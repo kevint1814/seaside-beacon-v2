@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seaside Beacon — Sunrise Forecast for Chennai</title>
+  <meta name="description" content="Know before you go. Precise sunrise quality forecasts for Chennai's four beaches — with photography guidance tailored to tomorrow's exact sky.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ── SCROLL PROGRESS ─────────────────────── -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- ── SUBSCRIBE MODAL ───────────────────────────────── -->
+<div class="modal-overlay" id="emailModal">
+  <div class="modal-panel">
+    <button class="modal-close" id="closeModal" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <p class="modal-eyebrow">Daily Briefing</p>
+    <h2 class="modal-title">Wake up knowing<br>what the sky holds.</h2>
+    <p class="modal-sub">Your beach. Your camera. Tomorrow's exact conditions — delivered at 4 AM before you leave home.</p>
+    <form id="subscriptionForm" autocomplete="off">
+      <div class="form-row">
+        <label class="form-label">Email</label>
+        <input type="email" id="emailInput" class="form-input" placeholder="you@example.com" required>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Your beach</label>
+        <select id="beachSelect" class="form-select" required>
+          <option value="marina">Marina Beach</option>
+          <option value="elliot">Elliot's Beach</option>
+          <option value="covelong">Covelong Beach</option>
+          <option value="thiruvanmiyur">Thiruvanmiyur Beach</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-subscribe" id="subscribeBtn">
+        <span id="subscribeText">Subscribe — Free</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <p class="form-note">No spam. Unsubscribe anytime.</p>
+      <div class="form-message" id="subscribeMessage"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ── COLD START OVERLAY ─────────────────────────── -->
+<div class="cold-overlay hidden" id="coldOverlay">
+  <div class="cold-panel">
+    <div class="cold-pulse"></div>
+    <h3 class="cold-title">Reading the atmosphere</h3>
+    <p class="cold-desc">First request of the day takes about 45 seconds while our forecasting engine wakes up.</p>
+    <div class="cold-bar-wrap"><div class="cold-bar" id="coldBar"></div></div>
+    <p class="cold-timer" id="coldTimer">Connecting…</p>
+  </div>
+</div>
+
+<!-- ── TOAST ──────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- ── SCENE BACKGROUND ─────────────────────────── -->
+<div class="scene-bg">
+  <canvas id="sunriseCanvas"></canvas>
+  <div class="scene-grain"></div>
+</div>
+
+<div class="page">
+
+  <!-- ── NAV ──────────────────────────────────────── -->
+  <nav class="nav" id="nav">
+    <a class="nav-brand" href="#home">
+      <div class="nav-emblem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </div>
+      <span class="nav-name">Seaside Beacon</span>
+    </a>
+    <div class="nav-links">
+      <a href="#forecast" class="nav-link">Forecast</a>
+      <a href="#craft" class="nav-link">Our Craft</a>
+      <button class="btn-nav-cta" id="navSubscribeBtn">Daily Briefing</button>
+    </div>
+    <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+      <span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="nav-drawer hidden" id="navDrawer">
+    <a href="#forecast" class="drawer-link">Forecast</a>
+    <a href="#craft" class="drawer-link">Our Craft</a>
+    <button class="drawer-cta" id="drawerSubscribeBtn">Daily Briefing</button>
+  </div>
+
+  <!-- ── HERO ─────────────────────────────────────── -->
+  <section class="hero" id="home">
+    <div class="hero-body">
+      <div class="hero-kicker">
+        <span class="kicker-line"></span>
+        <span class="kicker-text">Chennai · Four Beaches · Dawn</span>
+      </div>
+
+      <h1 class="hero-headline">
+        <span class="hl-line">The sky above</span>
+        <span class="hl-line hl-italic">your beach,</span>
+        <span class="hl-line">read in advance.</span>
+      </h1>
+
+      <p class="hero-body-text">Every sunrise is different. Most are forgettable. A few stop you cold. We study tomorrow's atmosphere tonight — so you only go when it's worth it.</p>
+
+      <div class="hero-ctas">
+        <a href="#forecast" class="btn-primary">Read tomorrow's sky</a>
+        <button class="btn-text" id="heroSubscribeBtn">
+          Get the 4 AM briefing
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="hero-rule"></div>
+
+      <div class="hero-stats">
+        <div class="hst">
+          <span class="hst-val">4</span>
+          <span class="hst-key">Chennai beaches</span>
+        </div>
+        <div class="hst-sep"></div>
+        <div class="hst">
+          <span class="hst-val">6</span>
+          <span class="hst-key">Atmospheric factors</span>
+        </div>
+        <div class="hst-sep"></div>
+        <div class="hst">
+          <span class="hst-val">4 AM</span>
+          <span class="hst-key">Morning delivery</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-scroll-cue" id="heroScrollCue">
+      <div class="scroll-cue-line"></div>
+      <span>Forecast below</span>
+    </div>
+  </section>
+
+  <!-- ── FORECAST ──────────────────────────────────── -->
+  <section class="forecast-section" id="forecast">
+    <div class="forecast-inner">
+
+      <header class="section-header">
+        <p class="section-eyebrow">Tomorrow Morning</p>
+        <h2 class="section-heading">Sunrise Forecast</h2>
+        <p class="section-note">Predictions available from 6 PM IST</p>
+      </header>
+
+      <!-- Beach selector -->
+      <div class="beach-selector" id="beachSelector">
+        <button class="bsel active" data-beach="marina" data-lat="13.0499" data-lon="80.2824">
+          <span class="bsel-name">Marina</span>
+          <span class="bsel-sub">North Chennai</span>
+        </button>
+        <button class="bsel" data-beach="elliot" data-lat="13.0067" data-lon="80.2669">
+          <span class="bsel-name">Elliot's</span>
+          <span class="bsel-sub">Besant Nagar</span>
+        </button>
+        <button class="bsel" data-beach="covelong" data-lat="12.7925" data-lon="80.2514">
+          <span class="bsel-name">Covelong</span>
+          <span class="bsel-sub">ECR</span>
+        </button>
+        <button class="bsel" data-beach="thiruvanmiyur" data-lat="12.9826" data-lon="80.2589">
+          <span class="bsel-name">Thiruvanmiyur</span>
+          <span class="bsel-sub">South</span>
+        </button>
+      </div>
+
+      <!-- Master forecast card — idle -->
+      <div class="forecast-master" id="forecastMaster">
+        <div class="fmaster-idle" id="fmasterIdle">
+          <div class="fmi-left">
+            <div class="fmi-emblem">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            </div>
+            <div>
+              <h3 class="fmi-title">Ready to read the sky</h3>
+              <p class="fmi-desc">Tomorrow's atmospheric conditions, interpreted for photographers.</p>
+            </div>
+          </div>
+          <button class="btn-forecast" id="predictBtn">
+            Read the forecast
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <!-- loading -->
+        <div class="fmaster-loading hidden" id="fmasterLoading">
+          <div class="fml-spinner"></div>
+          <p class="fml-label" id="fmlLabel">Reading the atmosphere…</p>
+        </div>
+
+        <!-- result -->
+        <div class="fmaster-result hidden" id="fmasterResult">
+          <!-- Left: score -->
+          <div class="fmr-score-col">
+            <p class="fmr-beach-name" id="fmrBeachName">Marina Beach</p>
+            <div class="score-ring-wrap">
+              <svg class="score-ring-svg" viewBox="0 0 110 110" width="110" height="110">
+                <defs>
+                  <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#8a3d5a"/>
+                    <stop offset="40%" stop-color="#c4733a"/>
+                    <stop offset="100%" stop-color="#c9a055"/>
+                  </linearGradient>
+                </defs>
+                <circle class="ring-track" cx="55" cy="55" r="46"/>
+                <circle class="ring-fill" id="ringFill" cx="55" cy="55" r="46"
+                  stroke-dasharray="289.03" stroke-dashoffset="289.03"
+                  transform="rotate(-90 55 55)"/>
+              </svg>
+              <div class="ring-inner">
+                <span class="ring-score" id="ringScore">0</span>
+                <span class="ring-denom">/100</span>
+              </div>
+            </div>
+            <div class="score-verdict-wrap" id="scoreVerdictWrap">
+              <span class="score-verdict" id="scoreVerdict">—</span>
+            </div>
+          </div>
+
+          <!-- Center: conditions -->
+          <div class="fmr-conditions-col">
+            <div class="fmr-golden" id="fmrGolden">
+              <span class="fmrg-label">Golden window</span>
+              <span class="fmrg-time" id="fmrgTime">—</span>
+              <span class="fmrg-peak">Peak at <strong id="fmrgPeak">—</strong></span>
+            </div>
+            <div class="conditions-strip" id="conditionsStrip">
+              <!-- populated by JS -->
+            </div>
+          </div>
+
+          <!-- Right: photo intel preview -->
+          <div class="fmr-intel-col">
+            <p class="fmri-label">Photographer's read</p>
+            <p class="fmri-insight" id="fmriInsight">—</p>
+            <button class="btn-view-analysis" id="btnViewAnalysis">
+              Full atmospheric analysis
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 10l5 5 5-5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unavailable -->
+      <div class="unavail-card hidden" id="unavailCard">
+        <div class="unavail-inner">
+          <span class="unavail-time" id="unavailCountdown">—</span>
+          <div>
+            <h3 class="unavail-title">Available after 6 PM tonight</h3>
+            <p class="unavail-desc">We read tomorrow's 6 AM sky once the full 12-hour forecast window is available. Come back this evening.</p>
+          </div>
+          <button class="btn-text" id="unavailSubscribeBtn">
+            Get it at 4 AM instead
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── DEEP ANALYSIS PANEL ─────────────────── -->
+      <div class="analysis-panel hidden" id="deepPanel">
+
+        <div class="ap-header">
+          <div>
+            <h3 class="ap-title">Atmospheric Analysis</h3>
+            <p class="ap-sub" id="deepSubtitle">For Marina Beach · Tomorrow morning</p>
+          </div>
+          <button class="ap-collapse" id="deepCollapse">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 14l5-5 5 5"/></svg>
+          </button>
+        </div>
+
+        <div class="ap-tabs" role="tablist">
+          <button class="ap-tab active" data-tab="analysis" role="tab">Conditions</button>
+          <button class="ap-tab" data-tab="dslr" role="tab">DSLR</button>
+          <button class="ap-tab" data-tab="mobile" role="tab">Mobile</button>
+          <button class="ap-tab" data-tab="composition" role="tab">Composition</button>
+          <div class="ap-tab-ink" id="apTabInk"></div>
+        </div>
+
+        <div class="ap-pane active" id="tab-analysis">
+          <div class="ap-atm-grid" id="atmGrid"></div>
+          <div class="ap-pattern" id="patternBox"></div>
+        </div>
+
+        <div class="ap-pane" id="tab-dslr">
+          <div class="ap-settings-grid" id="dslrGrid"></div>
+          <div class="ap-tips" id="dslrProTips"></div>
+          <div class="ap-tips" id="dslrCompTips"></div>
+        </div>
+
+        <div class="ap-pane" id="tab-mobile">
+          <div class="ap-settings-grid" id="mobileGrid"></div>
+          <div class="ap-tips" id="mobileProTips"></div>
+          <div class="ap-tips" id="mobileCompTips"></div>
+        </div>
+
+        <div class="ap-pane" id="tab-composition">
+          <div class="ap-comp-grid" id="beachCompareGrid"></div>
+        </div>
+
+      </div><!-- /analysis-panel -->
+
+    </div>
+  </section>
+
+  <!-- ── THE CRAFT SECTION ─────────────────────────── -->
+  <section class="craft-section" id="craft">
+    <div class="craft-inner">
+
+      <div class="craft-header">
+        <p class="section-eyebrow">The Craft</p>
+        <h2 class="section-heading">How we read<br><em>the dawn sky</em></h2>
+      </div>
+
+      <div class="craft-grid">
+        <div class="craft-card" data-index="01">
+          <div class="cc-num">01</div>
+          <h3 class="cc-title">Clouds are not the enemy</h3>
+          <p class="cc-body">Every other sunrise predictor penalises cloud cover. We don't. A clear sky at dawn is often flat and pale — no drama, no colour. The fires happen when broken clouds hang low enough to catch the first light from below the horizon. We score the sky accordingly.</p>
+        </div>
+        <div class="craft-card" data-index="02">
+          <div class="cc-num">02</div>
+          <h3 class="cc-title">Moisture shapes colour</h3>
+          <p class="cc-body">Low humidity means crisp, saturated reds and golds. High humidity scatters and mutes — the same sky looks washed out through humid air. We factor atmospheric moisture alongside cloud cover, because both determine what your sensor actually captures.</p>
+        </div>
+        <div class="craft-card" data-index="03">
+          <div class="cc-num">03</div>
+          <h3 class="cc-title">Every beach is different</h3>
+          <p class="cc-body">Marina's 13 kilometre flat expanse reads differently to Covelong's rock formations. The same cloud pattern calls for different compositions, different timing, different focal lengths. Our photography guidance is specific to your beach — not generic sunrise advice.</p>
+        </div>
+        <div class="craft-card" data-index="04">
+          <div class="cc-num">04</div>
+          <h3 class="cc-title">The ten minutes before sunrise</h3>
+          <p class="cc-body">Most photographers arrive at sunrise. The professionals arrive earlier. The sky's most dramatic colours appear in the window before the sun clears the horizon — the civil twilight. We mark this window precisely for tomorrow's exact sunrise time at your beach.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── SUBSCRIBE STRIP ──────────────────────────── -->
+  <section class="sub-section">
+    <div class="sub-inner">
+      <div class="sub-text-col">
+        <p class="section-eyebrow">Daily Briefing</p>
+        <h2 class="sub-heading">The forecast,<br>before you wake.</h2>
+        <p class="sub-body">Every morning at 4 AM — full conditions, camera settings, and your beach's specific guide. So when your alarm goes off at 5, the decision is already made.</p>
+      </div>
+      <div class="sub-form-col">
+        <div class="sub-form-card">
+          <div class="form-row">
+            <label class="form-label">Email address</label>
+            <input type="email" id="stripEmail" class="form-input" placeholder="you@example.com">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Your beach</label>
+            <select id="stripBeach" class="form-select">
+              <option value="marina">Marina Beach</option>
+              <option value="elliot">Elliot's Beach</option>
+              <option value="covelong">Covelong Beach</option>
+              <option value="thiruvanmiyur">Thiruvanmiyur Beach</option>
+            </select>
+          </div>
+          <button class="btn-subscribe" id="stripSubscribeBtn">
+            Start daily briefing — free
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+          <div class="form-message" id="stripMessage"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ───────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-wave">
+      <svg viewBox="0 0 1440 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path class="wave-path" d="M0,20 C240,40 480,0 720,20 C960,40 1200,0 1440,20 L1440,40 L0,40 Z"/>
+      </svg>
+    </div>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-brand">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          Seaside Beacon
+        </div>
+        <p class="footer-line">Sunrise intelligence for Chennai's beaches.</p>
+      </div>
+      <div class="footer-right">
+        <p class="footer-credit">Kevin T · 2026</p>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /page -->
+
+<script src="script.js"></script>
+</body>
+</html>
