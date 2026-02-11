@@ -441,10 +441,10 @@ function renderTips(id, tips, heading) {
 function renderCompositionTab(p) {
   const comp=p?.beachComparison||{}, beaches=comp.beaches||{};
   const meta={
-    marina:        {name:'Marina Beach',    sub:'13km · Lighthouse · Fishing boats'},
-    elliot:        {name:"Elliot's Beach",  sub:'6km · Karl Schmidt Memorial'},
-    covelong:      {name:'Covelong Beach',  sub:'40km · Rock formations · Tidal pools'},
-    thiruvanmiyur: {name:'Thiruvanmiyur',   sub:'8km · Breakwater · Reflections'}
+    marina:        {name:'Marina Beach',    sub:'Lighthouse · Fishing boats'},
+    elliot:        {name:"Elliot's Beach",  sub:'Karl Schmidt Memorial'},
+    covelong:      {name:'Covelong Beach',  sub:'Rock formations · Tidal pools'},
+    thiruvanmiyur: {name:'Thiruvanmiyur',   sub:'Breakwater · Reflections'}
   };
   const suitCls={Best:'cs-best',Good:'cs-good',Fair:'cs-fair',Poor:'cs-poor'};
   document.getElementById('beachCompareGrid').innerHTML=
