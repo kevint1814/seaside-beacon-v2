@@ -577,7 +577,7 @@ input, select, textarea { font-family:inherit; }
 
 /* ── UNAVAILABLE ────────────────────────────────────── */
 .unavail-card {
-  padding:28px 32px; border-radius:var(--r-lg);
+  border-radius:var(--r-xl);
   background:var(--glass-fill);
   backdrop-filter:var(--blur-md);
   -webkit-backdrop-filter:var(--blur-md);
@@ -586,13 +586,64 @@ input, select, textarea { font-family:inherit; }
   position:relative; overflow:hidden;
 }
 .unavail-card::before {
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(160deg,rgba(255,255,255,0.09) 0%,transparent 60%);
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:linear-gradient(160deg,rgba(255,255,255,0.09) 0%,transparent 55%);
 }
-.unavail-inner { display:flex; align-items:center; gap:28px; flex-wrap:wrap; position:relative; }
-.unavail-time  { font-family:var(--ff-display); font-size:32px; font-weight:600; color:var(--accent-bright); white-space:nowrap; flex-shrink:0; }
-.unavail-title { font-size:15px; font-weight:500; color:var(--t1); margin-bottom:5px; }
-.unavail-desc  { font-size:13px; color:var(--t2); }
+.unavail-inner {
+  display:flex; align-items:stretch; position:relative; z-index:1;
+}
+
+/* Left — countdown column */
+.unavail-left {
+  flex-shrink:0; width:200px;
+  display:flex; align-items:center; justify-content:center;
+  padding:36px 28px;
+  background:rgba(196,115,58,0.05);
+  border-right:1px solid var(--accent-border);
+}
+.unavail-countdown-wrap { text-align:center; }
+.unavail-label {
+  display:block; font-size:9.5px; text-transform:uppercase;
+  letter-spacing:1.5px; color:var(--t3); margin-bottom:6px;
+}
+.unavail-label:last-child { margin-top:6px; margin-bottom:0; }
+.unavail-time {
+  display:block; font-family:var(--ff-display);
+  font-size:38px; font-weight:600; line-height:1;
+  color:var(--accent-bright); white-space:nowrap;
+}
+
+/* Divider — hidden on mobile (left col handles it) */
+.unavail-divider { display:none; }
+
+/* Right — explanation column */
+.unavail-right {
+  flex:1; padding:32px 32px;
+  display:flex; flex-direction:column; gap:14px;
+}
+.unavail-title {
+  font-family:var(--ff-display);
+  font-size:18px; font-weight:600; color:var(--t1);
+  letter-spacing:-0.01em; line-height:1.2;
+}
+.unavail-desc {
+  font-size:13px; color:var(--t2); line-height:1.82;
+  font-weight:300; max-width:560px;
+}
+
+/* Factor rows */
+.unavail-factors {
+  display:flex; flex-direction:column; gap:7px;
+}
+.unavail-factor {
+  display:flex; align-items:flex-start; gap:10px;
+  font-size:12px; color:var(--t2); line-height:1.6;
+}
+.uf-icon {
+  color:var(--accent); font-size:10px; flex-shrink:0;
+  margin-top:3px; opacity:0.7;
+}
+.uf-text { flex:1; }
 
 /* ═══════════════════════════════════════════════════════
    ANALYSIS PANEL
@@ -1025,7 +1076,15 @@ input, select, textarea { font-family:inherit; }
   .ap-comp-grid { grid-template-columns:1fr; }
   .craft-section,.sub-section { padding:60px 20px; }
   .footer-inner { flex-direction:column; text-align:center; }
-  .unavail-inner { flex-direction:column; text-align:center; }
+  /* Unavailable card — stack on mobile */
+  .unavail-inner { flex-direction:column; }
+  .unavail-left {
+    width:100%; border-right:none;
+    border-bottom:1px solid var(--accent-border);
+    padding:28px 24px;
+  }
+  .unavail-right { padding:24px 24px; }
+  .unavail-title { font-size:16px; }
 }
 
 @media(max-width:480px) {

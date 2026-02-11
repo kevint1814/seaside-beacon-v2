@@ -109,7 +109,7 @@
         <span class="hl-line">read in advance.</span>
       </h1>
 
-      <p class="hero-body-text">Every sunrise is different. Most are forgettable. A few stop you cold. We study tomorrow's atmosphere tonight — so you only go when it's worth it.</p>
+      <p class="hero-body-text">Every sunrise is different. Most are forgettable. A few stop you cold. We study tomorrow's atmosphere tonight, so you only go when it's worth it.</p>
 
       <div class="hero-ctas">
         <a href="#forecast" class="btn-primary">Read tomorrow's sky</a>
@@ -171,7 +171,7 @@
         </button>
         <button class="bsel" data-beach="thiruvanmiyur" data-lat="12.9826" data-lon="80.2589">
           <span class="bsel-name">Thiruvanmiyur</span>
-          <span class="bsel-sub">South</span>
+          <span class="bsel-sub">South Chennai</span>
         </button>
       </div>
 
@@ -255,15 +255,45 @@
       <!-- Unavailable -->
       <div class="unavail-card hidden" id="unavailCard">
         <div class="unavail-inner">
-          <span class="unavail-time" id="unavailCountdown">—</span>
-          <div>
-            <h3 class="unavail-title">Available after 6 PM tonight</h3>
-            <p class="unavail-desc">We read tomorrow's 6 AM sky once the full 12-hour forecast window is available. Come back this evening.</p>
+
+          <!-- Left: countdown -->
+          <div class="unavail-left">
+            <div class="unavail-countdown-wrap">
+              <span class="unavail-label">Forecast opens in</span>
+              <span class="unavail-time" id="unavailCountdown">—</span>
+              <span class="unavail-label">at 6 PM tonight</span>
+            </div>
           </div>
-          <button class="btn-text" id="unavailSubscribeBtn">
-            Get it at 4 AM instead
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
+
+          <!-- Divider -->
+          <div class="unavail-divider"></div>
+
+          <!-- Right: explanation -->
+          <div class="unavail-right">
+            <h3 class="unavail-title">Why the evening window matters</h3>
+            <p class="unavail-desc">
+              Dawn conditions are shaped by atmospheric systems that take 10 to 14 hours to establish cloud formations, moisture gradients, and pressure cells that determine whether tomorrow's horizon ignites in deep copper or stays flat and grey. Reading the sky at noon gives you 18 hours of uncertainty. Reading it at 6 PM gives you 12 hours, the minimum window where atmospheric models converge to reliable accuracy. Earlier than this, the margin of error is too wide to be honest with you.
+            </p>
+            <div class="unavail-factors">
+              <div class="unavail-factor">
+                <span class="uf-icon">◎</span>
+                <span class="uf-text">Cloud formations need 8 to 10 hours to stabilise into forecastable patterns</span>
+              </div>
+              <div class="unavail-factor">
+                <span class="uf-icon">◎</span>
+                <span class="uf-text">Bay of Bengal moisture moves overnight, hence evening readings capture it accurately</span>
+              </div>
+              <div class="unavail-factor">
+                <span class="uf-icon">◎</span>
+                <span class="uf-text">Wind direction at dawn is set by pressure gradients that form after sunset</span>
+              </div>
+            </div>
+            <button class="btn-text" id="unavailSubscribeBtn">
+              Get tomorrow's forecast at 4 AM instead
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -327,22 +357,22 @@
         <div class="craft-card" data-index="01">
           <div class="cc-num">01</div>
           <h3 class="cc-title">Clouds are not the enemy</h3>
-          <p class="cc-body">Every other sunrise predictor penalises cloud cover. We don't. A clear sky at dawn is often flat and pale — no drama, no colour. The fires happen when broken clouds hang low enough to catch the first light from below the horizon. We score the sky accordingly.</p>
+          <p class="cc-body">Others penalise cloud cover. We don't. A clear sky at dawn is often flat and pale. Nso drama, no colour. The fires happen when broken clouds hang low enough to catch the first light from below the horizon. We score the sky accordingly.</p>
         </div>
         <div class="craft-card" data-index="02">
           <div class="cc-num">02</div>
           <h3 class="cc-title">Moisture shapes colour</h3>
-          <p class="cc-body">Low humidity means crisp, saturated reds and golds. High humidity scatters and mutes — the same sky looks washed out through humid air. We factor atmospheric moisture alongside cloud cover, because both determine what your sensor actually captures.</p>
+          <p class="cc-body">Low humidity means crisp, saturated reds and golds. High humidity scatters and mutes. The same sky looks washed out through humid air. We factor atmospheric moisture alongside cloud cover, because both determine what your sensor actually captures.</p>
         </div>
         <div class="craft-card" data-index="03">
           <div class="cc-num">03</div>
           <h3 class="cc-title">Every beach is different</h3>
-          <p class="cc-body">Marina's 13 kilometre flat expanse reads differently to Covelong's rock formations. The same cloud pattern calls for different compositions, different timing, different focal lengths. Our photography guidance is specific to your beach — not generic sunrise advice.</p>
+          <p class="cc-body">Marina's 13 kilometre flat expanse reads differently to Covelong's rock formations. The same cloud pattern calls for different compositions, different timing, different focal lengths. Our photography guidance is specific to your beach, not generic sunrise advice.</p>
         </div>
         <div class="craft-card" data-index="04">
           <div class="cc-num">04</div>
           <h3 class="cc-title">The ten minutes before sunrise</h3>
-          <p class="cc-body">Most photographers arrive at sunrise. The professionals arrive earlier. The sky's most dramatic colours appear in the window before the sun clears the horizon — the civil twilight. We mark this window precisely for tomorrow's exact sunrise time at your beach.</p>
+          <p class="cc-body">Most photographers arrive at sunrise. The professionals arrive earlier. The sky's most dramatic colours appear in the window before the sun clears the horizon, the civil twilight. We mark this window precisely for tomorrow's exact sunrise time at your beach.</p>
         </div>
       </div>
 
@@ -398,7 +428,7 @@
         <p class="footer-line">Sunrise intelligence for Chennai's beaches.</p>
       </div>
       <div class="footer-right">
-        <p class="footer-credit">Kevin T · 2026</p>
+        <p class="footer-credit">Kevin T · 24BCS1045 · VIT Chennai · 2026</p>
       </div>
     </div>
   </footer>

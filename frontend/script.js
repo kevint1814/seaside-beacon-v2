@@ -324,7 +324,7 @@ function renderForecast() {
 
   const labels = pred.atmosphericLabels||{};
   document.getElementById('conditionsStrip').innerHTML = [
-    {lbl:'Cloud Cover',    val:`${f.cloudCover}%`,    sub:labels.cloudLabel    ||(f.cloudCover>=30&&f.cloudCover<=60?'Optimal':f.cloudCover<30?'Clear':'Heavy')},
+    {lbl:'Cloud',    val:`${f.cloudCover}%`,    sub:labels.cloudLabel    ||(f.cloudCover>=30&&f.cloudCover<=60?'Optimal':f.cloudCover<30?'Clear':'Heavy')},
     {lbl:'Humidity', val:`${f.humidity}%`,       sub:labels.humidityLabel ||(f.humidity<=55?'Low':'High')},
     {lbl:'Visibility',val:`${f.visibility}km`,   sub:labels.visibilityLabel||(f.visibility>=10?'Excellent':'Good')},
     {lbl:'Wind',     val:`${f.windSpeed}km/h`,   sub:labels.windLabel     ||(f.windSpeed<=15?'Calm':'Breezy')}
@@ -441,10 +441,10 @@ function renderTips(id, tips, heading) {
 function renderCompositionTab(p) {
   const comp=p?.beachComparison||{}, beaches=comp.beaches||{};
   const meta={
-    marina:        {name:'Marina Beach',    sub:'Lighthouse · Fishing boats'},
-    elliot:        {name:"Elliot's Beach",  sub:'Karl Schmidt Memorial'},
-    covelong:      {name:'Covelong Beach',  sub:'Rock formations · Tidal pools'},
-    thiruvanmiyur: {name:'Thiruvanmiyur',   sub:'Breakwater · Reflections'}
+    marina:        {name:'Marina Beach',    sub:'13km · Lighthouse · Fishing boats'},
+    elliot:        {name:"Elliot's Beach",  sub:'6km · Karl Schmidt Memorial'},
+    covelong:      {name:'Covelong Beach',  sub:'40km · Rock formations · Tidal pools'},
+    thiruvanmiyur: {name:'Thiruvanmiyur',   sub:'8km · Breakwater · Reflections'}
   };
   const suitCls={Best:'cs-best',Good:'cs-good',Fair:'cs-fair',Poor:'cs-poor'};
   document.getElementById('beachCompareGrid').innerHTML=
@@ -495,8 +495,26 @@ function initDeepPanel() {
 // ─────────────────────────────────────────────
 function showUnavailable(td) {
   show('unavailCard');
-  const t = td?`${td.hours}h ${td.minutes}m`:(countdownTo6PM()||'—');
-  document.getElementById('unavailCountdown').textContent = t;
+
+  function updateCountdown() {
+    const t = td ? `${td.hours}h ${td.minutes}m` : (countdownTo6PM() || '—');
+    document.getElementById('unavailCountdown').textContent = t;
+  }
+
+  updateCountdown();
+  // Tick every 60s so the countdown stays live without a refresh
+  if (!state._unavailInterval) {
+    state._unavailInterval = setInterval(() => {
+      // If we've passed 6 PM, stop ticking
+      if (isAvailable()) {
+        clearInterval(state._unavailInterval);
+        state._unavailInterval = null;
+        document.getElementById('unavailCountdown').textContent = 'Ready';
+        return;
+      }
+      updateCountdown();
+    }, 60000);
+  }
 }
 
 // ─────────────────────────────────────────────
