@@ -238,7 +238,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     <div class="header">
       <div class="verdict-emoji">${verdictEmoji}</div>
       <h1>${verdict}</h1>
-      <p>Tomorrow's Sunrise · ${beach}</p>
+      <p>Today's Sunrise · ${beach}</p>
     </div>
 
     <div class="score-section">
