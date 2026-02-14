@@ -252,22 +252,46 @@ async function handlePredict() {
   if (!isAvailable()) { showUnavailable(); return; }
   state.loading = true;
   setLoadingState(true);
+
+  // Run API fetch and pipeline animation in parallel
+  // Results only render after BOTH are done (minimum 5s visual)
+  const pipelinePromise = runPipeline();
+  let data, error;
+
   try {
-    const data = await fetchTimeout(`${CONFIG.API_URL}/predict/${state.beach}`, 70000);
-    // Quick flash "Done" step before rendering
-    advancePipeline(4);
-    await new Promise(r => setTimeout(r, 400));
-    if (!data.success) throw new Error(data.message||'Prediction failed');
-    if (!data.data.weather.available) { showUnavailable(data.data.weather.timeUntilAvailable); return; }
-    state.weather = data.data.weather;
-    state.photography = data.data.photography;
-    renderForecast();
+    data = await fetchTimeout(`${CONFIG.API_URL}/predict/${state.beach}`, 70000);
   } catch(err) {
-    showToast(err.message||'Unable to fetch — please try again');
-    console.error(err);
-  } finally {
-    state.loading = false; setLoadingState(false);
+    error = err;
   }
+
+  // Wait for pipeline to finish its full animation
+  await pipelinePromise;
+
+  if (error) {
+    showToast(error.message||'Unable to fetch — please try again');
+    console.error(error);
+    state.loading = false; setLoadingState(false);
+    return;
+  }
+
+  if (!data.success) {
+    showToast(data.message||'Prediction failed');
+    state.loading = false; setLoadingState(false);
+    return;
+  }
+
+  if (!data.data.weather.available) {
+    setLoadingState(false);
+    showUnavailable(data.data.weather.timeUntilAvailable);
+    state.loading = false;
+    return;
+  }
+
+  state.weather = data.data.weather;
+  state.photography = data.data.photography;
+  state.loading = false;
+  setLoadingState(false);
+  renderForecast();
 }
 
 async function fetchTimeout(url, ms) {
@@ -287,7 +311,8 @@ async function fetchTimeout(url, ms) {
 
 function setLoadingState(on) {
   if (on) {
-    hide('fmasterIdle'); hide('fmasterResult'); show('fmasterLoading');
+    hide('fmasterIdle'); hide('fmasterResult'); hide('experiencePanel'); hide('deepPanel');
+    show('fmasterLoading');
     // Reset all pipeline steps
     for (let i = 0; i < 5; i++) {
       const step = document.getElementById(`pipeStep${i}`);
@@ -295,25 +320,37 @@ function setLoadingState(on) {
       const line = document.getElementById(`pipeLine${i}`);
       if (line) { line.classList.remove('filled'); }
     }
-    document.getElementById('pipeStep0')?.classList.add('active');
     const statusEl = document.getElementById('pipeStatus');
-    if (statusEl) statusEl.textContent = 'Waking up the forecast engine…';
-
-    // Advance pipeline steps on a schedule
-    const steps = [
-      { at: 2000,  step: 1, status: 'Reading atmospheric data…' },
-      { at: 5000,  step: 2, status: 'Analysing cloud, humidity & visibility…' },
-      { at: 9000,  step: 3, status: 'Generating sunrise insights…' },
-    ];
-    state._pipeTimeouts = steps.map(s =>
-      setTimeout(() => advancePipeline(s.step, s.status), s.at)
-    );
+    if (statusEl) statusEl.textContent = '';
   } else {
     // Clear any pending timeouts
     (state._pipeTimeouts || []).forEach(clearTimeout);
     state._pipeTimeouts = [];
     hide('fmasterLoading');
   }
+}
+
+/**
+ * Runs the 5-step pipeline animation over exactly 5 seconds.
+ * Returns a promise that resolves when "Done" has displayed.
+ */
+function runPipeline() {
+  return new Promise(resolve => {
+    const steps = [
+      { at: 0,    step: 0, status: 'Connecting to forecast engine…' },
+      { at: 1000, step: 1, status: 'Reading atmospheric data…' },
+      { at: 2200, step: 2, status: 'Analysing cloud, humidity & visibility…' },
+      { at: 3500, step: 3, status: 'Generating sunrise insights…' },
+      { at: 4600, step: 4, status: 'Preparing your forecast…' },
+    ];
+
+    state._pipeTimeouts = steps.map(s =>
+      setTimeout(() => advancePipeline(s.step, s.status), s.at)
+    );
+
+    // Resolve after full animation completes (5s total)
+    state._pipeTimeouts.push(setTimeout(resolve, 5200));
+  });
 }
 
 function advancePipeline(stepIndex, statusText) {

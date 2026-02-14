@@ -1052,11 +1052,13 @@ input, select, textarea { font-family:inherit; }
 ═══════════════════════════════════════════════════════ */
 .fmaster-loading {
   display:flex; flex-direction:column; align-items:center;
-  gap:20px; padding:36px 28px 30px;
+  justify-content:center;
+  gap:20px; padding:40px 28px 32px;
+  min-height:190px;
 }
 .pipeline {
-  display:flex; align-items:center; gap:0;
-  width:100%; max-width:680px;
+  display:flex; align-items:flex-start; justify-content:center;
+  gap:0; width:100%; max-width:680px;
 }
 
 /* Each step: node + label */
@@ -1124,7 +1126,7 @@ input, select, textarea { font-family:inherit; }
   flex:1; height:1.5px; min-width:12px;
   background:var(--glass-border-hi);
   position:relative; overflow:hidden;
-  margin:0 2px; margin-bottom:20px;
+  margin:0 2px; margin-top:13px; /* align with center of 28px nodes */
 }
 .pipe-line::after {
   content:''; position:absolute; inset:0;
