@@ -194,6 +194,22 @@ input, select, textarea { font-family:inherit; }
   box-shadow: 0 1px 0 var(--specular) inset;
   transition: all 0.2s;
 }
+/* Logo images — replace SVG sun icons */
+.nav-logo {
+  width:20px; height:20px;
+  object-fit:contain;
+  border-radius:4px;
+}
+.fmi-logo {
+  width:32px; height:32px;
+  object-fit:contain;
+  border-radius:6px;
+}
+.footer-logo {
+  width:18px; height:18px;
+  object-fit:contain;
+  border-radius:3px;
+}
 .nav-brand:hover .nav-emblem {
   background: var(--accent-subtle);
   border-color: var(--accent-border);

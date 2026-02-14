@@ -55,7 +55,8 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
     const beachDisplay = beachDisplayNames[beachName] || beachName;
 
     const mailOptions = {
-      from: { name: 'Seaside Beacon', address: process.env.GMAIL_USER },
+      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'SeasideBeacon@kevintportfolio.com' },
+      replyTo: process.env.GMAIL_USER,
       to: subscriberEmail,
       subject: '🌅 Welcome to Seaside Beacon — Honest sunrise forecasts, starting tomorrow',
       headers: {
@@ -194,7 +195,8 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     else { recLabel = '— Sunrise likely not visible'; recColor = '#DC2626'; }
 
     const mailOptions = {
-      from: { name: 'Seaside Beacon', address: process.env.GMAIL_USER },
+      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'SeasideBeacon@kevintportfolio.com' },
+      replyTo: process.env.GMAIL_USER,
       to: subscriberEmail,
       subject: `${verdictEmoji} ${verdict} Sunrise Tomorrow — ${beach} (${score}/100)`,
       headers: {
@@ -260,7 +262,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     <div class="header">
       <div class="verdict-emoji">${verdictEmoji}</div>
       <h1>${verdict}</h1>
-      <p>Tomorrow's Sunrise · ${beach}</p>
+      <p>Today's Sunrise · ${beach}</p>
     </div>
 
     <div class="score-section">
