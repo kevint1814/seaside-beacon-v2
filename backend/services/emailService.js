@@ -56,13 +56,13 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
 
     const mailOptions = {
       from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'SeasideBeacon@kevintportfolio.com' },
-      replyTo: process.env.GMAIL_USER,
       to: subscriberEmail,
-      subject: '🌅 Welcome to Seaside Beacon — Honest sunrise forecasts, starting tomorrow',
+      subject: '🌅 Welcome to Seaside Beacon — Honest Sunrise Forecasts, Starting Tomorrow!',
       headers: {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
       },
+      text: `Welcome to Seaside Beacon!\n\nYou're subscribed to daily sunrise forecasts for ${beachDisplay}.\n\nEvery morning at 4:00 AM IST, we'll send you an honest sunrise forecast — what the sky will actually look like, whether it's worth waking up for, plus photography tips if you want them.\n\nYour first forecast arrives tomorrow at 4:00 AM IST.\n\nUnsubscribe: ${unsubscribeUrl}\n\nSeaside Beacon — Made in Chennai`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -196,13 +196,13 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 
     const mailOptions = {
       from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'SeasideBeacon@kevintportfolio.com' },
-      replyTo: process.env.GMAIL_USER,
       to: subscriberEmail,
       subject: `${verdictEmoji} ${verdict} Sunrise Tomorrow — ${beach} (${score}/100)`,
       headers: {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
       },
+      text: `${greeting}\n\n${beach} — Sunrise Score: ${score}/100 (${verdict})\n\nGolden Hour: ${goldenHour.start} – ${goldenHour.end} (Peak: ${goldenHour.peak})\n\n${insight}\n\n${sunriseExp.whatYoullSee ? 'What you\'ll see: ' + sunriseExp.whatYoullSee + '\n\n' : ''}${sunriseExp.worthWakingUp ? 'Worth waking up? ' + sunriseExp.worthWakingUp + '\n\n' : ''}Conditions: Cloud ${cloudCover}%, Humidity ${humidity}%, Visibility ${visibility}km, Wind ${windSpeed}km/h, Temp ${temperature}°C\n\nUnsubscribe: ${unsubscribeUrl}\n\nSeaside Beacon — Daily at 4:00 AM IST`,
       html: `
 <!DOCTYPE html>
 <html>
