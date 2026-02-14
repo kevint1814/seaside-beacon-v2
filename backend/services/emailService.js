@@ -1,5 +1,6 @@
 // ==========================================
 // Email Service - SendGrid / Brevo / Gmail
+// General-audience-first, honest tone
 // ==========================================
 
 const nodemailer = require('nodemailer');
@@ -38,7 +39,7 @@ function getUnsubscribeUrl(email) {
 }
 
 /**
- * Send welcome email
+ * Send welcome email — general audience first
  */
 async function sendWelcomeEmail(subscriberEmail, beachName) {
   try {
@@ -56,7 +57,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
     const mailOptions = {
       from: { name: 'Seaside Beacon', address: process.env.GMAIL_USER },
       to: subscriberEmail,
-      subject: '🌅 Welcome to Seaside Beacon — Your sunrise forecasts start tomorrow',
+      subject: '🌅 Welcome to Seaside Beacon — Honest sunrise forecasts, starting tomorrow',
       headers: {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
@@ -93,45 +94,45 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
   <div class="container">
     <div class="header">
       <h1>🌅 Welcome to Seaside Beacon</h1>
-      <p>Your intelligent sunrise companion for Chennai beaches</p>
+      <p>Honest sunrise forecasts for Chennai beaches</p>
     </div>
     <div class="content">
       <h2>You're all set!</h2>
       <div class="beach-badge">📍 ${beachDisplay}</div>
-      <p>Every morning at <strong>4:00 AM IST</strong>, we'll send you an AI-powered sunrise forecast for your beach — complete with photography tips tailored to tomorrow's exact atmospheric conditions.</p>
+      <p>Every morning at <strong>4:00 AM IST</strong>, we'll send you an honest sunrise forecast for your beach — what the sky will actually look like, whether it's worth waking up for, plus photography tips if you want them.</p>
       <div class="features">
         <div class="feature">
-          <div class="feature-icon">🤖</div>
+          <div class="feature-icon">🌅</div>
           <div class="feature-text">
-            <strong>Research-Backed Predictions</strong>
-            <span>Scoring based on meteorological research — cloud cover, humidity, visibility, wind all weighted correctly for sunrise photography quality.</span>
+            <strong>Honest Verdict</strong>
+            <span>We'll tell you straight — is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</span>
           </div>
         </div>
         <div class="feature">
-          <div class="feature-icon">📸</div>
+          <div class="feature-icon">🌤️</div>
           <div class="feature-text">
-            <strong>Educational Photography Insights</strong>
-            <span>Not just settings — we explain WHY each setting works for the day's atmospheric conditions, for both DSLR and smartphone.</span>
+            <strong>What You'll Actually See</strong>
+            <span>Specific descriptions of expected sky colors, light quality, and beach atmosphere — so you're never disappointed.</span>
           </div>
         </div>
         <div class="feature">
           <div class="feature-icon">🏖️</div>
           <div class="feature-text">
             <strong>Beach Comparison</strong>
-            <span>All 4 Chennai beaches rated for today's conditions so you always go to the right spot.</span>
+            <span>All 4 Chennai beaches rated — or honestly told "none are great today" when that's the truth.</span>
           </div>
         </div>
         <div class="feature">
-          <div class="feature-icon">🌤️</div>
+          <div class="feature-icon">📸</div>
           <div class="feature-text">
-            <strong>Atmospheric Analysis</strong>
-            <span>Understand how each weather parameter — clouds, humidity, wind — shapes the colors and mood of your sunrise.</span>
+            <strong>Photography Tips</strong>
+            <span>Camera settings and composition tips for photographers — with explanations of why each setting works for the day's conditions.</span>
           </div>
         </div>
       </div>
       <div class="highlight">
         ⏰ <strong>Your first forecast arrives tomorrow at 4:00 AM IST.</strong><br>
-        Set your alarm for 5:30 AM and you'll arrive at the beach just in time for the peak golden hour (10-15 minutes before sunrise at 6 AM).
+        If conditions are good, set your alarm for 5:30 AM to arrive at the beach for the peak color window (10-15 minutes before sunrise).
       </div>
     </div>
     <div class="footer">
@@ -154,7 +155,9 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
 }
 
 /**
- * Send daily prediction email (updated for new data structure)
+ * Send daily prediction email
+ * General audience first, photography secondary
+ * Conditionally shorter on poor days
  */
 async function sendDailyPredictionEmail(subscriberEmail, weatherData, photographyInsights) {
   try {
@@ -168,18 +171,27 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     const statusColor = score >= 85 ? '#059669' : score >= 70 ? '#0284c7' : score >= 55 ? '#D97706' : score >= 40 ? '#EA580C' : '#DC2626';
     const verdictEmoji = score >= 85 ? '🔥' : score >= 70 ? '🌅' : score >= 55 ? '☀️' : score >= 40 ? '☁️' : '🌫️';
 
-    // Extract insights safely (handle both AI and rule-based structure)
+    // Extract insights
     const insight = photographyInsights.insight || '';
     const greeting = photographyInsights.greeting || '';
     const goldenHour = photographyInsights.goldenHour || { start: '5:45 AM', peak: '5:50 AM', end: '6:20 AM', quality: 'Good' };
+    const sunriseExp = photographyInsights.sunriseExperience || {};
     const dslrSettings = photographyInsights.dslr?.cameraSettings || {};
     const dslrTips = photographyInsights.dslr?.compositionTips || [];
     const beachComp = photographyInsights.beachComparison || null;
-    const atm = photographyInsights.atmosphericAnalysis || null;
 
     // Cloud label
     const cloudLabel = atmosphericLabels?.cloudLabel || (cloudCover >= 30 && cloudCover <= 60 ? 'Optimal' : cloudCover < 30 ? 'Too Clear' : 'Overcast');
-    const cloudColor = cloudCover >= 30 && cloudCover <= 60 ? '#059669' : cloudCover < 75 ? '#D97706' : '#DC2626';
+
+    // Determine if this is a good enough day to include full photography section
+    const includePhotography = score >= 40;
+
+    // Worth waking up recommendation
+    let recLabel, recColor;
+    if (score >= 70) { recLabel = '✓ Worth the early alarm'; recColor = '#059669'; }
+    else if (score >= 50) { recLabel = '~ Pleasant, not spectacular'; recColor = '#D97706'; }
+    else if (score >= 30) { recLabel = '✗ Underwhelming sunrise expected'; recColor = '#EA580C'; }
+    else { recLabel = '— Sunrise likely not visible'; recColor = '#DC2626'; }
 
     const mailOptions = {
       from: { name: 'Seaside Beacon', address: process.env.GMAIL_USER },
@@ -205,10 +217,18 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     .score-section { background: #FAFAFA; padding: 28px 36px; text-align: center; border-bottom: 1px solid #eee; }
     .score-number { font-size: 64px; font-weight: 800; color: ${statusColor}; line-height: 1; margin: 0; }
     .score-label { font-size: 14px; color: #888; margin: 6px 0 0 0; }
-    .golden-hour { display: inline-block; background: linear-gradient(135deg, #FFF4ED, #FFF0E0); border: 1px solid #E8834A30; border-radius: 10px; padding: 10px 20px; margin-top: 16px; font-size: 14px; color: #D64828; font-weight: 600; }
+    .rec-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 12px; color: ${recColor}; background: ${recColor}12; border: 1px solid ${recColor}30; }
+    .golden-hour { display: inline-block; background: linear-gradient(135deg, #FFF4ED, #FFF0E0); border: 1px solid #E8834A30; border-radius: 10px; padding: 10px 20px; margin-top: 12px; font-size: 14px; color: #D64828; font-weight: 600; }
     .content { padding: 28px 36px; }
     .section-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin: 0 0 14px 0; padding-bottom: 8px; border-bottom: 2px solid #f0f0f0; }
     .insight-box { background: linear-gradient(135deg, #FFF4ED, #FFF9F4); border-left: 3px solid #E8834A; border-radius: 0 10px 10px 0; padding: 16px 20px; margin-bottom: 24px; font-size: 14px; color: #444; line-height: 1.7; }
+    .experience-box { background: #F9F9F9; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+    .exp-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 6px; font-weight: 600; }
+    .exp-text { font-size: 14px; color: #555; line-height: 1.65; margin-bottom: 14px; }
+    .exp-text:last-child { margin-bottom: 0; }
+    .exp-verdict-box { background: linear-gradient(135deg, #FFF4ED, #FFF9F4); border-left: 3px solid ${recColor}; border-radius: 0 10px 10px 0; padding: 14px 18px; margin-bottom: 24px; }
+    .exp-verdict-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: ${recColor}; font-weight: 700; margin-bottom: 4px; }
+    .exp-verdict-text { font-size: 14px; color: #444; line-height: 1.6; }
     .atm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
     .atm-card { background: #F9F9F9; border-radius: 10px; padding: 14px; }
     .atm-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 4px; }
@@ -228,6 +248,8 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     .beach-best-label { font-size: 11px; text-transform: uppercase; color: #059669; font-weight: 700; margin-bottom: 4px; }
     .beach-best-name { font-size: 17px; font-weight: 700; color: #1a1a1a; }
     .beach-best-reason { font-size: 13px; color: #555; margin-top: 4px; line-height: 1.5; }
+    .skip-note { background: #F9F9F9; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; }
+    .skip-note p { font-size: 14px; color: #777; line-height: 1.6; margin: 0; }
     .footer { background: #F9F9F9; padding: 20px 36px; text-align: center; border-top: 1px solid #eee; }
     .footer p { font-size: 12px; color: #aaa; margin: 0 0 4px 0; }
     .footer a { color: #E8834A; text-decoration: none; }
@@ -238,13 +260,14 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     <div class="header">
       <div class="verdict-emoji">${verdictEmoji}</div>
       <h1>${verdict}</h1>
-      <p>Today's Sunrise · ${beach}</p>
+      <p>Tomorrow's Sunrise · ${beach}</p>
     </div>
 
     <div class="score-section">
       <p class="score-number">${score}</p>
       <p class="score-label">Sunrise Quality Score / 100</p>
-      <div class="golden-hour">⏰ Peak Color: ${goldenHour.peak || goldenHour.start} · Window: ${goldenHour.start} – ${goldenHour.end}</div>
+      <div class="rec-badge">${recLabel}</div>
+      ${score >= 50 ? `<br><div class="golden-hour">⏰ Peak Color: ${goldenHour.peak || goldenHour.start} · Window: ${goldenHour.start} – ${goldenHour.end}</div>` : ''}
     </div>
 
     <div class="content">
@@ -252,6 +275,19 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
       <div class="insight-box">
         <strong>${greeting}</strong><br>${insight}
       </div>
+
+      ${sunriseExp.whatYoullSee || sunriseExp.beachVibes ? `
+      <h3 class="section-title">🌅 What to Expect</h3>
+      <div class="experience-box">
+        ${sunriseExp.whatYoullSee ? `<div class="exp-label">What you'll see</div><div class="exp-text">${sunriseExp.whatYoullSee}</div>` : ''}
+        ${sunriseExp.beachVibes ? `<div class="exp-label">Beach vibes</div><div class="exp-text">${sunriseExp.beachVibes}</div>` : ''}
+      </div>` : ''}
+
+      ${sunriseExp.worthWakingUp ? `
+      <div class="exp-verdict-box">
+        <div class="exp-verdict-label">Worth waking up?</div>
+        <div class="exp-verdict-text">${sunriseExp.worthWakingUp}</div>
+      </div>` : ''}
 
       <h3 class="section-title">🌤️ Atmospheric Conditions</h3>
       <div class="atm-grid">
@@ -280,12 +316,13 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
       ${beachComp ? `
       <h3 class="section-title">🏖️ Today's Best Beach</h3>
       <div class="beach-best">
-        <div class="beach-best-label">⭐ Recommended for Today</div>
+        <div class="beach-best-label">⭐ Recommended</div>
         <div class="beach-best-name">${{marina: 'Marina Beach', elliot: "Elliot's Beach", covelong: 'Covelong Beach', thiruvanmiyur: 'Thiruvanmiyur Beach'}[beachComp.todaysBest] || beach}</div>
         <div class="beach-best-reason">${beachComp.reason || ''}</div>
       </div>` : ''}
 
-      <h3 class="section-title">📷 DSLR Settings</h3>
+      ${includePhotography ? `
+      <h3 class="section-title">📷 Photography Settings</h3>
       <div class="settings-grid">
         <div class="setting-card"><div class="setting-label">ISO</div><div class="setting-value">${dslrSettings.iso || '200'}</div></div>
         <div class="setting-card"><div class="setting-label">Shutter</div><div class="setting-value">${dslrSettings.shutterSpeed || '1/125s'}</div></div>
@@ -293,10 +330,16 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
         <div class="setting-card"><div class="setting-label">White Balance</div><div class="setting-value">${dslrSettings.whiteBalance || '5500K'}</div></div>
       </div>
 
+      ${dslrTips.length ? `
       <h3 class="section-title">💡 Composition Tips</h3>
       <ul class="tips-list">
         ${dslrTips.map(tip => `<li>${tip}</li>`).join('')}
-      </ul>
+      </ul>` : ''}
+      ` : `
+      <div class="skip-note">
+        <p>Photography section skipped — conditions aren't favorable enough to warrant camera settings today. We'll include them when the sky is worth shooting. 📷</p>
+      </div>
+      `}
 
     </div>
     <div class="footer">

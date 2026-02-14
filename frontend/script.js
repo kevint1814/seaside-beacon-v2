@@ -11,7 +11,7 @@ const CONFIG = {
 
 const state = {
   beach:'marina', weather:null, photography:null, loading:false,
-  _loadInterval:null, _coldInterval:null
+  _loadInterval:null, _pipeTimeouts:[]
 };
 
 // ─────────────────────────────────────────────
@@ -221,10 +221,9 @@ function initBeachSelector() {
 
 function resetForecast() {
   state.weather = null; state.photography = null;
-  show('fmasterIdle'); hide('fmasterLoading'); hide('fmasterResult'); hide('deepPanel');
+  show('fmasterIdle'); hide('fmasterLoading'); hide('fmasterResult'); hide('experiencePanel'); hide('deepPanel');
   document.getElementById('forecastMaster').classList.remove('loaded');
 }
-
 // ─────────────────────────────────────────────
 // AVAILABILITY
 // ─────────────────────────────────────────────
@@ -253,17 +252,17 @@ async function handlePredict() {
   if (!isAvailable()) { showUnavailable(); return; }
   state.loading = true;
   setLoadingState(true);
-  const coldTimer = setTimeout(showColdStart, 4000);
   try {
     const data = await fetchTimeout(`${CONFIG.API_URL}/predict/${state.beach}`, 70000);
-    clearTimeout(coldTimer); hideColdStart();
+    // Quick flash "Done" step before rendering
+    advancePipeline(4);
+    await new Promise(r => setTimeout(r, 400));
     if (!data.success) throw new Error(data.message||'Prediction failed');
     if (!data.data.weather.available) { showUnavailable(data.data.weather.timeUntilAvailable); return; }
     state.weather = data.data.weather;
     state.photography = data.data.photography;
     renderForecast();
   } catch(err) {
-    clearTimeout(coldTimer); hideColdStart();
     showToast(err.message||'Unable to fetch — please try again');
     console.error(err);
   } finally {
@@ -289,15 +288,49 @@ async function fetchTimeout(url, ms) {
 function setLoadingState(on) {
   if (on) {
     hide('fmasterIdle'); hide('fmasterResult'); show('fmasterLoading');
-    const msgs = ['Reading the atmosphere…','Analysing cloud patterns…','Calculating visibility…','Generating photography guide…'];
-    let i=0;
-    state._loadInterval = setInterval(()=>{
-      i=(i+1)%msgs.length;
-      const el=document.getElementById('fmlLabel');
-      if(el) el.textContent=msgs[i];
-    },2800);
+    // Reset all pipeline steps
+    for (let i = 0; i < 5; i++) {
+      const step = document.getElementById(`pipeStep${i}`);
+      if (step) { step.classList.remove('active','done'); }
+      const line = document.getElementById(`pipeLine${i}`);
+      if (line) { line.classList.remove('filled'); }
+    }
+    document.getElementById('pipeStep0')?.classList.add('active');
+    const statusEl = document.getElementById('pipeStatus');
+    if (statusEl) statusEl.textContent = 'Waking up the forecast engine…';
+
+    // Advance pipeline steps on a schedule
+    const steps = [
+      { at: 2000,  step: 1, status: 'Reading atmospheric data…' },
+      { at: 5000,  step: 2, status: 'Analysing cloud, humidity & visibility…' },
+      { at: 9000,  step: 3, status: 'Generating sunrise insights…' },
+    ];
+    state._pipeTimeouts = steps.map(s =>
+      setTimeout(() => advancePipeline(s.step, s.status), s.at)
+    );
   } else {
-    clearInterval(state._loadInterval); hide('fmasterLoading');
+    // Clear any pending timeouts
+    (state._pipeTimeouts || []).forEach(clearTimeout);
+    state._pipeTimeouts = [];
+    hide('fmasterLoading');
+  }
+}
+
+function advancePipeline(stepIndex, statusText) {
+  // Mark all previous steps as done
+  for (let i = 0; i < stepIndex; i++) {
+    const step = document.getElementById(`pipeStep${i}`);
+    if (step) { step.classList.remove('active'); step.classList.add('done'); }
+    const line = document.getElementById(`pipeLine${i}`);
+    if (line) { line.classList.add('filled'); }
+  }
+  // Mark current step as active
+  const current = document.getElementById(`pipeStep${stepIndex}`);
+  if (current) { current.classList.remove('done'); current.classList.add('active'); }
+  // Update status text
+  if (statusText) {
+    const el = document.getElementById('pipeStatus');
+    if (el) el.textContent = statusText;
   }
 }
 
@@ -324,7 +357,7 @@ function renderForecast() {
 
   const labels = pred.atmosphericLabels||{};
   document.getElementById('conditionsStrip').innerHTML = [
-    {lbl:'Cloud',    val:`${f.cloudCover}%`,    sub:labels.cloudLabel    ||(f.cloudCover>=30&&f.cloudCover<=60?'Optimal':f.cloudCover<30?'Clear':'Heavy')},
+    {lbl:'Cloud Cover',val:`${f.cloudCover}%`,    sub:labels.cloudLabel    ||(f.cloudCover>=30&&f.cloudCover<=60?'Optimal':f.cloudCover<30?'Clear':'Heavy')},
     {lbl:'Humidity', val:`${f.humidity}%`,       sub:labels.humidityLabel ||(f.humidity<=55?'Low':'High')},
     {lbl:'Visibility',val:`${f.visibility}km`,   sub:labels.visibilityLabel||(f.visibility>=10?'Excellent':'Good')},
     {lbl:'Wind',     val:`${f.windSpeed}km/h`,   sub:labels.windLabel     ||(f.windSpeed<=15?'Calm':'Breezy')}
@@ -332,8 +365,48 @@ function renderForecast() {
 
   document.getElementById('fmriInsight').textContent = p?.insight||`${pred.verdict} conditions forecast for ${w.beach} at dawn.`;
 
+  // Render sunrise experience panel (general audience)
+  renderExperiencePanel(pred.score, p, w.beach);
+
   renderAnalysisPanel(f, pred, p, w.beach);
   setTimeout(()=>document.getElementById('forecastMaster').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+}
+
+function renderExperiencePanel(score, p, beachName) {
+  const exp = p?.sunriseExperience;
+  if (!exp) { hide('experiencePanel'); return; }
+
+  show('experiencePanel');
+
+  document.getElementById('expTitle').textContent = `What tomorrow's sunrise will look like at ${beachName}`;
+
+  // Recommendation badge
+  const recEl = document.getElementById('expRecommendation');
+  const recIcon = document.getElementById('expRecIcon');
+  const recText = document.getElementById('expRecText');
+
+  recEl.className = 'exp-recommendation';
+  if (score >= 70) {
+    recEl.classList.add('exp-rec-go');
+    recIcon.textContent = '✓';
+    recText.textContent = 'Worth the early alarm';
+  } else if (score >= 50) {
+    recEl.classList.add('exp-rec-maybe');
+    recIcon.textContent = '~';
+    recText.textContent = 'Pleasant, not spectacular';
+  } else if (score >= 30) {
+    recEl.classList.add('exp-rec-skip');
+    recIcon.textContent = '✗';
+    recText.textContent = 'Underwhelming sunrise expected';
+  } else {
+    recEl.classList.add('exp-rec-no');
+    recIcon.textContent = '—';
+    recText.textContent = 'Sunrise likely not visible';
+  }
+
+  document.getElementById('expWhatYoullSee').textContent = exp.whatYoullSee || '';
+  document.getElementById('expBeachVibes').textContent = exp.beachVibes || '';
+  document.getElementById('expWorthItText').textContent = exp.worthWakingUp || '';
 }
 
 function animateRing(score) {
@@ -366,6 +439,7 @@ function renderAnalysisPanel(f,pred,p,beachName) {
   renderMobileTab(p);
   renderCompositionTab(p);
 }
+
 
 function renderConditionsTab(f,pred,p) {
   const labels=pred.atmosphericLabels||{}, atm=p?.atmosphericAnalysis||{};
@@ -515,25 +589,6 @@ function showUnavailable(td) {
       updateCountdown();
     }, 60000);
   }
-}
-
-// ─────────────────────────────────────────────
-// COLD START
-// ─────────────────────────────────────────────
-function showColdStart() {
-  show('coldOverlay'); let p=0;
-  state._coldInterval=setInterval(()=>{
-    p=Math.min(p+1.6,92);
-    const bar=document.getElementById('coldBar'),timer=document.getElementById('coldTimer');
-    if(bar)bar.style.width=p+'%';
-    if(timer)timer.textContent=`~${Math.ceil((92-p)/1.6)}s remaining`;
-  },1500);
-}
-function hideColdStart() {
-  clearInterval(state._coldInterval);
-  const bar=document.getElementById('coldBar');
-  if(bar)bar.style.width='100%';
-  setTimeout(()=>hide('coldOverlay'),500);
 }
 
 // ─────────────────────────────────────────────

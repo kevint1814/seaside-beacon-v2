@@ -475,18 +475,7 @@ input, select, textarea { font-family:inherit; }
 .btn-forecast:hover { transform:scale(1.04); background:var(--accent-bright); box-shadow:0 1px 0 rgba(255,255,255,0.25) inset, 0 8px 28px var(--accent-glow); }
 .btn-forecast:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
 
-/* Loading */
-.fmaster-loading {
-  display:flex; align-items:center; gap:16px; padding:28px 32px;
-}
-.fml-spinner {
-  width:18px; height:18px; border-radius:50%; flex-shrink:0;
-  border:2px solid var(--glass-border-hi);
-  border-top-color:var(--accent-bright);
-  animation:spin 0.75s linear infinite;
-}
-@keyframes spin { to { transform:rotate(360deg); } }
-.fml-label { font-size:13px; color:var(--t2); }
+/* Loading — handled by pipeline stepper in its own section */
 
 /* Result — 3-col grid */
 .fmaster-result {
@@ -644,6 +633,95 @@ input, select, textarea { font-family:inherit; }
   margin-top:3px; opacity:0.7;
 }
 .uf-text { flex:1; }
+
+/* ═══════════════════════════════════════════════════════
+   SUNRISE EXPERIENCE PANEL — general audience
+═══════════════════════════════════════════════════════ */
+.experience-panel {
+  margin-top:14px; border-radius:var(--r-xl); overflow:hidden;
+  background:var(--glass-fill);
+  backdrop-filter:var(--blur-md);
+  -webkit-backdrop-filter:var(--blur-md);
+  border:1px solid var(--glass-border);
+  box-shadow:var(--shadow-card);
+  position:relative;
+  animation:panelIn 0.4s var(--ease-out) both;
+}
+.experience-panel::before {
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:linear-gradient(160deg, rgba(255,255,255,0.08) 0%, transparent 45%);
+}
+.experience-panel > * { position:relative; z-index:1; }
+
+.exp-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:22px 26px 16px; gap:16px; flex-wrap:wrap;
+  border-bottom:1px solid var(--glass-border);
+}
+.exp-title {
+  font-size:16px; font-weight:500; color:var(--t1);
+  letter-spacing:-0.01em;
+}
+.exp-recommendation {
+  display:flex; align-items:center; gap:8px;
+  padding:5px 14px; border-radius:50px;
+  font-size:11px; font-weight:600;
+  flex-shrink:0;
+}
+.exp-rec-go {
+  background:rgba(16,185,129,0.1); color:#34d399;
+  border:1px solid rgba(52,211,153,0.2);
+}
+.exp-rec-maybe {
+  background:rgba(251,191,36,0.1); color:#fbbf24;
+  border:1px solid rgba(251,191,36,0.2);
+}
+.exp-rec-skip {
+  background:rgba(248,113,113,0.08); color:#f87171;
+  border:1px solid rgba(248,113,113,0.15);
+}
+.exp-rec-no {
+  background:rgba(148,163,184,0.08); color:#94a3b8;
+  border:1px solid rgba(148,163,184,0.12);
+}
+
+.exp-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:1px; background:var(--glass-border);
+}
+.exp-card {
+  padding:20px 24px;
+  background:rgba(8,9,22,0.5);
+}
+.exp-card-label {
+  font-size:9.5px; text-transform:uppercase;
+  letter-spacing:1.2px; color:var(--t3);
+  margin-bottom:10px;
+}
+.exp-card-body {
+  font-size:13.5px; color:var(--t2); line-height:1.78;
+  font-weight:300;
+}
+
+.exp-verdict {
+  padding:18px 24px;
+  border-top:1px solid var(--glass-border);
+  background:rgba(196,115,58,0.03);
+}
+.exp-verdict-label {
+  font-size:9.5px; text-transform:uppercase;
+  letter-spacing:1.2px; color:var(--accent);
+  margin-bottom:6px; font-weight:500;
+}
+.exp-verdict-body {
+  font-size:13.5px; color:var(--t2); line-height:1.78;
+  font-weight:300;
+}
+
+@media(max-width:768px) {
+  .exp-grid { grid-template-columns:1fr; }
+  .exp-header { flex-direction:column; gap:10px; }
+}
 
 /* ═══════════════════════════════════════════════════════
    ANALYSIS PANEL
@@ -970,43 +1048,110 @@ input, select, textarea { font-family:inherit; }
 .modal-sub { font-size:13px; color:var(--t2); line-height:1.75; margin-bottom:24px; }
 
 /* ═══════════════════════════════════════════════════════
-   COLD START
+   PIPELINE STEPPER — inline loading animation
 ═══════════════════════════════════════════════════════ */
-.cold-overlay {
-  position:fixed; inset:0; z-index:600;
-  background:rgba(4,5,15,0.88);
-  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-  display:flex; align-items:center; justify-content:center; padding:16px;
+.fmaster-loading {
+  display:flex; flex-direction:column; align-items:center;
+  gap:20px; padding:36px 28px 30px;
 }
-.cold-panel {
-  max-width:380px; width:100%; text-align:center;
-  padding:40px 30px;
-  background:rgba(10,11,28,0.92);
-  backdrop-filter:var(--blur-xl);
-  border:1px solid var(--glass-border-hi);
-  border-radius:var(--r-xl); box-shadow:var(--shadow-pop); position:relative; overflow:hidden;
+.pipeline {
+  display:flex; align-items:center; gap:0;
+  width:100%; max-width:680px;
 }
-.cold-panel::before {
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(150deg, rgba(255,255,255,0.1) 0%, transparent 55%);
+
+/* Each step: node + label */
+.pipe-step {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  flex-shrink:0; position:relative;
 }
-.cold-panel > * { position:relative; }
-.cold-pulse {
-  width:40px; height:40px; border-radius:50%; margin:0 auto 20px;
-  background:var(--accent-subtle); border:1px solid var(--accent-border);
+.pipe-node {
+  width:28px; height:28px; border-radius:50%;
+  background:rgba(255,255,255,0.04);
+  border:1.5px solid var(--glass-border-hi);
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.4s var(--ease-smooth);
   position:relative;
 }
-.cold-pulse::after {
-  content:''; position:absolute; inset:-7px; border-radius:50%;
-  border:1px solid var(--accent-border); opacity:0.4;
-  animation:coldPulse 2.2s ease-in-out infinite;
+.pipe-dot {
+  width:8px; height:8px; border-radius:50%;
+  background:var(--t4);
+  transition:all 0.4s var(--ease-smooth);
 }
-@keyframes coldPulse { 0%,100%{transform:scale(1);opacity:0.4;} 50%{transform:scale(1.25);opacity:0;} }
-.cold-title { font-size:17px; font-weight:500; color:var(--t1); margin-bottom:8px; }
-.cold-desc  { font-size:13px; color:var(--t2); line-height:1.75; margin-bottom:22px; }
-.cold-bar-wrap { height:2px; background:var(--glass-fill); border-radius:1px; overflow:hidden; margin-bottom:12px; }
-.cold-bar { height:100%; width:0%; background:linear-gradient(90deg,var(--dawn-rose),var(--dawn-copper),var(--dawn-gold)); transition:width 0.5s var(--ease-smooth); }
-.cold-timer { font-size:12px; color:var(--t3); }
+.pipe-label {
+  font-size:9.5px; color:var(--t4);
+  letter-spacing:0.3px; white-space:nowrap;
+  transition:color 0.4s;
+}
+
+/* Active state — pulsing */
+.pipe-step.active .pipe-node {
+  border-color:var(--accent);
+  background:var(--accent-subtle);
+  box-shadow:0 0 16px var(--accent-glow);
+}
+.pipe-step.active .pipe-dot {
+  background:var(--accent-bright);
+  animation:pipePulse 1.4s ease-in-out infinite;
+}
+.pipe-step.active .pipe-label {
+  color:var(--accent-bright);
+}
+@keyframes pipePulse {
+  0%,100% { transform:scale(1); opacity:1; }
+  50% { transform:scale(1.4); opacity:0.6; }
+}
+
+/* Done state — filled, no pulse */
+.pipe-step.done .pipe-node {
+  border-color:var(--accent);
+  background:var(--accent);
+}
+.pipe-step.done .pipe-dot {
+  background:rgba(4,5,15,0.9);
+  animation:none;
+  /* Checkmark via box-shadow trick */
+  width:6px; height:10px; border-radius:0;
+  border:solid rgba(4,5,15,0.9); border-width:0 2px 2px 0;
+  transform:rotate(45deg); margin-top:-2px; margin-left:1px;
+  background:transparent;
+}
+.pipe-step.done .pipe-label {
+  color:var(--t3);
+}
+
+/* Connecting lines */
+.pipe-line {
+  flex:1; height:1.5px; min-width:12px;
+  background:var(--glass-border-hi);
+  position:relative; overflow:hidden;
+  margin:0 2px; margin-bottom:20px;
+}
+.pipe-line::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg, var(--accent), var(--dawn-gold));
+  transform:scaleX(0); transform-origin:left;
+  transition:transform 0.6s var(--ease-out);
+}
+.pipe-line.filled::after {
+  transform:scaleX(1);
+}
+
+/* Status text below */
+.pipe-status {
+  font-size:12px; color:var(--t3);
+  text-align:center;
+  min-height:1.4em;
+  transition:opacity 0.2s;
+}
+
+/* Responsive */
+@media(max-width:600px) {
+  .pipeline { max-width:100%; }
+  .pipe-label { font-size:8px; letter-spacing:0.1px; }
+  .pipe-node { width:24px; height:24px; }
+  .pipe-dot { width:6px; height:6px; }
+  .pipe-step.done .pipe-dot { width:5px; height:8px; }
+}
 
 /* ═══════════════════════════════════════════════════════
    TOAST

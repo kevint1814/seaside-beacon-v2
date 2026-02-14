@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Seaside Beacon — Sunrise Forecast for Chennai</title>
-  <meta name="description" content="Know before you go. Precise sunrise quality forecasts for Chennai's four beaches — with photography guidance tailored to tomorrow's exact sky.">
+  <meta name="description" content="Know before you go. See exactly what tomorrow's sunrise will look like at Chennai's four beaches — honest forecasts, no sugarcoating.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
     </button>
     <p class="modal-eyebrow">Daily Briefing</p>
     <h2 class="modal-title">Wake up knowing<br>what the sky holds.</h2>
-    <p class="modal-sub">Your beach. Your camera. Tomorrow's exact conditions — delivered at 4 AM before you leave home.</p>
+    <p class="modal-sub">Your beach. Tomorrow's exact conditions — an honest verdict delivered at 4 AM before you decide whether to set the alarm.</p>
     <form id="subscriptionForm" autocomplete="off">
       <div class="form-row">
         <label class="form-label">Email</label>
@@ -49,15 +49,7 @@
 </div>
 
 <!-- ── COLD START OVERLAY ─────────────────────────── -->
-<div class="cold-overlay hidden" id="coldOverlay">
-  <div class="cold-panel">
-    <div class="cold-pulse"></div>
-    <h3 class="cold-title">Reading the atmosphere</h3>
-    <p class="cold-desc">First request of the day takes about 45 seconds while our forecasting engine wakes up.</p>
-    <div class="cold-bar-wrap"><div class="cold-bar" id="coldBar"></div></div>
-    <p class="cold-timer" id="coldTimer">Connecting…</p>
-  </div>
-</div>
+<!-- Cold start handled by inline pipeline stepper -->
 
 <!-- ── TOAST ──────────────────────────────────────── -->
 <div class="toast" id="toast"></div>
@@ -109,7 +101,7 @@
         <span class="hl-line">read in advance.</span>
       </h1>
 
-      <p class="hero-body-text">Every sunrise is different. Most are forgettable. A few stop you cold. We study tomorrow's atmosphere tonight, so you only go when it's worth it.</p>
+      <p class="hero-body-text">Every sunrise is different. Most are forgettable. A few stop you cold. We study tomorrow's atmosphere tonight and tell you honestly — is it worth the early alarm?</p>
 
       <div class="hero-ctas">
         <a href="#forecast" class="btn-primary">Read tomorrow's sky</a>
@@ -184,7 +176,7 @@
             </div>
             <div>
               <h3 class="fmi-title">Ready to read the sky</h3>
-              <p class="fmi-desc">Tomorrow's atmospheric conditions, interpreted for photographers.</p>
+              <p class="fmi-desc">Tomorrow's atmospheric conditions — what you'll see, whether it's worth the trip.</p>
             </div>
           </div>
           <button class="btn-forecast" id="predictBtn">
@@ -193,10 +185,35 @@
           </button>
         </div>
 
-        <!-- loading -->
+        <!-- loading — pipeline stepper -->
         <div class="fmaster-loading hidden" id="fmasterLoading">
-          <div class="fml-spinner"></div>
-          <p class="fml-label" id="fmlLabel">Reading the atmosphere…</p>
+          <div class="pipeline">
+            <div class="pipe-step active" id="pipeStep0">
+              <div class="pipe-node"><div class="pipe-dot"></div></div>
+              <span class="pipe-label">Connecting</span>
+            </div>
+            <div class="pipe-line" id="pipeLine0"></div>
+            <div class="pipe-step" id="pipeStep1">
+              <div class="pipe-node"><div class="pipe-dot"></div></div>
+              <span class="pipe-label">Reading atmosphere</span>
+            </div>
+            <div class="pipe-line" id="pipeLine1"></div>
+            <div class="pipe-step" id="pipeStep2">
+              <div class="pipe-node"><div class="pipe-dot"></div></div>
+              <span class="pipe-label">Analysing conditions</span>
+            </div>
+            <div class="pipe-line" id="pipeLine2"></div>
+            <div class="pipe-step" id="pipeStep3">
+              <div class="pipe-node"><div class="pipe-dot"></div></div>
+              <span class="pipe-label">Generating insights</span>
+            </div>
+            <div class="pipe-line" id="pipeLine3"></div>
+            <div class="pipe-step" id="pipeStep4">
+              <div class="pipe-node"><div class="pipe-dot"></div></div>
+              <span class="pipe-label">Done</span>
+            </div>
+          </div>
+          <p class="pipe-status" id="pipeStatus">Waking up the forecast engine…</p>
         </div>
 
         <!-- result -->
@@ -242,7 +259,7 @@
 
           <!-- Right: photo intel preview -->
           <div class="fmr-intel-col">
-            <p class="fmri-label">Photographer's read</p>
+            <p class="fmri-label">What to expect</p>
             <p class="fmri-insight" id="fmriInsight">—</p>
             <button class="btn-view-analysis" id="btnViewAnalysis">
               Full atmospheric analysis
@@ -297,6 +314,31 @@
         </div>
       </div>
 
+      <!-- ── SUNRISE EXPERIENCE PANEL ──────────────── -->
+      <div class="experience-panel hidden" id="experiencePanel">
+        <div class="exp-header">
+          <h3 class="exp-title" id="expTitle">What tomorrow's sunrise will look like</h3>
+          <div class="exp-recommendation" id="expRecommendation">
+            <span class="exp-rec-icon" id="expRecIcon"></span>
+            <span class="exp-rec-text" id="expRecText"></span>
+          </div>
+        </div>
+        <div class="exp-grid">
+          <div class="exp-card exp-see">
+            <div class="exp-card-label">What you'll see</div>
+            <p class="exp-card-body" id="expWhatYoullSee"></p>
+          </div>
+          <div class="exp-card exp-vibes">
+            <div class="exp-card-label">Beach vibes</div>
+            <p class="exp-card-body" id="expBeachVibes"></p>
+          </div>
+        </div>
+        <div class="exp-verdict" id="expWorthIt">
+          <div class="exp-verdict-label">Worth the early alarm?</div>
+          <p class="exp-verdict-body" id="expWorthItText"></p>
+        </div>
+      </div>
+
       <!-- ── DEEP ANALYSIS PANEL ─────────────────── -->
       <div class="analysis-panel hidden" id="deepPanel">
 
@@ -314,7 +356,7 @@
           <button class="ap-tab active" data-tab="analysis" role="tab">Conditions</button>
           <button class="ap-tab" data-tab="dslr" role="tab">DSLR</button>
           <button class="ap-tab" data-tab="mobile" role="tab">Mobile</button>
-          <button class="ap-tab" data-tab="composition" role="tab">Composition</button>
+          <button class="ap-tab" data-tab="composition" role="tab">Beach Comparison</button>
           <div class="ap-tab-ink" id="apTabInk"></div>
         </div>
 
@@ -385,7 +427,7 @@
       <div class="sub-text-col">
         <p class="section-eyebrow">Daily Briefing</p>
         <h2 class="sub-heading">The forecast,<br>before you wake.</h2>
-        <p class="sub-body">Every morning at 4 AM — full conditions, camera settings, and your beach's specific guide. So when your alarm goes off at 5, the decision is already made.</p>
+        <p class="sub-body">Every morning at 4 AM — an honest forecast for your beach. Is it worth waking up for? We'll tell you straight, so you never waste an early alarm.</p>
       </div>
       <div class="sub-form-col">
         <div class="sub-form-card">
