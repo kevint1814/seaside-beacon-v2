@@ -222,7 +222,8 @@ function initBeachSelector() {
 function resetForecast() {
   state.weather = null; state.photography = null;
   show('fmasterIdle'); hide('fmasterLoading'); hide('fmasterResult'); hide('experiencePanel'); hide('deepPanel');
-  document.getElementById('forecastMaster').classList.remove('loaded');
+  const master = document.getElementById('forecastMaster');
+  master.classList.remove('loaded','tone-great','tone-good','tone-meh','tone-poor');
 }
 // ─────────────────────────────────────────────
 // AVAILABILITY
@@ -380,6 +381,9 @@ function renderForecast() {
   show('fmasterResult');
   document.getElementById('forecastMaster').classList.add('loaded');
 
+  // ── Visual tone matching — score-dependent colors ──
+  applyScoreTone(pred.score);
+
   document.getElementById('fmrBeachName').textContent = w.beach;
   animateRing(pred.score);
   countUp('ringScore', 0, pred.score, 1100);
@@ -407,6 +411,50 @@ function renderForecast() {
 
   renderAnalysisPanel(f, pred, p, w.beach);
   setTimeout(()=>document.getElementById('forecastMaster').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+}
+
+/**
+ * Visual tone matching — shift ring gradient, card accent, and
+ * glow based on score tier so the UI "feels" like the forecast
+ */
+function applyScoreTone(score) {
+  const master = document.getElementById('forecastMaster');
+  // Remove previous tone classes
+  master.classList.remove('tone-great','tone-good','tone-meh','tone-poor');
+
+  // Gradient stops for the ring SVG
+  const stops = document.querySelectorAll('#ringGrad stop');
+  const ring = document.getElementById('ringFill');
+
+  if (score >= 70) {
+    // Great — warm golden sunrise palette
+    master.classList.add('tone-great');
+    if (stops[0]) stops[0].setAttribute('stop-color', '#d4542b');
+    if (stops[1]) stops[1].setAttribute('stop-color', '#e8944a');
+    if (stops[2]) stops[2].setAttribute('stop-color', '#f0c040');
+    ring.style.filter = 'drop-shadow(0 0 12px rgba(232,148,74,0.6))';
+  } else if (score >= 50) {
+    // Decent — muted amber
+    master.classList.add('tone-good');
+    if (stops[0]) stops[0].setAttribute('stop-color', '#8a3d5a');
+    if (stops[1]) stops[1].setAttribute('stop-color', '#c4733a');
+    if (stops[2]) stops[2].setAttribute('stop-color', '#c9a055');
+    ring.style.filter = 'drop-shadow(0 0 10px rgba(196,115,58,0.5))';
+  } else if (score >= 30) {
+    // Underwhelming — cool muted tones
+    master.classList.add('tone-meh');
+    if (stops[0]) stops[0].setAttribute('stop-color', '#6b5b73');
+    if (stops[1]) stops[1].setAttribute('stop-color', '#8a7b6a');
+    if (stops[2]) stops[2].setAttribute('stop-color', '#9e9585');
+    ring.style.filter = 'drop-shadow(0 0 6px rgba(138,123,106,0.3))';
+  } else {
+    // Poor — desaturated grey
+    master.classList.add('tone-poor');
+    if (stops[0]) stops[0].setAttribute('stop-color', '#5a5a6a');
+    if (stops[1]) stops[1].setAttribute('stop-color', '#6e6e7a');
+    if (stops[2]) stops[2].setAttribute('stop-color', '#82828e');
+    ring.style.filter = 'drop-shadow(0 0 4px rgba(100,100,120,0.2))';
+  }
 }
 
 function renderExperiencePanel(score, p, beachName) {

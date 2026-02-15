@@ -178,41 +178,22 @@ input, select, textarea { font-family:inherit; }
   box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 8px 32px rgba(4,5,15,0.5);
 }
 .nav-brand {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 0px;
   font-size: 13.5px; font-weight: 500;
   letter-spacing: -0.15px; color: var(--t1);
   transition: opacity 0.2s;
 }
 .nav-brand:hover { opacity: 0.8; }
 .nav-emblem {
-  width: 30px; height: 30px; border-radius: 9px;
+  width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--glass-fill-2);
-  border: 1px solid var(--glass-border-hi);
-  backdrop-filter: var(--blur-sm);
-  color: var(--accent-bright);
-  box-shadow: 0 1px 0 var(--specular) inset;
-  transition: all 0.2s;
+  flex-shrink: 0; overflow: hidden;
+  transition: opacity 0.2s;
 }
-/* Logo images — replace SVG sun icons */
+.nav-brand:hover .nav-emblem { opacity: 0.85; }
 .nav-logo {
-  width:20px; height:20px;
-  object-fit:contain;
-  border-radius:4px;
-}
-.fmi-logo {
-  width:32px; height:32px;
-  object-fit:contain;
-  border-radius:6px;
-}
-.footer-logo {
-  width:18px; height:18px;
-  object-fit:contain;
-  border-radius:3px;
-}
-.nav-brand:hover .nav-emblem {
-  background: var(--accent-subtle);
-  border-color: var(--accent-border);
+  width: 100%; height: 100%;
+  object-fit: contain;
 }
 .nav-links { display:flex; align-items:center; gap:2px; }
 .nav-link {
@@ -701,6 +682,51 @@ input, select, textarea { font-family:inherit; }
   border:1px solid rgba(148,163,184,0.12);
 }
 
+/* ═══════════════════════════════════════════════════════
+   SCORE TONE — visual mood shift based on sunrise quality
+═══════════════════════════════════════════════════════ */
+.forecast-master.tone-great {
+  --tone-accent: #e8944a;
+  --tone-glow: rgba(232,148,74,0.12);
+  border-color: rgba(232,148,74,0.2);
+  box-shadow: 0 4px 40px rgba(232,148,74,0.08), var(--shadow-card);
+}
+.forecast-master.tone-good {
+  --tone-accent: #c4733a;
+  --tone-glow: rgba(196,115,58,0.08);
+}
+.forecast-master.tone-meh {
+  --tone-accent: #8a7b6a;
+  --tone-glow: rgba(138,123,106,0.05);
+  border-color: rgba(138,123,106,0.15);
+}
+.forecast-master.tone-poor {
+  --tone-accent: #6e6e7a;
+  --tone-glow: rgba(100,100,120,0.04);
+  border-color: rgba(100,100,120,0.12);
+}
+
+/* Tone affects the golden hour label color */
+.tone-great .fmrg-time  { color: #f0c040; }
+.tone-good  .fmrg-time  { color: var(--accent-bright); }
+.tone-meh   .fmrg-time  { color: #9e9585; }
+.tone-poor  .fmrg-time  { color: #82828e; }
+
+/* Tone affects the insight text column header */
+.tone-great .fmri-label { color: #e8944a; }
+.tone-meh   .fmri-label { color: #8a7b6a; }
+.tone-poor  .fmri-label { color: #6e6e7a; }
+
+/* Tone affects experience panel border accent */
+.tone-great .experience-panel { border-color: rgba(232,148,74,0.2); }
+.tone-meh   .experience-panel { border-color: rgba(138,123,106,0.12); }
+.tone-poor  .experience-panel { border-color: rgba(100,100,120,0.1); }
+
+/* Tone affects "Worth the early alarm?" label */
+.tone-great .exp-verdict-label { color: #e8944a; }
+.tone-meh   .exp-verdict-label { color: #8a7b6a; }
+.tone-poor  .exp-verdict-label { color: #6e6e7a; }
+
 .exp-grid {
   display:grid; grid-template-columns:1fr 1fr;
   gap:1px; background:var(--glass-border);
@@ -1019,7 +1045,11 @@ input, select, textarea { font-family:inherit; }
   display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
 }
 .footer-brand { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:500; color:var(--t1); margin-bottom:3px; }
-.footer-brand svg { color:var(--accent); }
+.footer-logo {
+  width:22px; height:22px;
+  object-fit:contain;
+  flex-shrink:0;
+}
 .footer-line { font-size:12px; color:var(--t3); }
 .footer-credit { font-size:11px; color:var(--t4); }
 

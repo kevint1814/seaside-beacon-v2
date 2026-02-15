@@ -358,6 +358,17 @@ function getVerdict(score) {
 }
 
 /**
+ * Actionable recommendation — clear, honest, tier-based
+ * Used by frontend badge + email subject
+ */
+function getRecommendation(score) {
+  if (score >= 70) return 'GO';
+  if (score >= 50) return 'MAYBE';
+  if (score >= 30) return 'SKIP';
+  return 'NO';
+}
+
+/**
  * Get atmospheric quality labels for UI display
  */
 function getAtmosphericLabels(forecast) {
@@ -448,6 +459,7 @@ async function getTomorrow6AMForecast(beachKey) {
 
   const { score, breakdown } = calculateSunriseScore(forecast6AM);
   const verdict = getVerdict(score);
+  const recommendation = getRecommendation(score);
   const atmosphericLabels = getAtmosphericLabels(weatherData);
 
   return {
@@ -466,6 +478,7 @@ async function getTomorrow6AMForecast(beachKey) {
     prediction: {
       score,
       verdict,
+      recommendation,
       breakdown,
       atmosphericLabels,
       factors: {
