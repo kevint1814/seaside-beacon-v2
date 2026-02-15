@@ -8,8 +8,8 @@ let nodemailerSendgrid;
 try { nodemailerSendgrid = require('nodemailer-sendgrid'); }
 catch (e) { console.warn('nodemailer-sendgrid not installed, SendGrid unavailable'); }
 
-const APP_URL = process.env.APP_URL || 'https://seaside-beacon.vercel.app';
-const API_URL = process.env.API_URL || 'https://seaside-beacon.onrender.com';
+const APP_URL = process.env.APP_URL || 'https://seasidebeacon.com';
+const API_URL = process.env.API_URL || 'https://api.seasidebeacon.com';
 
 /**
  * Create transporter - SendGrid preferred, Brevo/Gmail fallback
@@ -55,9 +55,9 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
     const beachDisplay = beachDisplayNames[beachName] || beachName;
 
     const mailOptions = {
-      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'SeasideBeacon@kevintportfolio.com' },
+      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
       to: subscriberEmail,
-      subject: '🌅 Welcome to Seaside Beacon — Honest Sunrise Forecasts, Starting Tomorrow!',
+      subject: '🌅 Welcome to Seaside Beacon — Honest sunrise forecasts, starting tomorrow',
       headers: {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
@@ -195,7 +195,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     else { recLabel = '— Sunrise likely not visible'; recColor = '#DC2626'; }
 
     const mailOptions = {
-      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'SeasideBeacon@kevintportfolio.com' },
+      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
       to: subscriberEmail,
       subject: `${verdictEmoji} ${verdict} Sunrise Tomorrow — ${beach} (${score}/100)`,
       headers: {
@@ -262,7 +262,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     <div class="header">
       <div class="verdict-emoji">${verdictEmoji}</div>
       <h1>${verdict}</h1>
-      <p>Today's Sunrise · ${beach}</p>
+      <p>Tomorrow's Sunrise · ${beach}</p>
     </div>
 
     <div class="score-section">
@@ -345,7 +345,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 
     </div>
     <div class="footer">
-      <p><strong>Seaside Beacon</strong> · Daily at 4:00 AM IST · <a href="${APP_URL}">seaside-beacon.vercel.app</a></p>
+      <p><strong>Seaside Beacon</strong> · Daily at 4:00 AM IST · <a href="${APP_URL}">seasidebeacon.com</a></p>
       <p>You're receiving this because you subscribed for ${beach} forecasts.</p>
       <p><a href="${unsubscribeUrl}">Unsubscribe</a></p>
     </div>

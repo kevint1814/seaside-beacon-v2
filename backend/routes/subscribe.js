@@ -134,7 +134,7 @@ router.get('/unsubscribe', async (req, res) => {
     <div class="icon">${icon}</div>
     <h1>${title}</h1>
     <p>${message}</p>
-    <a href="https://seaside-beacon.vercel.app">Return to Seaside Beacon</a>
+    <a href="https://seasidebeacon.com">Return to Seaside Beacon</a>
   </div>
 </body>
 </html>`;
