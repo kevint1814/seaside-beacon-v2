@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDeepPanel();
   initModals();
   initSubscribeForms();
+  initShare();
   initScrollReveal();
 });
 
@@ -221,7 +222,7 @@ function initBeachSelector() {
 
 function resetForecast() {
   state.weather = null; state.photography = null;
-  show('fmasterIdle'); hide('fmasterLoading'); hide('fmasterResult'); hide('experiencePanel'); hide('deepPanel');
+  show('fmasterIdle'); hide('fmasterLoading'); hide('fmasterResult'); hide('experiencePanel'); hide('deepPanel'); hide('shareBar');
   const master = document.getElementById('forecastMaster');
   master.classList.remove('loaded','tone-great','tone-good','tone-meh','tone-poor');
 }
@@ -408,6 +409,10 @@ function renderForecast() {
 
   // Render sunrise experience panel (general audience)
   renderExperiencePanel(pred.score, p, w.beach);
+
+  // Show share bar
+  show('shareBar');
+  updateShareLinks(w.beach, pred.score, pred.verdict);
 
   renderAnalysisPanel(f, pred, p, w.beach);
   setTimeout(()=>document.getElementById('forecastMaster').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
@@ -747,6 +752,53 @@ function observeReveal() {
     entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); } });
   },{threshold:0.1,rootMargin:'0px 0px -20px 0px'});
   document.querySelectorAll('.reveal:not(.visible)').forEach(el=>obs.observe(el));
+}
+
+// ─────────────────────────────────────────────
+// SHARE
+// ─────────────────────────────────────────────
+function initShare() {
+  document.getElementById('shareWhatsApp')?.addEventListener('click', () => shareVia('whatsapp'));
+  document.getElementById('shareTwitter')?.addEventListener('click', () => shareVia('twitter'));
+  document.getElementById('shareCopy')?.addEventListener('click', () => shareVia('copy'));
+  document.getElementById('shareNative')?.addEventListener('click', () => shareVia('native'));
+
+  // Show native share button only if Web Share API is available
+  if (navigator.share) {
+    document.getElementById('shareNative').style.display = 'flex';
+  }
+}
+
+function updateShareLinks(beach, score, verdict) {
+  state._shareText = `Tomorrow's sunrise at ${beach}: ${score}/100 (${verdict}). Check the forecast on Seaside Beacon`;
+  state._shareUrl = 'https://seasidebeacon.com';
+}
+
+function shareVia(platform) {
+  const text = state._shareText || 'Check out Seaside Beacon — honest sunrise forecasts for Chennai beaches';
+  const url = state._shareUrl || 'https://seasidebeacon.com';
+
+  switch (platform) {
+    case 'whatsapp':
+      window.open(`https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`, '_blank');
+      break;
+    case 'twitter':
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+      break;
+    case 'copy':
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('shareCopy');
+        btn.classList.add('copied');
+        showToast('Link copied!');
+        setTimeout(() => btn.classList.remove('copied'), 2000);
+      });
+      break;
+    case 'native':
+      if (navigator.share) {
+        navigator.share({ title: 'Seaside Beacon', text: text, url: url }).catch(() => {});
+      }
+      break;
+  }
 }
 
 // ─────────────────────────────────────────────
