@@ -56,9 +56,9 @@ function initSunriseCanvas() {
   function updateScroll() {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const raw = maxScroll > 0 ? window.scrollY / maxScroll : 0;
-    // Map first 55% of page scroll to the full sunrise (0→1)
-    // After 55%, the sky stays in "morning" state
-    scrollProgress = Math.min(1, raw / 0.55);
+    // Map first 85% of page scroll to the full sunrise (0→1)
+    // Sunrise keeps progressing through most of the page
+    scrollProgress = Math.min(1, raw / 0.85);
   }
 
   let scrollTick = false;
@@ -103,71 +103,77 @@ function initSunriseCanvas() {
   /*
    * Sky color palettes across sunrise phases:
    *   0.00 = deep pre-dawn (existing dark indigo)
-   *   0.25 = civil twilight (purple/violet horizon)
-   *   0.50 = golden hour (warm amber/peach) — PEAK
-   *   0.75 = post-sunrise (golden afterglow lingers, NOT blue)
-   *   1.00 = settled morning (dark warm, blends with glass UI)
+   *   0.20 = civil twilight (purple/violet horizon)
+   *   0.40 = golden hour (warm amber/peach) — PEAK DRAMA
+   *   0.55 = sun clearing horizon (golden afterglow)
+   *   0.70 = early morning (warm blue emerging)
+   *   0.85 = morning established (vibrant warm blue sky)
+   *   1.00 = settled morning (deep sky blue, still warm)
    *
-   * KEY DESIGN RULE: never go cold/clinical blue. The glass UI needs
-   * a warm, muted backdrop at all scroll positions. The golden afterglow
-   * should linger well past 50% — don't rush to neutral.
+   * KEY: Sky keeps evolving. The glass UI reads against an
+   * increasingly blue-warm sky as the user scrolls deeper.
    */
 
-  // Zenith (top of sky) — blue sky emerges when sun is up
+  // Zenith (top of sky) — deep indigo → rich morning blue
   const zenithStops = [
     [0.0,  [6, 6, 16]],        // deep night indigo
-    [0.15, [8, 7, 22]],        // barely lighter
-    [0.3,  [16, 12, 38]],      // twilight deep
-    [0.45, [28, 20, 50]],      // twilight violet
-    [0.6,  [38, 28, 48]],      // muted purple dawn
-    [0.72, [26, 34, 58]],      // blue coming through
-    [0.85, [20, 36, 62]],      // clear morning blue
-    [1.0,  [16, 34, 60]]       // settled: dark sky blue
+    [0.12, [10, 8, 28]],       // barely lighter
+    [0.25, [22, 16, 48]],      // twilight deep purple
+    [0.38, [38, 24, 62]],      // twilight violet - richer
+    [0.50, [48, 32, 58]],      // muted purple dawn
+    [0.62, [38, 52, 85]],      // blue breaking through - more vivid
+    [0.75, [35, 65, 105]],     // clear morning blue - brighter
+    [0.88, [32, 72, 118]],     // vibrant sky blue
+    [1.0,  [26, 62, 108]]      // settled: rich warm blue
   ];
 
-  // Mid-sky — warm rose blooms then slowly fades, blue at end
+  // Mid-sky — warm rose blooms vivid then evolves
   const midStops = [
     [0.0,  [10, 10, 30]],
-    [0.2,  [18, 14, 42]],
-    [0.35, [40, 22, 52]],
-    [0.5,  [105, 55, 50]],     // warm rose peak
-    [0.6,  [95, 52, 48]],      // rose lingers
-    [0.72, [58, 40, 50]],      // fading warm with blue hint
-    [0.85, [30, 32, 48]],      // blue tint
-    [1.0,  [20, 28, 46]]       // settled: warm blue
+    [0.15, [22, 16, 48]],
+    [0.30, [55, 28, 62]],      // richer purple
+    [0.42, [135, 65, 55]],     // warm rose peak - more saturated
+    [0.52, [118, 58, 52]],     // rose lingers - richer
+    [0.62, [72, 52, 62]],      // fading warm - more color
+    [0.75, [42, 55, 78]],      // blue-grey morning
+    [0.88, [34, 60, 92]],      // morning blue - brighter
+    [1.0,  [28, 50, 80]]       // settled
   ];
 
-  // Horizon — amber fire → golden → warm afterglow lingers → dark
+  // Horizon — intense amber fire → golden → warm afterglow
   const horizonStops = [
-    [0.0,  [40, 16, 12]],      // faint ember
-    [0.18, [70, 28, 16]],      // deepening warm
-    [0.35, [160, 72, 28]],     // amber fire building
-    [0.5,  [220, 140, 55]],    // peak golden
-    [0.62, [200, 125, 52]],    // golden lingers
-    [0.75, [145, 85, 45]],     // warm afterglow
-    [0.88, [75, 50, 35]],      // fading ember
-    [1.0,  [35, 26, 22]]       // settled: dark warm
+    [0.0,  [50, 20, 14]],      // warmer ember
+    [0.15, [95, 38, 18]],      // deeper warm - more saturated
+    [0.30, [195, 88, 32]],     // amber fire - brighter
+    [0.42, [245, 162, 60]],    // peak golden - more vivid
+    [0.55, [228, 145, 58]],    // golden lingers - brighter
+    [0.68, [175, 115, 60]],    // warm afterglow - richer
+    [0.80, [110, 82, 52]],     // fading amber
+    [0.92, [65, 55, 44]],      // gentle ember
+    [1.0,  [42, 38, 32]]       // settled
   ];
 
-  // Glow color stops (radial glow at horizon)
+  // Glow color stops — more intense
   const glowStops = [
-    [0.0,  [196, 105, 50]],
-    [0.25, [220, 125, 48]],
-    [0.45, [250, 175, 65]],    // intense golden
-    [0.6,  [235, 160, 72]],    // golden lingers
-    [0.75, [180, 115, 60]],    // warm afterglow
-    [0.9,  [110, 70, 42]],
-    [1.0,  [55, 38, 28]]       // warm dim
+    [0.0,  [210, 118, 55]],    // warmer start
+    [0.20, [240, 145, 55]],    // brighter
+    [0.38, [255, 195, 75]],    // intense golden - vivid
+    [0.52, [250, 178, 80]],    // golden lingers
+    [0.65, [210, 148, 72]],    // warm afterglow - richer
+    [0.78, [148, 102, 58]],    // fading
+    [0.90, [95, 68, 45]],
+    [1.0,  [58, 45, 35]]       // warm dim
   ];
 
-  // Sea — dark → warm tinted → dark warm
+  // Sea — more color in the water reflections
   const seaStops = [
     [0.0,  [6, 5, 12]],        // near black
-    [0.25, [10, 8, 18]],
-    [0.45, [28, 18, 24]],      // warm purple-tinted
-    [0.6,  [35, 25, 28]],      // peak warm sea
-    [0.75, [28, 22, 25]],      // cooling slowly
-    [1.0,  [14, 12, 16]]       // settled: very dark warm
+    [0.20, [12, 10, 22]],
+    [0.38, [35, 22, 28]],      // warm purple-tinted - richer
+    [0.52, [42, 30, 32]],      // peak warm sea - more visible
+    [0.65, [36, 32, 38]],      // cooling with color
+    [0.80, [28, 34, 42]],      // blue hint in water
+    [1.0,  [20, 28, 38]]       // settled: teal-warm
   ];
 
   function draw(t) {
@@ -221,32 +227,32 @@ function initSunriseCanvas() {
       ctx.fillRect(0, 0, W, H * 0.75);
     }
 
-    // ── Sun disc (appears after 30% scroll) — BIG, layered ──
-    if (sp > 0.30) {
-      const sunProgress = Math.min(1, (sp - 0.30) / 0.45); // 0→1 over 30-75% scroll
+    // ── Sun disc (appears after 20% scroll) — BIG, layered ──
+    if (sp > 0.20) {
+      const sunProgress = Math.min(1, (sp - 0.20) / 0.60); // 0→1 over 20-80% scroll
       const sunEased = ease(sunProgress);
-      const sunY = horizonY - sunEased * H * 0.22; // rises higher
+      const sunY = horizonY - sunEased * H * 0.35; // rises much higher
       const sunR = 38 + sunEased * 32; // much bigger disc
       const sunAlpha = Math.min(1, sunProgress * 2.0);
 
       // Layer 1: atmospheric haze — enormous soft warm wash
       const hazeR = sunR * 18;
       const haze = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, hazeR);
-      haze.addColorStop(0,    `rgba(255,215,130,${sunAlpha * 0.14})`);
-      haze.addColorStop(0.15, `rgba(255,190,100,${sunAlpha * 0.08})`);
-      haze.addColorStop(0.35, `rgba(255,160,70,${sunAlpha * 0.035})`);
-      haze.addColorStop(0.6,  `rgba(255,140,50,${sunAlpha * 0.012})`);
-      haze.addColorStop(1,    `rgba(255,130,40,0)`);
+      haze.addColorStop(0,    `rgba(255,220,140,${sunAlpha * 0.18})`);
+      haze.addColorStop(0.15, `rgba(255,195,110,${sunAlpha * 0.10})`);
+      haze.addColorStop(0.35, `rgba(255,165,78,${sunAlpha * 0.045})`);
+      haze.addColorStop(0.6,  `rgba(255,145,55,${sunAlpha * 0.018})`);
+      haze.addColorStop(1,    `rgba(255,135,45,0)`);
       ctx.fillStyle = haze;
       ctx.fillRect(0, 0, W, H);
 
       // Layer 2: far corona
       const coronaR = sunR * 6;
       const corona = ctx.createRadialGradient(W*0.5, sunY, sunR * 0.6, W*0.5, sunY, coronaR);
-      corona.addColorStop(0,   `rgba(255,225,150,${sunAlpha * 0.35})`);
-      corona.addColorStop(0.25,`rgba(255,200,110,${sunAlpha * 0.18})`);
-      corona.addColorStop(0.5, `rgba(255,170,80,${sunAlpha * 0.07})`);
-      corona.addColorStop(1,   `rgba(255,150,60,0)`);
+      corona.addColorStop(0,   `rgba(255,230,158,${sunAlpha * 0.42})`);
+      corona.addColorStop(0.25,`rgba(255,208,118,${sunAlpha * 0.22})`);
+      corona.addColorStop(0.5, `rgba(255,178,88,${sunAlpha * 0.09})`);
+      corona.addColorStop(1,   `rgba(255,155,65,0)`);
       ctx.fillStyle = corona;
       ctx.beginPath();
       ctx.arc(W*0.5, sunY, coronaR, 0, Math.PI*2);
@@ -254,10 +260,10 @@ function initSunriseCanvas() {
 
       // Layer 3: inner bright glow (tight around disc)
       const innerGlow = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, sunR * 2.5);
-      innerGlow.addColorStop(0,   `rgba(255,248,225,${sunAlpha * 0.55})`);
-      innerGlow.addColorStop(0.3, `rgba(255,230,170,${sunAlpha * 0.30})`);
-      innerGlow.addColorStop(0.6, `rgba(255,210,120,${sunAlpha * 0.10})`);
-      innerGlow.addColorStop(1,   `rgba(255,190,90,0)`);
+      innerGlow.addColorStop(0,   `rgba(255,250,230,${sunAlpha * 0.62})`);
+      innerGlow.addColorStop(0.3, `rgba(255,235,178,${sunAlpha * 0.35})`);
+      innerGlow.addColorStop(0.6, `rgba(255,215,128,${sunAlpha * 0.12})`);
+      innerGlow.addColorStop(1,   `rgba(255,195,95,0)`);
       ctx.fillStyle = innerGlow;
       ctx.beginPath();
       ctx.arc(W*0.5, sunY, sunR * 2.5, 0, Math.PI*2);
@@ -417,7 +423,7 @@ function initSunriseCanvas() {
       const rayIntensity = sp < 0.5 ? (sp-0.15)/0.35 : (0.92-sp)/0.42;
       const baseAlpha = rayIntensity * 0.10;
 
-      const sunYForRays = sp > 0.30 ? horizonY - ease(Math.min(1,(sp-0.30)/0.45)) * H * 0.22 : horizonY;
+      const sunYForRays = sp > 0.20 ? horizonY - ease(Math.min(1,(sp-0.20)/0.60)) * H * 0.35 : horizonY;
 
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
@@ -1075,6 +1081,16 @@ function showMsg(id,msg,ok) {
 // ─────────────────────────────────────────────
 function initScrollReveal() {
   document.querySelectorAll('.craft-card').forEach((el,i)=>{
+    el.classList.add('reveal',`reveal-delay-${i%3+1}`);
+  });
+  // Story section reveal
+  const storyEl = document.querySelector('.story-narrative');
+  if (storyEl) storyEl.classList.add('reveal','reveal-delay-1');
+  document.querySelectorAll('.sn-photo').forEach((el,i)=>{
+    el.classList.add('reveal',`reveal-delay-${i%2+1}`);
+  });
+  // Case study cards reveal
+  document.querySelectorAll('.case-card').forEach((el,i)=>{
     el.classList.add('reveal',`reveal-delay-${i%3+1}`);
   });
   observeReveal();
