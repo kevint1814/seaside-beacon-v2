@@ -79,6 +79,21 @@ app.get('/health', (req, res) => {
 app.use('/api', subscribeRoutes);
 app.use('/api', predictRoutes);
 
+// ── Public stats endpoint ──
+const SiteStats = require('./models/SiteStats');
+app.get('/api/stats', async (req, res) => {
+  try {
+    const stats = await SiteStats.getPublicStats();
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error('Stats error:', error.message);
+    res.json({
+      success: true,
+      data: { forecastsGenerated: 0, consecutiveDays: 0, dataPointsProcessed: 0, emailsSent: 0 }
+    });
+  }
+});
+
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Endpoint not found' });
 });

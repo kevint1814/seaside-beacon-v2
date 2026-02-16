@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSubscribeForms();
   initShare();
   initScrollReveal();
+  initMetrics();
 });
 
 // ═════════════════════════════════════════════════════
@@ -1141,4 +1142,86 @@ function showToast(msg,ms=3500){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+// ═════════════════════════════════════════════════════
+// LIVE METRICS — fetch stats + animated count-up
+// ═════════════════════════════════════════════════════
+function initMetrics() {
+  const strip = document.getElementById('metricsStrip');
+  if (!strip) return;
+
+  let hasAnimated = false;
+
+  // Fetch stats from API
+  async function fetchStats() {
+    try {
+      const res = await fetch(`${CONFIG.API_URL}/stats`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        // Set targets on each metric element
+        strip.querySelectorAll('.metric-val').forEach(el => {
+          const key = el.dataset.key;
+          if (key && json.data[key] !== undefined) {
+            el.dataset.target = json.data[key];
+          }
+        });
+      }
+    } catch (e) {
+      // Fallback: calculate from launch date
+      const launch = new Date('2026-02-16');
+      const now = new Date();
+      const days = Math.max(1, Math.floor((now - launch) / (1000 * 60 * 60 * 24)));
+      const fallback = {
+        forecastsGenerated: days * 4,    // 4 beaches/day
+        consecutiveDays: days,
+        dataPointsProcessed: days * 24   // 6 factors × 4 beaches
+      };
+      strip.querySelectorAll('.metric-val').forEach(el => {
+        const key = el.dataset.key;
+        if (key && fallback[key] !== undefined) {
+          el.dataset.target = fallback[key];
+        }
+      });
+    }
+  }
+
+  // Animated count-up with easing
+  function animateCountUp(el, target) {
+    const duration = 1800; // ms
+    const start = performance.now();
+
+    function tick(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(eased * target);
+      el.textContent = current.toLocaleString('en-IN');
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  // Trigger count-up when strip scrolls into view
+  function checkVisibility() {
+    if (hasAnimated) return;
+    const rect = strip.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.85 && rect.bottom > 0) {
+      hasAnimated = true;
+      strip.querySelectorAll('.metric-val').forEach(el => {
+        const target = parseInt(el.dataset.target) || 0;
+        if (target > 0) {
+          animateCountUp(el, target);
+        }
+      });
+    }
+  }
+
+  // Load stats then watch scroll
+  fetchStats().then(() => {
+    checkVisibility();
+    window.addEventListener('scroll', checkVisibility, { passive: true });
+  });
 }
