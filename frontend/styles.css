@@ -4,6 +4,110 @@
    Liquid Glass · Beach Sunrise · Ultra Premium
 ═══════════════════════════════════════════════════════ */
 
+/* ── Cinematic Load ── */
+html.loading {
+  overflow: hidden;
+}
+.intro-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #04050f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+  transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+.intro-veil.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.intro-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 1s ease, transform 1s cubic-bezier(0.16,1,0.3,1);
+}
+.intro-veil.active .intro-mark {
+  opacity: 1;
+  transform: scale(1);
+}
+.intro-sun {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,248,225,0.95), rgba(220,160,60,0.7) 60%, rgba(196,115,58,0) 100%);
+  box-shadow: 0 0 40px rgba(255,200,100,0.35), 0 0 80px rgba(196,115,58,0.15);
+  animation: introSunPulse 2s ease-in-out infinite;
+}
+@keyframes introSunPulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(255,200,100,0.35), 0 0 80px rgba(196,115,58,0.15); transform: scale(1); }
+  50% { box-shadow: 0 0 55px rgba(255,200,100,0.5), 0 0 110px rgba(196,115,58,0.25); transform: scale(1.05); }
+}
+.intro-name {
+  font-family: var(--ff-display);
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: rgba(240,238,250,0.7);
+}
+/* Hero entrance after load */
+.hero-body {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 1s cubic-bezier(0.16,1,0.3,1) 0.2s, transform 1s cubic-bezier(0.16,1,0.3,1) 0.2s;
+}
+html:not(.loading) .hero-body {
+  opacity: 1;
+  transform: translateY(0);
+}
+.nav {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s;
+}
+html:not(.loading) .nav {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Subscribe success burst ── */
+@keyframes subBurst {
+  0% { transform: scale(0); opacity: 1; }
+  50% { opacity: 0.8; }
+  100% { transform: scale(3); opacity: 0; }
+}
+.sub-form-card {
+  position: relative;
+  overflow: hidden;
+}
+.sub-burst {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 80px; height: 80px;
+  margin: -40px 0 0 -40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,220,130,0.5), rgba(196,115,58,0.3) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 5;
+  animation: subBurst 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.sub-success-state .btn-subscribe {
+  background: rgba(52,180,80,0.15) !important;
+  border-color: rgba(52,180,80,0.4) !important;
+  color: #34b450 !important;
+}
+.sub-success-state .form-input,
+.sub-success-state .form-select {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 :root {
   /* Scene colours — real pre-dawn Chennai sky */
   --sky-zenith:    #04050f;
@@ -1725,11 +1829,23 @@ input, select, textarea { font-family:inherit; }
 /* ═══════════════════════════════════════════════════════
    SCROLL REVEAL
 ═══════════════════════════════════════════════════════ */
-.reveal { opacity:0; transform:translateY(18px); transition:opacity 0.65s var(--ease-out),transform 0.65s var(--ease-out); }
-.reveal.visible { opacity:1; transform:translateY(0); }
-.reveal-delay-1 { transition-delay:0.07s; }
-.reveal-delay-2 { transition-delay:0.14s; }
-.reveal-delay-3 { transition-delay:0.21s; }
+.reveal {
+  opacity: 0;
+  transform: scale(0.97);
+  filter: blur(4px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16,1,0.3,1),
+    transform 0.8s cubic-bezier(0.16,1,0.3,1),
+    filter 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0px);
+}
+.reveal-delay-1 { transition-delay:0.08s; }
+.reveal-delay-2 { transition-delay:0.16s; }
+.reveal-delay-3 { transition-delay:0.24s; }
 
 /* ═══════════════════════════════════════════════════════
    RESPONSIVE

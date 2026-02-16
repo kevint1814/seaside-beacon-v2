@@ -18,6 +18,7 @@ const state = {
 // BOOT
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  initIntro();
   initSunriseCanvas();
   initScrollProgress();
   initNav();
@@ -31,6 +32,28 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   initMetrics();
 });
+
+// ═════════════════════════════════════════════════════
+// CINEMATIC INTRO
+// ═════════════════════════════════════════════════════
+function initIntro() {
+  const veil = document.getElementById('introVeil');
+  if (!veil) return;
+  document.documentElement.classList.add('loading');
+
+  // Activate: mark fades in
+  requestAnimationFrame(() => {
+    veil.classList.add('active');
+  });
+
+  // After 1.8s, fade out veil and reveal page
+  setTimeout(() => {
+    veil.classList.add('fade-out');
+    document.documentElement.classList.remove('loading');
+    // Remove from DOM after transition
+    setTimeout(() => veil.remove(), 900);
+  }, 1800);
+}
 
 // ═════════════════════════════════════════════════════
 // SUNRISE CANVAS — real pre-dawn beach sky physics
@@ -116,64 +139,64 @@ function initSunriseCanvas() {
 
   // Zenith (top of sky) — deep indigo → rich morning blue
   const zenithStops = [
-    [0.0,  [6, 6, 16]],        // deep night indigo
-    [0.12, [10, 8, 28]],       // barely lighter
-    [0.25, [22, 16, 48]],      // twilight deep purple
-    [0.38, [38, 24, 62]],      // twilight violet - richer
-    [0.50, [48, 32, 58]],      // muted purple dawn
-    [0.62, [38, 52, 85]],      // blue breaking through - more vivid
-    [0.75, [35, 65, 105]],     // clear morning blue - brighter
-    [0.88, [32, 72, 118]],     // vibrant sky blue
-    [1.0,  [26, 62, 108]]      // settled: rich warm blue
+    [0.0,  [6, 6, 18]],        // deep night indigo
+    [0.12, [12, 9, 32]],       // barely lighter
+    [0.25, [26, 18, 55]],      // twilight deep purple - richer
+    [0.38, [44, 28, 72]],      // twilight violet - more saturated
+    [0.50, [55, 36, 65]],      // muted purple dawn
+    [0.62, [42, 58, 95]],      // blue breaking through - more vivid
+    [0.75, [38, 72, 115]],     // clear morning blue - brighter
+    [0.88, [35, 78, 128]],     // vibrant sky blue
+    [1.0,  [28, 68, 118]]      // settled: rich warm blue
   ];
 
   // Mid-sky — warm rose blooms vivid then evolves
   const midStops = [
-    [0.0,  [10, 10, 30]],
-    [0.15, [22, 16, 48]],
-    [0.30, [55, 28, 62]],      // richer purple
-    [0.42, [135, 65, 55]],     // warm rose peak - more saturated
-    [0.52, [118, 58, 52]],     // rose lingers - richer
-    [0.62, [72, 52, 62]],      // fading warm - more color
-    [0.75, [42, 55, 78]],      // blue-grey morning
-    [0.88, [34, 60, 92]],      // morning blue - brighter
-    [1.0,  [28, 50, 80]]       // settled
+    [0.0,  [10, 10, 32]],
+    [0.15, [25, 18, 55]],
+    [0.30, [65, 32, 70]],      // richer purple-magenta
+    [0.42, [152, 72, 58]],     // warm rose peak - punchier
+    [0.52, [132, 64, 55]],     // rose lingers - richer
+    [0.62, [82, 58, 68]],      // fading warm - more color
+    [0.75, [48, 60, 85]],      // blue-grey morning
+    [0.88, [38, 65, 100]],     // morning blue - brighter
+    [1.0,  [30, 55, 88]]       // settled
   ];
 
   // Horizon — intense amber fire → golden → warm afterglow
   const horizonStops = [
-    [0.0,  [50, 20, 14]],      // warmer ember
-    [0.15, [95, 38, 18]],      // deeper warm - more saturated
-    [0.30, [195, 88, 32]],     // amber fire - brighter
-    [0.42, [245, 162, 60]],    // peak golden - more vivid
-    [0.55, [228, 145, 58]],    // golden lingers - brighter
-    [0.68, [175, 115, 60]],    // warm afterglow - richer
-    [0.80, [110, 82, 52]],     // fading amber
-    [0.92, [65, 55, 44]],      // gentle ember
-    [1.0,  [42, 38, 32]]       // settled
+    [0.0,  [58, 24, 16]],      // warmer ember
+    [0.15, [108, 44, 20]],     // deeper warm - more fire
+    [0.30, [215, 98, 35]],     // amber fire - brighter
+    [0.42, [255, 175, 65]],    // peak golden - vivid punch
+    [0.55, [242, 158, 62]],    // golden lingers - brighter
+    [0.68, [192, 125, 65]],    // warm afterglow - richer
+    [0.80, [122, 90, 55]],     // fading amber
+    [0.92, [72, 60, 48]],      // gentle ember
+    [1.0,  [45, 40, 34]]       // settled
   ];
 
   // Glow color stops — more intense
   const glowStops = [
-    [0.0,  [210, 118, 55]],    // warmer start
-    [0.20, [240, 145, 55]],    // brighter
-    [0.38, [255, 195, 75]],    // intense golden - vivid
-    [0.52, [250, 178, 80]],    // golden lingers
-    [0.65, [210, 148, 72]],    // warm afterglow - richer
-    [0.78, [148, 102, 58]],    // fading
-    [0.90, [95, 68, 45]],
-    [1.0,  [58, 45, 35]]       // warm dim
+    [0.0,  [225, 128, 60]],    // warmer start
+    [0.20, [252, 158, 60]],    // brighter
+    [0.38, [255, 210, 82]],    // intense golden - vivid
+    [0.52, [255, 192, 85]],    // golden lingers
+    [0.65, [225, 162, 78]],    // warm afterglow - richer
+    [0.78, [162, 112, 62]],    // fading
+    [0.90, [105, 75, 48]],
+    [1.0,  [62, 48, 38]]       // warm dim
   ];
 
   // Sea — more color in the water reflections
   const seaStops = [
-    [0.0,  [6, 5, 12]],        // near black
-    [0.20, [12, 10, 22]],
-    [0.38, [35, 22, 28]],      // warm purple-tinted - richer
-    [0.52, [42, 30, 32]],      // peak warm sea - more visible
-    [0.65, [36, 32, 38]],      // cooling with color
-    [0.80, [28, 34, 42]],      // blue hint in water
-    [1.0,  [20, 28, 38]]       // settled: teal-warm
+    [0.0,  [6, 5, 14]],        // near black
+    [0.20, [14, 12, 25]],
+    [0.38, [40, 25, 32]],      // warm purple-tinted - richer
+    [0.52, [48, 34, 36]],      // peak warm sea - more visible
+    [0.65, [40, 36, 42]],      // cooling with color
+    [0.80, [32, 38, 48]],      // blue hint in water
+    [1.0,  [24, 32, 42]]       // settled: teal-warm
   ];
 
   function draw(t) {
@@ -369,15 +392,18 @@ function initSunriseCanvas() {
       }
     }
 
-    // ── Stars — fade out as sunrise progresses ──
+    // ── Stars — fade out as sunrise progresses, parallax depth ──
     const starAlpha = Math.max(0, 1 - sp * 2.2); // gone by ~45% scroll
+    const parallaxOffset = scrollProgress * H * 0.08; // stars drift up slower than scroll
     if (starAlpha > 0.01) {
       STARS.forEach(s => {
         const twinkle = 0.5 + 0.5 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
         const a = starAlpha * s.brightness * (0.4 + twinkle * 0.6);
         if (a < 0.01) return;
+        const sy = s.y * H - parallaxOffset * (0.3 + s.brightness * 0.7); // deeper stars move less
+        if (sy < -5 || sy > H * 0.7) return; // skip off-screen
         ctx.beginPath();
-        ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI*2);
+        ctx.arc(s.x * W, sy, s.r, 0, Math.PI*2);
         ctx.fillStyle = `rgba(228,224,255,${a})`;
         ctx.fill();
       });
@@ -1065,6 +1091,15 @@ async function submitSub(email,beach,msgId,btnId) {
     const d=await res.json();
     if(d.success){
       showMsg(msgId,d.message||'✓ Subscribed — see you at 4 AM.',true);
+      // Sunrise burst animation
+      const card = document.getElementById(btnId)?.closest('.sub-form-card');
+      if (card) {
+        card.classList.add('sub-success-state');
+        const burst = document.createElement('div');
+        burst.className = 'sub-burst';
+        card.appendChild(burst);
+        setTimeout(() => burst.remove(), 900);
+      }
       const inp=document.getElementById('emailInput'); if(inp)inp.value='';
       setTimeout(closeModalFn,2400);
     } else showMsg(msgId,d.message||'Something went wrong.',false);
@@ -1080,6 +1115,10 @@ function showMsg(id,msg,ok) {
 // SCROLL REVEAL
 // ─────────────────────────────────────────────
 function initScrollReveal() {
+  // Section headings
+  document.querySelectorAll('.section-eyebrow, .section-heading, .section-note').forEach(el => {
+    el.classList.add('reveal');
+  });
   document.querySelectorAll('.craft-card').forEach((el,i)=>{
     el.classList.add('reveal',`reveal-delay-${i%3+1}`);
   });
@@ -1092,6 +1131,10 @@ function initScrollReveal() {
   // Case study cards reveal
   document.querySelectorAll('.case-card').forEach((el,i)=>{
     el.classList.add('reveal',`reveal-delay-${i%3+1}`);
+  });
+  // Subscribe section
+  document.querySelectorAll('.sub-heading, .sub-body, .sub-form-card').forEach((el,i) => {
+    el.classList.add('reveal', `reveal-delay-${i%3+1}`);
   });
   observeReveal();
 }

@@ -101,8 +101,8 @@ CRITICAL RULES:
 
 Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
 {
-  "greeting": "One honest sentence setting expectations for tomorrow's sunrise at ${beach}",
-  "insight": "Two sentences describing what someone will actually see and experience at the beach tomorrow morning. Be specific about expected sky colors, light quality, and overall atmosphere. Match honesty to the ${score}/100 score.",
+  "greeting": "One honest sentence setting expectations for this morning's sunrise at ${beach}",
+  "insight": "Two sentences describing what someone will actually see and experience at the beach this morning. Be specific about expected sky colors, light quality, and overall atmosphere. Match honesty to the ${score}/100 score.",
   "sunriseExperience": {
     "whatYoullSee": "2-3 sentences painting an honest picture of the visual experience — sky colors, cloud behavior, light quality. Be specific and grounded.",
     "beachVibes": "1-2 sentences about the non-visual experience — temperature feel, wind on skin, crowd level, sounds of the beach at dawn. This stays pleasant regardless of sky conditions since it's about the beach itself.",
@@ -243,7 +243,7 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   if (score >= 85) {
     greeting = `Tomorrow's looking exceptional at ${beach} — this is a sunrise worth setting an alarm for.`;
   } else if (score >= 70) {
-    greeting = `Strong conditions shaping up at ${beach} tomorrow — expect vivid colors across the sky.`;
+    greeting = `Strong conditions shaping up at ${beach} this morning — expect vivid colors across the sky.`;
   } else if (score >= 55) {
     greeting = `Decent morning ahead at ${beach} — pleasant conditions, though the sky won't be the most dramatic.`;
   } else if (score >= 40) {
@@ -283,7 +283,7 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
     quality: score >= 75 ? 'Very Good' : score >= 55 ? 'Good' : score >= 35 ? 'Fair' : 'Poor',
     tip: score >= 55
       ? 'Be at the beach by 5:35 AM — the richest colors appear 10-15 minutes before the sun clears the horizon.'
-      : 'Color window will be limited tomorrow. If you go, aim for 5:45-6:00 AM for whatever light is available.'
+      : 'Color window will be limited this morning. If you go, aim for 5:45-6:00 AM for whatever light is available.'
   };
 
   // ── Atmospheric analysis ──
@@ -328,7 +328,7 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
   } else if (score >= 35) {
     whatYoullSee = `Realistically, the sky will be mostly grey or washed out near the horizon. ${cloudCover > 70 ? `At ${cloudCover}% cloud cover, the sun may not be visible at all when it rises — you'll notice the sky gradually brightening from dark grey to lighter grey.` : `High humidity at ${humidity}% will haze out most color, giving the sky a flat, milky appearance.`} If any color appears, it will be brief and faint.`;
   } else {
-    whatYoullSee = `The sunrise will likely not be visible tomorrow. ${cloudCover > 80 ? 'Thick cloud cover will block the sun entirely — the sky will shift from dark to overcast grey without any color.' : 'A combination of poor visibility and atmospheric moisture will make the horizon indistinguishable.'} The beach will still be dim well after the official sunrise time.`;
+    whatYoullSee = `The sunrise will likely not be visible this morning. ${cloudCover > 80 ? 'Thick cloud cover will block the sun entirely — the sky will shift from dark to overcast grey without any color.' : 'A combination of poor visibility and atmospheric moisture will make the horizon indistinguishable.'} The beach will still be dim well after the official sunrise time.`;
   }
 
   // Beach vibes — always honest but acknowledges the beach itself is pleasant
@@ -674,7 +674,7 @@ function generateBeachComparison(currentBeach, cloudCover, windSpeed, visibility
   // If ALL beaches are poor, acknowledge it honestly
   const allPoor = Object.values(scores).every(s => s.score < 40);
   const compReason = allPoor
-    ? 'Conditions are poor across all Chennai beaches tomorrow — none are particularly recommended for sunrise viewing. If you still want to go, choose the closest one for convenience.'
+    ? 'Conditions are poor across all Chennai beaches this morning — none are particularly recommended for sunrise viewing. If you still want to go, choose the closest one for convenience.'
     : beachReason(bestBeach);
 
   return {

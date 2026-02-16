@@ -57,7 +57,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
     const mailOptions = {
       from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
       to: subscriberEmail,
-      subject: '🌅 Welcome to Seaside Beacon. Your Honest Sunrise Forecasts, Starting Tomorrow!',
+      subject: '🌅 Welcome to Seaside Beacon — Honest sunrise forecasts, starting tomorrow',
       headers: {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
@@ -94,19 +94,19 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🌅 Welcome to Seaside Beacon!</h1>
+      <h1>🌅 Welcome to Seaside Beacon!!</h1>
       <p>Honest Sunrise Forecasts for Chennai Beaches</p>
     </div>
     <div class="content">
       <h2>You're all set!</h2>
       <div class="beach-badge">📍 ${beachDisplay}</div>
-      <p>Every morning at <strong>4:00 AM IST</strong>, we'll send you an honest sunrise forecast for your beach on what the sky will actually look like, whether it's worth waking up for, plus photography tips if you need them.</p>
+      <p>Every morning at <strong>4:00 AM IST</strong>, we'll send you an honest sunrise forecast for your beach, what the sky will actually look like, whether it's worth waking up for, plus photography tips if you need them.</p>
       <div class="features">
         <div class="feature">
           <div class="feature-icon">🌅</div>
           <div class="feature-text">
             <strong>Honest Verdict</strong>
-            <span>We'll tell you straight, is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</span>
+            <span>We'll tell you straight. Is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</span>
           </div>
         </div>
         <div class="feature">
@@ -120,14 +120,14 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
           <div class="feature-icon">🏖️</div>
           <div class="feature-text">
             <strong>Beach Comparison</strong>
-            <span>All 4 Chennai beaches rated or straight away told "none are great today" when that's the truth.</span>
+            <span>All 4 Chennai beaches rated, or honestly told "none are great today" when that's the truth.</span>
           </div>
         </div>
         <div class="feature">
           <div class="feature-icon">📸</div>
           <div class="feature-text">
             <strong>Photography Tips</strong>
-            <span>Camera settings and composition tips for photographers, with explanations of why each setting works for the day's conditions.</span>
+            <span>Camera settings and composition tips for photographers with explanations of why each setting works for the day's conditions.</span>
           </div>
         </div>
       </div>
@@ -137,7 +137,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
       </div>
     </div>
     <div class="footer">
-      <p><strong>Seaside Beacon</strong> · Made with ☀️ in Chennai</p>
+      <p><strong>Seaside Beacon</strong> · Kevin T </p>
       <p>You're subscribed to daily sunrise forecasts for ${beachDisplay}.</p>
       <p><a href="${unsubscribeUrl}">Unsubscribe</a> · <a href="${APP_URL}">Visit Website</a></p>
     </div>
@@ -197,7 +197,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     const mailOptions = {
       from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
       to: subscriberEmail,
-      subject: `${verdictEmoji} ${verdict} Sunrise Tomorrow — ${beach} (${score}/100)`,
+      subject: `${verdictEmoji} ${verdict} Sunrise This Morning — ${beach} (${score}/100)`,
       headers: {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
@@ -262,7 +262,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     <div class="header">
       <div class="verdict-emoji">${verdictEmoji}</div>
       <h1>${verdict}</h1>
-      <p>Today's Sunrise · ${beach}</p>
+      <p>This Morning's Sunrise · ${beach}</p>
     </div>
 
     <div class="score-section">
@@ -345,7 +345,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 
     </div>
     <div class="footer">
-      <p><strong>Seaside Beacon</strong> · Daily at 4:00 AM IST · <a href="${APP_URL}">seasidebeacon.com</a></p>
+      <p><strong>Seaside Beacon by Kevin T</strong> · Daily at 4:00 AM IST · <a href="${APP_URL}">seasidebeacon.com</a></p>
       <p>You're receiving this because you subscribed for ${beach} forecasts.</p>
       <p><a href="${unsubscribeUrl}">Unsubscribe</a></p>
     </div>
