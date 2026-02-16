@@ -57,7 +57,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
     const mailOptions = {
       from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
       to: subscriberEmail,
-      subject: '🌅 Welcome to Seaside Beacon — Honest sunrise forecasts, starting tomorrow',
+      subject: '🌅 Welcome to Seaside Beacon. Your Honest Sunrise Forecasts, Starting Tomorrow!',
       headers: {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
@@ -94,46 +94,46 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🌅 Welcome to Seaside Beacon</h1>
-      <p>Honest sunrise forecasts for Chennai beaches</p>
+      <h1>🌅 Welcome to Seaside Beacon!</h1>
+      <p>Honest Sunrise Forecasts for Chennai Beaches</p>
     </div>
     <div class="content">
       <h2>You're all set!</h2>
       <div class="beach-badge">📍 ${beachDisplay}</div>
-      <p>Every morning at <strong>4:00 AM IST</strong>, we'll send you an honest sunrise forecast for your beach — what the sky will actually look like, whether it's worth waking up for, plus photography tips if you want them.</p>
+      <p>Every morning at <strong>4:00 AM IST</strong>, we'll send you an honest sunrise forecast for your beach on what the sky will actually look like, whether it's worth waking up for, plus photography tips if you need them.</p>
       <div class="features">
         <div class="feature">
           <div class="feature-icon">🌅</div>
           <div class="feature-text">
             <strong>Honest Verdict</strong>
-            <span>We'll tell you straight — is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</span>
+            <span>We'll tell you straight, is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</span>
           </div>
         </div>
         <div class="feature">
           <div class="feature-icon">🌤️</div>
           <div class="feature-text">
             <strong>What You'll Actually See</strong>
-            <span>Specific descriptions of expected sky colors, light quality, and beach atmosphere — so you're never disappointed.</span>
+            <span>Specific descriptions of expected sky colors, light quality, and beach atmosphere so you're never disappointed.</span>
           </div>
         </div>
         <div class="feature">
           <div class="feature-icon">🏖️</div>
           <div class="feature-text">
             <strong>Beach Comparison</strong>
-            <span>All 4 Chennai beaches rated — or honestly told "none are great today" when that's the truth.</span>
+            <span>All 4 Chennai beaches rated or straight away told "none are great today" when that's the truth.</span>
           </div>
         </div>
         <div class="feature">
           <div class="feature-icon">📸</div>
           <div class="feature-text">
             <strong>Photography Tips</strong>
-            <span>Camera settings and composition tips for photographers — with explanations of why each setting works for the day's conditions.</span>
+            <span>Camera settings and composition tips for photographers, with explanations of why each setting works for the day's conditions.</span>
           </div>
         </div>
       </div>
       <div class="highlight">
         ⏰ <strong>Your first forecast arrives tomorrow at 4:00 AM IST.</strong><br>
-        If conditions are good, set your alarm for 5:30 AM to arrive at the beach for the peak color window (10-15 minutes before sunrise).
+        If conditions are good, set your alarm for 5:30 AM to arrive at the beach for the peak color window (10 to 15 minutes before sunrise).
       </div>
     </div>
     <div class="footer">
@@ -262,7 +262,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     <div class="header">
       <div class="verdict-emoji">${verdictEmoji}</div>
       <h1>${verdict}</h1>
-      <p>Tomorrow's Sunrise · ${beach}</p>
+      <p>Today's Sunrise · ${beach}</p>
     </div>
 
     <div class="score-section">
