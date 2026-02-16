@@ -178,7 +178,7 @@ input, select, textarea { font-family:inherit; }
   box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 8px 32px rgba(4,5,15,0.5);
 }
 .nav-brand {
-  display: flex; align-items: center; gap: 0px;
+  display: flex; align-items: center; gap: 10px;
   font-size: 13.5px; font-weight: 500;
   letter-spacing: -0.15px; color: var(--t1);
   transition: opacity 0.2s;
@@ -283,6 +283,7 @@ input, select, textarea { font-family:inherit; }
   font-size:10.5px; font-weight:500; text-transform:uppercase;
   letter-spacing:2.2px; color:var(--t3);
 }
+.kicker-claim, .kicker-detail { display:inline; }
 
 .hero-headline {
   font-family: var(--ff-display);
@@ -1098,7 +1099,7 @@ input, select, textarea { font-family:inherit; }
   max-width:1100px; margin:0 auto;
   display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
 }
-.footer-brand { display:flex; align-items:center; gap:3px; font-size:14px; font-weight:500; color:var(--t1); margin-bottom:3px; }
+.footer-brand { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:500; color:var(--t1); margin-bottom:3px; }
 .footer-logo {
   width:22px; height:22px;
   object-fit:contain;
@@ -1301,9 +1302,10 @@ input, select, textarea { font-family:inherit; }
   .hero-ctas { gap:14px; }
   .kicker-text {
     font-size: 9.5px; letter-spacing: 1.6px;
-    white-space: nowrap; overflow:hidden;
-    max-width: calc(100vw - 80px); text-overflow: ellipsis;
+    display: flex; flex-wrap: wrap; gap: 0;
   }
+  .kicker-claim { display: block; width: 100%; }
+  .kicker-detail { display: block; width: 100%; opacity: 0.6; margin-top: 4px; }
   /* Stats stay in a row */
   .hst { padding:0 14px 0 0; }
   .hst-val { font-size:22px; }
@@ -1340,7 +1342,8 @@ input, select, textarea { font-family:inherit; }
   .hero-body-text { font-size:14px; }
   /* Kicker line hide on very small — text alone is enough */
   .kicker-line { display:none; }
-  .kicker-text { letter-spacing:1.4px; font-size:9px; }
+  .kicker-text { letter-spacing:1.4px; font-size:8.5px; }
+  .kicker-detail { font-size: 8px; }
   .hero-ctas { flex-direction:column; align-items:flex-start; gap:12px; }
   .btn-primary { width:100%; justify-content:center; padding:14px 20px; }
   .hst { padding:0 14px 0 0; }
