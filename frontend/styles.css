@@ -114,6 +114,8 @@ html:not(.loading) .nav {
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
+  position: absolute;
+  visibility: hidden;
 }
 
 /* Animated checkmark circle */
