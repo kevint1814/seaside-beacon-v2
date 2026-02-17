@@ -1,34 +1,88 @@
 // ==========================================
-// Email Service - SendGrid / Brevo / Gmail
+// Email Service - Brevo (primary) / SendGrid (backup)
 // General-audience-first, honest tone
+// ENV: EMAIL_PROVIDER=brevo (default) or sendgrid
 // ==========================================
 
 const nodemailer = require('nodemailer');
 let nodemailerSendgrid;
 try { nodemailerSendgrid = require('nodemailer-sendgrid'); }
-catch (e) { console.warn('nodemailer-sendgrid not installed, SendGrid unavailable'); }
+catch (e) { /* SendGrid transport not installed — Brevo only */ }
 
 const APP_URL = process.env.APP_URL || 'https://seasidebeacon.com';
 const API_URL = process.env.API_URL || 'https://api.seasidebeacon.com';
 
+const EMAIL_PROVIDER = (process.env.EMAIL_PROVIDER || 'brevo').toLowerCase();
+
 /**
- * Create transporter - SendGrid preferred, Brevo/Gmail fallback
+ * Send email via Brevo REST API (no nodemailer needed)
  */
-function createTransporter() {
-  if (process.env.SENDGRID_API_KEY && nodemailerSendgrid) {
-    return nodemailer.createTransport(
-      nodemailerSendgrid({ apiKey: process.env.SENDGRID_API_KEY })
-    );
-  }
-  return nodemailer.createTransport({
-    host: process.env.BREVO_USER ? 'smtp-relay.brevo.com' : 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.BREVO_USER || process.env.GMAIL_USER,
-      pass: process.env.BREVO_API_KEY || process.env.GMAIL_APP_PASSWORD
+async function sendViaBrevo(mailOptions) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) throw new Error('BREVO_API_KEY not set');
+
+  const payload = {
+    sender: { name: mailOptions.from.name, email: mailOptions.from.address },
+    to: [{ email: mailOptions.to }],
+    subject: mailOptions.subject,
+    htmlContent: mailOptions.html,
+    textContent: mailOptions.text,
+    headers: {
+      'List-Unsubscribe': mailOptions.headers['List-Unsubscribe']
     }
+  };
+
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': apiKey,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify(payload)
   });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`Brevo API ${res.status}: ${errBody}`);
+  }
+
+  const data = await res.json();
+  return { messageId: data.messageId || data.messageIds?.[0] || 'brevo-sent' };
+}
+
+/**
+ * Send email via SendGrid (nodemailer transport)
+ */
+async function sendViaSendGrid(mailOptions) {
+  if (!process.env.SENDGRID_API_KEY || !nodemailerSendgrid) {
+    throw new Error('SendGrid not configured');
+  }
+  const transporter = nodemailer.createTransport(
+    nodemailerSendgrid({ apiKey: process.env.SENDGRID_API_KEY })
+  );
+  return transporter.sendMail(mailOptions);
+}
+
+/**
+ * Send email — routes to active provider, falls back to other on failure
+ */
+async function sendEmail(mailOptions) {
+  const primary = EMAIL_PROVIDER === 'sendgrid' ? sendViaSendGrid : sendViaBrevo;
+  const fallback = EMAIL_PROVIDER === 'sendgrid' ? sendViaBrevo : sendViaSendGrid;
+
+  try {
+    return await primary(mailOptions);
+  } catch (primaryErr) {
+    console.warn(`⚠️ Primary (${EMAIL_PROVIDER}) failed: ${primaryErr.message}`);
+    try {
+      console.log(`🔄 Trying fallback provider...`);
+      return await fallback(mailOptions);
+    } catch (fallbackErr) {
+      console.error(`❌ Fallback also failed: ${fallbackErr.message}`);
+      throw primaryErr; // throw original error
+    }
+  }
 }
 
 /**
@@ -43,7 +97,6 @@ function getUnsubscribeUrl(email) {
  */
 async function sendWelcomeEmail(subscriberEmail, beachName) {
   try {
-    const transporter = createTransporter();
     const unsubscribeUrl = getUnsubscribeUrl(subscriberEmail);
 
     const beachDisplayNames = {
@@ -94,50 +147,50 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🌅 Welcome to Seaside Beacon!!</h1>
-      <p>Honest Sunrise Forecasts for Chennai Beaches</p>
+      <h1>🌅 Welcome to Seaside Beacon</h1>
+      <p>Honest sunrise forecasts for Chennai beaches</p>
     </div>
     <div class="content">
       <h2>You're all set!</h2>
       <div class="beach-badge">📍 ${beachDisplay}</div>
-      <p>Every morning at <strong>4:00 AM IST</strong>, we'll send you an honest sunrise forecast for your beach, what the sky will actually look like, whether it's worth waking up for, plus photography tips if you need them.</p>
+      <p>Every morning at <strong>4:00 AM IST</strong>, we'll send you an honest sunrise forecast for your beach — what the sky will actually look like, whether it's worth waking up for, plus photography tips if you want them.</p>
       <div class="features">
         <div class="feature">
           <div class="feature-icon">🌅</div>
           <div class="feature-text">
             <strong>Honest Verdict</strong>
-            <span>We'll tell you straight. Is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</span>
+            <span>We'll tell you straight — is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</span>
           </div>
         </div>
         <div class="feature">
           <div class="feature-icon">🌤️</div>
           <div class="feature-text">
             <strong>What You'll Actually See</strong>
-            <span>Specific descriptions of expected sky colors, light quality, and beach atmosphere so you're never disappointed.</span>
+            <span>Specific descriptions of expected sky colors, light quality, and beach atmosphere — so you're never disappointed.</span>
           </div>
         </div>
         <div class="feature">
           <div class="feature-icon">🏖️</div>
           <div class="feature-text">
             <strong>Beach Comparison</strong>
-            <span>All 4 Chennai beaches rated, or honestly told "none are great today" when that's the truth.</span>
+            <span>All 4 Chennai beaches rated — or honestly told "none are great today" when that's the truth.</span>
           </div>
         </div>
         <div class="feature">
           <div class="feature-icon">📸</div>
           <div class="feature-text">
             <strong>Photography Tips</strong>
-            <span>Camera settings and composition tips for photographers with explanations of why each setting works for the day's conditions.</span>
+            <span>Camera settings and composition tips for photographers — with explanations of why each setting works for the day's conditions.</span>
           </div>
         </div>
       </div>
       <div class="highlight">
         ⏰ <strong>Your first forecast arrives tomorrow at 4:00 AM IST.</strong><br>
-        If conditions are good, set your alarm for 5:30 AM to arrive at the beach for the peak color window (10 to 15 minutes before sunrise).
+        If conditions are good, set your alarm for 5:30 AM to arrive at the beach for the peak color window (10-15 minutes before sunrise).
       </div>
     </div>
     <div class="footer">
-      <p><strong>Seaside Beacon</strong> · Kevin T </p>
+      <p><strong>Seaside Beacon</strong> · Made with ☀️ in Chennai</p>
       <p>You're subscribed to daily sunrise forecasts for ${beachDisplay}.</p>
       <p><a href="${unsubscribeUrl}">Unsubscribe</a> · <a href="${APP_URL}">Visit Website</a></p>
     </div>
@@ -146,8 +199,8 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
 </html>`
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Welcome email sent to ${subscriberEmail}`);
+    const info = await sendEmail(mailOptions);
+    console.log(`✅ Welcome email sent to ${subscriberEmail} via ${EMAIL_PROVIDER}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('❌ Welcome email error:', error.message);
@@ -162,7 +215,6 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
  */
 async function sendDailyPredictionEmail(subscriberEmail, weatherData, photographyInsights) {
   try {
-    const transporter = createTransporter();
     const unsubscribeUrl = getUnsubscribeUrl(subscriberEmail);
 
     const { beach, forecast, prediction } = weatherData;
@@ -345,7 +397,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 
     </div>
     <div class="footer">
-      <p><strong>Seaside Beacon by Kevin T</strong> · Daily at 4:00 AM IST · <a href="${APP_URL}">seasidebeacon.com</a></p>
+      <p><strong>Seaside Beacon</strong> · Daily at 4:00 AM IST · <a href="${APP_URL}">seasidebeacon.com</a></p>
       <p>You're receiving this because you subscribed for ${beach} forecasts.</p>
       <p><a href="${unsubscribeUrl}">Unsubscribe</a></p>
     </div>
@@ -354,8 +406,8 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 </html>`
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Daily prediction sent to ${subscriberEmail}`);
+    const info = await sendEmail(mailOptions);
+    console.log(`✅ Daily prediction sent to ${subscriberEmail} via ${EMAIL_PROVIDER}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('❌ Daily email error:', error.message);
@@ -363,4 +415,32 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
   }
 }
 
-module.exports = { sendWelcomeEmail, sendDailyPredictionEmail };
+/**
+ * Test email — sends a quick test to verify provider works
+ */
+async function sendTestEmail(toEmail) {
+  const mailOptions = {
+    from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
+    to: toEmail,
+    subject: '🧪 Seaside Beacon — Email Test',
+    headers: { 'List-Unsubscribe': `<${getUnsubscribeUrl(toEmail)}>` },
+    text: `This is a test email from Seaside Beacon.\nProvider: ${EMAIL_PROVIDER}\nTimestamp: ${new Date().toISOString()}\n\nIf you received this, the email system is working correctly.`,
+    html: `
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family: -apple-system, sans-serif; padding: 40px;">
+  <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);">
+    <h2 style="color: #D64828; margin: 0 0 16px 0;">🧪 Email Test — Passed!</h2>
+    <p style="color: #555; line-height: 1.6;">This is a test email from <strong>Seaside Beacon</strong>.</p>
+    <p style="color: #555; line-height: 1.6;">Provider: <strong>${EMAIL_PROVIDER}</strong><br>Timestamp: <strong>${new Date().toISOString()}</strong></p>
+    <p style="color: #059669; font-weight: 600;">✅ If you received this, the email system is working correctly.</p>
+    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+    <p style="color: #999; font-size: 12px;">Seaside Beacon · <a href="${APP_URL}" style="color: #E8834A;">seasidebeacon.com</a></p>
+  </div>
+</body></html>`
+  };
+
+  const info = await sendEmail(mailOptions);
+  console.log(`✅ Test email sent to ${toEmail} via ${EMAIL_PROVIDER}`);
+  return { success: true, messageId: info.messageId, provider: EMAIL_PROVIDER };
+}
+
+module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendTestEmail };
