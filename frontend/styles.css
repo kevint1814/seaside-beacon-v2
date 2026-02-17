@@ -1388,7 +1388,7 @@ input, select, textarea { font-family:inherit; }
   backdrop-filter: var(--blur-sm);
   -webkit-backdrop-filter: var(--blur-sm);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
   transform: rotateY(0deg);
   display: flex;
   flex-direction: column;
@@ -1451,9 +1451,6 @@ input, select, textarea { font-family:inherit; }
 .case-card:not(.flipped):hover .case-front {
   animation-play-state: paused;
   transform: rotateY(8deg);
-  box-shadow:
-    0 14px 40px rgba(0,0,0,0.4),
-    0 1px 0 var(--specular-bright) inset;
 }
 
 /* ── Photo area ── */
