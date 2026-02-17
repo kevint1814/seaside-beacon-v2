@@ -1366,6 +1366,107 @@ input, select, textarea { font-family:inherit; }
   }
 }
 
+/* ── Community letter ── */
+.community-letter {
+  margin-top: 48px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 36px 40px;
+  position: relative;
+}
+.community-letter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(150deg, rgba(255,255,255,0.04) 0%, transparent 40%);
+  border-radius: 20px;
+}
+@media (max-width: 768px) {
+  .community-letter {
+    padding: 28px 22px;
+  }
+}
+.cl-para {
+  font-size: 14.5px;
+  line-height: 1.9;
+  color: var(--t2);
+  margin: 0 0 18px 0;
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+.cl-closing {
+  color: var(--t1);
+  font-size: 15px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--glass-border);
+}
+
+/* ── Community share ── */
+.community-share {
+  margin-top: 32px;
+}
+.community-share-label {
+  font-family: var(--ff-display);
+  font-size: 15px;
+  color: var(--t2);
+  margin: 0 0 14px 0;
+  letter-spacing: 0.5px;
+}
+.community-share-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.community-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: var(--t2);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+  font-family: var(--ff-body);
+}
+.community-share-btn:hover {
+  border-color: var(--glass-border-hi);
+  background: var(--glass-fill-2);
+  color: var(--t1);
+}
+.community-share-btn svg {
+  opacity: 0.7;
+  transition: opacity 0.25s;
+}
+.community-share-btn:hover svg {
+  opacity: 1;
+}
+@media (max-width: 768px) {
+  .community-share-row {
+    gap: 8px;
+  }
+  .community-share-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  .community-share-btn span {
+    display: none;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════
    THE STORY — ORIGIN
 ═══════════════════════════════════════════════════════ */

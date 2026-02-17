@@ -1223,11 +1223,47 @@ function initCommunity() {
       btn.innerHTML = orig;
     }
   });
-}
 
-// ─────────────────────────────────────────────
-// SCROLL REVEAL
-// ─────────────────────────────────────────────
+  // ── Community share buttons ──
+  const siteUrl = 'https://seasidebeacon.com';
+  const shareTextGeneral = `Found something interesting — there's a website that scores tomorrow's sunrise 0 to 100 and tells you if it's actually worth waking up for. Built for Chennai beaches. Free daily forecast at 4 AM.\n${siteUrl}`;
+  const shareTextX = `This website scores tomorrow's sunrise 0–100 and tells you if it's worth the 5 AM alarm. Built for Chennai beaches. Kind of obsessed with it. ${siteUrl} 🌅`;
+  const shareTextIG = `If you're in Chennai and love sunrises, check out seasidebeacon.com — they score tomorrow's sky 0 to 100 and tell you honestly if it's worth waking up for. Free 4 AM forecast. 🌅`;
+
+  document.getElementById('comShareWA')?.addEventListener('click', e => {
+    e.preventDefault();
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTextGeneral)}`, '_blank');
+  });
+
+  document.getElementById('comShareX')?.addEventListener('click', e => {
+    e.preventDefault();
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTextX)}`, '_blank');
+  });
+
+  document.getElementById('comShareReddit')?.addEventListener('click', e => {
+    e.preventDefault();
+    window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(siteUrl)}&title=${encodeURIComponent('This website scores tomorrow\'s sunrise 0–100 and tells you if it\'s worth waking up for (Chennai beaches)')}`, '_blank');
+  });
+
+  document.getElementById('comShareFB')?.addEventListener('click', e => {
+    e.preventDefault();
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(siteUrl)}`, '_blank');
+  });
+
+  document.getElementById('comShareIG')?.addEventListener('click', e => {
+    e.preventDefault();
+    navigator.clipboard.writeText(shareTextIG).then(() => {
+      const btn = e.currentTarget;
+      const origText = btn.querySelector('span').textContent;
+      btn.querySelector('span').textContent = 'Copied!';
+      btn.style.borderColor = 'rgba(52,180,80,0.5)';
+      setTimeout(() => {
+        btn.querySelector('span').textContent = origText;
+        btn.style.borderColor = '';
+      }, 2000);
+    });
+  });
+}
 function initScrollReveal() {
   // Section headings
   document.querySelectorAll('.section-eyebrow, .section-heading, .section-note').forEach(el => {
@@ -1254,6 +1290,8 @@ function initScrollReveal() {
   document.querySelectorAll('.community-card').forEach((el,i) => {
     el.classList.add('reveal', `reveal-delay-${i%2+1}`);
   });
+  const comLetter = document.querySelector('.community-letter');
+  if (comLetter) comLetter.classList.add('reveal', 'reveal-delay-1');
   observeReveal();
 }
 function observeReveal() {
