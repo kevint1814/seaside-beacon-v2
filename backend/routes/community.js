@@ -4,6 +4,7 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const SunriseSubmission = require('../models/SunriseSubmission');
 const Feedback = require('../models/Feedback');
+const { notifyNewFeedback, notifyNewPhotoSubmission } = require('../services/notifyAdmin');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -78,6 +79,7 @@ router.post('/sunrise-submission', (req, res, next) => {
     });
 
     console.log(`📸 New sunrise submission: ${submission.beachName} by ${submission.name} (${date})`);
+    notifyNewPhotoSubmission(submission.name, beach, date, result.secure_url);
 
     res.json({
       success: true,
@@ -108,6 +110,7 @@ router.post('/feedback', async (req, res) => {
     });
 
     console.log(`💬 New feedback: ${feedback.rating} for ${feedback.beachName}${comment ? ' — "' + comment.substring(0, 50) + '"' : ''}`);
+    notifyNewFeedback(rating, comment, beach);
 
     res.json({
       success: true,

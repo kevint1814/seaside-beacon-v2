@@ -1096,17 +1096,56 @@ async function submitSub(email,beach,msgId,btnId) {
     const d=await res.json();
     if(d.success){
       showMsg(msgId,d.message||'✓ Subscribed — see you at 4 AM.',true);
-      // Sunrise burst animation
+      // GPay-style card flip success
       const card = document.getElementById(btnId)?.closest('.sub-form-card');
       if (card) {
-        card.classList.add('sub-success-state');
-        const burst = document.createElement('div');
-        burst.className = 'sub-burst';
-        card.appendChild(burst);
-        setTimeout(() => burst.remove(), 900);
+        // Build success face
+        const face = document.createElement('div');
+        face.className = 'sub-success-face';
+
+        // Particles
+        const particles = document.createElement('div');
+        particles.className = 'success-particles';
+        const colors = ['#34d399','#6ee7b7','#a7f3d0','#fbbf24','#f59e0b','#ffffff'];
+        for (let i = 0; i < 12; i++) {
+          const p = document.createElement('div');
+          p.className = 'success-particle';
+          const angle = (i / 12) * Math.PI * 2;
+          const dist = 60 + Math.random() * 40;
+          p.style.setProperty('--px', `${Math.cos(angle) * dist}px`);
+          p.style.setProperty('--py', `${Math.sin(angle) * dist}px`);
+          p.style.background = colors[i % colors.length];
+          p.style.animationDelay = `${0.3 + Math.random() * 0.2}s`;
+          particles.appendChild(p);
+        }
+        face.appendChild(particles);
+
+        // Checkmark ring
+        const ring = document.createElement('div');
+        ring.className = 'success-check-ring';
+        ring.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
+        face.appendChild(ring);
+
+        // Text
+        const title = document.createElement('p');
+        title.className = 'success-title';
+        title.textContent = 'You\'re in.';
+        face.appendChild(title);
+
+        const sub = document.createElement('p');
+        sub.className = 'success-subtitle';
+        sub.textContent = 'First forecast arrives tomorrow at 4 AM.\nSee you at sunrise.';
+        face.appendChild(sub);
+
+        card.appendChild(face);
+
+        // Trigger flip
+        requestAnimationFrame(() => {
+          card.classList.add('sub-flipped');
+        });
       }
       const inp=document.getElementById('emailInput'); if(inp)inp.value='';
-      setTimeout(closeModalFn,2400);
+      setTimeout(closeModalFn,4000);
     } else showMsg(msgId,d.message||'Something went wrong.',false);
   } catch{ showMsg(msgId,'Network error. Please try again.',false); }
   finally{ btn.disabled=false; btn.innerHTML=orig; }
@@ -1296,6 +1335,12 @@ function initScrollReveal() {
   });
   const comLetter = document.querySelector('.community-letter');
   if (comLetter) comLetter.classList.add('reveal', 'reveal-delay-1');
+  // Contact section
+  document.querySelectorAll('.contact-card').forEach((el,i) => {
+    el.classList.add('reveal', `reveal-delay-${i%2+1}`);
+  });
+  const contactClosing = document.querySelector('.contact-closing');
+  if (contactClosing) contactClosing.classList.add('reveal', 'reveal-delay-1');
   observeReveal();
 }
 function observeReveal() {

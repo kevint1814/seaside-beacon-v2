@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const Subscriber = require('../models/Subscriber');
 const emailService = require('../services/emailService');
+const { notifyNewSubscriber, notifyUnsubscribe } = require('../services/notifyAdmin');
 
 /**
  * POST /api/subscribe
@@ -59,6 +60,7 @@ router.post('/subscribe', async (req, res) => {
       .catch(err => console.error(`❌ Email error for ${subscriber.email}:`, err.message));
 
     console.log(`✅ New subscriber: ${email} → ${preferredBeach}`);
+    notifyNewSubscriber(email, preferredBeach);
 
     res.json({
       success: true,
@@ -98,6 +100,7 @@ router.post('/unsubscribe', async (req, res) => {
     await subscriber.save();
 
     console.log(`👋 Unsubscribed (POST): ${email}`);
+    notifyUnsubscribe(email);
 
     res.json({ success: true, message: "You've been unsubscribed. No more emails from Seaside Beacon." });
   } catch (error) {
@@ -158,6 +161,7 @@ router.get('/unsubscribe', async (req, res) => {
     subscriber.isActive = false;
     await subscriber.save();
     console.log(`👋 Unsubscribed (GET link): ${decodedEmail}`);
+    notifyUnsubscribe(decodedEmail);
 
     res.send(page('👋', 'Successfully Unsubscribed', "You won't receive any more sunrise forecast emails. We hope to see you back on the beach! 🌅"));
 
