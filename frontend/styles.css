@@ -1197,6 +1197,176 @@ input, select, textarea { font-family:inherit; }
 .cc-body { font-size:13px; color:var(--t2); line-height:1.82; font-weight:300; position:relative; }
 
 /* ═══════════════════════════════════════════════════════
+   COMMUNITY — YOUR MORNINGS
+═══════════════════════════════════════════════════════ */
+.community-section {
+  padding: 100px clamp(20px,4vw,56px);
+}
+.community-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.community-note {
+  max-width: 620px;
+}
+.community-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-top: 8px;
+}
+.community-card {
+  background: var(--glass-fill);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 32px;
+  position: relative;
+}
+.community-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(150deg, rgba(255,255,255,0.04) 0%, transparent 40%);
+  border-radius: 20px;
+}
+.community-card-heading {
+  font-family: var(--ff-display);
+  font-size: clamp(20px, 2.2vw, 26px);
+  font-weight: 400;
+  color: var(--t1);
+  margin: 0 0 14px 0;
+}
+.community-card-body {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--t2);
+  margin: 0 0 12px 0;
+}
+.community-card-subtle {
+  color: var(--t3);
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+
+/* Photo upload area */
+.photo-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 1.5px dashed var(--glass-border-hi);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.02);
+  cursor: pointer;
+  transition: border-color 0.3s, background 0.3s;
+  color: var(--t3);
+}
+.photo-upload-area:hover {
+  border-color: var(--accent);
+  background: rgba(196,115,58,0.04);
+}
+.photo-upload-area.has-file {
+  border-color: rgba(52,180,80,0.4);
+  background: rgba(52,180,80,0.04);
+}
+.photo-upload-text {
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+.photo-upload-preview {
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* Half-width row for date + name */
+.form-row-half {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* Textarea */
+.form-textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--t1);
+  font-family: var(--ff-body);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.form-optional {
+  color: var(--t3);
+  font-weight: 300;
+}
+
+/* Feedback rating chips */
+.feedback-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.feedback-chip {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill);
+  color: var(--t2);
+}
+.feedback-chip:hover {
+  border-color: var(--glass-border-hi);
+  background: var(--glass-fill-2);
+}
+/* Selected states */
+.feedback-option input:checked + .feedback-chip-good {
+  border-color: rgba(52,180,80,0.5);
+  background: rgba(52,180,80,0.1);
+  color: #34b450;
+}
+.feedback-option input:checked + .feedback-chip-ok {
+  border-color: rgba(220,180,60,0.5);
+  background: rgba(220,180,60,0.1);
+  color: #dcb43c;
+}
+.feedback-option input:checked + .feedback-chip-bad {
+  border-color: rgba(220,80,60,0.5);
+  background: rgba(220,80,60,0.1);
+  color: #dc503c;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .community-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-row-half {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
    THE STORY — ORIGIN
 ═══════════════════════════════════════════════════════ */
 .story-section {
@@ -1405,9 +1575,7 @@ input, select, textarea { font-family:inherit; }
 .case-back {
   background: rgba(8,9,22,0.6);
   border: 1px solid var(--glass-border-hi);
-  box-shadow:
-    0 12px 40px rgba(0,0,0,0.4),
-    0 1px 0 var(--specular) inset;
+  box-shadow: none;
   transform: rotateY(180deg);
   display: flex;
   align-items: center;
@@ -1886,7 +2054,7 @@ input, select, textarea { font-family:inherit; }
   .ap-atm-grid { grid-template-columns:1fr 1fr; }
   .ap-settings-grid { grid-template-columns:1fr 1fr; }
   .ap-comp-grid { grid-template-columns:1fr; }
-  .craft-section,.sub-section,.story-section,.cases-section { padding:60px 20px; }
+  .craft-section,.sub-section,.story-section,.cases-section,.community-section { padding:60px 20px; }
   .case-card { flex: 0 0 260px; height: 380px; }
   .case-photo { height: 170px; }
   .story-narrative {

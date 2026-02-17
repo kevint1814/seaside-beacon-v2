@@ -12,6 +12,7 @@ const rateLimit = require('express-rate-limit');
 
 const subscribeRoutes = require('./routes/subscribe');
 const predictRoutes = require('./routes/predict');
+const communityRoutes = require('./routes/community');
 const { initializeDailyEmailJob } = require('./jobs/dailyEmail');
 
 const app = express();
@@ -78,6 +79,7 @@ app.get('/health', (req, res) => {
 
 app.use('/api', subscribeRoutes);
 app.use('/api', predictRoutes);
+app.use('/api', communityRoutes);
 
 // ── Public stats endpoint ──
 const SiteStats = require('./models/SiteStats');

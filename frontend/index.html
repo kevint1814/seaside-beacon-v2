@@ -213,6 +213,7 @@
       <a href="#forecast" class="nav-link">Forecast</a>
       <a href="#craft" class="nav-link">Our Craft</a>
       <a href="#cases" class="nav-link">Real Mornings</a>
+      <a href="#community" class="nav-link">Community</a>
       <a href="#story" class="nav-link">The Story</a>
       <button class="btn-nav-cta" id="navSubscribeBtn">Daily Briefing</button>
     </div>
@@ -225,6 +226,7 @@
     <a href="#forecast" class="drawer-link">Forecast</a>
     <a href="#craft" class="drawer-link">Our Craft</a>
     <a href="#cases" class="drawer-link">Real Mornings</a>
+    <a href="#community" class="drawer-link">Community</a>
     <a href="#story" class="drawer-link">The Story</a>
     <button class="drawer-cta" id="drawerSubscribeBtn">Daily Briefing</button>
   </div>
@@ -767,6 +769,107 @@
     </div>
   </section>
 
+  <!-- ── COMMUNITY — YOUR MORNINGS ─────────────────── -->
+  <section class="community-section" id="community">
+    <div class="community-inner">
+      <p class="section-eyebrow">Your Mornings</p>
+      <h2 class="section-heading">We read the sky. <em>You were there.</em></h2>
+      <p class="section-note community-note">Every forecast is a prediction. Your photos are the proof. Share what you saw — the ones that stop us get featured.</p>
+
+      <div class="community-grid">
+
+        <!-- Photo submission card -->
+        <div class="community-card community-card-photo">
+          <h3 class="community-card-heading">Send us the sunrise</h3>
+          <p class="community-card-body">You set the alarm. You made the drive. You stood at the water's edge while the city slept. If you captured that moment, we want to see it.</p>
+          <p class="community-card-body community-card-subtle">The best submissions are featured on this page and shared with every subscriber. Your morning, seen by everyone who almost slept through theirs.</p>
+
+          <form class="community-form" id="photoForm">
+            <div class="form-row">
+              <label class="form-label">Your photo</label>
+              <label class="photo-upload" id="photoUploadLabel">
+                <input type="file" id="photoFile" accept="image/*" hidden>
+                <div class="photo-upload-area" id="photoUploadArea">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V8M8 12l4-4 4 4"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+                  <span class="photo-upload-text">Tap to choose a photo</span>
+                </div>
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Beach</label>
+              <select id="photoBeach" class="form-select">
+                <option value="marina">Marina Beach</option>
+                <option value="elliot">Elliot's Beach</option>
+                <option value="covelong">Covelong Beach</option>
+                <option value="thiruvanmiyur">Thiruvanmiyur Beach</option>
+              </select>
+            </div>
+            <div class="form-row-half">
+              <div class="form-row">
+                <label class="form-label">Date</label>
+                <input type="date" id="photoDate" class="form-input">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Your name <span class="form-optional">(optional)</span></label>
+                <input type="text" id="photoName" class="form-input" placeholder="First name">
+              </div>
+            </div>
+            <button type="submit" class="btn-subscribe" id="photoSubmitBtn">
+              Share this morning
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <div class="form-message" id="photoMessage"></div>
+          </form>
+        </div>
+
+        <!-- Feedback card -->
+        <div class="community-card community-card-feedback">
+          <h3 class="community-card-heading">Was it worth the alarm?</h3>
+          <p class="community-card-body">We score the sky at 4 AM. You see it at 6. Tell us if we got it right — your honesty is what makes this forecast sharper, every single day.</p>
+
+          <form class="community-form" id="feedbackForm">
+            <div class="form-row">
+              <label class="form-label">How was our forecast?</label>
+              <div class="feedback-options">
+                <label class="feedback-option">
+                  <input type="radio" name="rating" value="spot-on" hidden>
+                  <span class="feedback-chip feedback-chip-good">Spot on</span>
+                </label>
+                <label class="feedback-option">
+                  <input type="radio" name="rating" value="close" hidden>
+                  <span class="feedback-chip feedback-chip-ok">Close enough</span>
+                </label>
+                <label class="feedback-option">
+                  <input type="radio" name="rating" value="missed" hidden>
+                  <span class="feedback-chip feedback-chip-bad">Off the mark</span>
+                </label>
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">What did the sky actually look like? <span class="form-optional">(optional)</span></label>
+              <textarea id="feedbackComment" class="form-textarea" rows="3" placeholder="Describe what you saw..."></textarea>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Beach</label>
+              <select id="feedbackBeach" class="form-select">
+                <option value="marina">Marina Beach</option>
+                <option value="elliot">Elliot's Beach</option>
+                <option value="covelong">Covelong Beach</option>
+                <option value="thiruvanmiyur">Thiruvanmiyur Beach</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-subscribe" id="feedbackSubmitBtn">
+              Send feedback
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <div class="form-message" id="feedbackMessage"></div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- ── THE STORY — ORIGIN ──────────────────────── -->
   <section class="story-section" id="story">
     <div class="story-inner">
@@ -782,31 +885,31 @@
       </div>
 
       <div class="story-narrative">
-        <p class="sn-para">I moved to Chennai from Rajapalayam, a small town in South Tamil Nadu, near Courtallam, just after the post-pandemic relaxations. New city, new pace, new life. The night before my birthday, June 13, 2023, I went out on my bike with nothing but time and curiosity. No destination. No plan. Somewhere along the ride, the roads led me to Marina Beach. It was around 5 AM.</p>
+        <p class="sn-para">I moved to Chennai from Rajapalayam — a small town in South Tamil Nadu, near Courtallam — just after the post-pandemic relaxations. New city, new pace, new life. The night before my birthday, June 13, 2023, I went out on my bike with nothing but time and curiosity. No destination. No plan. Somewhere along the ride, the roads led me to Marina Beach. It was around 5 AM.</p>
 
         <p class="sn-para">The city felt different at that hour. Not loud. Not rushed. Just… alive in a quieter way.</p>
 
-        <p class="sn-para">I walked toward the waves and saw fishermen beginning their day pulling boats in, setting nets, preparing with focus and pride. I had never witnessed that world so closely. I remember standing there thinking so much effort happens before sunrise, and most people never even see it. And then the sky arrived.</p>
+        <p class="sn-para">I walked toward the waves and saw fishermen beginning their day — pulling boats in, setting nets, preparing with focus and pride. I had never witnessed that world so closely. I remember standing there thinking: so much effort happens before sunrise, and most people never even see it. And then the sky arrived.</p>
 
         <blockquote class="sn-pullquote">Pinkish blues first. Then gold. The entire horizon turned dramatic, like it was putting on a show just because it could.</blockquote>
 
-        <p class="sn-para">It was my first ever sunrise, and it felt like the perfect beginning to a birthday, grounding, beautiful, and strangely emotional.</p>
+        <p class="sn-para">It was my first ever sunrise, and it felt like the perfect beginning to a birthday — grounding, beautiful, and strangely emotional.</p>
 
         <div class="sn-photo">
           <img src="https://res.cloudinary.com/dj0ewfbtf/image/upload/w_600,f_auto,q_auto/ig-first-sunrise_vlmwme.jpg" alt="Kevin's first sunrise at Marina Beach — June 13, 2023" loading="lazy">
         </div>
 
-        <p class="sn-para">The next weekend, I returned chasing the same moment… but the sunrise wasn't there. The sky was dull. Another day, only clouds. Some mornings came through, some didn't and that unpredictability kept pulling me back.</p>
+        <p class="sn-para">The next weekend, I returned chasing the same moment… but the sunrise wasn't there. The sky was dull. Another day, only clouds. Some mornings came through, some didn't — and that unpredictability kept pulling me back.</p>
 
-        <p class="sn-para">So I did what I naturally do. I started learning the "why." I researched weather patterns, tracked the signals, and slowly developed a mental system, a metric range mindset where a few numbers could tell me whether the sunrise would be worth it.</p>
+        <p class="sn-para">So I did what I naturally do. I started learning the "why." I researched weather patterns, tracked the signals, and slowly developed a mental system — a metric-range mindset where a few numbers could tell me whether the sunrise would be worth it.</p>
 
-        <p class="sn-para">Eventually my friends started asking me, <em>"How do you always get it right that it'll be good tomorrow?"</em> That question became the spark for me. If I could figure this out manually, why not build something that does it automatically for me, for my friends, and for anyone who just wants to witness the ocean and sky at their best?</p>
+        <p class="sn-para">Eventually my friends started asking me, <em>"How do you always get it right that it'll be good tomorrow?"</em> That question became the spark. If I could figure this out manually, why not build something that does it automatically — for me, for my friends, and for anyone who just wants to witness the ocean and sky at their best?</p>
 
         <div class="sn-photo">
           <img src="https://res.cloudinary.com/dj0ewfbtf/image/upload/w_600,f_auto,q_auto/ig-building-beacon_rbzgpg.jpg" alt="Kevin building Seaside Beacon at the beach — September 2024" loading="lazy">
         </div>
 
-        <p class="sn-para sn-closing">That's how Seaside Beacon started. Asia's first sunrise quality forecast project built from one sunrise, one disappointment, and the simple belief that nature's best moments shouldn't be left to guesswork.</p>
+        <p class="sn-para sn-closing">That's how Seaside Beacon started. A project built from one sunrise, one disappointment, and the simple belief that nature's best moments shouldn't be left to guesswork.</p>
       </div>
 
     </div>

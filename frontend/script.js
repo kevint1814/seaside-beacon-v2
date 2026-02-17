@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDeepPanel();
   initModals();
   initSubscribeForms();
+  initCommunity();
   initShare();
   initScrollReveal();
   initMetrics();
@@ -1112,6 +1113,119 @@ function showMsg(id,msg,ok) {
 }
 
 // ─────────────────────────────────────────────
+// COMMUNITY — PHOTO UPLOAD + FEEDBACK
+// ─────────────────────────────────────────────
+function initCommunity() {
+  // Photo upload preview
+  const fileInput = document.getElementById('photoFile');
+  const uploadArea = document.getElementById('photoUploadArea');
+  if (fileInput && uploadArea) {
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      uploadArea.classList.add('has-file');
+      // Show preview
+      const existing = uploadArea.querySelector('.photo-upload-preview');
+      if (existing) existing.remove();
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.className = 'photo-upload-preview';
+        uploadArea.querySelector('svg').style.display = 'none';
+        uploadArea.querySelector('.photo-upload-text').textContent = file.name;
+        uploadArea.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Set default date to today
+  const dateInput = document.getElementById('photoDate');
+  if (dateInput) {
+    dateInput.value = new Date().toISOString().split('T')[0];
+  }
+
+  // Photo form submit
+  document.getElementById('photoForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const file = document.getElementById('photoFile').files[0];
+    if (!file) { showMsg('photoMessage', 'Please select a photo.', false); return; }
+
+    const btn = document.getElementById('photoSubmitBtn');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Uploading…';
+
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      formData.append('beach', document.getElementById('photoBeach').value);
+      formData.append('date', document.getElementById('photoDate').value);
+      formData.append('name', document.getElementById('photoName').value.trim());
+
+      const res = await fetch(`${CONFIG.API_URL}/sunrise-submission`, {
+        method: 'POST',
+        body: formData
+      });
+      const d = await res.json();
+      if (d.success) {
+        showMsg('photoMessage', 'Thank you — your sunrise has been received.', true);
+        document.getElementById('photoForm').reset();
+        uploadArea.classList.remove('has-file');
+        const preview = uploadArea.querySelector('.photo-upload-preview');
+        if (preview) preview.remove();
+        uploadArea.querySelector('svg').style.display = '';
+        uploadArea.querySelector('.photo-upload-text').textContent = 'Tap to choose a photo';
+      } else {
+        showMsg('photoMessage', d.message || 'Something went wrong.', false);
+      }
+    } catch {
+      showMsg('photoMessage', 'Network error. Please try again.', false);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+
+  // Feedback form submit
+  document.getElementById('feedbackForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const rating = document.querySelector('input[name="rating"]:checked');
+    if (!rating) { showMsg('feedbackMessage', 'Please select a rating.', false); return; }
+
+    const btn = document.getElementById('feedbackSubmitBtn');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Sending…';
+
+    try {
+      const res = await fetch(`${CONFIG.API_URL}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rating: rating.value,
+          comment: document.getElementById('feedbackComment').value.trim(),
+          beach: document.getElementById('feedbackBeach').value
+        })
+      });
+      const d = await res.json();
+      if (d.success) {
+        showMsg('feedbackMessage', 'Noted — this makes every forecast better. Thank you.', true);
+        document.getElementById('feedbackForm').reset();
+      } else {
+        showMsg('feedbackMessage', d.message || 'Something went wrong.', false);
+      }
+    } catch {
+      showMsg('feedbackMessage', 'Network error. Please try again.', false);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
 // SCROLL REVEAL
 // ─────────────────────────────────────────────
 function initScrollReveal() {
@@ -1135,6 +1249,10 @@ function initScrollReveal() {
   // Subscribe section
   document.querySelectorAll('.sub-heading, .sub-body, .sub-form-card').forEach((el,i) => {
     el.classList.add('reveal', `reveal-delay-${i%3+1}`);
+  });
+  // Community section
+  document.querySelectorAll('.community-card').forEach((el,i) => {
+    el.classList.add('reveal', `reveal-delay-${i%2+1}`);
   });
   observeReveal();
 }
