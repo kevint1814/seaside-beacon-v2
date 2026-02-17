@@ -1554,6 +1554,8 @@ input, select, textarea { font-family:inherit; }
   border-top: 1px solid var(--glass-border);
   border-bottom: 1px solid var(--glass-border);
   position: relative;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 .sn-closing {
   color: var(--t1);
@@ -1562,6 +1564,8 @@ input, select, textarea { font-family:inherit; }
   margin-top: 28px;
   padding-top: 24px;
   border-top: 1px solid var(--glass-border);
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 /* ── Inline photos — glass framed, compact ── */

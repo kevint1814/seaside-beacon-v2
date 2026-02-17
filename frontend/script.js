@@ -140,64 +140,68 @@ function initSunriseCanvas() {
 
   // Zenith (top of sky) — deep indigo → rich morning blue
   const zenithStops = [
-    [0.0,  [6, 6, 18]],        // deep night indigo
-    [0.12, [12, 9, 32]],       // barely lighter
-    [0.25, [26, 18, 55]],      // twilight deep purple - richer
-    [0.38, [44, 28, 72]],      // twilight violet - more saturated
-    [0.50, [55, 36, 65]],      // muted purple dawn
-    [0.62, [42, 58, 95]],      // blue breaking through - more vivid
-    [0.75, [38, 72, 115]],     // clear morning blue - brighter
-    [0.88, [35, 78, 128]],     // vibrant sky blue
-    [1.0,  [28, 68, 118]]      // settled: rich warm blue
+    [0.0,  [8, 6, 22]],        // deep night indigo
+    [0.12, [14, 10, 38]],      // barely lighter
+    [0.25, [30, 20, 62]],      // twilight deep purple - vivid
+    [0.38, [52, 32, 82]],      // twilight violet - rich magenta tint
+    [0.50, [62, 40, 72]],      // muted purple dawn - warmer
+    [0.62, [48, 65, 108]],     // blue breaking through - more vivid
+    [0.75, [42, 82, 128]],     // clear morning blue - vibrant
+    [0.88, [38, 88, 142]],     // bright sky blue
+    [1.0,  [30, 75, 128]]      // settled: vivid warm blue
   ];
 
   // Mid-sky — warm rose blooms vivid then evolves
   const midStops = [
-    [0.0,  [10, 10, 32]],
-    [0.15, [25, 18, 55]],
-    [0.30, [65, 32, 70]],      // richer purple-magenta
-    [0.42, [152, 72, 58]],     // warm rose peak - punchier
-    [0.52, [132, 64, 55]],     // rose lingers - richer
-    [0.62, [82, 58, 68]],      // fading warm - more color
-    [0.75, [48, 60, 85]],      // blue-grey morning
-    [0.88, [38, 65, 100]],     // morning blue - brighter
-    [1.0,  [30, 55, 88]]       // settled
+    [0.0,  [12, 10, 35]],
+    [0.15, [28, 20, 60]],
+    [0.28, [75, 35, 78]],      // richer purple-magenta
+    [0.38, [128, 52, 72]],     // magenta-rose transition
+    [0.46, [168, 82, 62]],     // warm rose peak - punchier vivid
+    [0.54, [145, 72, 58]],     // rose lingers - richer
+    [0.65, [92, 62, 72]],      // fading warm - more colour retained
+    [0.78, [52, 65, 92]],      // blue-grey morning
+    [0.90, [42, 70, 108]],     // morning blue - brighter
+    [1.0,  [32, 58, 92]]       // settled
   ];
 
   // Horizon — intense amber fire → golden → warm afterglow
   const horizonStops = [
-    [0.0,  [58, 24, 16]],      // warmer ember
-    [0.15, [108, 44, 20]],     // deeper warm - more fire
-    [0.30, [215, 98, 35]],     // amber fire - brighter
-    [0.42, [255, 175, 65]],    // peak golden - vivid punch
-    [0.55, [242, 158, 62]],    // golden lingers - brighter
-    [0.68, [192, 125, 65]],    // warm afterglow - richer
-    [0.80, [122, 90, 55]],     // fading amber
-    [0.92, [72, 60, 48]],      // gentle ember
-    [1.0,  [45, 40, 34]]       // settled
+    [0.0,  [65, 28, 18]],      // warmer ember
+    [0.12, [118, 48, 22]],     // deep fire - more intensity
+    [0.25, [195, 78, 28]],     // building amber
+    [0.35, [235, 108, 38]],    // amber fire - brighter
+    [0.45, [255, 185, 72]],    // peak golden - vivid punch
+    [0.55, [255, 168, 65]],    // golden lingers - bright
+    [0.65, [218, 138, 68]],    // warm afterglow - richer
+    [0.78, [148, 98, 58]],     // fading amber with colour
+    [0.90, [82, 65, 50]],      // gentle ember
+    [1.0,  [48, 42, 36]]       // settled
   ];
 
   // Glow color stops — more intense
   const glowStops = [
-    [0.0,  [225, 128, 60]],    // warmer start
-    [0.20, [252, 158, 60]],    // brighter
-    [0.38, [255, 210, 82]],    // intense golden - vivid
-    [0.52, [255, 192, 85]],    // golden lingers
-    [0.65, [225, 162, 78]],    // warm afterglow - richer
-    [0.78, [162, 112, 62]],    // fading
-    [0.90, [105, 75, 48]],
-    [1.0,  [62, 48, 38]]       // warm dim
+    [0.0,  [235, 135, 62]],    // warmer start
+    [0.18, [255, 165, 62]],    // brighter
+    [0.32, [255, 198, 72]],    // building golden
+    [0.42, [255, 222, 88]],    // intense golden - vivid peak
+    [0.54, [255, 200, 88]],    // golden lingers
+    [0.68, [235, 168, 82]],    // warm afterglow - richer
+    [0.80, [172, 118, 65]],    // fading
+    [0.92, [112, 78, 50]],
+    [1.0,  [65, 50, 40]]       // warm dim
   ];
 
-  // Sea — more color in the water reflections
+  // Sea — more colour in the water reflections
   const seaStops = [
-    [0.0,  [6, 5, 14]],        // near black
-    [0.20, [14, 12, 25]],
-    [0.38, [40, 25, 32]],      // warm purple-tinted - richer
-    [0.52, [48, 34, 36]],      // peak warm sea - more visible
-    [0.65, [40, 36, 42]],      // cooling with color
-    [0.80, [32, 38, 48]],      // blue hint in water
-    [1.0,  [24, 32, 42]]       // settled: teal-warm
+    [0.0,  [8, 6, 16]],        // near black
+    [0.18, [16, 14, 28]],
+    [0.32, [38, 22, 32]],      // warm purple hint
+    [0.42, [55, 38, 38]],      // peak warm sea - richer visible
+    [0.54, [52, 35, 40]],      // holding warmth
+    [0.68, [42, 38, 48]],      // cooling with colour
+    [0.82, [34, 42, 52]],      // blue hint in water
+    [1.0,  [26, 35, 45]]       // settled: teal-warm
   ];
 
   function draw(t) {
@@ -260,46 +264,46 @@ function initSunriseCanvas() {
       const sunAlpha = Math.min(1, sunProgress * 2.0);
 
       // Layer 1: atmospheric haze — enormous soft warm wash
-      const hazeR = sunR * 18;
+      const hazeR = sunR * 20;
       const haze = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, hazeR);
-      haze.addColorStop(0,    `rgba(255,220,140,${sunAlpha * 0.18})`);
-      haze.addColorStop(0.15, `rgba(255,195,110,${sunAlpha * 0.10})`);
-      haze.addColorStop(0.35, `rgba(255,165,78,${sunAlpha * 0.045})`);
-      haze.addColorStop(0.6,  `rgba(255,145,55,${sunAlpha * 0.018})`);
-      haze.addColorStop(1,    `rgba(255,135,45,0)`);
+      haze.addColorStop(0,    `rgba(255,225,148,${sunAlpha * 0.22})`);
+      haze.addColorStop(0.12, `rgba(255,200,118,${sunAlpha * 0.14})`);
+      haze.addColorStop(0.3,  `rgba(255,172,85,${sunAlpha * 0.06})`);
+      haze.addColorStop(0.55, `rgba(255,150,60,${sunAlpha * 0.025})`);
+      haze.addColorStop(1,    `rgba(255,138,48,0)`);
       ctx.fillStyle = haze;
       ctx.fillRect(0, 0, W, H);
 
       // Layer 2: far corona
-      const coronaR = sunR * 6;
-      const corona = ctx.createRadialGradient(W*0.5, sunY, sunR * 0.6, W*0.5, sunY, coronaR);
-      corona.addColorStop(0,   `rgba(255,230,158,${sunAlpha * 0.42})`);
-      corona.addColorStop(0.25,`rgba(255,208,118,${sunAlpha * 0.22})`);
-      corona.addColorStop(0.5, `rgba(255,178,88,${sunAlpha * 0.09})`);
-      corona.addColorStop(1,   `rgba(255,155,65,0)`);
+      const coronaR = sunR * 7;
+      const corona = ctx.createRadialGradient(W*0.5, sunY, sunR * 0.5, W*0.5, sunY, coronaR);
+      corona.addColorStop(0,   `rgba(255,235,165,${sunAlpha * 0.48})`);
+      corona.addColorStop(0.2, `rgba(255,215,125,${sunAlpha * 0.28})`);
+      corona.addColorStop(0.45,`rgba(255,185,92,${sunAlpha * 0.12})`);
+      corona.addColorStop(1,   `rgba(255,158,68,0)`);
       ctx.fillStyle = corona;
       ctx.beginPath();
       ctx.arc(W*0.5, sunY, coronaR, 0, Math.PI*2);
       ctx.fill();
 
       // Layer 3: inner bright glow (tight around disc)
-      const innerGlow = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, sunR * 2.5);
-      innerGlow.addColorStop(0,   `rgba(255,250,230,${sunAlpha * 0.62})`);
-      innerGlow.addColorStop(0.3, `rgba(255,235,178,${sunAlpha * 0.35})`);
-      innerGlow.addColorStop(0.6, `rgba(255,215,128,${sunAlpha * 0.12})`);
-      innerGlow.addColorStop(1,   `rgba(255,195,95,0)`);
+      const innerGlow = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, sunR * 2.8);
+      innerGlow.addColorStop(0,   `rgba(255,252,235,${sunAlpha * 0.68})`);
+      innerGlow.addColorStop(0.25,`rgba(255,240,185,${sunAlpha * 0.40})`);
+      innerGlow.addColorStop(0.55,`rgba(255,220,135,${sunAlpha * 0.15})`);
+      innerGlow.addColorStop(1,   `rgba(255,198,98,0)`);
       ctx.fillStyle = innerGlow;
       ctx.beginPath();
-      ctx.arc(W*0.5, sunY, sunR * 2.5, 0, Math.PI*2);
+      ctx.arc(W*0.5, sunY, sunR * 2.8, 0, Math.PI*2);
       ctx.fill();
 
       // Layer 4: sun disc body — hot white center, amber edge
       const sunDisc = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, sunR);
-      sunDisc.addColorStop(0,    `rgba(255,254,245,${sunAlpha * 0.99})`);
-      sunDisc.addColorStop(0.35, `rgba(255,245,210,${sunAlpha * 0.97})`);
-      sunDisc.addColorStop(0.65, `rgba(255,225,150,${sunAlpha * 0.90})`);
-      sunDisc.addColorStop(0.85, `rgba(255,200,100,${sunAlpha * 0.65})`);
-      sunDisc.addColorStop(1,    `rgba(255,175,65,${sunAlpha * 0.18})`);
+      sunDisc.addColorStop(0,    `rgba(255,255,248,${sunAlpha * 0.99})`);
+      sunDisc.addColorStop(0.3,  `rgba(255,248,218,${sunAlpha * 0.97})`);
+      sunDisc.addColorStop(0.6,  `rgba(255,230,155,${sunAlpha * 0.92})`);
+      sunDisc.addColorStop(0.82, `rgba(255,205,108,${sunAlpha * 0.68})`);
+      sunDisc.addColorStop(1,    `rgba(255,180,70,${sunAlpha * 0.20})`);
       ctx.fillStyle = sunDisc;
       ctx.beginPath();
       ctx.arc(W*0.5, sunY, sunR, 0, Math.PI*2);
