@@ -2,10 +2,6 @@
 // Seaside Beacon Backend Server v3
 // Kevin T - 24BCS1045 - VIT Chennai
 // ==========================================
-// v3: Added visit tracking middleware
-//     Added daily admin digest (8 AM IST)
-//     Removed per-event admin notifications
-// ==========================================
 
 require('dotenv').config();
 const express = require('express');
@@ -28,11 +24,35 @@ const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  methods: ['GET', 'POST'],
-  credentials: true
-}));
+// ✅ Correct CORS: supports 1+ allowed origins from env, no duplicates, no "*" with credentials
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, cb) => {
+    // Allow requests with no Origin header (health checks, curl, server-to-server)
+    if (!origin) return cb(null, true);
+
+    // If you forgot to set FRONTEND_URL, block cross-site instead of using "*"
+    if (allowedOrigins.length === 0) {
+      return cb(new Error('CORS: FRONTEND_URL not set'), false);
+    }
+
+    // Allow only exact matches
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+
+    return cb(new Error(`CORS blocked: ${origin}`), false);
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // keep true ONLY if you use cookies/sessions; otherwise set false
+};
+
+app.use(cors(corsOptions));
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -123,10 +143,7 @@ async function startServer() {
       console.log('═══════════════════════════════════════');
     });
 
-    // Daily forecast emails at 4:00 AM IST
     initializeDailyEmailJob();
-
-    // Daily admin digest at 8:00 AM IST
     initializeDailyDigest();
 
   } catch (error) {
