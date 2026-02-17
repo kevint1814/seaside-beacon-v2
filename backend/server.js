@@ -1,6 +1,10 @@
 // ==========================================
-// Seaside Beacon Backend Server
+// Seaside Beacon Backend Server v3
 // Kevin T - 24BCS1045 - VIT Chennai
+// ==========================================
+// v3: Added visit tracking middleware
+//     Added daily admin digest (8 AM IST)
+//     Removed per-event admin notifications
 // ==========================================
 
 require('dotenv').config();
@@ -12,8 +16,9 @@ const rateLimit = require('express-rate-limit');
 
 const subscribeRoutes = require('./routes/subscribe');
 const predictRoutes = require('./routes/predict');
-const communityRoutes = require('./routes/community');
 const { initializeDailyEmailJob } = require('./jobs/dailyEmail');
+const { initializeDailyDigest } = require('./services/notifyAdmin');
+const { trackVisitMiddleware } = require('./services/visitTracker');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -23,16 +28,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
 
-const allowedOrigins = (process.env.FRONTEND_URL || '*').split(',').map(s => s.trim());
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: process.env.FRONTEND_URL || '*',
   methods: ['GET', 'POST'],
   credentials: true
 }));
@@ -47,6 +44,9 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Visit tracking — counts every /api request
+app.use('/api', trackVisitMiddleware);
+
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
@@ -58,7 +58,7 @@ app.get('/', (req, res) => {
   res.json({
     status: 'online',
     service: 'Seaside Beacon API',
-    version: '2.0.0',
+    version: '3.0.0',
     endpoints: {
       beaches: 'GET /api/beaches',
       predict: 'GET /api/predict/:beach',
@@ -79,22 +79,6 @@ app.get('/health', (req, res) => {
 
 app.use('/api', subscribeRoutes);
 app.use('/api', predictRoutes);
-app.use('/api', communityRoutes);
-
-// ── Public stats endpoint ──
-const SiteStats = require('./models/SiteStats');
-app.get('/api/stats', async (req, res) => {
-  try {
-    const stats = await SiteStats.getPublicStats();
-    res.json({ success: true, data: stats });
-  } catch (error) {
-    console.error('Stats error:', error.message);
-    res.json({
-      success: true,
-      data: { forecastsGenerated: 0, consecutiveDays: 0, dataPointsProcessed: 0, emailsSent: 0 }
-    });
-  }
-});
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Endpoint not found' });
@@ -128,17 +112,23 @@ async function startServer() {
 
     app.listen(PORT, () => {
       console.log('═══════════════════════════════════════');
-      console.log('🌅 SEASIDE BEACON SERVER v2.0');
+      console.log('🌅 SEASIDE BEACON SERVER v3.0');
       console.log('═══════════════════════════════════════');
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📧 Email: ${process.env.GMAIL_USER ? 'Configured ✓' : 'Not configured'}`);
-      console.log(`🤖 AI: ${process.env.GEMINI_API_KEY ? 'Gemini ✓' : 'Fallback mode'}`);
+      console.log(`📧 Email: ${process.env.BREVO_API_KEY ? 'Brevo ✓' : 'Not configured'}`);
+      console.log(`🤖 AI: ${process.env.GROQ_API_KEY ? 'Groq ✓' : 'Fallback mode'}`);
       console.log(`🌤️  Weather: ${process.env.ACCUWEATHER_API_KEY ? 'AccuWeather ✓' : 'Not configured'}`);
+      console.log(`📊 Analytics: Visit tracking ✓`);
       console.log('═══════════════════════════════════════');
     });
 
+    // Daily forecast emails at 4:00 AM IST
     initializeDailyEmailJob();
+
+    // Daily admin digest at 8:00 AM IST
+    initializeDailyDigest();
+
   } catch (error) {
     console.error('❌ Startup error:', error.message);
     process.exit(1);

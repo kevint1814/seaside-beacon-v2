@@ -1,11 +1,14 @@
 // ==========================================
-// Predict Routes
+// Predict Routes v3
+// ==========================================
+// Added: trackPrediction() on each forecast request
 // ==========================================
 
 const express = require('express');
 const router = express.Router();
 const weatherService = require('../services/weatherService');
 const aiService = require('../services/aiService');
+const { trackPrediction } = require('../services/visitTracker');
 
 /**
  * GET /api/beaches
@@ -31,6 +34,9 @@ router.get('/predict/:beach', async (req, res) => {
   try {
     const { beach } = req.params;
     console.log(`\n📍 Prediction for: ${beach}`);
+
+    // Track this forecast request (non-blocking)
+    trackPrediction();
 
     // ── Fetch selected beach first (fail fast if unavailable) ──
     const primaryWeather = await weatherService.getTomorrow6AMForecast(beach);
@@ -58,7 +64,6 @@ router.get('/predict/:beach', async (req, res) => {
         }
       });
     } catch (e) {
-      // If parallel fetches fail, we still have the primary — degrade gracefully
       console.warn('⚠️  Could not fetch all beach weather:', e.message);
     }
 

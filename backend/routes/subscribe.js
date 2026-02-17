@@ -1,12 +1,17 @@
 // ==========================================
-// Subscribe Routes
+// Subscribe Routes v3
+// ==========================================
+// - Unsubscribe DELETES record from MongoDB
+// - Tracks new subs + unsubs in DailyVisit
+// - No per-event admin emails (digest at 8 AM)
+// - Fixed return URL → seasidebeacon.com
 // ==========================================
 
 const express = require('express');
 const router = express.Router();
 const Subscriber = require('../models/Subscriber');
 const emailService = require('../services/emailService');
-const { notifyNewSubscriber, notifyUnsubscribe } = require('../services/notifyAdmin');
+const { trackNewSub, trackUnsub } = require('../services/visitTracker');
 
 /**
  * POST /api/subscribe
@@ -22,7 +27,6 @@ router.post('/subscribe', async (req, res) => {
       });
     }
 
-    // Validate beach
     const validBeaches = ['marina', 'elliot', 'covelong', 'thiruvanmiyur'];
     if (!validBeaches.includes(preferredBeach)) {
       return res.status(400).json({
@@ -31,7 +35,6 @@ router.post('/subscribe', async (req, res) => {
       });
     }
 
-    // Check if already subscribed
     let subscriber = await Subscriber.findOne({ email: email.toLowerCase() });
 
     if (subscriber) {
@@ -44,6 +47,7 @@ router.post('/subscribe', async (req, res) => {
         // Reactivate
         subscriber.isActive = true;
         subscriber.preferredBeach = preferredBeach;
+        subscriber.createdAt = new Date(); // Reset so it shows in digest
         await subscriber.save();
       }
     } else {
@@ -54,13 +58,15 @@ router.post('/subscribe', async (req, res) => {
       await subscriber.save();
     }
 
-    // Send welcome email (non-blocking)
+    // Track in DailyVisit (non-blocking)
+    trackNewSub();
+
+    // Welcome email (non-blocking)
     emailService.sendWelcomeEmail(subscriber.email, subscriber.preferredBeach)
       .then(() => console.log(`✅ Welcome email sent to ${subscriber.email}`))
       .catch(err => console.error(`❌ Email error for ${subscriber.email}:`, err.message));
 
     console.log(`✅ New subscriber: ${email} → ${preferredBeach}`);
-    notifyNewSubscriber(email, preferredBeach);
 
     res.json({
       success: true,
@@ -76,7 +82,8 @@ router.post('/subscribe', async (req, res) => {
 });
 
 /**
- * POST /api/unsubscribe  (fetch/API calls)
+ * POST /api/unsubscribe  (API calls)
+ * DELETES the subscriber record from MongoDB
  */
 router.post('/unsubscribe', async (req, res) => {
   try {
@@ -93,14 +100,14 @@ router.post('/unsubscribe', async (req, res) => {
     }
 
     if (!subscriber.isActive) {
+      await Subscriber.deleteOne({ email: email.toLowerCase() });
       return res.json({ success: false, message: 'This email is already unsubscribed.' });
     }
 
-    subscriber.isActive = false;
-    await subscriber.save();
+    await Subscriber.deleteOne({ email: email.toLowerCase() });
+    trackUnsub(); // Track in DailyVisit
 
-    console.log(`👋 Unsubscribed (POST): ${email}`);
-    notifyUnsubscribe(email);
+    console.log(`👋 Unsubscribed + deleted (POST): ${email}`);
 
     res.json({ success: true, message: "You've been unsubscribed. No more emails from Seaside Beacon." });
   } catch (error) {
@@ -111,7 +118,7 @@ router.post('/unsubscribe', async (req, res) => {
 
 /**
  * GET /api/unsubscribe?email=xxx  (clickable links in emails)
- * Returns a styled HTML confirmation page
+ * DELETES the subscriber record + shows styled confirmation page
  */
 router.get('/unsubscribe', async (req, res) => {
   const { email } = req.query;
@@ -151,19 +158,20 @@ router.get('/unsubscribe', async (req, res) => {
     const subscriber = await Subscriber.findOne({ email: decodedEmail });
 
     if (!subscriber) {
-      return res.send(page('🔍', 'Not Found', 'This email address was not found in our subscribers list.', true));
+      return res.send(page('✅', 'Already Unsubscribed', "You're already removed from our mailing list. No further action needed."));
     }
 
     if (!subscriber.isActive) {
-      return res.send(page('✅', "Already Unsubscribed", "You're already removed from our mailing list. No further action needed."));
+      await Subscriber.deleteOne({ email: decodedEmail });
+      return res.send(page('✅', 'Already Unsubscribed', "You're already removed from our mailing list. No further action needed."));
     }
 
-    subscriber.isActive = false;
-    await subscriber.save();
-    console.log(`👋 Unsubscribed (GET link): ${decodedEmail}`);
-    notifyUnsubscribe(decodedEmail);
+    await Subscriber.deleteOne({ email: decodedEmail });
+    trackUnsub(); // Track in DailyVisit
 
-    res.send(page('👋', 'Successfully Unsubscribed', "You won't receive any more sunrise forecast emails. We hope to see you back on the beach! 🌅"));
+    console.log(`👋 Unsubscribed + deleted (GET): ${decodedEmail}`);
+
+    res.send(page('👋', 'Successfully Unsubscribed', "You won't receive any more sunrise forecast emails. Your data has been removed. We hope to see you back on the beach! 🌅"));
 
   } catch (error) {
     console.error('Unsubscribe GET error:', error.message);
