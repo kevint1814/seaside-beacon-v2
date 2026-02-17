@@ -1139,9 +1139,9 @@ async function submitSub(email,beach,msgId,btnId) {
 
         card.appendChild(face);
 
-        // Trigger flip
+        // Trigger crossfade
         requestAnimationFrame(() => {
-          card.classList.add('sub-flipped');
+          card.classList.add('sub-success-active');
         });
       }
       const inp=document.getElementById('emailInput'); if(inp)inp.value='';

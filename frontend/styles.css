@@ -85,16 +85,8 @@ html:not(.loading) .nav {
 .sub-form-card {
   position: relative;
   overflow: hidden;
-  transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.sub-form-card.sub-flipped {
-  transform: rotateY(180deg);
-}
-.sub-form-card.sub-flipped > *:not(.sub-success-face) {
-  opacity: 0;
-  pointer-events: none;
-}
+/* Success overlay — fades in over the form */
 .sub-success-face {
   position: absolute;
   inset: 0;
@@ -102,20 +94,26 @@ html:not(.loading) .nav {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  backface-visibility: hidden;
-  transform: rotateY(180deg);
   z-index: 10;
-  opacity: 0;
-  pointer-events: none;
   padding: 32px;
   background: var(--glass-fill);
   backdrop-filter: var(--blur-md);
   -webkit-backdrop-filter: var(--blur-md);
   border-radius: var(--r-xl);
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
 }
-.sub-flipped .sub-success-face {
+.sub-success-active .sub-success-face {
   opacity: 1;
+  transform: scale(1);
   pointer-events: auto;
+}
+.sub-success-active > *:not(.sub-success-face) {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 /* Animated checkmark circle */
@@ -128,7 +126,7 @@ html:not(.loading) .nav {
   justify-content: center;
   margin-bottom: 20px;
   position: relative;
-  animation: successRingPop 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: successRingPop 0.5s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 .success-check-ring::before {
   content: '';
@@ -136,32 +134,32 @@ html:not(.loading) .nav {
   inset: -6px;
   border-radius: 50%;
   background: rgba(52, 211, 153, 0.08);
-  animation: successRingGlow 1.5s 0.6s ease-out both;
+  animation: successRingGlow 1.5s 0.5s ease-out both;
 }
 .success-check-ring svg {
   stroke-dasharray: 30;
   stroke-dashoffset: 30;
-  animation: successCheckDraw 0.4s 0.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: successCheckDraw 0.4s 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 .success-title {
   font-family: var(--ff-display);
-  font-size: clamp(18px, 2.5vw, 22px);
+  font-size: clamp(20px, 2.5vw, 26px);
   color: #34d399;
   margin: 0 0 8px 0;
   font-weight: 400;
   opacity: 0;
   transform: translateY(8px);
-  animation: successTextIn 0.4s 0.8s ease-out forwards;
+  animation: successTextIn 0.4s 0.7s ease-out forwards;
 }
 .success-subtitle {
   font-size: 13px;
   color: var(--t3);
   margin: 0;
   text-align: center;
-  line-height: 1.6;
+  line-height: 1.7;
   opacity: 0;
   transform: translateY(8px);
-  animation: successTextIn 0.4s 0.95s ease-out forwards;
+  animation: successTextIn 0.4s 0.85s ease-out forwards;
 }
 .success-particles {
   position: absolute;
@@ -174,7 +172,7 @@ html:not(.loading) .nav {
   width: 4px; height: 4px;
   border-radius: 50%;
   top: 50%; left: 50%;
-  animation: successParticle 0.8s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: successParticle 0.8s 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
 }
 
@@ -197,17 +195,6 @@ html:not(.loading) .nav {
 @keyframes successParticle {
   0% { opacity: 1; transform: translate(0, 0) scale(1); }
   100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0); }
-}
-.sub-burst {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 80px; height: 80px;
-  margin: -40px 0 0 -40px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(52,211,153,0.4), rgba(52,211,153,0.15) 50%, transparent 70%);
-  pointer-events: none;
-  z-index: 5;
-  animation: subBurst 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
 }
 
 :root {
@@ -2078,7 +2065,6 @@ input, select, textarea { font-family:inherit; }
 .sub-inner {
   max-width:1100px; margin:0 auto;
   display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center;
-  perspective:1200px;
 }
 .sub-heading {
   font-family:var(--ff-display);
@@ -2096,18 +2082,12 @@ input, select, textarea { font-family:inherit; }
   border-radius:var(--r-xl);
   box-shadow:var(--shadow-card);
   position:relative; overflow:hidden;
-  transform-style:preserve-3d;
-  transition:transform 0.6s cubic-bezier(0.34,1.56,0.64,1);
-}
-.sub-form-card.sub-flipped {
-  transform:rotateY(180deg);
 }
 .sub-form-card::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(150deg, rgba(255,255,255,0.1) 0%, transparent 55%);
-  backface-visibility:hidden;
 }
-.sub-form-card > *:not(.sub-success-face) { position:relative; backface-visibility:hidden; }
+.sub-form-card > * { position:relative; }
 
 .form-row { margin-bottom:14px; }
 .form-label {
