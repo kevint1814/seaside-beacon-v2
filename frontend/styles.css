@@ -1405,6 +1405,9 @@ input, select, textarea { font-family:inherit; }
   margin-top: 28px;
   padding-top: 24px;
   border-top: 1px solid var(--glass-border);
+  text-align: center;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 /* ── Community share ── */
