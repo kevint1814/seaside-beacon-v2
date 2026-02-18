@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initShare();
   initScrollReveal();
   initMetrics();
+  initCinemaMode();
 });
 
 // ═════════════════════════════════════════════════════
@@ -133,84 +134,141 @@ function initSunriseCanvas() {
    *   0.70 = early morning (warm blue emerging)
    *   0.85 = morning established (vibrant warm blue sky)
    *   1.00 = settled morning (deep sky blue, still warm)
-   *
-   * KEY: Sky keeps evolving. The glass UI reads against an
-   * increasingly blue-warm sky as the user scrolls deeper.
    */
 
-  // Zenith (top of sky) — deep indigo → rich morning blue
+  // Zenith — punchier purples, warm-tinted blues that stay rich
   const zenithStops = [
-    [0.0,  [8, 6, 22]],        // deep night indigo
-    [0.12, [14, 10, 38]],      // barely lighter
-    [0.25, [30, 20, 62]],      // twilight deep purple - vivid
-    [0.38, [52, 32, 82]],      // twilight violet - rich magenta tint
-    [0.50, [62, 40, 72]],      // muted purple dawn - warmer
-    [0.62, [48, 65, 108]],     // blue breaking through - more vivid
-    [0.75, [42, 82, 128]],     // clear morning blue - vibrant
-    [0.88, [38, 88, 142]],     // bright sky blue
-    [1.0,  [30, 75, 128]]      // settled: vivid warm blue
+    [0.0,  [8, 6, 22]],
+    [0.10, [16, 12, 42]],
+    [0.22, [38, 24, 72]],
+    [0.34, [62, 38, 96]],
+    [0.44, [72, 45, 88]],
+    [0.56, [48, 62, 105]],
+    [0.68, [38, 72, 118]],
+    [0.80, [35, 68, 115]],
+    [0.90, [32, 62, 108]],
+    [1.0,  [28, 55, 98]]
   ];
 
-  // Mid-sky — warm rose blooms vivid then evolves
+  // Mid-sky — richer magentas, warm blue that holds colour
   const midStops = [
     [0.0,  [12, 10, 35]],
-    [0.15, [28, 20, 60]],
-    [0.28, [75, 35, 78]],      // richer purple-magenta
-    [0.38, [128, 52, 72]],     // magenta-rose transition
-    [0.46, [168, 82, 62]],     // warm rose peak - punchier vivid
-    [0.54, [145, 72, 58]],     // rose lingers - richer
-    [0.65, [92, 62, 72]],      // fading warm - more colour retained
-    [0.78, [52, 65, 92]],      // blue-grey morning
-    [0.90, [42, 70, 108]],     // morning blue - brighter
-    [1.0,  [32, 58, 92]]       // settled
+    [0.12, [32, 22, 68]],
+    [0.24, [88, 40, 88]],
+    [0.34, [148, 58, 78]],
+    [0.44, [192, 92, 68]],
+    [0.52, [168, 80, 62]],
+    [0.62, [108, 68, 78]],
+    [0.74, [62, 58, 88]],
+    [0.86, [45, 52, 82]],
+    [1.0,  [35, 48, 75]]
   ];
 
-  // Horizon — intense amber fire → golden → warm afterglow
+  // Horizon — vivid fire, amber lingers to the very end
   const horizonStops = [
-    [0.0,  [65, 28, 18]],      // warmer ember
-    [0.12, [118, 48, 22]],     // deep fire - more intensity
-    [0.25, [195, 78, 28]],     // building amber
-    [0.35, [235, 108, 38]],    // amber fire - brighter
-    [0.45, [255, 185, 72]],    // peak golden - vivid punch
-    [0.55, [255, 168, 65]],    // golden lingers - bright
-    [0.65, [218, 138, 68]],    // warm afterglow - richer
-    [0.78, [148, 98, 58]],     // fading amber with colour
-    [0.90, [82, 65, 50]],      // gentle ember
-    [1.0,  [48, 42, 36]]       // settled
+    [0.0,  [75, 32, 20]],
+    [0.10, [138, 55, 24]],
+    [0.22, [218, 88, 32]],
+    [0.32, [252, 125, 42]],
+    [0.42, [255, 175, 62]],
+    [0.52, [255, 158, 55]],
+    [0.62, [218, 118, 48]],
+    [0.74, [165, 92, 45]],
+    [0.86, [118, 68, 38]],
+    [1.0,  [82, 52, 32]]
   ];
 
-  // Glow color stops — more intense
+  // Glow — amber-orange, stays alive through the full page
   const glowStops = [
-    [0.0,  [235, 135, 62]],    // warmer start
-    [0.18, [255, 165, 62]],    // brighter
-    [0.32, [255, 198, 72]],    // building golden
-    [0.42, [255, 222, 88]],    // intense golden - vivid peak
-    [0.54, [255, 200, 88]],    // golden lingers
-    [0.68, [235, 168, 82]],    // warm afterglow - richer
-    [0.80, [172, 118, 65]],    // fading
-    [0.92, [112, 78, 50]],
-    [1.0,  [65, 50, 40]]       // warm dim
+    [0.0,  [248, 138, 58]],
+    [0.15, [255, 168, 62]],
+    [0.28, [255, 195, 72]],
+    [0.40, [255, 210, 82]],
+    [0.52, [255, 188, 68]],
+    [0.65, [245, 158, 62]],
+    [0.78, [208, 128, 58]],
+    [0.90, [158, 95, 52]],
+    [1.0,  [115, 72, 42]]
   ];
 
-  // Sea — more colour in the water reflections
+  // Sea — warm reflections held, deeper but never dead
   const seaStops = [
-    [0.0,  [8, 6, 16]],        // near black
-    [0.18, [16, 14, 28]],
-    [0.32, [38, 22, 32]],      // warm purple hint
-    [0.42, [55, 38, 38]],      // peak warm sea - richer visible
-    [0.54, [52, 35, 40]],      // holding warmth
-    [0.68, [42, 38, 48]],      // cooling with colour
-    [0.82, [34, 42, 52]],      // blue hint in water
-    [1.0,  [26, 35, 45]]       // settled: teal-warm
+    [0.0,  [8, 6, 16]],
+    [0.15, [18, 15, 30]],
+    [0.28, [45, 25, 35]],
+    [0.40, [65, 42, 42]],
+    [0.52, [58, 40, 45]],
+    [0.65, [45, 38, 48]],
+    [0.80, [35, 35, 48]],
+    [1.0,  [25, 28, 40]]
+  ];
+
+  // Cloud color — golden lit during peak, warm-tinted later (not grey)
+  const cloudColorStops = [
+    [0,    [140, 72, 42]],
+    [0.25, [218, 128, 55]],
+    [0.40, [255, 210, 115]],
+    [0.55, [248, 195, 108]],
+    [0.70, [178, 138, 92]],
+    [0.85, [118, 98, 78]],
+    [1.0,  [82, 72, 62]]
+  ];
+
+  // Volumetric cloud configs — wisps + puffy cumulus
+  const wispConfigs = [
+    { yBase: 0.35, thick: 5,  speed: 0.000065, phase: 0.0,  wMul: 0.32 },
+    { yBase: 0.40, thick: 7,  speed: 0.000050, phase: 0.9,  wMul: 0.26 },
+    { yBase: 0.45, thick: 9,  speed: 0.000080, phase: 1.6,  wMul: 0.30 },
+    { yBase: 0.50, thick: 11, speed: 0.000060, phase: 0.3,  wMul: 0.38 },
+    { yBase: 0.54, thick: 9,  speed: 0.000095, phase: 2.1,  wMul: 0.28 },
+    { yBase: 0.58, thick: 14, speed: 0.000045, phase: 1.1,  wMul: 0.42 },
+    { yBase: 0.62, thick: 16, speed: 0.000038, phase: 0.6,  wMul: 0.45 },
+    { yBase: 0.66, thick: 12, speed: 0.000072, phase: 1.8,  wMul: 0.35 },
+  ];
+
+  // Puffy cloud bank configs — larger, softer, appear mid-sunrise
+  const puffConfigs = [
+    { cx: 0.18, cy: 0.28, rx: 0.12, ry: 0.025, phase: 0.0,  speed: 0.000025 },
+    { cx: 0.72, cy: 0.32, rx: 0.14, ry: 0.030, phase: 1.2,  speed: 0.000020 },
+    { cx: 0.42, cy: 0.22, rx: 0.10, ry: 0.020, phase: 2.4,  speed: 0.000030 },
+    { cx: 0.85, cy: 0.26, rx: 0.09, ry: 0.022, phase: 0.7,  speed: 0.000028 },
+    { cx: 0.28, cy: 0.38, rx: 0.11, ry: 0.028, phase: 1.8,  speed: 0.000022 },
+  ];
+
+  // 24 rays for denser god-ray fan
+  const rayConfigs = [
+    { angle: -0.68, width: 12, lenMul: 0.70 },
+    { angle: -0.58, width: 22, lenMul: 0.88 },
+    { angle: -0.50, width: 34, lenMul: 1.05 },
+    { angle: -0.42, width: 16, lenMul: 0.78 },
+    { angle: -0.35, width: 40, lenMul: 1.12 },
+    { angle: -0.28, width: 20, lenMul: 0.85 },
+    { angle: -0.22, width: 46, lenMul: 1.18 },
+    { angle: -0.15, width: 26, lenMul: 0.92 },
+    { angle: -0.09, width: 50, lenMul: 1.20 },
+    { angle: -0.03, width: 18, lenMul: 0.82 },
+    { angle:  0.03, width: 48, lenMul: 1.18 },
+    { angle:  0.09, width: 22, lenMul: 0.88 },
+    { angle:  0.15, width: 44, lenMul: 1.15 },
+    { angle:  0.22, width: 28, lenMul: 0.95 },
+    { angle:  0.28, width: 38, lenMul: 1.10 },
+    { angle:  0.35, width: 14, lenMul: 0.75 },
+    { angle:  0.42, width: 32, lenMul: 1.02 },
+    { angle:  0.50, width: 24, lenMul: 0.90 },
+    { angle:  0.58, width: 16, lenMul: 0.78 },
+    { angle:  0.65, width: 28, lenMul: 0.85 },
+    { angle:  0.72, width: 10, lenMul: 0.68 },
+    { angle: -0.45, width: 8,  lenMul: 0.60 },
+    { angle:  0.48, width: 10, lenMul: 0.65 },
+    { angle: -0.02, width: 55, lenMul: 1.22 },
   ];
 
   function draw(t) {
     const sp = ease(scrollProgress);
 
-    // Small breathing still present, but subtler as scroll progresses
-    const breathAmp = 1 - sp * 0.8; // breathing fades as sunrise progresses
+    const breathAmp = 1 - sp * 0.8;
     const breath = 0.5 + 0.5 * Math.sin(t * 0.000022);
-    const warmth = breath * breathAmp * 0.15; // very subtle pulsing
+    const warmth = breath * breathAmp * 0.18;
 
     // ── Sky gradient ──────────────────────────
     const zenith  = multiLerp(zenithStops, sp);
@@ -218,96 +276,157 @@ function initSunriseCanvas() {
     const horizon = multiLerp(horizonStops, sp);
 
     const sky = ctx.createLinearGradient(0, 0, 0, H * 0.75);
+    // 10 stops for butter-smooth pre-dawn blending — no visible banding
+    const zm1 = lerpColor(zenith, mid, 0.18);
+    const zm2 = lerpColor(zenith, mid, 0.42);
+    const zm3 = lerpColor(zenith, mid, 0.68);
+    const mh1 = lerpColor(mid, horizon, 0.25);
+    const mh2 = lerpColor(mid, horizon, 0.55);
+    const mh3 = lerpColor(mid, horizon, 0.80);
     sky.addColorStop(0,    `rgb(${zenith[0]},${zenith[1]},${zenith[2]})`);
-    sky.addColorStop(0.25, `rgb(${Math.round(zenith[0]*0.7+mid[0]*0.3)},${Math.round(zenith[1]*0.7+mid[1]*0.3)},${Math.round(zenith[2]*0.7+mid[2]*0.3)})`);
-    sky.addColorStop(0.5,  `rgb(${mid[0]},${mid[1]},${mid[2]})`);
-    sky.addColorStop(0.72, `rgb(${Math.round(mid[0]*0.4+horizon[0]*0.6)},${Math.round(mid[1]*0.4+horizon[1]*0.6)},${Math.round(mid[2]*0.4+horizon[2]*0.6)})`);
-    sky.addColorStop(0.88, `rgb(${Math.round(horizon[0]*0.8+mid[0]*0.2)},${Math.round(horizon[1]*0.8+mid[1]*0.2)},${Math.round(horizon[2]*0.8+mid[2]*0.2)})`);
+    sky.addColorStop(0.10, `rgb(${zm1[0]},${zm1[1]},${zm1[2]})`);
+    sky.addColorStop(0.22, `rgb(${zm2[0]},${zm2[1]},${zm2[2]})`);
+    sky.addColorStop(0.36, `rgb(${zm3[0]},${zm3[1]},${zm3[2]})`);
+    sky.addColorStop(0.48, `rgb(${mid[0]},${mid[1]},${mid[2]})`);
+    sky.addColorStop(0.58, `rgb(${mh1[0]},${mh1[1]},${mh1[2]})`);
+    sky.addColorStop(0.70, `rgb(${mh2[0]},${mh2[1]},${mh2[2]})`);
+    sky.addColorStop(0.82, `rgb(${mh3[0]},${mh3[1]},${mh3[2]})`);
+    sky.addColorStop(0.92, `rgb(${Math.round(horizon[0]*0.92+mid[0]*0.08)},${Math.round(horizon[1]*0.92+mid[1]*0.08)},${Math.round(horizon[2]*0.92+mid[2]*0.08)})`);
     sky.addColorStop(1,    `rgb(${horizon[0]},${horizon[1]},${horizon[2]})`);
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, H * 0.75);
 
-    // ── Horizon glow — intensifies then fades ──
+    // ── Horizon glow — bigger, brighter ──
     const gc = multiLerp(glowStops, sp);
-    const glowPeak = sp < 0.5 ? sp * 2 : Math.max(0, 2 - sp * 2.2);
-    const glowIntensity = 0.15 + glowPeak * 0.50 + warmth;
+    const glowPeak = sp < 0.5 ? sp * 2 : Math.max(0.15, 2 - sp * 2.1);
+    const glowIntensity = 0.18 + glowPeak * 0.58 + warmth;
     const horizonY = H * 0.72;
 
-    const glowR = ctx.createRadialGradient(W*0.5, horizonY, 0, W*0.5, horizonY, W * (0.5 + sp*0.3));
+    const glowR = ctx.createRadialGradient(W*0.5, horizonY, 0, W*0.5, horizonY, W * (0.55 + sp*0.35));
     glowR.addColorStop(0,    `rgba(${gc[0]},${gc[1]},${gc[2]},${glowIntensity})`);
-    glowR.addColorStop(0.22, `rgba(${gc[0]},${gc[1]},${gc[2]},${glowIntensity*0.65})`);
-    glowR.addColorStop(0.48, `rgba(${Math.max(0,gc[0]-40)},${Math.max(0,gc[1]-30)},${Math.max(0,gc[2]-15)},${glowIntensity*0.28})`);
-    glowR.addColorStop(0.75, `rgba(${Math.max(0,gc[0]-70)},${Math.max(0,gc[1]-50)},${Math.max(0,gc[2]-25)},${glowIntensity*0.08})`);
+    glowR.addColorStop(0.18, `rgba(${gc[0]},${gc[1]},${gc[2]},${glowIntensity*0.68})`);
+    glowR.addColorStop(0.42, `rgba(${Math.max(0,gc[0]-35)},${Math.max(0,gc[1]-25)},${Math.max(0,gc[2]-12)},${glowIntensity*0.32})`);
+    glowR.addColorStop(0.70, `rgba(${Math.max(0,gc[0]-65)},${Math.max(0,gc[1]-45)},${Math.max(0,gc[2]-22)},${glowIntensity*0.10})`);
     glowR.addColorStop(1,    `rgba(0,0,0,0)`);
     ctx.fillStyle = glowR;
     ctx.fillRect(0, 0, W, H * 0.75);
 
-    // ── Warm atmospheric wash — prevents cold sky at any scroll ──
-    // Faint warm overlay that covers the entire sky, strongest at mid-phase
-    if (sp > 0.2) {
-      const washPeak = sp < 0.55 ? (sp - 0.2) / 0.35 : Math.max(0.15, 1 - (sp - 0.55) / 0.6);
-      const washStr = washPeak * 0.07;
-      const wash = ctx.createRadialGradient(W*0.5, horizonY * 0.6, 0, W*0.5, horizonY * 0.6, W * 0.85);
-      wash.addColorStop(0,   `rgba(180,110,55,${washStr})`);
-      wash.addColorStop(0.5, `rgba(140,75,40,${washStr * 0.5})`);
+    // ── Warm atmospheric wash — stronger, wider ──
+    if (sp > 0.15) {
+      const washPeak = sp < 0.50 ? (sp - 0.15) / 0.35 : Math.max(0.12, 1 - (sp - 0.50) / 0.55);
+      const washStr = washPeak * 0.10;
+      const wash = ctx.createRadialGradient(W*0.5, horizonY * 0.55, 0, W*0.5, horizonY * 0.55, W * 0.90);
+      wash.addColorStop(0,   `rgba(195,118,58,${washStr})`);
+      wash.addColorStop(0.4, `rgba(155,82,42,${washStr * 0.5})`);
       wash.addColorStop(1,   `rgba(0,0,0,0)`);
       ctx.fillStyle = wash;
       ctx.fillRect(0, 0, W, H * 0.75);
     }
 
-    // ── Sun disc (appears after 20% scroll) — BIG, layered ──
-    if (sp > 0.20) {
-      const sunProgress = Math.min(1, (sp - 0.20) / 0.60); // 0→1 over 20-80% scroll
-      const sunEased = ease(sunProgress);
-      const sunY = horizonY - sunEased * H * 0.35; // rises much higher
-      const sunR = 38 + sunEased * 32; // much bigger disc
-      const sunAlpha = Math.min(1, sunProgress * 2.0);
+    // ── Puffy volumetric clouds — fade in from ~25%, lit by sun ──
+    if (sp > 0.25) {
+      const cloudFade = Math.min(1, (sp - 0.25) / 0.25);
+      const cCol = multiLerp(cloudColorStops, sp);
+      // Later in sunrise, clouds get a blue-white top-light
+      const blueBlend = Math.max(0, (sp - 0.65) / 0.35);
+      const cR = Math.round(cCol[0] + (200 - cCol[0]) * blueBlend * 0.4);
+      const cG = Math.round(cCol[1] + (210 - cCol[1]) * blueBlend * 0.4);
+      const cB = Math.round(cCol[2] + (225 - cCol[2]) * blueBlend * 0.5);
 
-      // Layer 1: atmospheric haze — enormous soft warm wash
-      const hazeR = sunR * 20;
+      for (let p = 0; p < puffConfigs.length; p++) {
+        const pc = puffConfigs[p];
+        const drift = (t * pc.speed + pc.phase) % 2.0 - 0.3;
+        const px = (pc.cx + drift) * W;
+        const py = pc.cy * H * 0.75;
+        const rx = pc.rx * W;
+        const ry = pc.ry * H;
+        // Distance from sun center affects brightness
+        const distSun = Math.abs((pc.cx + drift) - 0.5);
+        const litFactor = Math.max(0.3, 1 - distSun * 1.5);
+        const pAlpha = cloudFade * 0.12 * litFactor;
+
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.scale(1, ry / rx);
+        const pGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+        pGrad.addColorStop(0,   `rgba(${cR},${cG},${cB},${pAlpha * 1.2})`);
+        pGrad.addColorStop(0.3, `rgba(${cR},${cG},${cB},${pAlpha * 0.8})`);
+        pGrad.addColorStop(0.6, `rgba(${cCol[0]},${cCol[1]},${cCol[2]},${pAlpha * 0.35})`);
+        pGrad.addColorStop(1,   `rgba(0,0,0,0)`);
+        ctx.fillStyle = pGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, rx, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // ── Sun disc (appears after 18% scroll) — bigger, more layered ──
+    if (sp > 0.18) {
+      const sunProgress = Math.min(1, (sp - 0.18) / 0.58);
+      const sunEased = ease(sunProgress);
+      const sunY = horizonY - sunEased * H * 0.38;
+      const sunR = 42 + sunEased * 38;
+      const sunAlpha = Math.min(1, sunProgress * 2.2);
+
+      // Layer 1: atmospheric haze — enormous
+      const hazeR = sunR * 22;
       const haze = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, hazeR);
-      haze.addColorStop(0,    `rgba(255,225,148,${sunAlpha * 0.22})`);
-      haze.addColorStop(0.12, `rgba(255,200,118,${sunAlpha * 0.14})`);
-      haze.addColorStop(0.3,  `rgba(255,172,85,${sunAlpha * 0.06})`);
-      haze.addColorStop(0.55, `rgba(255,150,60,${sunAlpha * 0.025})`);
-      haze.addColorStop(1,    `rgba(255,138,48,0)`);
+      haze.addColorStop(0,    `rgba(255,218,138,${sunAlpha * 0.26})`);
+      haze.addColorStop(0.10, `rgba(255,195,108,${sunAlpha * 0.18})`);
+      haze.addColorStop(0.28, `rgba(255,168,78,${sunAlpha * 0.08})`);
+      haze.addColorStop(0.50, `rgba(255,148,58,${sunAlpha * 0.03})`);
+      haze.addColorStop(1,    `rgba(255,132,42,0)`);
       ctx.fillStyle = haze;
       ctx.fillRect(0, 0, W, H);
 
-      // Layer 2: far corona
-      const coronaR = sunR * 7;
-      const corona = ctx.createRadialGradient(W*0.5, sunY, sunR * 0.5, W*0.5, sunY, coronaR);
-      corona.addColorStop(0,   `rgba(255,235,165,${sunAlpha * 0.48})`);
-      corona.addColorStop(0.2, `rgba(255,215,125,${sunAlpha * 0.28})`);
-      corona.addColorStop(0.45,`rgba(255,185,92,${sunAlpha * 0.12})`);
-      corona.addColorStop(1,   `rgba(255,158,68,0)`);
+      // Layer 2: far corona — wider
+      const coronaR = sunR * 8;
+      const corona = ctx.createRadialGradient(W*0.5, sunY, sunR * 0.4, W*0.5, sunY, coronaR);
+      corona.addColorStop(0,   `rgba(255,232,158,${sunAlpha * 0.55})`);
+      corona.addColorStop(0.18,`rgba(255,205,115,${sunAlpha * 0.32})`);
+      corona.addColorStop(0.42,`rgba(255,175,82,${sunAlpha * 0.14})`);
+      corona.addColorStop(1,   `rgba(255,152,62,0)`);
       ctx.fillStyle = corona;
       ctx.beginPath();
       ctx.arc(W*0.5, sunY, coronaR, 0, Math.PI*2);
       ctx.fill();
 
-      // Layer 3: inner bright glow (tight around disc)
-      const innerGlow = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, sunR * 2.8);
-      innerGlow.addColorStop(0,   `rgba(255,252,235,${sunAlpha * 0.68})`);
-      innerGlow.addColorStop(0.25,`rgba(255,240,185,${sunAlpha * 0.40})`);
-      innerGlow.addColorStop(0.55,`rgba(255,220,135,${sunAlpha * 0.15})`);
-      innerGlow.addColorStop(1,   `rgba(255,198,98,0)`);
+      // Layer 3: inner glow
+      const innerGlow = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, sunR * 3);
+      innerGlow.addColorStop(0,   `rgba(255,252,235,${sunAlpha * 0.72})`);
+      innerGlow.addColorStop(0.22,`rgba(255,238,178,${sunAlpha * 0.45})`);
+      innerGlow.addColorStop(0.50,`rgba(255,215,125,${sunAlpha * 0.18})`);
+      innerGlow.addColorStop(1,   `rgba(255,192,88,0)`);
       ctx.fillStyle = innerGlow;
       ctx.beginPath();
-      ctx.arc(W*0.5, sunY, sunR * 2.8, 0, Math.PI*2);
+      ctx.arc(W*0.5, sunY, sunR * 3, 0, Math.PI*2);
       ctx.fill();
 
-      // Layer 4: sun disc body — hot white center, amber edge
+      // Layer 4: sun disc — hot white center, amber edge
       const sunDisc = ctx.createRadialGradient(W*0.5, sunY, 0, W*0.5, sunY, sunR);
       sunDisc.addColorStop(0,    `rgba(255,255,248,${sunAlpha * 0.99})`);
-      sunDisc.addColorStop(0.3,  `rgba(255,248,218,${sunAlpha * 0.97})`);
-      sunDisc.addColorStop(0.6,  `rgba(255,230,155,${sunAlpha * 0.92})`);
-      sunDisc.addColorStop(0.82, `rgba(255,205,108,${sunAlpha * 0.68})`);
-      sunDisc.addColorStop(1,    `rgba(255,180,70,${sunAlpha * 0.20})`);
+      sunDisc.addColorStop(0.25, `rgba(255,248,215,${sunAlpha * 0.97})`);
+      sunDisc.addColorStop(0.55, `rgba(255,225,148,${sunAlpha * 0.93})`);
+      sunDisc.addColorStop(0.80, `rgba(255,195,98,${sunAlpha * 0.72})`);
+      sunDisc.addColorStop(1,    `rgba(255,172,65,${sunAlpha * 0.22})`);
       ctx.fillStyle = sunDisc;
       ctx.beginPath();
       ctx.arc(W*0.5, sunY, sunR, 0, Math.PI*2);
       ctx.fill();
+
+      // Layer 5: lens flare streak — amber tint
+      if (sunAlpha > 0.3) {
+        const flareStr = (sunAlpha - 0.3) * 0.12;
+        const flareGrad = ctx.createLinearGradient(W*0.5 - sunR*6, sunY, W*0.5 + sunR*6, sunY);
+        flareGrad.addColorStop(0,   `rgba(255,195,118,0)`);
+        flareGrad.addColorStop(0.3, `rgba(255,215,148,${flareStr * 0.3})`);
+        flareGrad.addColorStop(0.5, `rgba(255,238,192,${flareStr})`);
+        flareGrad.addColorStop(0.7, `rgba(255,215,148,${flareStr * 0.3})`);
+        flareGrad.addColorStop(1,   `rgba(255,195,118,0)`);
+        ctx.fillStyle = flareGrad;
+        ctx.fillRect(W*0.5 - sunR*6, sunY - 2, sunR*12, 4);
+      }
     }
 
     // ── Sea ───────────────────────────────────
@@ -318,25 +437,23 @@ function initSunriseCanvas() {
     ctx.fillStyle = seaGrad;
     ctx.fillRect(0, H*0.72, W, H * 0.28);
 
-    // ── Sea reflection — soft radial glow, no hard edges ─────────
+    // ── Sea reflection — bigger, brighter ─────────
     const reflC = multiLerp(glowStops, sp);
-    const reflIntensity = 0.06 + glowPeak * 0.24 + warmth;
+    const reflIntensity = 0.08 + glowPeak * 0.30 + warmth;
     const refX = W * 0.5;
-    const reflW = W * (0.10 + sp * 0.14);
+    const reflW = W * (0.12 + sp * 0.18);
     const seaTop = H * 0.72;
     const seaH = H * 0.28;
 
-    // Primary reflection: radial ellipse centered at horizon, fading in all directions
-    // Using save/restore + scale to create an elliptical radial gradient
     ctx.save();
     ctx.translate(refX, seaTop);
-    ctx.scale(1, seaH / reflW); // squash vertically to make an ellipse
+    ctx.scale(1, seaH / reflW);
     const reflRadial = ctx.createRadialGradient(0, 0, 0, 0, 0, reflW);
-    reflRadial.addColorStop(0,    `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.9})`);
-    reflRadial.addColorStop(0.15, `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.65})`);
-    reflRadial.addColorStop(0.35, `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.35})`);
-    reflRadial.addColorStop(0.6,  `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.12})`);
-    reflRadial.addColorStop(0.85, `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.03})`);
+    reflRadial.addColorStop(0,    `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.95})`);
+    reflRadial.addColorStop(0.12, `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.70})`);
+    reflRadial.addColorStop(0.32, `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.38})`);
+    reflRadial.addColorStop(0.58, `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.14})`);
+    reflRadial.addColorStop(0.82, `rgba(${reflC[0]},${reflC[1]},${reflC[2]},${reflIntensity * 0.04})`);
     reflRadial.addColorStop(1,    'rgba(0,0,0,0)');
     ctx.fillStyle = reflRadial;
     ctx.beginPath();
@@ -344,21 +461,21 @@ function initSunriseCanvas() {
     ctx.fill();
     ctx.restore();
 
-    // Bright horizon kiss — radial glow right where sun meets water
-    if (sp > 0.28) {
-      const coreP = Math.min(1, (sp - 0.28) / 0.3);
-      const coreFade = sp > 0.75 ? Math.max(0, 1 - (sp - 0.75) / 0.2) : 1;
-      const coreStr = coreP * coreFade * 0.3;
+    // Bright horizon kiss
+    if (sp > 0.25) {
+      const coreP = Math.min(1, (sp - 0.25) / 0.28);
+      const coreFade = sp > 0.72 ? Math.max(0, 1 - (sp - 0.72) / 0.22) : 1;
+      const coreStr = coreP * coreFade * 0.35;
       if (coreStr > 0.01) {
-        const coreRx = reflW * 0.7;
-        const coreRy = H * 0.06;
+        const coreRx = reflW * 0.75;
+        const coreRy = H * 0.07;
         ctx.save();
         ctx.translate(refX, seaTop + 2);
         ctx.scale(1, coreRy / coreRx);
         const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, coreRx);
-        coreGrad.addColorStop(0,   `rgba(255,240,180,${coreStr})`);
-        coreGrad.addColorStop(0.3, `rgba(255,215,130,${coreStr * 0.5})`);
-        coreGrad.addColorStop(0.7, `rgba(255,190,90,${coreStr * 0.12})`);
+        coreGrad.addColorStop(0,   `rgba(255,245,190,${coreStr})`);
+        coreGrad.addColorStop(0.28,`rgba(255,222,140,${coreStr * 0.5})`);
+        coreGrad.addColorStop(0.65,`rgba(255,198,95,${coreStr * 0.12})`);
         coreGrad.addColorStop(1,   'rgba(0,0,0,0)');
         ctx.fillStyle = coreGrad;
         ctx.beginPath();
@@ -368,26 +485,25 @@ function initSunriseCanvas() {
       }
     }
 
-    // Scattered shimmer fragments — small soft ellipses, not rectangles
-    if (sp > 0.22) {
-      const shimmerAlpha = Math.min(1, (sp - 0.22) / 0.25) * glowPeak;
-      for (let s = 0; s < 18; s++) {
-        const sx = refX + (pseudoRand(s*31+5) - 0.5) * reflW * 2.8;
-        const sy = H * (0.735 + pseudoRand(s*17+3) * 0.20);
-        const sw = 4 + pseudoRand(s*23) * 22; // half-width
-        const sh = 1 + pseudoRand(s*11) * 1.5; // half-height
-        const flickerSpeed = 0.0015 + pseudoRand(s*7) * 0.004;
+    // Scattered shimmer fragments — more of them
+    if (sp > 0.20) {
+      const shimmerAlpha = Math.min(1, (sp - 0.20) / 0.22) * glowPeak;
+      for (let s = 0; s < 26; s++) {
+        const sx = refX + (pseudoRand(s*31+5) - 0.5) * reflW * 3.2;
+        const sy = H * (0.735 + pseudoRand(s*17+3) * 0.22);
+        const sw = 5 + pseudoRand(s*23) * 28;
+        const sh = 1 + pseudoRand(s*11) * 2;
+        const flickerSpeed = 0.0012 + pseudoRand(s*7) * 0.005;
         const flicker = 0.2 + 0.8 * Math.abs(Math.sin(t * flickerSpeed + s * 2.1));
         const distFade = 1 - (sy - H*0.73) / (H*0.24);
-        const sa = shimmerAlpha * flicker * 0.12 * Math.max(0, distFade);
+        const sa = shimmerAlpha * flicker * 0.14 * Math.max(0, distFade);
         if (sa < 0.004) continue;
-        // Soft elliptical shimmer using radial gradient
         ctx.save();
         ctx.translate(sx, sy);
         ctx.scale(1, sh / sw);
         const shimGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, sw);
-        shimGrad.addColorStop(0,   `rgba(${reflC[0]},${Math.min(255,reflC[1]+35)},${Math.min(255,reflC[2]+25)},${sa})`);
-        shimGrad.addColorStop(0.5, `rgba(${reflC[0]},${Math.min(255,reflC[1]+20)},${Math.min(255,reflC[2]+15)},${sa * 0.4})`);
+        shimGrad.addColorStop(0,   `rgba(${reflC[0]},${Math.min(255,reflC[1]+40)},${Math.min(255,reflC[2]+30)},${sa})`);
+        shimGrad.addColorStop(0.45,`rgba(${reflC[0]},${Math.min(255,reflC[1]+22)},${Math.min(255,reflC[2]+18)},${sa * 0.4})`);
         shimGrad.addColorStop(1,   'rgba(0,0,0,0)');
         ctx.fillStyle = shimGrad;
         ctx.beginPath();
@@ -397,16 +513,16 @@ function initSunriseCanvas() {
       }
     }
 
-    // ── Stars — fade out as sunrise progresses, parallax depth ──
-    const starAlpha = Math.max(0, 1 - sp * 2.2); // gone by ~45% scroll
-    const parallaxOffset = scrollProgress * H * 0.08; // stars drift up slower than scroll
+    // ── Stars ──
+    const starAlpha = Math.max(0, 1 - sp * 2.2);
+    const parallaxOffset = scrollProgress * H * 0.08;
     if (starAlpha > 0.01) {
       STARS.forEach(s => {
         const twinkle = 0.5 + 0.5 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
         const a = starAlpha * s.brightness * (0.4 + twinkle * 0.6);
         if (a < 0.01) return;
-        const sy = s.y * H - parallaxOffset * (0.3 + s.brightness * 0.7); // deeper stars move less
-        if (sy < -5 || sy > H * 0.7) return; // skip off-screen
+        const sy = s.y * H - parallaxOffset * (0.3 + s.brightness * 0.7);
+        if (sy < -5 || sy > H * 0.7) return;
         ctx.beginPath();
         ctx.arc(s.x * W, sy, s.r, 0, Math.PI*2);
         ctx.fillStyle = `rgba(228,224,255,${a})`;
@@ -414,89 +530,57 @@ function initSunriseCanvas() {
       });
     }
 
-    // ── Cloud wisps — brighten during golden hour, stay warm ──
-    const cloudBright = sp < 0.3 ? sp / 0.3 : sp < 0.65 ? 1 : 1 - (sp-0.65)/0.35;
-    const cloudConfigs = [
-      { yBase: 0.42, thick: 6,  speed: 0.00008, phase: 0.0,  wMul: 0.35 }, // high wisp
-      { yBase: 0.48, thick: 8,  speed: 0.00006, phase: 0.8,  wMul: 0.28 }, // high wisp
-      { yBase: 0.53, thick: 10, speed: 0.00010, phase: 1.5,  wMul: 0.32 },
-      { yBase: 0.57, thick: 12, speed: 0.00007, phase: 0.4,  wMul: 0.40 },
-      { yBase: 0.61, thick: 10, speed: 0.00012, phase: 2.2,  wMul: 0.30 },
-      { yBase: 0.65, thick: 14, speed: 0.00005, phase: 1.0,  wMul: 0.38 }, // near horizon — thickest
-    ];
-    const cloudColorStops = [
-      [0, [160, 85, 50]], [0.35, [220, 140, 65]], [0.5, [245, 195, 105]],
-      [0.7, [200, 140, 80]], [0.9, [100, 70, 50]], [1, [55, 40, 32]]
-    ];
+    // ── Cloud wisps — 8 layers, brighter ──
+    const cloudBright = sp < 0.28 ? sp / 0.28 : sp < 0.62 ? 1 : 1 - (sp-0.62)/0.38;
     const cloudColor = multiLerp(cloudColorStops, sp);
 
-    for (let c = 0; c < cloudConfigs.length; c++) {
-      const cc = cloudConfigs[c];
+    for (let c = 0; c < wispConfigs.length; c++) {
+      const cc = wispConfigs[c];
       const cy  = H * cc.yBase;
-      const cwx = (t * cc.speed + cc.phase) % 1.4 - 0.2;
+      const cwx = (t * cc.speed + cc.phase) % 1.5 - 0.25;
       const cw  = W * (cc.wMul + pseudoRand(c*7) * 0.15);
-      const distFromHorizon = 1 - Math.abs(cc.yBase - 0.60) / 0.20; // brightest near horizon
-      const cAlpha = (0.015 + cloudBright * 0.09) * Math.max(0.3, distFromHorizon);
+      const distFromHorizon = 1 - Math.abs(cc.yBase - 0.58) / 0.25;
+      const cAlpha = (0.018 + cloudBright * 0.12) * Math.max(0.25, distFromHorizon);
 
       const cGrad = ctx.createLinearGradient(cwx*W, 0, cwx*W + cw, 0);
-      cGrad.addColorStop(0,   'rgba(0,0,0,0)');
-      cGrad.addColorStop(0.15, `rgba(${cloudColor[0]},${cloudColor[1]},${cloudColor[2]},${cAlpha * 0.4})`);
-      cGrad.addColorStop(0.4, `rgba(${cloudColor[0]},${cloudColor[1]},${cloudColor[2]},${cAlpha})`);
-      cGrad.addColorStop(0.6, `rgba(${cloudColor[0]},${cloudColor[1]},${cloudColor[2]},${cAlpha * 0.85})`);
-      cGrad.addColorStop(0.85, `rgba(${cloudColor[0]},${cloudColor[1]},${cloudColor[2]},${cAlpha * 0.3})`);
-      cGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      cGrad.addColorStop(0,    'rgba(0,0,0,0)');
+      cGrad.addColorStop(0.12, `rgba(${cloudColor[0]},${cloudColor[1]},${cloudColor[2]},${cAlpha * 0.35})`);
+      cGrad.addColorStop(0.38, `rgba(${cloudColor[0]},${cloudColor[1]},${cloudColor[2]},${cAlpha})`);
+      cGrad.addColorStop(0.62, `rgba(${cloudColor[0]},${cloudColor[1]},${cloudColor[2]},${cAlpha * 0.82})`);
+      cGrad.addColorStop(0.88, `rgba(${cloudColor[0]},${cloudColor[1]},${cloudColor[2]},${cAlpha * 0.25})`);
+      cGrad.addColorStop(1,    'rgba(0,0,0,0)');
       ctx.fillStyle = cGrad;
       ctx.fillRect(cwx*W, cy - cc.thick/2, cw, cc.thick);
     }
 
-    // ── Crepuscular rays — 16 rays, screen blended, wide fan ──
-    if (sp > 0.15 && sp < 0.92) {
-      const rayIntensity = sp < 0.5 ? (sp-0.15)/0.35 : (0.92-sp)/0.42;
-      const baseAlpha = rayIntensity * 0.10;
+    // ── Crepuscular rays — 24 rays, screen blended ──
+    if (sp > 0.12 && sp < 0.94) {
+      const rayIntensity = sp < 0.48 ? (sp-0.12)/0.36 : (0.94-sp)/0.46;
+      const baseAlpha = rayIntensity * 0.13;
 
-      const sunYForRays = sp > 0.20 ? horizonY - ease(Math.min(1,(sp-0.20)/0.60)) * H * 0.35 : horizonY;
+      const sunYForRays = sp > 0.18 ? horizonY - ease(Math.min(1,(sp-0.18)/0.58)) * H * 0.38 : horizonY;
 
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
 
-      // 16 rays with varied width, length, and gentle sway
-      const rayConfigs = [
-        { angle: -0.60, width: 14, lenMul: 0.75 },
-        { angle: -0.50, width: 24, lenMul: 0.92 },
-        { angle: -0.40, width: 32, lenMul: 1.05 },
-        { angle: -0.30, width: 18, lenMul: 0.82 },
-        { angle: -0.22, width: 38, lenMul: 1.10 },
-        { angle: -0.13, width: 22, lenMul: 0.88 },
-        { angle: -0.05, width: 42, lenMul: 1.15 },
-        { angle:  0.02, width: 28, lenMul: 0.95 },
-        { angle:  0.10, width: 45, lenMul: 1.12 },
-        { angle:  0.18, width: 20, lenMul: 0.85 },
-        { angle:  0.26, width: 36, lenMul: 1.08 },
-        { angle:  0.34, width: 16, lenMul: 0.78 },
-        { angle:  0.42, width: 30, lenMul: 1.00 },
-        { angle:  0.50, width: 25, lenMul: 0.90 },
-        { angle:  0.58, width: 12, lenMul: 0.72 },
-        { angle:  0.65, width: 20, lenMul: 0.80 },
-      ];
-
       for (let r = 0; r < rayConfigs.length; r++) {
         const rc = rayConfigs[r];
-        const sway = Math.sin(t * 0.000022 + r * 1.9) * 0.018;
-        const shimmer = 0.55 + 0.45 * Math.sin(t * 0.00004 + r * 2.7);
+        const sway = Math.sin(t * 0.000020 + r * 1.9) * 0.020;
+        const shimmer = 0.50 + 0.50 * Math.sin(t * 0.000038 + r * 2.7);
         const angle = rc.angle + sway;
-        const rayLen = H * 0.72 * rc.lenMul;
+        const rayLen = H * 0.75 * rc.lenMul;
         const x2 = W*0.5 + Math.sin(angle) * rayLen;
         const y2 = sunYForRays - Math.cos(angle) * rayLen;
-        const rayAlpha = baseAlpha * shimmer * (0.5 + pseudoRand(r*13) * 0.5);
+        const rayAlpha = baseAlpha * shimmer * (0.45 + pseudoRand(r*13) * 0.55);
 
         if (rayAlpha < 0.003) continue;
 
         const rayGrad = ctx.createLinearGradient(W*0.5, sunYForRays, x2, y2);
-        rayGrad.addColorStop(0,    `rgba(255,220,130,${rayAlpha * 1.2})`);
-        rayGrad.addColorStop(0.2,  `rgba(255,200,100,${rayAlpha * 0.7})`);
-        rayGrad.addColorStop(0.45, `rgba(255,180,80,${rayAlpha * 0.3})`);
-        rayGrad.addColorStop(0.7,  `rgba(255,165,65,${rayAlpha * 0.08})`);
-        rayGrad.addColorStop(1,    `rgba(255,150,55,0)`);
+        rayGrad.addColorStop(0,    `rgba(255,208,115,${rayAlpha * 1.3})`);
+        rayGrad.addColorStop(0.18, `rgba(255,185,88,${rayAlpha * 0.75})`);
+        rayGrad.addColorStop(0.42, `rgba(255,165,68,${rayAlpha * 0.32})`);
+        rayGrad.addColorStop(0.68, `rgba(255,148,55,${rayAlpha * 0.10})`);
+        rayGrad.addColorStop(1,    `rgba(255,135,48,0)`);
         ctx.strokeStyle = rayGrad;
         ctx.lineWidth = rc.width;
         ctx.beginPath();
@@ -508,20 +592,22 @@ function initSunriseCanvas() {
       ctx.restore();
     }
 
-    // ── Sea wave shimmer ─────────────────────
+    // ── Sea waves — 12 layers, richer motion ─────────
     const waveColor = multiLerp(glowStops, sp);
-    const waveAlpha = 0.025 + glowPeak * 0.07;
-    for (let w = 0; w < 7; w++) {
-      const wy   = H * (0.73 + w * 0.035);
-      const amp  = 4.5 - w * 0.45;
-      const freq = 0.004 + w * 0.0015;
-      const spd  = 0.0004 + w * 0.00012;
+    const waveAlpha = 0.032 + glowPeak * 0.09;
+    for (let w = 0; w < 12; w++) {
+      const wy   = H * (0.73 + w * 0.022);
+      const amp  = 5.5 - w * 0.35;
+      const freq = 0.0035 + w * 0.0012;
+      const spd  = 0.00035 + w * 0.00010;
+      const wPhase = w * 1.4 + (w % 2 === 0 ? 0 : Math.PI * 0.6);
       ctx.beginPath();
       for (let x = 0; x <= W; x += 3) {
-        const y = wy + amp * Math.sin(x * freq + t * spd + w * 1.2);
+        const y = wy + amp * Math.sin(x * freq + t * spd + wPhase)
+                     + amp * 0.3 * Math.sin(x * freq * 2.3 + t * spd * 1.7 + w);
         x===0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
-      ctx.strokeStyle = `rgba(${waveColor[0]},${waveColor[1]},${waveColor[2]},${(waveAlpha) * (1-w*0.11)})`;
+      ctx.strokeStyle = `rgba(${waveColor[0]},${waveColor[1]},${waveColor[2]},${(waveAlpha) * (1-w*0.07)})`;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
@@ -1485,5 +1571,31 @@ function initMetrics() {
   fetchStats().then(() => {
     checkVisibility();
     window.addEventListener('scroll', checkVisibility, { passive: true });
+  });
+}
+
+// ═════════════════════════════════════════════════════
+// CINEMA MODE — immersive sunrise toggle
+// ═════════════════════════════════════════════════════
+function initCinemaMode() {
+  const btn = document.getElementById('cinemaToggle');
+  if (!btn) return;
+  const label = btn.querySelector('.cinema-label');
+
+  btn.addEventListener('click', () => {
+    const active = document.body.classList.toggle('cinema-mode');
+    label.textContent = active ? 'Exit' : 'Cinema';
+    // Scroll to top for best view when entering
+    if (active) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  // ESC key to exit
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('cinema-mode')) {
+      document.body.classList.remove('cinema-mode');
+      label.textContent = 'Cinema';
+    }
   });
 }
