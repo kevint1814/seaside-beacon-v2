@@ -1054,7 +1054,17 @@ function showUnavailable(td) {
 // MODALS
 // ─────────────────────────────────────────────
 function openModal() { document.getElementById('emailModal').classList.add('active'); }
-function closeModalFn() { document.getElementById('emailModal').classList.remove('active'); }
+function closeModalFn() {
+  const modal = document.getElementById('emailModal');
+  modal.classList.remove('active');
+  // Reset flip animation so modal is clean on reopen
+  const panel = modal.querySelector('.modal-panel');
+  if (panel) {
+    panel.classList.remove('sub-success-active');
+    const face = panel.querySelector('.sub-success-face');
+    if (face) face.remove();
+  }
+}
 function initModals() {
   document.getElementById('closeModal')?.addEventListener('click', closeModalFn);
   document.getElementById('emailModal')?.addEventListener('click', e=>{ if(e.target.id==='emailModal') closeModalFn(); });

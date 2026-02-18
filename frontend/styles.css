@@ -2171,7 +2171,7 @@ input, select, textarea { font-family:inherit; }
   border:1px solid var(--glass-border-hi);
   border-radius:var(--r-xl);
   box-shadow:var(--shadow-pop);
-  padding:36px 30px; width:100%; max-width:400px; position:relative;
+  padding:36px 30px; width:100%; max-width:400px; position:relative; overflow:hidden;
   transform:scale(0.94) translateY(14px);
   transition:transform 0.38s var(--ease-spring);
 }
