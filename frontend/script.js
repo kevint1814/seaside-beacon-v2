@@ -1315,16 +1315,25 @@ function renderCompositionTab(p) {
     thiruvanmiyur: {name:'Thiruvanmiyur',   sub:'Breakwater · Reflections'}
   };
   const suitCls={Best:'cs-best',Good:'cs-good',Fair:'cs-fair',Poor:'cs-poor'};
+  const hasData = Object.keys(beaches).length > 0;
+
+  if (!hasData) {
+    document.getElementById('beachCompareGrid').innerHTML=
+      `<div class="cc-no-data">Beach comparison data unavailable — only the selected beach was loaded.</div>`;
+    return;
+  }
+
   document.getElementById('beachCompareGrid').innerHTML=
     Object.keys(meta).map(key=>{
       const m=meta[key], d=beaches[key]||{}, suit=d.suitability||'Fair', isBest=key===comp.todaysBest;
+      const reason = d.reason || (d.suitability ? `${m.name} has ${suit.toLowerCase()} conditions this morning.` : `Data unavailable for ${m.name}.`);
       return `<div class="comp-card ${isBest?'best-today':''}">
         <div class="cc-header">
           <div class="cc-name">${m.name}</div>
           <span class="cc-suit ${suitCls[suit]||'cs-fair'}">${suit}</span>
         </div>
         <div class="cc-meta">${m.sub}</div>
-        <div class="cc-reason">${d.reason||`Conditions at ${m.name} for tomorrow's dawn.`}</div>
+        <div class="cc-reason">${reason}</div>
       </div>`;
     }).join('');
 }

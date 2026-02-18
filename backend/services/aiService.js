@@ -220,13 +220,13 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
     ]
   },
   "beachComparison": ${beachKeys.length > 1 ? `{
-    "todaysBest": "beach key (e.g. marina, elliot, covelong, thiruvanmiyur)",
+    "todaysBest": "one of: ${beachKeys.join(', ')}",
     "reason": "2-3 sentences explaining WHY this beach is best today based on how conditions interact with its physical features. If ALL beaches are poor, say so honestly and recommend the most convenient one.",
     "beaches": {
-      "for each beach key": {
+      ${beachKeys.map(k => `"${k}": {
         "suitability": "Best/Good/Fair/Poor",
         "reason": "1-2 sentences about how today's specific conditions interact with this beach's features. Reference named elements. Be honest on poor days."
-      }
+      }`).join(',\n      ')}
     }
   }` : 'null'}
 }`;
@@ -261,6 +261,26 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
     let beachComparison = aiData.beachComparison;
     if (!beachComparison && Object.keys(allWeatherData).length > 1) {
       beachComparison = generateBeachComparison(allWeatherData);
+    }
+
+    // Validate AI beach comparison — ensure all beach keys are present with reasons.
+    // AI sometimes uses wrong keys (e.g. "Marina Beach" instead of "marina") or omits beaches.
+    if (beachComparison && beachComparison.beaches) {
+      const expectedKeys = Object.keys(allWeatherData);
+      const fallbackComp = generateBeachComparison(allWeatherData);
+      expectedKeys.forEach(key => {
+        if (!beachComparison.beaches[key] || !beachComparison.beaches[key].reason) {
+          // Fill missing beach from deterministic fallback
+          beachComparison.beaches[key] = fallbackComp?.beaches?.[key] || {
+            suitability: 'Fair',
+            reason: `Conditions are mixed at this beach — check the score breakdown for details.`
+          };
+        }
+      });
+      // Validate todaysBest is a real key
+      if (!expectedKeys.includes(beachComparison.todaysBest)) {
+        beachComparison.todaysBest = fallbackComp?.todaysBest || expectedKeys[0];
+      }
     }
 
     // Ensure golden hour uses real data if available, even if AI hallucinated times
