@@ -86,7 +86,7 @@ router.get('/predict/:beach', async (req, res) => {
     }
 
     // ── Fetch all other beaches in parallel ──────────────────
-    const ALL_BEACHES = ['marina', 'elliot', 'covelong', 'thiruvanmiyur'];
+    const ALL_BEACHES = weatherService.getBeaches().map(b => b.key);
     const otherBeaches = ALL_BEACHES.filter(b => b !== beach);
 
     let allWeatherData = { [beach]: primaryWeather };

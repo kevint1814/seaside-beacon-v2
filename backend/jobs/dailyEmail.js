@@ -11,13 +11,34 @@ const weatherService = require('../services/weatherService');
 const aiService = require('../services/aiService');
 const emailService = require('../services/emailService');
 
-const ALL_BEACHES = ['marina', 'elliot', 'covelong', 'thiruvanmiyur'];
+const ALL_BEACHES = weatherService.getBeaches().map(b => b.key);
+
+/**
+ * Fetch weather for all beaches once — returns { marina: data, elliot: data, ... }
+ * Used by both storeDailyScores and sendDailyPredictions to avoid duplicate API calls.
+ */
+async function fetchAllBeachWeather() {
+  const allWeatherData = {};
+
+  for (const beachKey of ALL_BEACHES) {
+    try {
+      const data = await weatherService.getTomorrow6AMForecast(beachKey);
+      if (data.available) {
+        allWeatherData[beachKey] = data;
+      }
+    } catch (err) {
+      console.error(`⚠️  Could not fetch ${beachKey}:`, err.message);
+    }
+  }
+
+  return allWeatherData;
+}
 
 /**
  * Store today's forecast data for all beaches
  * This runs regardless of subscriber count — we're building a dataset
  */
-async function storeDailyScores() {
+async function storeDailyScores(allWeatherData) {
   const today = new Date().toISOString().split('T')[0];
 
   // Idempotent — skip if already stored today
@@ -33,11 +54,8 @@ async function storeDailyScores() {
   let bestBeach = null;
   let totalScore = 0;
 
-  for (const beachKey of ALL_BEACHES) {
+  for (const [beachKey, data] of Object.entries(allWeatherData)) {
     try {
-      const data = await weatherService.getTomorrow6AMForecast(beachKey);
-      if (!data.available) continue;
-
       const beachEntry = {
         beachKey: data.beachKey,
         beachName: data.beach,
@@ -95,41 +113,72 @@ async function storeDailyScores() {
 
 /**
  * Send daily predictions to all active subscribers
+ *
+ * Flow:
+ *   1. Fetch weather for ALL beaches once (single set of API calls)
+ *   2. Store daily scores from that data
+ *   3. For each subscriber: pick their beach from cache, generate AI with full multi-beach context, send email
+ *
+ * This fixes two previous issues:
+ *   - Weather is no longer re-fetched per subscriber (was wasting API calls)
+ *   - AI now receives allWeatherData so emails include beach comparison
  */
 async function sendDailyPredictions() {
   try {
     console.log('\n🌅 Starting daily email job...');
 
-    // Step 1: Store daily scores (dataset collection)
-    const dailyScore = await storeDailyScores();
+    // Step 1: Fetch all beach weather ONCE
+    const allWeatherData = await fetchAllBeachWeather();
+    const availableBeaches = Object.keys(allWeatherData);
+    console.log(`🌊 Fetched weather for ${availableBeaches.length} beaches: ${availableBeaches.join(', ')}`);
+
+    if (availableBeaches.length === 0) {
+      console.log('⚠️  No beach weather available — skipping entire job');
+      return;
+    }
+
+    // Step 2: Store daily scores (dataset collection)
+    const dailyScore = await storeDailyScores(allWeatherData);
     const beachCount = dailyScore ? dailyScore.beaches.length : 0;
 
-    // Step 2: Send emails to subscribers
+    // Step 3: Build beach name lookup (once, not per subscriber)
+    const beachList = weatherService.getBeaches();
+    const allBeachNames = {};
+    beachList.forEach(b => { allBeachNames[b.key] = b.name; });
+
+    // Step 4: Send emails to subscribers
     const subscribers = await Subscriber.find({ isActive: true });
     console.log(`📧 Found ${subscribers.length} active subscribers`);
 
+    // Group subscribers by beach to generate AI insights once per beach
+    const insightsCache = {};
     let emailCount = 0;
 
     for (const subscriber of subscribers) {
       try {
-        const weatherData = await weatherService.getTomorrow6AMForecast(subscriber.preferredBeach);
-        if (!weatherData.available) {
-          console.log(`⏰ Skipping ${subscriber.email} - predictions not available yet`);
+        const beachKey = subscriber.preferredBeach;
+        const weatherData = allWeatherData[beachKey];
+
+        if (!weatherData) {
+          console.log(`⏰ Skipping ${subscriber.email} - no weather data for ${beachKey}`);
           continue;
         }
 
-        // Build beach name lookup from config for email template
-        const allBeaches = weatherService.getBeaches();
-        const allBeachNames = {};
-        allBeaches.forEach(b => { allBeachNames[b.key] = b.name; });
+        // Attach beach name lookup for email template
         weatherData.allBeachNames = allBeachNames;
 
-        const photographyInsights = await aiService.generatePhotographyInsights(weatherData);
+        // Generate AI insights once per beach, cache for other subscribers on same beach
+        if (!insightsCache[beachKey]) {
+          insightsCache[beachKey] = await aiService.generatePhotographyInsights(
+            weatherData,
+            allWeatherData  // ← FIX: pass all beaches so AI generates beach comparison
+          );
+        }
 
         await emailService.sendDailyPredictionEmail(
           subscriber.email,
           weatherData,
-          photographyInsights
+          insightsCache[beachKey]
         );
 
         subscriber.lastEmailSent = new Date();
@@ -143,7 +192,7 @@ async function sendDailyPredictions() {
       }
     }
 
-    // Step 3: Update site stats
+    // Step 5: Update site stats
     await SiteStats.recordDailyRun(beachCount, emailCount);
     console.log(`📈 Stats updated: +${beachCount} forecasts, +${emailCount} emails`);
 
