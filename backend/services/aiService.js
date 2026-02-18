@@ -71,15 +71,20 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
     }
 
     // Determine honesty tier so the AI knows what tone to use
+    // ALIGNED with verdict thresholds: 85 EXCELLENT / 70 VERY GOOD / 55 GOOD / 40 FAIR / 25 POOR / <25 UNFAVORABLE
     let toneInstruction;
-    if (score >= 75) {
-      toneInstruction = 'This is genuinely a great morning. Be enthusiastic but grounded — describe the specific colors and experience people can expect. It is okay to encourage people to go.';
+    if (score >= 85) {
+      toneInstruction = 'This is an exceptional morning — one of the best possible. Be genuinely enthusiastic. Describe the vivid, specific colors and dramatic sky people can expect. Strongly encourage going.';
+    } else if (score >= 70) {
+      toneInstruction = 'This is a genuinely good morning for sunrise. Be confident and encouraging — expect vivid colors and a satisfying experience. Not the rarest show, but clearly worth the effort for anyone interested.';
     } else if (score >= 55) {
       toneInstruction = 'This is a decent morning — pleasant but not spectacular. Set realistic expectations. Describe what will be nice and what will be limited. Don\'t oversell it.';
-    } else if (score >= 35) {
+    } else if (score >= 40) {
       toneInstruction = 'This is a below-average morning for sunrise viewing. Be honest — the sky will likely be underwhelming. If someone goes, tell them what they will realistically see (muted colors, grey horizon, etc). Do NOT spin this as "dramatic" or "moody" or find silver linings. A beach walk might still be pleasant for other reasons, but the sunrise itself won\'t be impressive.';
+    } else if (score >= 25) {
+      toneInstruction = 'This is a poor morning for sunrise. Be straightforward — sunrise will likely not be visible or will be completely washed out. Do NOT romanticize this.';
     } else {
-      toneInstruction = 'This is a poor morning for sunrise. Be straightforward — the sunrise will likely not be visible or will be completely washed out. Describe what someone would actually see: overcast grey sky, no color, flat light. Do NOT romanticize this. If someone still wants to go for a walk, that\'s fine, but they should not expect any sunrise spectacle.';
+      toneInstruction = 'This is an unfavorable morning. The sunrise will almost certainly not be visible. Be direct — overcast grey sky, no color, flat light. If someone still wants to go for a walk, that\'s fine, but there is no sunrise spectacle.';
     }
 
     // Build comparison context from all beaches if available
@@ -360,7 +365,7 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
         start: realGoldenHour.start,
         peak: realGoldenHour.peak,
         end: realGoldenHour.end,
-        quality: score >= 75 ? 'Very Good' : score >= 55 ? 'Good' : score >= 35 ? 'Fair' : 'Poor',
+        quality: score >= 85 ? 'Excellent' : score >= 70 ? 'Very Good' : score >= 55 ? 'Good' : score >= 40 ? 'Fair' : 'Poor',
         tip: score >= 55
           ? `Be at the beach by ${realGoldenHour.start} — the richest colors appear 10-15 minutes before the sun clears the horizon.`
           : `Color window will be limited this morning. If you go, aim for around ${realGoldenHour.peak} for whatever light is available.`
@@ -369,7 +374,7 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
         start: 'N/A',
         peak: 'N/A',
         end: 'N/A',
-        quality: score >= 75 ? 'Very Good' : score >= 55 ? 'Good' : score >= 35 ? 'Fair' : 'Poor',
+        quality: score >= 85 ? 'Excellent' : score >= 70 ? 'Very Good' : score >= 55 ? 'Good' : score >= 40 ? 'Fair' : 'Poor',
         tip: 'Sunrise time unavailable — arrive 20 minutes before expected sunrise for best color window.'
       };
 
@@ -407,15 +412,17 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
 
 function generateSunriseExperience(score, cloudCover, humidity, visibility, windSpeed, temperature, beach) {
   let whatYoullSee;
-  if (score >= 75) {
+  if (score >= 85) {
+    whatYoullSee = `The sky should light up with vivid oranges and reds as sunlight catches the underside of scattered clouds. Expect a dramatic build of color starting about 15 minutes before sunrise, peaking as the sun nears the horizon. With ${visibility}km visibility, the horizon will be sharp and the colors intense.`;
+  } else if (score >= 70) {
     if (cloudCover >= 30 && cloudCover <= 60) {
-      whatYoullSee = `The sky should light up with warm oranges and reds as sunlight catches the underside of scattered clouds. Expect a gradual build of color starting about 15 minutes before sunrise, peaking as the sun nears the horizon. With ${visibility}km visibility, the horizon will be sharp and the colors well-defined.`;
+      whatYoullSee = `Good conditions for warm colors across the sky — clouds at ${cloudCover}% will catch light nicely, producing oranges and golds. With ${visibility}km visibility, expect a satisfying color display that builds gradually before sunrise.`;
     } else {
-      whatYoullSee = `Good atmospheric conditions overall — expect pleasant warm tones across the sky with ${visibility}km of clear sightlines to the horizon. The color intensity will depend on cloud positioning, but the fundamentals are strong for a satisfying sunrise.`;
+      whatYoullSee = `Good atmospheric conditions overall — expect pleasant warm tones across the sky with ${visibility}km of clear sightlines to the horizon. The color intensity will depend on cloud positioning, but conditions are strong for a rewarding sunrise.`;
     }
   } else if (score >= 55) {
     whatYoullSee = `You'll see some color in the sky — likely softer warm tones rather than intense reds and oranges. ${cloudCover > 60 ? 'Heavier cloud cover will filter the light, giving a diffused, gentler glow rather than sharp color bands.' : cloudCover < 30 ? 'Clear skies mean the color will mostly be pale yellows and soft blues — pleasant but not dramatic.' : 'Moderate cloud coverage means some color reflection, though humidity may soften the vibrancy.'} It will be a nice morning, just not a show-stopper.`;
-  } else if (score >= 35) {
+  } else if (score >= 40) {
     whatYoullSee = `Realistically, the sky will be mostly grey or washed out near the horizon. ${cloudCover > 70 ? `At ${cloudCover}% cloud cover, the sun may not be visible at all when it rises — you'll notice the sky gradually brightening from dark grey to lighter grey.` : `High humidity at ${humidity}% will haze out most color, giving the sky a flat, milky appearance.`} If any color appears, it will be brief and faint.`;
   } else {
     whatYoullSee = `The sunrise will likely not be visible this morning. ${cloudCover > 80 ? 'Thick cloud cover will block the sun entirely — the sky will shift from dark to overcast grey without any color.' : 'A combination of poor visibility and atmospheric moisture will make the horizon indistinguishable.'} The beach will still be dim well after the official sunrise time.`;
@@ -433,11 +440,11 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
 
   // Worth waking up — the key honest recommendation
   let worthWakingUp;
-  if (score >= 75) {
+  if (score >= 70) {
     worthWakingUp = 'Yes — conditions are genuinely strong for a beautiful sunrise. This is the kind of morning that rewards the early alarm.';
   } else if (score >= 55) {
     worthWakingUp = 'If you\'re already a morning person or nearby, it\'ll be a pleasant outing. The sunrise will have some color but won\'t be spectacular — go for the full beach experience, not just the sky.';
-  } else if (score >= 35) {
+  } else if (score >= 40) {
     worthWakingUp = 'For the sunrise alone, probably not worth the early alarm. The sky will be underwhelming. That said, the beach at dawn is always peaceful — if you enjoy the quiet morning atmosphere regardless of sky conditions, go for the walk.';
   } else {
     worthWakingUp = 'No, not for the sunrise — it likely won\'t be visible. If you happen to be awake and nearby, a dawn beach walk is still calming, but don\'t set an alarm expecting sky colors.';
@@ -472,7 +479,7 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
     },
     humidity: {
       value: humidity,
-      rating: humidity <= 40 ? 'Excellent' : humidity <= 55 ? 'Very Good' : humidity <= 70 ? 'Moderate' : humidity <= 85 ? 'High' : 'Very High',
+      rating: humidity <= 55 ? 'Excellent' : humidity <= 65 ? 'Very Good' : humidity <= 75 ? 'Good' : humidity <= 85 ? 'Moderate' : 'High',
       impact: humidity <= 55
         ? `At ${humidity}% humidity, the air is dry — colors will appear crisp, vivid and well-saturated. Low humidity is one of the key ingredients behind the best sunrise conditions.`
         : humidity <= 70
@@ -481,7 +488,7 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
     },
     visibility: {
       value: visibility,
-      rating: visibility >= 15 ? 'Exceptional' : visibility >= 10 ? 'Excellent' : visibility >= 8 ? 'Very Good' : visibility >= 5 ? 'Good' : 'Poor',
+      rating: visibility >= 18 ? 'Exceptional' : visibility >= 12 ? 'Excellent' : visibility >= 8 ? 'Good' : visibility >= 5 ? 'Fair' : 'Poor',
       impact: visibility >= 10
         ? `${visibility}km visibility means excellent atmospheric clarity — the horizon will be sharp, and colors will have strong contrast and intensity.`
         : visibility >= 8

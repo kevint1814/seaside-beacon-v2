@@ -1105,7 +1105,7 @@ function renderForecast() {
   document.getElementById('conditionsStrip').innerHTML = [
     {lbl:'Cloud Cover',val:`${f.cloudCover}%`,    sub:labels.cloudLabel    ||(f.cloudCover>=30&&f.cloudCover<=60?'Optimal':f.cloudCover<30?'Clear':'Heavy')},
     {lbl:'Humidity', val:`${f.humidity}%`,       sub:labels.humidityLabel ||(f.humidity<=55?'Low':'High')},
-    {lbl:'Visibility',val:`${f.visibility}km`,   sub:labels.visibilityLabel||(f.visibility>=10?'Excellent':'Good')},
+    {lbl:'Visibility',val:`${f.visibility}km`,   sub:labels.visibilityLabel||(f.visibility>=18?'Exceptional':f.visibility>=12?'Excellent':f.visibility>=8?'Good':'Fair')},
     {lbl:'Wind',     val:`${f.windSpeed}km/h`,   sub:labels.windLabel     ||(f.windSpeed<=15?'Calm':'Breezy')}
   ].map(c=>`<div class="cond-item"><div class="cond-label">${c.lbl}</div><div class="cond-val">${c.val}</div><div class="cond-sub">${c.sub}</div></div>`).join('');
 
@@ -1246,15 +1246,29 @@ function renderConditionsTab(f,pred,p) {
        :f.cloudCover<30?`At ${f.cloudCover}%, mostly clear sky. Clean but potentially flat — the dramatic fire sky needs cloud texture to ignite.`
        :`At ${f.cloudCover}%, heavy cover. Colours will likely be muted and diffused. Look for gaps where light breaks through.`)},
     {lbl:'Humidity',val:`${f.humidity}%`,
-     rating:labels.humidityLabel||(f.humidity<=40?'Excellent':f.humidity<=55?'Very Good':f.humidity<=70?'Moderate':'High'),
-     cls:f.humidity<=55?'ab-good':f.humidity<=70?'ab-ok':'ab-bad',
+     rating:labels.humidityLabel||(f.humidity<=55?'Excellent':f.humidity<=65?'Very Good':f.humidity<=75?'Good':f.humidity<=85?'Moderate':'High'),
+     cls:f.humidity<=65?'ab-good':f.humidity<=80?'ab-ok':'ab-bad',
      body:atm.humidity?.impact||(f.humidity<=55
-       ?`At ${f.humidity}%, the atmosphere is dry. Light travels cleanly — colours will be saturated, contrast strong, and shadows crisp.`
-       :`At ${f.humidity}%, moderate moisture in the air. Expect slightly warmer, hazier tones — the sea horizon may soften slightly.`)},
+       ?`At ${f.humidity}%, the atmosphere is exceptionally dry for dawn. Light travels cleanly — colours will be saturated, contrast strong, and shadows crisp.`
+       :f.humidity<=70
+       ?`At ${f.humidity}%, good moisture levels for sunrise. Colours will be clear with only slight softening — a strong morning for photography.`
+       :f.humidity<=82
+       ?`At ${f.humidity}%, typical coastal dawn humidity. Expect moderately muted colours — warm tones will soften and the horizon may appear hazy.`
+       :f.humidity<=93
+       ?`At ${f.humidity}%, high moisture is scattering light significantly. Colours will appear washed out and pastel rather than vivid. The horizon will look milky.`
+       :`At ${f.humidity}%, near-saturation humidity. Fog or heavy mist is likely — sunrise colours will be severely muted if visible at all.`)},
     {lbl:'Visibility',val:`${f.visibility}km`,
-     rating:labels.visibilityLabel||(f.visibility>=15?'Exceptional':f.visibility>=10?'Excellent':f.visibility>=8?'Very Good':'Moderate'),
+     rating:labels.visibilityLabel||(f.visibility>=18?'Exceptional':f.visibility>=12?'Excellent':f.visibility>=8?'Good':'Fair'),
      cls:f.visibility>=8?'ab-good':f.visibility>=5?'ab-ok':'ab-bad',
-     body:atm.visibility?.impact||`${f.visibility}km — ${f.visibility>=10?'exceptional clarity. Distant elements will render sharply. Strong colour separation across the sky.':'good conditions with some atmospheric haze, which can soften the horizon and add warmth to long exposures.'}`},
+     body:atm.visibility?.impact||(f.visibility>=18
+       ?`${f.visibility}km — post-rain crystal clarity. Distant elements will render sharply with strong colour separation across the sky.`
+       :f.visibility>=12
+       ?`${f.visibility}km — excellent morning clarity. Clean atmospheric conditions will allow vivid colour intensity and good contrast.`
+       :f.visibility>=8
+       ?`${f.visibility}km — decent visibility. Some atmospheric haze may soften the horizon and add warmth, but colours will still come through.`
+       :f.visibility>=5
+       ?`${f.visibility}km — reduced visibility from haze or mist. Colours will be muted and the horizon diffused. Contrast will be low.`
+       :`${f.visibility}km — poor visibility. Heavy haze, mist or fog will significantly obscure the sunrise. Expect flat, grey tones.`)},
     {lbl:'Wind',val:`${f.windSpeed}km/h`,
      rating:labels.windLabel||(f.windSpeed<=10?'Calm':f.windSpeed<=20?'Light':f.windSpeed<=30?'Moderate':'Strong'),
      cls:f.windSpeed<=20?'ab-good':f.windSpeed<=30?'ab-ok':'ab-bad',

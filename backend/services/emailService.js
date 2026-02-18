@@ -298,7 +298,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 
     const { beach, forecast, prediction } = weatherData;
     const beachDisplayNames = weatherData.allBeachNames || {};
-    const { score, verdict, breakdown, atmosphericLabels } = prediction;
+    const { score, verdict, atmosphericLabels } = prediction;
     const { cloudCover, humidity, visibility, windSpeed, temperature, precipProbability } = forecast;
 
     const statusColor = score >= 85 ? '#059669' : score >= 70 ? '#0284c7' : score >= 55 ? '#D97706' : score >= 40 ? '#EA580C' : '#DC2626';

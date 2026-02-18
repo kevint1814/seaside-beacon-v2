@@ -5,7 +5,7 @@
 // KEY FINDING: Cloud cover 30-60% = OPTIMAL
 // (previously scored 0% as best - scientifically incorrect)
 //
-// Weights: Cloud 35% | Visibility 30% | Humidity 20% | Weather 10% | Wind 5%
+// Weights: Cloud 35 | Humidity 25 | Vis 20 | Weather 10 | Wind 5 | Synergy ±5
 // ==========================================
 
 const axios = require('axios');
@@ -331,7 +331,7 @@ function scoreHumidity(humidity) {
     score = 25;
   } else if (humidity <= 65) {
     // Excellent — sharp, saturated sunrise colors
-    score = 22 - Math.round((humidity - 55) / 10 * 3);
+    score = 25 - Math.round((humidity - 55) / 10 * 6);
   } else if (humidity <= 75) {
     // Good — typical dry-season Chennai morning
     score = 19 - Math.round((humidity - 65) / 10 * 6);
@@ -395,7 +395,7 @@ function scoreWind(windSpeedKmh) {
  * Research basis:
  * - High humidity + low cloud = worst combo (no canvas AND washed-out light)
  * - Low humidity + optimal cloud = best combo (vivid colors on dramatic canvas)
- * - Post-rain pattern (high vis + moderate humid + broken cloud) = sunrise magic
+ * - Very high humidity negates even optimal cloud cover (colors wash out regardless)
  */
 function getSynergyAdjustment(cloudCover, humidity, visibilityKm) {
   let adjustment = 0;
@@ -414,6 +414,12 @@ function getSynergyAdjustment(cloudCover, humidity, visibilityKm) {
     adjustment -= 2; // Clear + humid = bland
   }
 
+  // PENALTY: Very high humidity washes out colors even with good cloud canvas
+  // (NOAA: "Higher humidity gives a milky look" — Mie scattering from water droplets)
+  if (humidity > 85 && cloudCover >= 30) {
+    adjustment -= 3; // Clouds are there but colors are muted to pastels
+  }
+
   // BONUS: Low humidity + optimal clouds — the dream combo
   if (humidity < 70 && cloudCover >= 30 && cloudCover <= 60) {
     adjustment += 4;
@@ -426,31 +432,43 @@ function getSynergyAdjustment(cloudCover, humidity, visibilityKm) {
     adjustment -= 2;
   }
 
-  // BONUS: Post-rain signature — high vis + moderate humid + broken cloud
-  if (visibilityKm >= 15 && humidity >= 60 && humidity <= 80 && cloudCover >= 25 && cloudCover <= 65) {
-    adjustment += 3;
-  }
-
   return Math.max(-5, Math.min(5, adjustment));
 }
 
 /**
- * POST-RAIN BONUS (max +8 points)
+ * POST-RAIN BONUS (max +5 points)
  * After rain: clearest air (15-20km visibility), broken clouds remain at 30-60%
- * Detected via: recent precipitation + now clearing description
+ *
+ * DETECTION: We only have a single hour's data (6 AM), so we can't check
+ * "was it raining earlier?" directly. Instead we look for the DATA SIGNATURE
+ * of post-rain conditions: unusually high visibility + moderate cloud + elevated humidity.
+ * This combination (vis≥15 + cloud 25-65 + humidity 60-82) almost never occurs
+ * UNLESS rain recently washed the air clean and clouds are breaking up.
+ *
+ * Previous approach matched IconPhrase text like "Partly cloudy" — but that's
+ * AccuWeather's most common description and triggered on ~70% of forecasts.
+ * Now detection is purely data-driven with no text matching.
  */
-function getPostRainBonus(forecast, weatherDescription) {
-  const desc = (weatherDescription || '').toLowerCase();
+function getPostRainBonus(forecast) {
   const precipProb = forecast.precipProbability || 0;
+  const humidity = forecast.humidity || 0;
+  const visibility = forecast.visibility || 0;
+  const cloudCover = forecast.cloudCover || 0;
 
-  // Post-frontal clearing patterns
-  const clearingPatterns = ['clearing', 'partly cloudy', 'mostly cloudy', 'clouds'];
-  const isClearing = clearingPatterns.some(p => desc.includes(p));
+  // Post-rain data signature:
+  // - Low current precip probability (rain has stopped)
+  // - High visibility (rain washed aerosols from air → crystal clarity)
+  // - Moderate cloud (30-65%: clouds breaking up but still providing canvas)
+  // - Elevated humidity (60-82%: moisture from recent rain, but not soupy)
+  const isPostRain =
+    precipProb <= 20 &&
+    visibility >= 15 &&
+    cloudCover >= 25 && cloudCover <= 65 &&
+    humidity >= 60 && humidity <= 82;
 
-  // Low current precipitation but description suggests recent rain
-  if (precipProb <= 20 && isClearing && (forecast.humidity > 60 && forecast.humidity < 85)) {
-    console.log('🌧️ Post-rain conditions detected: +8 bonus');
-    return 8;
+  if (isPostRain) {
+    console.log('🌧️ Post-rain data signature detected: +5 bonus');
+    return 5;
   }
 
   return 0;
@@ -483,11 +501,13 @@ function calculateSunriseScore(forecastRaw) {
 
   const baseScore = cloudScore + visScore + humidScore + weatherScore + windScore + synergy;
 
-  // Post-rain bonus (max 8 extra points)
-  const postRainBonus = getPostRainBonus(
-    { precipProbability: precipProb, humidity },
-    weatherDesc
-  );
+  // Post-rain bonus (max 5 extra points)
+  const postRainBonus = getPostRainBonus({
+    precipProbability: precipProb,
+    humidity,
+    visibility: visibilityKm,
+    cloudCover
+  });
 
   const finalScore = Math.max(0, Math.min(100, baseScore + postRainBonus));
 
