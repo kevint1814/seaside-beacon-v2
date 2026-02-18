@@ -31,13 +31,42 @@ try {
 async function generatePhotographyInsights(weatherData, allWeatherData = {}) {
   try {
     if (groqClient && process.env.GROQ_API_KEY) {
-      return await generateGroqInsights(weatherData, allWeatherData);
+      return await generateGroqInsightsWithRetry(weatherData, allWeatherData);
     } else {
       return generateRuleBasedInsights(weatherData, allWeatherData);
     }
   } catch (error) {
-    console.error('AI generation error:', error.message);
+    console.error('AI generation error (all retries exhausted):', error.message);
     return generateRuleBasedInsights(weatherData, allWeatherData);
+  }
+}
+
+/**
+ * Retry wrapper for Groq — exponential backoff on rate limits/timeouts
+ * Attempt 1: immediate
+ * Attempt 2: wait 2s
+ * Attempt 3: wait 4s
+ * Only then fall back to rule-based
+ */
+async function generateGroqInsightsWithRetry(weatherData, allWeatherData, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await generateGroqInsights(weatherData, allWeatherData);
+    } catch (error) {
+      const isRetryable = error.status === 429 || // Rate limit
+                          error.status === 503 || // Service unavailable
+                          error.code === 'ECONNRESET' ||
+                          error.code === 'ETIMEDOUT' ||
+                          error.message?.includes('timeout');
+
+      if (isRetryable && attempt < maxRetries) {
+        const waitMs = Math.pow(2, attempt) * 1000; // 2s, 4s
+        console.warn(`⚠️ Groq attempt ${attempt}/${maxRetries} failed (${error.status || error.code || error.message}), retrying in ${waitMs/1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, waitMs));
+      } else {
+        throw error; // Non-retryable error or final attempt — propagate to fallback
+      }
+    }
   }
 }
 
