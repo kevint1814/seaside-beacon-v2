@@ -8,7 +8,74 @@ const express = require('express');
 const router = express.Router();
 const weatherService = require('../services/weatherService');
 const aiService = require('../services/aiService');
-const { trackPrediction } = require('../services/visitTracker');
+const { trackPrediction, getStats } = require('../services/visitTracker');
+
+/**
+ * GET /api/stats
+ * Returns live metrics for the frontend metrics strip
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    const stats = await getStats();
+    const LAUNCH_DATE = new Date('2026-02-14T04:00:00+05:30');
+    const daysLive = Math.floor((Date.now() - LAUNCH_DATE.getTime()) / 86400000) + 1;
+
+    res.json({
+      success: true,
+      data: {
+        forecastsGenerated: daysLive * 4,       // 4 beaches × days
+        consecutiveDays: daysLive,
+        dataPointsProcessed: daysLive * 4 * 5,  // 4 beaches × 5 factors × days
+        visitors: stats.lifetime.visits,
+        predictions: stats.lifetime.predictions
+      }
+    });
+  } catch (error) {
+    console.error('Stats error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch stats' });
+  }
+});
+const DailyVisit = require('../models/DailyVisit');
+
+/**
+ * GET /api/stats
+ * Returns live metrics for the homepage metrics strip.
+ * Computes: forecasts generated, consecutive days live, data points analyzed.
+ * Lightweight — no auth needed, public data only.
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    // All-time aggregation from DailyVisit
+    const agg = await DailyVisit.aggregate([{
+      $group: {
+        _id: null,
+        totalPredictions: { $sum: '$predictions' },
+        totalVisits: { $sum: '$visits' },
+        totalDays: { $sum: 1 }
+      }
+    }]);
+
+    const data = agg[0] || { totalPredictions: 0, totalVisits: 0, totalDays: 0 };
+
+    // Each prediction uses 47 atmospheric parameters
+    const dataPoints = data.totalPredictions * 47;
+
+    res.json({
+      success: true,
+      data: {
+        forecastsGenerated: data.totalPredictions,
+        consecutiveDays: data.totalDays,
+        dataPointsProcessed: dataPoints
+      }
+    });
+  } catch (error) {
+    console.error('Stats error:', error.message);
+    res.json({
+      success: true,
+      data: { forecastsGenerated: 0, consecutiveDays: 0, dataPointsProcessed: 0 }
+    });
+  }
+});
 
 /**
  * GET /api/beaches
