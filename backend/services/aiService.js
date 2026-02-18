@@ -133,67 +133,61 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const currentMonth = monthNames[new Date().getMonth()];
 
-    const prompt = `You are a knowledgeable local guide who gives honest sunrise forecasts for Chennai beaches. Your audience is GENERAL PUBLIC first (people wondering "should I wake up early?") and photography enthusiasts second.
+    const prompt = `Score: ${score}/100 (${verdict}). ${currentMonth}.
 
-TONE INSTRUCTION (score: ${score}/100):
-${toneInstruction}
+TONE: ${toneInstruction}
 
-ATMOSPHERIC CONDITIONS:
-- Cloud Cover: ${cloudCover}% (${atmosphericLabels?.cloudLabel || 'measured'})
-- Humidity: ${humidity}% (${atmosphericLabels?.humidityLabel || 'measured'})
-- Visibility: ${visibility} km (${atmosphericLabels?.visibilityLabel || 'measured'})
-- Wind: ${windSpeed} km/h (${atmosphericLabels?.windLabel || 'measured'})
-- Temperature: ${temperature}°C
-- Precipitation Probability: ${precipProbability}%
-- Conditions: ${weatherDescription}
-- Sunrise Score: ${score}/100 (${verdict})
+CONDITIONS: Cloud ${cloudCover}%, Humidity ${humidity}%, Visibility ${visibility}km, Wind ${windSpeed}km/h, ${temperature}°C, Precip ${precipProbability}%, ${weatherDescription}.
 
 ${goldenHourInstruction}
 
 BEACH: ${beach}
-BEACH CONTEXT: ${context}
+CONTEXT: ${context}
 ${comparisonContext}
 
-RULES:
-1. NEVER use positive spin on poor conditions. No "every sunrise is unique" or "embrace the mood."
-2. Cloud 30-60% = OPTIMAL canvas for color. Clear <20% = pale. Over 75% = blocked.
-3. Humidity under 55% = vivid. Over 70% = washed out.
-4. Greeting MUST match the score. A 30/100 should NOT sound exciting.
-5. Each beach comparison reason MUST be unique, referencing that beach's specific features from BEACH CONTEXT.
+WRITING STYLE:
+- Talk like a friend texting someone about tomorrow's sunrise. Simple, warm, honest.
+- Describe what the sky will LOOK like in plain words anyone understands: "orange and pink streaks across the clouds", "grey and flat, no color", "soft warm glow near the horizon."
+- Do NOT use weather numbers in your text (no "45% cloud cover" or "87% humidity"). The data is shown separately — your job is to describe the EXPERIENCE.
+- On bad days: be honest and brief. "The sky will be mostly grey tomorrow — not much color expected." Don't try to make it sound better than it is.
+- On good days: be genuinely excited. "This is the kind of morning that makes you glad you woke up early."
+- NEVER use: "spectacular", "breathtaking", "nature's canvas", "painted sky", "embrace the mood", "serene", "magical", "treat yourself", "every sunrise is unique."
+- Beach comparisons: mention what makes each beach DIFFERENT (the lighthouse at Marina, the quiet at Elliot's, the rocks at Covelong) and whether today's sky helps or hurts that spot specifically.
 
-Respond ONLY with valid JSON:
+JSON response:
 {
-  "greeting": "One honest sentence setting expectations for this morning's sunrise at ${beach}. Match tone to ${score}/100.",
-  "insight": "Two sentences describing what someone will actually see — specific sky colors, light quality. Match honesty to ${score}/100.",
+  "greeting": "One friendly, honest sentence. Like texting a friend: 'Tomorrow's looking really good at Marina — set that alarm' or 'Not worth the early wake-up tomorrow, honestly.'",
+  "insight": "Two sentences describing what the sky will look like and feel like. Plain language — someone's grandma should understand it.",
   "sunriseExperience": {
-    "whatYoullSee": "2-3 sentences: honest visual picture — sky colors, cloud behavior, light. Be specific.",
-    "beachVibes": "1-2 sentences: temperature feel, wind, crowd level, sounds. Reference ${beach}'s specific character.",
-    "worthWakingUp": "${score >= 70 ? 'Yes — explain why genuinely worth the early alarm' : score >= 50 ? 'Conditionally — pleasant but not spectacular' : 'For sunrise alone, probably not. Beach walk still peaceful.'}"
+    "whatYoullSee": "2-3 sentences painting a picture anyone can visualize. What colors, where in the sky, how it changes as the sun comes up. No technical terms.",
+    "beachVibes": "1-2 sentences about what being at ${beach} feels like at dawn — temperature, breeze, crowds, sounds. Use specific details from CONTEXT like the fishing boats or the memorial.",
+    "worthWakingUp": "${score >= 70 ? 'Yes — one enthusiastic sentence about why' : score >= 50 ? 'Maybe — honest about what you will and won\'t get' : 'Probably not for the sunrise — but say if the beach walk itself is still nice'}"
   },
   "goldenHour": {
     "quality": "${score >= 85 ? 'Excellent' : score >= 70 ? 'Very Good' : score >= 55 ? 'Good' : score >= 40 ? 'Fair' : 'Poor'}",
-    "tip": "One sentence: when to arrive for best light, appropriate to conditions"
+    "tip": "One simple sentence — when to get there and what to look for, in plain language."
   },
   "beachComparison": ${beachKeys.length > 1 ? `{
     "todaysBest": "MUST be exactly one of: ${beachKeys.join(', ')}",
-    "reason": "2-3 sentences: WHY this beach is best today. If ALL poor, say so honestly.",
+    "reason": "1-2 friendly sentences. Why this beach is the best pick today — or if they're all similar, say that honestly.",
     "beaches": {
       ${beachKeys.map(k => `"${k}": {
         "suitability": "Best/Good/Fair/Poor",
-        "reason": "1-2 sentences: how today's conditions interact with THIS beach's unique features. Reference specific elements from BEACH CONTEXT. Must be DIFFERENT from other beaches."
+        "reason": "1-2 sentences. What makes THIS beach different from the others for tomorrow's conditions? Mention a specific feature from CONTEXT. Must be UNIQUE — don't repeat the same thing for every beach."
       }`).join(',\n      ')}
     }
   }` : 'null'}
 }
 
-CRITICAL: Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A'}. NOT full names (wrong: "Marina Beach", right: "marina").`;
+Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A'}. NOT full names like "Marina Beach".`;
+
 
     const completion = await groqClient.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
-          content: "You are a knowledgeable, honest local guide for coastal beaches. You give balanced sunrise forecasts — enthusiastic on great days, straightforward on poor days. Your priority is setting accurate expectations so people are never disappointed. You understand atmospheric science, photography, and what makes a sunrise worth seeing. Always respond with valid JSON only, no markdown or code blocks."
+          content: "You are Beacon — a friendly, straight-talking sunrise guide for Chennai beaches. You talk like a local friend who checks the sky every morning and texts you whether it's worth waking up. Simple language, no jargon, no weather-nerd talk. When it's good, you're excited but specific about what people will see. When it's bad, you say so plainly without padding. You describe what the sky LOOKS like in everyday words anyone understands — 'orange and pink streaks', 'grey and flat', 'soft warm glow' — not cloud percentages or humidity numbers. Always respond with valid JSON only."
         },
         { role: "user", content: prompt }
       ],
@@ -293,38 +287,38 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   const { cloudCover, humidity, visibility, windSpeed, temperature, precipProbability } = forecast;
   const { score, verdict, atmosphericLabels } = prediction;
 
-  // ── Greeting — honest, matches score ──
+  // ── Greeting — friendly, direct, like texting a friend ──
   let greeting;
   if (score >= 85) {
-    greeting = `Tomorrow's looking exceptional at ${beach} — this is a sunrise worth setting an alarm for.`;
+    greeting = `Tomorrow's looking really good at ${beach} — the kind of morning where the whole sky lights up orange and pink. Set that alarm.`;
   } else if (score >= 70) {
-    greeting = `Strong conditions shaping up at ${beach} this morning — expect vivid colors across the sky.`;
+    greeting = `Solid morning ahead at ${beach} — you should see some nice warm colors across the sky. Worth the early wake-up.`;
   } else if (score >= 55) {
-    greeting = `Decent morning ahead at ${beach} — pleasant conditions, though the sky won't be the most dramatic.`;
+    greeting = `Tomorrow at ${beach} will be pleasant but nothing dramatic. You'll see some color near the horizon, just don't expect the sky to light up.`;
   } else if (score >= 40) {
-    greeting = `Tomorrow's sunrise at ${beach} will be fairly muted — limited color expected due to atmospheric conditions.`;
+    greeting = `Not the best morning for sunrise at ${beach}, honestly. The sky will be mostly flat without much color. Nice for a quiet beach walk though.`;
   } else if (score >= 25) {
-    greeting = `Not a great morning for sunrise at ${beach} — heavy cloud cover and haze will block most of the color.`;
+    greeting = `Tomorrow's sunrise at ${beach} won't have much to show — the sky will be washed out and grey. Not worth the early alarm for the view.`;
   } else {
-    greeting = `Tomorrow's sunrise at ${beach} will likely not be visible — overcast skies and poor visibility expected.`;
+    greeting = `No real sunrise to see at ${beach} tomorrow — overcast and grey. Save your sleep.`;
   }
 
-  // ── Insight — what you'll actually see ──
+  // ── Insight — plain language anyone understands ──
   let insight;
   if (cloudCover >= 30 && cloudCover <= 60) {
     if (humidity <= 55) {
-      insight = `Cloud cover at ${cloudCover}% sits in the sweet spot — clouds will catch orange and red light from below the horizon, painting the sky with vivid color. Low humidity at ${humidity}% means those colors will look crisp and saturated.`;
+      insight = `There are enough clouds in the sky to catch the sunrise light, and the air is clear enough that the colors will look really vivid — think deep oranges and warm pinks. One of the better combinations you can get.`;
     } else if (humidity <= 70) {
-      insight = `Clouds at ${cloudCover}% will act as a canvas for sunrise colors, though ${humidity}% humidity will soften the saturation somewhat. Expect warm tones that are pleasant but not intensely vivid.`;
+      insight = `The clouds should pick up some nice warm colors as the sun comes up, though the moisture in the air will soften things a bit. Expect warm amber tones rather than intense fiery reds.`;
     } else {
-      insight = `Cloud cover is in the optimal range at ${cloudCover}%, but high humidity at ${humidity}% will noticeably wash out the colors. You'll see warm tones, but they'll appear muted and hazy rather than crisp.`;
+      insight = `There are clouds in the right spots to catch color, but the heavy moisture in the air will fade everything out. You'll see some warmth near the horizon, but it'll look hazy and soft rather than sharp.`;
     }
   } else if (cloudCover < 30) {
-    insight = `At only ${cloudCover}% cloud cover, the sky is mostly clear — expect soft pastel yellows and blues rather than dramatic oranges and reds. Clear skies lack the cloud canvas that creates those fiery sunrise photos you see online.`;
+    insight = `The sky is mostly clear, which sounds good but actually means less color — the sunrise needs clouds to bounce light off of. Expect pale yellows and light blues, pleasant but not the colorful show you might be hoping for.`;
   } else if (cloudCover <= 75) {
-    insight = `Cloud cover at ${cloudCover}% is on the heavy side. Some color may break through gaps in the clouds, but it will be patchy and diffused rather than a full-sky display. The light will be soft and even.`;
+    insight = `The sky is pretty cloudy, so the sunrise will be hit or miss. If the sun finds a gap in the clouds you might get a nice burst of color, but mostly it'll be soft, diffused light.`;
   } else {
-    insight = `Heavy cloud cover at ${cloudCover}% will block most direct sunlight. The horizon will likely stay grey with minimal color. If any light breaks through, it will be brief and muted — don't expect the classic sunrise glow.`;
+    insight = `The clouds are too thick for any real sunrise color to come through. The sky will just gradually get lighter — from dark grey to lighter grey — without the warm colors you'd normally see.`;
   }
 
   // ── Sunrise experience (general audience) ──
