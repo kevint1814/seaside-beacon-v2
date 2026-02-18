@@ -107,7 +107,7 @@
         "name": "How does Seaside Beacon predict sunrise quality?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Seaside Beacon uses 47+ atmospheric parameters from AccuWeather including cloud cover, humidity, visibility, wind speed, and precipitation probability. These are scored using research-backed weights (clouds 35%, visibility 30%, humidity 20%, weather 10%, wind 5%) to produce a 0–100 sunrise quality score."
+          "text": "Seaside Beacon uses atmospheric data from AccuWeather including cloud cover, humidity, visibility, wind speed, and precipitation probability. These are scored using research-backed weights (clouds 35%, visibility 30%, humidity 20%, weather 10%, wind 5%) to produce a 0–100 sunrise quality score."
         }
       }
     ]
@@ -238,7 +238,7 @@
     <div class="hero-body">
       <div class="hero-kicker">
         <span class="kicker-line"></span>
-        <span class="kicker-text"><span class="kicker-claim">We Are India's First Native Sunrise Quality Forecast</span><span class="kicker-detail"> · Chennai · Four Beaches · More To Come</span></span>
+        <span class="kicker-text"><span class="kicker-claim">India's First Purpose-Built Sunrise Quality Forecast For Beaches</span><span class="kicker-detail"> · Chennai · Four Beaches · More To Come</span></span>
       </div>
 
       <h1 class="hero-headline">
@@ -266,8 +266,8 @@
         </div>
         <div class="hst-sep"></div>
         <div class="hst">
-          <span class="hst-val">6</span>
-          <span class="hst-key">Atmospheric factors</span>
+          <span class="hst-val">5</span>
+          <span class="hst-key">Scoring factors</span>
         </div>
         <div class="hst-sep"></div>
         <div class="hst">
@@ -570,6 +570,52 @@
       </div>
     </div>
   </section>
+
+  <!-- Live Metrics Calculator -->
+  <script>
+  (function(){
+    const LAUNCH_DATE = new Date('2026-02-14T04:00:00+05:30');
+    const BEACHES = 4;
+    const FACTORS = 5;
+
+    function updateMetrics(){
+      const ms = Date.now() - LAUNCH_DATE.getTime();
+      if(ms < 0) return;
+      const days = Math.floor(ms / 86400000) + 1;
+      const forecasts = days * BEACHES;
+      const dataPoints = days * BEACHES * FACTORS;
+
+      document.querySelectorAll('.metric-val').forEach(el => {
+        const k = el.dataset.key;
+        el.dataset.target = k === 'forecastsGenerated' ? forecasts
+          : k === 'consecutiveDays' ? days : dataPoints;
+      });
+
+      const strip = document.getElementById('metricsStrip');
+      if(!strip) return;
+      new IntersectionObserver((entries, obs) => {
+        entries.forEach(e => {
+          if(e.isIntersecting){
+            e.target.querySelectorAll('.metric-val').forEach(el => {
+              const to = parseInt(el.dataset.target);
+              if(!to){ el.textContent = '0'; return; }
+              const t0 = performance.now();
+              (function tick(now){
+                const p = Math.min((now - t0) / 1200, 1);
+                el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))).toLocaleString('en-IN');
+                if(p < 1) requestAnimationFrame(tick);
+              })(t0);
+            });
+            obs.unobserve(e.target);
+          }
+        });
+      }, {threshold: 0.3}).observe(strip);
+    }
+
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateMetrics);
+    else updateMetrics();
+  })();
+  </script>
 
   <!-- ── THE CRAFT SECTION ─────────────────────────── -->
   <section class="craft-section" id="craft">
