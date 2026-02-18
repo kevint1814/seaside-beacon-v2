@@ -576,14 +576,15 @@
   (function(){
     const LAUNCH_DATE = new Date('2026-02-14T04:00:00+05:30');
     const BEACHES = 4;
-    const FACTORS = 5;
+    const HOURS_FETCHED = 12;    // 12-hour AccuWeather forecast
+    const FIELDS_PER_HOUR = 11;  // temp, feelsLike, cloud, humidity, wind, windDir, vis, uv, precip, desc, hasPrecip
 
     function updateMetrics(){
       const ms = Date.now() - LAUNCH_DATE.getTime();
       if(ms < 0) return;
       const days = Math.floor(ms / 86400000) + 1;
       const forecasts = days * BEACHES;
-      const dataPoints = days * BEACHES * FACTORS;
+      const dataPoints = days * BEACHES * HOURS_FETCHED * FIELDS_PER_HOUR;
 
       document.querySelectorAll('.metric-val').forEach(el => {
         const k = el.dataset.key;

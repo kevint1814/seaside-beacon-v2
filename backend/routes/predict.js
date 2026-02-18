@@ -13,19 +13,30 @@ const { trackPrediction, getStats } = require('../services/visitTracker');
 /**
  * GET /api/stats
  * Returns live metrics for the frontend metrics strip
+ *
+ * Math:
+ *   Forecasts generated = daysLive × 4 beaches (scored daily)
+ *   Data points = daysLive × 4 beaches × 12 hourly forecasts × 11 fields per hour
+ *     Fields: temperature, feelsLike, cloudCover, humidity, windSpeed,
+ *             windDirection, visibility, uvIndex, precipProbability,
+ *             weatherDescription, hasPrecipitation
  */
 router.get('/stats', async (req, res) => {
   try {
     const stats = await getStats();
     const LAUNCH_DATE = new Date('2026-02-14T04:00:00+05:30');
-    const daysLive = Math.floor((Date.now() - LAUNCH_DATE.getTime()) / 86400000) + 1;
+    const daysLive = Math.max(1, Math.floor((Date.now() - LAUNCH_DATE.getTime()) / 86400000) + 1);
+
+    const BEACHES = 4;
+    const HOURS_FETCHED = 12;
+    const FIELDS_PER_HOUR = 11;
 
     res.json({
       success: true,
       data: {
-        forecastsGenerated: daysLive * 4,       // 4 beaches × days
+        forecastsGenerated: daysLive * BEACHES,
         consecutiveDays: daysLive,
-        dataPointsProcessed: daysLive * 4 * 5,  // 4 beaches × 5 factors × days
+        dataPointsProcessed: daysLive * BEACHES * HOURS_FETCHED * FIELDS_PER_HOUR,
         visitors: stats.lifetime.visits,
         predictions: stats.lifetime.predictions
       }
