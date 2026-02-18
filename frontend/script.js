@@ -96,8 +96,15 @@ function initSunriseCanvas() {
   updateScroll(); // initial
 
   function resize() {
-    W = canvas.width  = canvas.offsetWidth;
-    H = canvas.height = canvas.offsetHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap at 2x to save GPU
+    const cssW = canvas.offsetWidth;
+    const cssH = canvas.offsetHeight;
+    canvas.width  = cssW * dpr;
+    canvas.height = cssH * dpr;
+    canvas.style.width  = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    W = canvas.width;
+    H = canvas.height;
   }
 
   // Easing — smooth the scroll transitions
