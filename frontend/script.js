@@ -1433,13 +1433,13 @@ function initMetrics() {
       }
     } catch (e) {
       // Fallback: calculate from launch date
-      const launch = new Date('2026-02-16');
+      const launch = new Date('2026-02-14T04:00:00+05:30');
       const now = new Date();
       const days = Math.max(1, Math.floor((now - launch) / (1000 * 60 * 60 * 24)));
       const fallback = {
-        forecastsGenerated: days * 4,    // 4 beaches/day
+        forecastsGenerated: days * 4,              // 4 beaches/day
         consecutiveDays: days,
-        dataPointsProcessed: days * 24   // 6 factors × 4 beaches
+        dataPointsProcessed: days * 4 * 12 * 11   // 4 beaches × 12 hours × 11 fields
       };
       strip.querySelectorAll('.metric-val').forEach(el => {
         const key = el.dataset.key;

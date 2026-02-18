@@ -46,48 +46,6 @@ router.get('/stats', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch stats' });
   }
 });
-const DailyVisit = require('../models/DailyVisit');
-
-/**
- * GET /api/stats
- * Returns live metrics for the homepage metrics strip.
- * Computes: forecasts generated, consecutive days live, data points analyzed.
- * Lightweight — no auth needed, public data only.
- */
-router.get('/stats', async (req, res) => {
-  try {
-    // All-time aggregation from DailyVisit
-    const agg = await DailyVisit.aggregate([{
-      $group: {
-        _id: null,
-        totalPredictions: { $sum: '$predictions' },
-        totalVisits: { $sum: '$visits' },
-        totalDays: { $sum: 1 }
-      }
-    }]);
-
-    const data = agg[0] || { totalPredictions: 0, totalVisits: 0, totalDays: 0 };
-
-    // Each prediction uses 47 atmospheric parameters
-    const dataPoints = data.totalPredictions * 47;
-
-    res.json({
-      success: true,
-      data: {
-        forecastsGenerated: data.totalPredictions,
-        consecutiveDays: data.totalDays,
-        dataPointsProcessed: dataPoints
-      }
-    });
-  } catch (error) {
-    console.error('Stats error:', error.message);
-    res.json({
-      success: true,
-      data: { forecastsGenerated: 0, consecutiveDays: 0, dataPointsProcessed: 0 }
-    });
-  }
-});
-
 /**
  * GET /api/beaches
  */
