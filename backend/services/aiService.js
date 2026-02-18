@@ -254,15 +254,17 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
     ]
   },
   "beachComparison": ${beachKeys.length > 1 ? `{
-    "todaysBest": "one of: ${beachKeys.join(', ')}",
+    "todaysBest": "MUST be exactly one of these strings: ${beachKeys.join(', ')}",
     "reason": "2-3 sentences explaining WHY this beach is best today based on how conditions interact with its physical features. If ALL beaches are poor, say so honestly and recommend the most convenient one.",
     "beaches": {
       ${beachKeys.map(k => `"${k}": {
         "suitability": "Best/Good/Fair/Poor",
-        "reason": "1-2 sentences about how today's specific conditions interact with this beach's features. Reference named elements. Be honest on poor days."
+        "reason": "1-2 sentences about how today's specific conditions interact with this beach's features. Reference named elements from the BEACH CONTEXT. Be honest on poor days. IMPORTANT: Each beach MUST have a UNIQUE reason that references its specific features — do NOT repeat the same text across beaches."
       }`).join(',\n      ')}
     }
   }` : 'null'}
+
+CRITICAL: The "beaches" object MUST use exactly these keys: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A'}. Do NOT use full beach names as keys (wrong: "Marina Beach", right: "marina").
 }`;
 
     const completion = await groqClient.chat.completions.create({
@@ -294,6 +296,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
     // If not (single beach call), generate deterministic comparison.
     let beachComparison = aiData.beachComparison;
     if (!beachComparison && Object.keys(allWeatherData).length > 1) {
+      console.warn('⚠️  Groq returned no beachComparison — using rule-based fallback');
       beachComparison = generateBeachComparison(allWeatherData);
     }
 
@@ -302,8 +305,10 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
     if (beachComparison && beachComparison.beaches) {
       const expectedKeys = Object.keys(allWeatherData);
       const fallbackComp = generateBeachComparison(allWeatherData);
+      let patchCount = 0;
       expectedKeys.forEach(key => {
         if (!beachComparison.beaches[key] || !beachComparison.beaches[key].reason) {
+          patchCount++;
           // Fill missing beach from deterministic fallback
           beachComparison.beaches[key] = fallbackComp?.beaches?.[key] || {
             suitability: 'Fair',
@@ -311,6 +316,9 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
           };
         }
       });
+      if (patchCount > 0) {
+        console.warn(`⚠️  Patched ${patchCount}/${expectedKeys.length} beach comparisons from Groq (missing keys or reasons). AI returned keys: ${Object.keys(beachComparison.beaches || {}).join(', ')}`);
+      }
       // Validate todaysBest is a real key
       if (!expectedKeys.includes(beachComparison.todaysBest)) {
         beachComparison.todaysBest = fallbackComp?.todaysBest || expectedKeys[0];
