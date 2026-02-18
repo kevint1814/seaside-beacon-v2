@@ -792,8 +792,13 @@ function initSunriseCanvas() {
   }
 
   window.addEventListener('resize', resize);
-  resize();
-  requestAnimationFrame(draw);
+  // Double-rAF ensures browser has completed layout before first resize + draw
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      resize();
+      requestAnimationFrame(draw);
+    });
+  });
 }
 
 // ─────────────────────────────────────────────
