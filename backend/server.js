@@ -28,8 +28,17 @@ const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
 
+// CORS — handle multiple allowed origins properly
+const allowedOrigins = (process.env.FRONTEND_URL || '*').split(',').map(s => s.trim());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      return callback(null, origin);
+    }
+    return callback(null, false);
+  },
   methods: ['GET', 'POST'],
   credentials: true
 }));

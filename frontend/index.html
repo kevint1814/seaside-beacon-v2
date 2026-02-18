@@ -107,7 +107,7 @@
         "name": "How does Seaside Beacon predict sunrise quality?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Seaside Beacon uses 47+ atmospheric parameters from AccuWeather including cloud cover, humidity, visibility, wind speed, and precipitation probability. These are scored using research-backed weights (clouds 35%, visibility 30%, humidity 20%, weather 10%, wind 5%) to produce a 0–100 sunrise quality score."
+          "text": "Seaside Beacon uses atmospheric data from AccuWeather including cloud cover, humidity, visibility, wind speed, and precipitation probability. These are scored using research-backed weights (clouds 35%, visibility 30%, humidity 20%, weather 10%, wind 5%) to produce a 0–100 sunrise quality score."
         }
       }
     ]
@@ -238,7 +238,7 @@
     <div class="hero-body">
       <div class="hero-kicker">
         <span class="kicker-line"></span>
-        <span class="kicker-text"><span class="kicker-claim">We Are India's First Native Sunrise Quality Forecast</span><span class="kicker-detail"> · Chennai · Four Beaches · More To Come</span></span>
+        <span class="kicker-text"><span class="kicker-claim">India's First Purpose-Built Sunrise Quality Forecast For Beaches</span><span class="kicker-detail"> · Chennai · Four Beaches · More To Come</span></span>
       </div>
 
       <h1 class="hero-headline">
@@ -266,8 +266,8 @@
         </div>
         <div class="hst-sep"></div>
         <div class="hst">
-          <span class="hst-val">6</span>
-          <span class="hst-key">Atmospheric factors</span>
+          <span class="hst-val">5</span>
+          <span class="hst-key">Scoring factors</span>
         </div>
         <div class="hst-sep"></div>
         <div class="hst">
@@ -570,6 +570,52 @@
       </div>
     </div>
   </section>
+
+  <!-- Live Metrics Calculator -->
+  <script>
+  (function(){
+    const LAUNCH_DATE = new Date('2026-02-14T04:00:00+05:30');
+    const BEACHES = 4;
+    const FACTORS = 5;
+
+    function updateMetrics(){
+      const ms = Date.now() - LAUNCH_DATE.getTime();
+      if(ms < 0) return;
+      const days = Math.floor(ms / 86400000) + 1;
+      const forecasts = days * BEACHES;
+      const dataPoints = days * BEACHES * FACTORS;
+
+      document.querySelectorAll('.metric-val').forEach(el => {
+        const k = el.dataset.key;
+        el.dataset.target = k === 'forecastsGenerated' ? forecasts
+          : k === 'consecutiveDays' ? days : dataPoints;
+      });
+
+      const strip = document.getElementById('metricsStrip');
+      if(!strip) return;
+      new IntersectionObserver((entries, obs) => {
+        entries.forEach(e => {
+          if(e.isIntersecting){
+            e.target.querySelectorAll('.metric-val').forEach(el => {
+              const to = parseInt(el.dataset.target);
+              if(!to){ el.textContent = '0'; return; }
+              const t0 = performance.now();
+              (function tick(now){
+                const p = Math.min((now - t0) / 1200, 1);
+                el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))).toLocaleString('en-IN');
+                if(p < 1) requestAnimationFrame(tick);
+              })(t0);
+            });
+            obs.unobserve(e.target);
+          }
+        });
+      }, {threshold: 0.3}).observe(strip);
+    }
+
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateMetrics);
+    else updateMetrics();
+  })();
+  </script>
 
   <!-- ── THE CRAFT SECTION ─────────────────────────── -->
   <section class="craft-section" id="craft">
@@ -1005,9 +1051,9 @@
           <p class="contact-card-body">Saw something beautiful this morning? Got a forecast that missed the mark? Want to tell us about a beach we should cover next? We read every single message. This project was built by listening, and we're still listening.</p>
           <p class="contact-card-subtle">Kevin usually responds within a few hours.</p>
           <div class="contact-chips">
-            <a href="mailto:hellofromseasidebeacon@gmail.com" class="contact-chip">
+            <a href="/cdn-cgi/l/email-protection#c6aea3aaaaa9a0b4a9abb5a3a7b5afa2a3a4a3a7a5a9a886a1aba7afaae8a5a9ab" class="contact-chip">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/></svg>
-              <span>hello@seasidebeacon.com</span>
+              <span><span class="__cf_email__" data-cfemail="a0c8c5cccccfe0d3c5c1d3c9c4c5c2c5c1c3cfce8ec3cfcd">[email&#160;protected]</span></span>
             </a>
             <a href="tel:+916381084571" class="contact-chip">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
@@ -1022,9 +1068,9 @@
           <p class="contact-card-body">Seaside Beacon reaches sunrise photographers, morning runners, and beach lovers across Chennai — every single day, before they're even awake. If your brand belongs in that moment, let's talk.</p>
           <p class="contact-card-subtle">Sponsorships, collaborations, and media inquiries are more than welcome.</p>
           <div class="contact-chips">
-            <a href="mailto:hellofromseasidebeacon@gmail.com?subject=Partnership%20Inquiry%20—%20Seaside%20Beacon" class="contact-chip">
+            <a href="/cdn-cgi/l/email-protection#c7afa2ababa8a1b5a8aab4a2a6b4aea3a2a5a2a6a4a8a987a0aaa6aeabe9a4a8aaf8b4b2a5ada2a4b3fa97a6b5b3a9a2b5b4afaeb7e2f5f78ea9b6b2aeb5bee2f5f7254753e2f5f794a2a6b4aea3a2e2f5f785a2a6a4a8a9" class="contact-chip">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/></svg>
-              <span>hello@seasidebeacon.com</span>
+              <span><span class="__cf_email__" data-cfemail="6d05080101022d1e080c1e0409080f080c0e0203430e0200">[email&#160;protected]</span></span>
             </a>
             <a href="tel:+916381084571" class="contact-chip">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
@@ -1056,17 +1102,4 @@
               </svg>
               <circle cx="12" cy="12" r="4"></circle>
           Seaside Beacon
-        </div>
-        <p class="footer-line">We Are India's First Native Sunrise Quality Forecast. Marina, Elliot's, Covelong & Thiruvanmiyur Beach, Chennai.</p>
-      </div>
-      <div class="footer-right">
-        <p class="footer-credit">Kevin T · 2026</p>
-      </div>
-    </div>
-  </footer>
-
-</div><!-- /page -->
-
-<script src="script.js"></script>
-</body>
-</html>
+        </d
