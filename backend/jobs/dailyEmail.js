@@ -59,6 +59,7 @@ async function storeDailyScores() {
           humidity:    { value: data.prediction.breakdown.humidity.value,    score: data.prediction.breakdown.humidity.score },
           weather:     { value: data.prediction.breakdown.weather.value,     score: data.prediction.breakdown.weather.score },
           wind:        { value: data.prediction.breakdown.wind.value,        score: data.prediction.breakdown.wind.score },
+          synergy:     data.prediction.breakdown.synergy || 0,
           postRainBonus: data.prediction.breakdown.postRainBonus || 0
         }
       };
