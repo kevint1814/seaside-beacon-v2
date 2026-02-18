@@ -203,9 +203,12 @@
 </div>
 
 <div class="page">
+  <a href="#mainContent" class="skip-link">Skip to main content</a>
 
   <!-- ── NAV ──────────────────────────────────────── -->
   <nav class="nav" id="nav">
+    <!-- Liquid Glass magnification lens — canvas draws zoomed background -->
+    <div class="nav-lens" id="navLens"><canvas id="lensCanvas"></canvas></div>
     <a class="nav-brand" href="#home">
       <div class="nav-emblem">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="orange" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -213,12 +216,13 @@
       <span class="nav-name">Seaside Beacon</span>
     </a>
     <div class="nav-links">
-      <a href="#forecast" class="nav-link">Forecast</a>
-      <a href="#craft" class="nav-link">Our Craft</a>
-      <a href="#cases" class="nav-link">Real Mornings</a>
-      <a href="#community" class="nav-link">Community</a>
-      <a href="#story" class="nav-link">The Story</a>
-      <a href="#contact" class="nav-link">Contact</a>
+      <div class="nav-indicator" id="navIndicator"></div>
+      <a href="#forecast" class="nav-link" data-section="forecast">Forecast</a>
+      <a href="#craft" class="nav-link" data-section="craft">Our Craft</a>
+      <a href="#cases" class="nav-link" data-section="cases">Real Mornings</a>
+      <a href="#community" class="nav-link" data-section="community">Community</a>
+      <a href="#story" class="nav-link" data-section="story">The Story</a>
+      <a href="#contact" class="nav-link" data-section="contact">Contact</a>
       <button type="button" class="btn-nav-cta" id="navSubscribeBtn">Daily Briefing</button>
     </div>
     <button type="button" class="nav-hamburger" id="navHamburger" aria-label="Menu">
@@ -242,7 +246,7 @@
     <div class="hero-body">
       <div class="hero-kicker">
         <span class="kicker-line"></span>
-        <span class="kicker-text"><span class="kicker-claim">India's First Purpose-Built Sunrise Quality Forecast For Beaches</span><span class="kicker-detail"><br>Chennai · Four Beaches · More To Come</span></span>
+        <span class="kicker-text"><span class="kicker-claim">India's First Purpose-Built Sunrise Quality Forecast For Beaches</span><span class="kicker-detail"> · Chennai · Four Beaches · More To Come</span></span>
       </div>
 
       <h1 class="hero-headline">

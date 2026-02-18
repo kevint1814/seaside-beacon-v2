@@ -806,8 +806,18 @@ function initSunriseCanvas() {
 // ─────────────────────────────────────────────
 function initScrollProgress() {
   const bar = document.getElementById('scrollProgress');
+  const nav = document.getElementById('nav');
+
+  // Sync progress bar width to nav capsule width
+  function syncWidth() {
+    if (nav) bar.style.setProperty('--nav-width', nav.offsetWidth + 'px');
+  }
+  syncWidth();
+  window.addEventListener('resize', syncWidth, {passive:true});
+
   window.addEventListener('scroll', () => {
-    bar.style.width = (window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+    const pct = (window.scrollY/(document.body.scrollHeight-window.innerHeight)*100);
+    bar.style.setProperty('--scroll-pct', pct + '%');
   }, {passive:true});
 }
 
@@ -818,6 +828,9 @@ function initNav() {
   const nav = document.getElementById('nav');
   const ham = document.getElementById('navHamburger');
   const drawer = document.getElementById('navDrawer');
+  const indicator = document.getElementById('navIndicator');
+  const navLinksContainer = document.querySelector('.nav-links');
+  const navLinks = document.querySelectorAll('.nav-link[data-section]');
 
   window.addEventListener('scroll', () => {
     nav.classList.toggle('scrolled', window.scrollY > 40);
@@ -833,6 +846,66 @@ function initNav() {
     drawer?.classList.remove('open');
     drawer?.classList.add('hidden');
   }));
+
+  // ── Sliding indicator ──
+  if (!indicator || !navLinksContainer || !navLinks.length) return;
+
+  function moveIndicator(link) {
+    if (!link) {
+      indicator.classList.remove('active');
+      return;
+    }
+    const containerRect = navLinksContainer.getBoundingClientRect();
+    const linkRect = link.getBoundingClientRect();
+    indicator.style.left = (linkRect.left - containerRect.left) + 'px';
+    indicator.style.width = linkRect.width + 'px';
+    indicator.style.top = ((linkRect.top - containerRect.top) + (linkRect.height - 30) / 2) + 'px';
+    indicator.classList.add('active');
+
+    // Update active class on links
+    navLinks.forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+  }
+
+  // IntersectionObserver — detect which section is in view
+  const sections = [];
+  navLinks.forEach(link => {
+    const id = link.dataset.section;
+    const el = document.getElementById(id);
+    if (el) sections.push({ el, link });
+  });
+
+  let currentSection = null;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const match = sections.find(s => s.el === entry.target);
+        if (match && match.link !== currentSection) {
+          currentSection = match.link;
+          moveIndicator(match.link);
+        }
+      }
+    });
+  }, {
+    rootMargin: '-20% 0px -60% 0px', // trigger when section is in upper-middle of viewport
+    threshold: 0
+  });
+
+  sections.forEach(s => observer.observe(s.el));
+
+  // When at very top (hero), hide indicator
+  window.addEventListener('scroll', () => {
+    if (window.scrollY < 200) {
+      currentSection = null;
+      indicator.classList.remove('active');
+      navLinks.forEach(l => l.classList.remove('active'));
+    }
+  }, {passive: true});
+
+  // Recalculate on resize
+  window.addEventListener('resize', () => {
+    if (currentSection) moveIndicator(currentSection);
+  }, {passive: true});
 }
 
 // ─────────────────────────────────────────────
