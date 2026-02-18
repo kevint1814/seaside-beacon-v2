@@ -26,6 +26,7 @@ const beachScoreSchema = new mongoose.Schema({
     humidity:    { value: Number, score: Number },
     weather:     { value: Number, score: Number },
     wind:        { value: Number, score: Number },
+    synergy:       Number,
     postRainBonus: Number
   }
 }, { _id: false });
