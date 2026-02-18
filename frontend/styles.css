@@ -426,13 +426,13 @@ input, select, textarea { font-family:inherit; }
   position: fixed; top:12px; left:50%; z-index:300;
   transform: translateX(-50%);
   height: 48px;
-  width: fit-content; max-width: min(94vw, 780px); min-width: min(88vw, 320px);
+  width: fit-content; max-width: min(94vw, 820px); min-width: min(88vw, 320px);
   display: flex; align-items:center; justify-content:space-between;
-  padding: 0 28px 0 16px;
+  padding: 0 24px 0 20px;
   border-radius: 999px;
   background: transparent;
   border: none;
-  overflow: hidden;
+  overflow: visible;
   transition: background 0.45s var(--ease-smooth),
               box-shadow 0.45s var(--ease-smooth);
   will-change: backdrop-filter;
@@ -440,6 +440,7 @@ input, select, textarea { font-family:inherit; }
 
 .nav.scrolled {
   background: rgba(20,16,10,0.22);
+  overflow: hidden;
   /* Liquid Glass lens — the "magnification" is perceptual:
      brightness + contrast + saturation make content behind appear
      sharper, more vivid, and closer than the surrounding area.
@@ -528,7 +529,7 @@ input, select, textarea { font-family:inherit; }
 .nav-link:hover { color: var(--t1); }
 .nav-link.active { color: var(--t1); }
 .btn-nav-cta {
-  margin-left: 6px; margin-right: 16px; padding: 6px 14px; border-radius: 999px;
+  margin-left: 6px; margin-right: 0; padding: 6px 14px; border-radius: 999px;
   font-size: 12px; font-weight: 500; letter-spacing: 0.15px;
   background: transparent;
   border: none;
@@ -556,7 +557,7 @@ input, select, textarea { font-family:inherit; }
 
 .nav-drawer {
   position:fixed; top:68px; left:50%; z-index:299;
-  width: fit-content; min-width: min(88vw, 320px); max-width: min(94vw, 780px);
+  width: fit-content; min-width: min(88vw, 320px); max-width: min(94vw, 820px);
   transform: translateX(-50%) translateY(-10px);
   border-radius: 24px;
   /* Match capsule glass — neutral, no indigo */
@@ -754,14 +755,14 @@ input, select, textarea { font-family:inherit; }
   backdrop-filter: var(--blur-sm);
   -webkit-backdrop-filter: var(--blur-sm);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 1px 0 var(--specular) inset, 0 4px 12px rgba(4,5,15,0.3);
+  box-shadow: 0 1px 0 var(--specular) inset, 0 4px 18px rgba(4,5,15,0.10);
   transition: all 0.22s var(--ease-smooth);
 }
 .bsel:hover { background:var(--glass-fill-2); border-color:var(--glass-border-hi); transform:translateY(-1px); }
 .bsel.active {
   background: var(--accent-subtle);
   border-color: var(--accent-border);
-  box-shadow: 0 1px 0 var(--specular) inset, 0 4px 16px var(--accent-glow);
+  box-shadow: 0 1px 0 var(--specular) inset, 0 4px 20px rgba(196,115,58,0.12);
 }
 .bsel-name { font-size:13px; font-weight:500; color:var(--t1); }
 .bsel-sub  { font-size:10px; color:var(--t3); }
@@ -1649,6 +1650,7 @@ input, select, textarea { font-family:inherit; }
 /* ── Community share ── */
 .community-share {
   margin-top: 32px;
+  text-align: center;
 }
 .community-share-label {
   font-family: var(--ff-display);
@@ -1661,6 +1663,7 @@ input, select, textarea { font-family:inherit; }
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  justify-content: center;
 }
 .community-share-btn {
   display: inline-flex;
@@ -1710,7 +1713,7 @@ input, select, textarea { font-family:inherit; }
    CONTACT — SAY HELLO
 ═══════════════════════════════════════════════════════ */
 .contact-section {
-  padding: 100px clamp(20px,4vw,56px);
+  padding: 100px clamp(20px,4vw,56px) 48px;
 }
 .contact-inner {
   max-width: 1100px;
@@ -2391,16 +2394,16 @@ body.cinema-mode .section-divider {
 }
 .footer-inner {
   max-width:1100px; margin:0 auto;
-  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;
 }
-.footer-brand { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:500; color:var(--t1); margin-bottom:3px; }
+.footer-brand { display:flex; align-items:center; justify-content:center; gap:6px; font-size:14px; font-weight:500; color:var(--t1); margin-bottom:3px; }
 .footer-logo {
   width:22px; height:22px;
   object-fit:contain;
   flex-shrink:0;
 }
-.footer-line { font-size:12px; color:var(--t3); }
-.footer-credit { font-size:11px; color:var(--t4); }
+.footer-line { font-size:12px; color:var(--t3); max-width:680px; }
+.footer-credit { font-size:11px; color:var(--t4); margin-top:4px; }
 
 /* ═══════════════════════════════════════════════════════
    MODAL
@@ -2627,13 +2630,18 @@ body.cinema-mode .section-divider {
     border-right:none; border-bottom:1px solid var(--glass-border);
     flex-direction:row; justify-content:center; gap:20px;
     align-items:center; padding:20px 22px;
+    flex-wrap:wrap;
+  }
+  .score-verdict-wrap {
+    display:flex; align-items:center; justify-content:center;
   }
   .fmr-conditions-col { border-right:none; }
   .fmr-intel-col { display:flex; }
   .ap-atm-grid { grid-template-columns:1fr 1fr; }
   .ap-settings-grid { grid-template-columns:1fr 1fr; }
   .ap-comp-grid { grid-template-columns:1fr; }
-  .craft-section,.sub-section,.story-section,.cases-section,.community-section,.contact-section { padding:60px 20px; }
+  .craft-section,.sub-section,.story-section,.cases-section,.community-section { padding:60px 20px; }
+  .contact-section { padding:60px 20px 36px; }
   .case-card { flex: 0 0 260px; height: 380px; }
   .case-photo { height: 170px; }
   .story-narrative {
@@ -2651,7 +2659,6 @@ body.cinema-mode .section-divider {
   .metric-label { font-size:10.5px; }
   .metric-item { padding:0 12px; }
   .metric-sep { height:32px; }
-  .footer-inner { flex-direction:column; text-align:center; }
   /* Unavailable card — stack on mobile */
   .unavail-inner { flex-direction:column; }
   .unavail-left {
