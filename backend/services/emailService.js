@@ -1,7 +1,7 @@
 // ==========================================
 // Email Service - Brevo (primary) / SendGrid (backup)
 // General-audience-first, honest tone
-// EMAIL-SAFE CSS: solid hex colors, bgcolor attrs, no rgba/gradients
+// LIGHT MODE: warm tones, email-safe CSS, works on ALL clients
 // ENV: EMAIL_PROVIDER=brevo (default) or sendgrid
 // ==========================================
 
@@ -128,29 +128,29 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <!--[if mso]><style>*{font-family:Arial,sans-serif!important;}</style><![endif]-->
 </head>
-<body style="margin:0;padding:0;background-color:#0c0b12;-webkit-text-size-adjust:none;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0c0b12">
+<body style="margin:0;padding:0;background-color:#f5f0ea;-webkit-text-size-adjust:none;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5f0ea">
     <tr><td align="center" style="padding:32px 16px;">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 
         <!-- ═══ HEADER ═══ -->
-        <tr><td bgcolor="#2b1810" style="padding:52px 40px 42px;text-align:center;">
+        <tr><td bgcolor="#C4733A" style="padding:52px 40px 42px;text-align:center;">
 
           <p style="margin:0 0 4px;font-size:28px;line-height:1;">☀️</p>
-          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:3px;color:#a08060;">Welcome to</p>
-          <h1 style="margin:0 0 12px;font-family:'Cormorant Garamond',Georgia,serif;font-size:36px;font-weight:600;color:#f5f0e8;letter-spacing:-0.5px;">Seaside Beacon</h1>
-          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;color:#9a8a7a;letter-spacing:0.3px;">Honest sunrise forecasts for Chennai beaches</p>
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:3px;color:#f5e8d8;">Welcome to</p>
+          <h1 style="margin:0 0 12px;font-family:'Cormorant Garamond',Georgia,serif;font-size:36px;font-weight:600;color:#ffffff;letter-spacing:-0.5px;">Seaside Beacon</h1>
+          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;color:#f5e0cc;letter-spacing:0.3px;">Honest sunrise forecasts for Chennai beaches</p>
 
         </td></tr>
 
         <!-- ═══ BODY ═══ -->
-        <tr><td bgcolor="#131218" style="padding:0;">
+        <tr><td bgcolor="#ffffff" style="padding:0;">
 
           <!-- Beach badge -->
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:36px 40px 0;text-align:center;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
-                <tr><td bgcolor="#1f1810" style="border:1px solid #3d2a1a;padding:8px 22px;">
+                <tr><td bgcolor="#FDF5EE" style="border:1px solid #E8D5C0;padding:8px 22px;">
                   <span style="font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;font-weight:500;color:#c4733a;letter-spacing:0.3px;">📍 ${beachDisplay}</span>
                 </td></tr>
               </table>
@@ -160,32 +160,32 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
           <!-- Main message -->
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:28px 40px 0;text-align:center;">
-              <h2 style="margin:0 0 16px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;color:#f0ebe0;letter-spacing:-0.3px;">You're all set.</h2>
-              <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.75;color:#8a8090;">Every morning at <strong style="color:#c8c0b8;">4:00 AM IST</strong>, we study the atmosphere and send you an honest forecast — what tomorrow's sky will actually look like at your beach, and whether it's worth the early alarm.</p>
+              <h2 style="margin:0 0 16px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;color:#2a2420;letter-spacing:-0.3px;">You're all set.</h2>
+              <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.75;color:#6b6058;">Every morning at <strong style="color:#2a2420;">4:00 AM IST</strong>, we study the atmosphere and send you an honest forecast — what tomorrow's sky will actually look like at your beach, and whether it's worth the early alarm.</p>
             </td></tr>
           </table>
 
           <!-- Divider -->
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:32px 40px;">
-              <div style="height:1px;background-color:#251e18;"></div>
+              <div style="height:1px;background-color:#E8DDD0;"></div>
             </td></tr>
           </table>
 
           <!-- What you'll get -->
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:0 40px;">
-              <p style="margin:0 0 20px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#605848;">What you'll get</p>
+              <p style="margin:0 0 20px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#a09080;">What you'll get</p>
 
               <!-- Feature 1 -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
                 <tr>
                   <td style="width:36px;vertical-align:top;padding-top:2px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#1a1510" style="width:32px;height:32px;border:1px solid #2a2018;text-align:center;line-height:32px;font-size:15px;">🌅</td></tr></table>
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#FDF5EE" style="width:32px;height:32px;border:1px solid #E8D5C0;text-align:center;line-height:32px;font-size:15px;">🌅</td></tr></table>
                   </td>
                   <td style="padding-left:14px;vertical-align:top;">
-                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:#e8e0d5;">Honest Verdict</p>
-                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#706860;">Is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</p>
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:#2a2420;">Honest Verdict</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</p>
                   </td>
                 </tr>
               </table>
@@ -243,9 +243,9 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:0 40px 40px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td bgcolor="#1a1510" style="border:1px solid #2d2218;padding:22px 24px;text-align:center;">
+                <tr><td bgcolor="#1a1510" style="border:1px solid #E8D5C0;padding:22px 24px;text-align:center;">
                   <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:600;color:#f0ebe0;">Your first forecast arrives tomorrow</p>
-                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#807060;">4:00 AM IST · If conditions are good, set your alarm for 5:30 AM to catch the peak color window.</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">4:00 AM IST · If conditions are good, set your alarm for 5:30 AM to catch the peak color window.</p>
                 </td></tr>
               </table>
             </td></tr>
@@ -254,13 +254,13 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
         </td></tr>
 
         <!-- ═══ FOOTER ═══ -->
-        <tr><td bgcolor="#0a0914" style="padding:28px 40px;text-align:center;border-top:1px solid #1a1820;">
+        <tr><td bgcolor="#F0E8DE" style="padding:28px 40px;text-align:center;border-top:1px solid #E0D5C8;">
 
-          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#504848;">Seaside Beacon · Made with ☀️ in Chennai</p>
-          <p style="margin:0 0 10px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#3a3538;">You're subscribed to daily sunrise forecasts for ${beachDisplay}.</p>
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Made with ☀️ in Chennai</p>
+          <p style="margin:0 0 10px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#a09888;">You're subscribed to daily sunrise forecasts for ${beachDisplay}.</p>
           <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
-            <a href="${unsubscribeUrl}" style="color:#9a6a40;text-decoration:none;">Unsubscribe</a>
-            <span style="color:#2a2528;margin:0 8px;">·</span>
+            <a href="${unsubscribeUrl}" style="color:#C4733A;text-decoration:none;">Unsubscribe</a>
+            <span style="color:#d0c8c0;margin:0 8px;">·</span>
             <a href="${APP_URL}" style="color:#9a6a40;text-decoration:none;">Visit Website</a>
           </p>
 
@@ -298,9 +298,9 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 
     // Solid hex colors only — no rgba
     const statusColor = score >= 85 ? '#059669' : score >= 70 ? '#0284c7' : score >= 55 ? '#D97706' : score >= 40 ? '#EA580C' : '#DC2626';
-    const statusBg = score >= 85 ? '#0a1f15' : score >= 70 ? '#0a1520' : score >= 55 ? '#1f1808' : score >= 40 ? '#1f1008' : '#1f0a0a';
-    const statusBorder = score >= 85 ? '#0f3a25' : score >= 70 ? '#0f2a3a' : score >= 55 ? '#3a2d10' : score >= 40 ? '#3a2010' : '#3a1515';
-    const headerBg = score >= 85 ? '#14261a' : score >= 70 ? '#142028' : score >= 55 ? '#2b1810' : score >= 40 ? '#251215' : '#1a0e12';
+    const statusBg = score >= 85 ? '#ECFDF5' : score >= 70 ? '#EFF6FF' : score >= 55 ? '#FFFBEB' : score >= 40 ? '#FFF7ED' : '#FEF2F2';
+    const statusBorder = score >= 85 ? '#A7F3D0' : score >= 70 ? '#BFDBFE' : score >= 55 ? '#FDE68A' : score >= 40 ? '#FED7AA' : '#FECACA';
+    const headerBg = score >= 85 ? '#059669' : score >= 70 ? '#C4733A' : score >= 55 ? '#C4733A' : score >= 40 ? '#8B6040' : '#7A5A4A';
     const verdictEmoji = score >= 85 ? '🔥' : score >= 70 ? '🌅' : score >= 55 ? '☀️' : score >= 40 ? '☁️' : '🌫️';
 
     // Extract insights
@@ -319,18 +319,18 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 
     // Recommendation
     let recLabel, recColor, recBg, recBorder;
-    if (score >= 70) { recLabel = '✓ Worth the early alarm'; recColor = '#059669'; recBg = '#0a1f15'; recBorder = '#0f3a25'; }
-    else if (score >= 50) { recLabel = '~ Pleasant, not spectacular'; recColor = '#D97706'; recBg = '#1f1808'; recBorder = '#3a2d10'; }
-    else if (score >= 30) { recLabel = '✗ Underwhelming sunrise expected'; recColor = '#EA580C'; recBg = '#1f1008'; recBorder = '#3a2010'; }
-    else { recLabel = '— Sunrise likely not visible'; recColor = '#DC2626'; recBg = '#1f0a0a'; recBorder = '#3a1515'; }
+    if (score >= 70) { recLabel = '✓ Worth the early alarm'; recColor = '#059669'; recBg = '#ECFDF5'; recBorder = '#A7F3D0'; }
+    else if (score >= 50) { recLabel = '~ Pleasant, not spectacular'; recColor = '#D97706'; recBg = '#FFFBEB'; recBorder = '#FDE68A'; }
+    else if (score >= 30) { recLabel = '✗ Underwhelming sunrise expected'; recColor = '#EA580C'; recBg = '#FFF7ED'; recBorder = '#FED7AA'; }
+    else { recLabel = '— Sunrise likely not visible'; recColor = '#DC2626'; recBg = '#FEF2F2'; recBorder = '#FECACA'; }
 
     // Condition badge colors
-    const cloudBadgeColor = cloudCover >= 30 && cloudCover <= 75 ? '#34d399' : cloudCover < 30 ? '#fbbf24' : '#f87171';
-    const cloudBadgeBg = cloudCover >= 30 && cloudCover <= 75 ? '#0a1f15' : cloudCover < 30 ? '#1f1808' : '#1f0a0a';
+    const cloudBadgeColor = cloudCover >= 30 && cloudCover <= 75 ? '#059669' : cloudCover < 30 ? '#B45A06' : '#B91C1C';
+    const cloudBadgeBg = cloudCover >= 30 && cloudCover <= 75 ? '#ECFDF5' : cloudCover < 30 ? '#FFFBEB' : '#FEF2F2';
     const humidBadgeColor = humidity <= 55 ? '#34d399' : humidity <= 70 ? '#fbbf24' : '#f87171';
-    const humidBadgeBg = humidity <= 55 ? '#0a1f15' : humidity <= 70 ? '#1f1808' : '#1f0a0a';
+    const humidBadgeBg = humidity <= 55 ? '#ECFDF5' : humidity <= 70 ? '#FFFBEB' : '#FEF2F2';
     const visBadgeColor = visibility >= 8 ? '#34d399' : visibility >= 5 ? '#fbbf24' : '#f87171';
-    const visBadgeBg = visibility >= 8 ? '#0a1f15' : visibility >= 5 ? '#1f1808' : '#1f0a0a';
+    const visBadgeBg = visibility >= 8 ? '#ECFDF5' : visibility >= 5 ? '#FFFBEB' : '#FEF2F2';
 
     const mailOptions = {
       from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
@@ -361,13 +361,13 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 
           <p style="margin:0 0 24px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2.5px;color:#605848;">Seaside Beacon · ${beach}</p>
           <p style="margin:0 0 10px;font-size:40px;line-height:1;">${verdictEmoji}</p>
-          <h1 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:700;color:#f5f0e8;letter-spacing:-0.5px;">${verdict}</h1>
+          <h1 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">${verdict}</h1>
           <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;color:#706860;">This Morning's Sunrise Forecast</p>
 
         </td></tr>
 
         <!-- ═══ SCORE ═══ -->
-        <tr><td bgcolor="#131218" style="padding:0;">
+        <tr><td bgcolor="#ffffff" style="padding:0;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:32px 40px;text-align:center;">
 
@@ -416,7 +416,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
             <tr><td style="padding:0 40px 24px;">
               <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#605848;">🌅 What to Expect</p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td bgcolor="#161520" style="border:1px solid #1e1d28;padding:20px 22px;">
+                <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:20px 22px;">
                   ${sunriseExp.whatYoullSee ? `<p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#605848;">What you'll see</p><p style="margin:0 0 ${sunriseExp.beachVibes ? '16px' : '0'};font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.65;color:#8a8090;">${sunriseExp.whatYoullSee}</p>` : ''}
                   ${sunriseExp.beachVibes ? `<p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#605848;">Beach vibes</p><p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.65;color:#8a8090;">${sunriseExp.beachVibes}</p>` : ''}
                 </td></tr>
@@ -484,7 +484,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
                       <tr><td bgcolor="#161520" style="border:1px solid #1e1d28;padding:14px 16px;">
                         <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#605848;">🌡️ Temperature</p>
                         <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:#f0ebe0;">${temperature}°C</p>
-                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#0a1f15" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:#34d399;">At Sunrise</span></td></tr></table>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ECFDF5" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:#34d399;">At Sunrise</span></td></tr></table>
                       </td></tr>
                     </table>
                   </td>
@@ -499,7 +499,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
             <tr><td style="padding:0 40px 24px;">
               <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#605848;">🏖️ Today's Best Beach</p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td bgcolor="#0a1f15" style="border:1px solid #0f3a25;padding:18px 22px;">
+                <tr><td bgcolor="#0a1f15" style="border:1px solid #A7F3D0;padding:18px 22px;">
                   <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600;color:#34d399;">⭐ Recommended</p>
                   <p style="margin:0 0 4px;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:600;color:#f0ebe0;">${beachDisplayNames[beachComp.todaysBest] || beach}</p>
                   <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#706860;">${beachComp.reason || ''}</p>
@@ -524,7 +524,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
                 <tr>
                   <td width="48%" style="padding:0 6px 10px 0;vertical-align:top;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <tr><td bgcolor="#1a1920" style="border:1px solid #252430;padding:14px 16px;text-align:center;">
+                      <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:14px 16px;text-align:center;">
                         <p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#605848;">ISO</p>
                         <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:#f0ebe0;">${dslrSettings.iso || '200'}</p>
                       </td></tr>
@@ -568,8 +568,8 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
               <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#605848;">💡 Composition Tips</p>
               ${dslrTips.map(tip => `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
-                <tr><td bgcolor="#141318" style="border:1px solid #1e1d25;padding:12px 16px;">
-                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:#807878;">📸 ${tip}</p>
+                <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:12px 16px;">
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:#6b6058;">📸 ${tip}</p>
                 </td></tr>
               </table>`).join('')}
             </td></tr>
@@ -580,7 +580,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
             <tr><td style="padding:0 40px 28px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr><td bgcolor="#141318" style="border:1px solid #1e1d25;padding:22px 24px;text-align:center;">
-                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:#605858;">Photography section skipped — conditions aren't favorable enough today. We'll include camera settings when the sky is worth shooting. 📷</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:#8a7e72;">Photography section skipped — conditions aren't favorable enough today. We'll include camera settings when the sky is worth shooting. 📷</p>
                 </td></tr>
               </table>
             </td></tr>
