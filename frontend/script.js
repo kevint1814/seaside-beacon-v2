@@ -1303,10 +1303,11 @@ function showUnavailable(td) {
 // ─────────────────────────────────────────────
 // MODALS
 // ─────────────────────────────────────────────
-function openModal() { document.getElementById('emailModal').classList.add('active'); }
+function openModal() { const m=document.getElementById('emailModal'); m.classList.add('active'); m.setAttribute('aria-hidden','false'); }
 function closeModalFn() {
   const modal = document.getElementById('emailModal');
   modal.classList.remove('active');
+  modal.setAttribute('aria-hidden','true');
   // Reset flip animation so modal is clean on reopen
   const panel = modal.querySelector('.modal-panel');
   if (panel) {
