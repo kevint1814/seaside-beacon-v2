@@ -3,6 +3,11 @@
 // Balanced, honest, general-audience-first
 // Photography tips as secondary layer
 // Model: llama-3.3-70b-versatile
+//
+// ZERO hardcoded beach content — AI generates
+// everything from weather data + beach context.
+// Golden hour computed from real AccuWeather
+// sunrise time, not hardcoded.
 // ==========================================
 
 const Groq = require('groq-sdk');
@@ -21,6 +26,7 @@ try {
 
 /**
  * Generate sunrise insights (general audience + photography)
+ * weatherData now includes: sunTimes, goldenHour, beachContext
  */
 async function generatePhotographyInsights(weatherData, allWeatherData = {}) {
   try {
@@ -44,18 +50,25 @@ async function generateGroqInsights(weatherData, allWeatherData = {}) {
   try {
     console.log('🤖 Calling Groq AI for insights...');
 
-    const { beach, forecast, prediction } = weatherData;
+    const { beach, forecast, prediction, beachContext, goldenHour, sunTimes } = weatherData;
     const { cloudCover, humidity, visibility, windSpeed, temperature, precipProbability, weatherDescription } = forecast;
     const { score, verdict, atmosphericLabels } = prediction;
 
-    const beachContextMap = {
-      'Marina Beach': 'The world\'s longest urban beach. Key elements: lighthouse (north end), fishing boats (colorful vallamkaran boats launch at dawn), the pier, long flat sand, urban Chennai skyline as backdrop, large tidal pools during low tide.',
-      "Elliot's Beach": 'Quieter, upscale Besant Nagar beach. Key elements: Karl Schmidt Memorial (stone structure on beach), clean white sand, Ashtalakshmi Temple visible in background, fewer crowds, calm water.',
-      'Covelong Beach': 'Secluded surf beach 40km south. Key elements: natural rock formations and tidal pools, rolling waves, dramatic cliffs to the south, isolated and pristine, minimal urban intrusion.',
-      'Thiruvanmiyur Beach': 'Residential neighborhood beach. Key elements: tidal pools, natural breakwater rocks, calmer than Marina, accessible parking and walkways.'
-    };
+    // Use context from weatherService BEACHES config (single source of truth)
+    const context = beachContext || 'Beach with natural foreground elements and ocean horizon.';
 
-    const beachContext = beachContextMap[beach] || 'Chennai beach with natural foreground elements and Bay of Bengal horizon.';
+    // Use real golden hour from AccuWeather, or signal AI to estimate
+    let goldenHourInstruction;
+    if (goldenHour) {
+      goldenHourInstruction = `ACTUAL SUNRISE DATA (from AccuWeather):
+- Sunrise: ${goldenHour.sunriseExact}
+- Golden Hour Start (20 min before sunrise): ${goldenHour.start}
+- Golden Hour Peak (10 min before sunrise): ${goldenHour.peak}
+- Golden Hour End (30 min after sunrise): ${goldenHour.end}
+Use these EXACT times in your response. Do NOT estimate or make up times.`;
+    } else {
+      goldenHourInstruction = 'Sunrise time data unavailable. Estimate based on the current month and latitude (~13°N). Be explicit that times are estimates.';
+    }
 
     // Determine honesty tier so the AI knows what tone to use
     let toneInstruction;
@@ -69,12 +82,31 @@ async function generateGroqInsights(weatherData, allWeatherData = {}) {
       toneInstruction = 'This is a poor morning for sunrise. Be straightforward — the sunrise will likely not be visible or will be completely washed out. Describe what someone would actually see: overcast grey sky, no color, flat light. Do NOT romanticize this. If someone still wants to go for a walk, that\'s fine, but they should not expect any sunrise spectacle.';
     }
 
-    const prompt = `You are a knowledgeable local guide for Chennai's beaches who gives honest, balanced sunrise forecasts. Your audience is GENERAL PUBLIC first (people wondering "should I wake up early?") and photography enthusiasts second.
+    // Build comparison context from all beaches if available
+    let comparisonContext = '';
+    const beachKeys = Object.keys(allWeatherData);
+    if (beachKeys.length > 1) {
+      comparisonContext = '\nOTHER BEACHES TODAY (for comparison):\n';
+      beachKeys.forEach(key => {
+        const d = allWeatherData[key];
+        if (d && d.forecast && d.prediction) {
+          comparisonContext += `- ${d.beach}: Score ${d.prediction.score}/100, Cloud ${d.forecast.cloudCover}%, Humidity ${d.forecast.humidity}%, Visibility ${d.forecast.visibility}km, Wind ${d.forecast.windSpeed}km/h. Context: ${d.beachContext || 'N/A'}\n`;
+        }
+      });
+    }
+
+    // Dynamic month reference
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const currentMonth = monthNames[new Date().getMonth()];
+
+    const prompt = `You are a knowledgeable local guide who gives honest, balanced sunrise forecasts. Your audience is GENERAL PUBLIC first (people wondering "should I wake up early?") and photography enthusiasts second.
 
 YOUR CORE PRINCIPLE: Set accurate expectations. If someone follows your advice, they should never be disappointed. On great days, help them appreciate what makes it special. On bad days, tell them exactly what they'll see so they can decide for themselves.
 
 TONE INSTRUCTION FOR TODAY (score: ${score}/100):
 ${toneInstruction}
+
+CURRENT MONTH: ${currentMonth}
 
 ATMOSPHERIC CONDITIONS:
 - Temperature: ${temperature}°C
@@ -86,8 +118,11 @@ ATMOSPHERIC CONDITIONS:
 - Conditions: ${weatherDescription}
 - Sunrise Score: ${score}/100 (${verdict})
 
-BEACH CONTEXT:
-${beachContext}
+${goldenHourInstruction}
+
+BEACH: ${beach}
+BEACH CONTEXT: ${context}
+${comparisonContext}
 
 CRITICAL RULES:
 1. NEVER use phrases like "every sunrise is unique", "you might still catch something beautiful", "embrace the mood", or any positive spin on objectively poor conditions.
@@ -96,8 +131,10 @@ CRITICAL RULES:
 4. The "greeting" must match the score honestly. A 30/100 greeting should NOT sound exciting.
 5. The "sunriseExperience" section is for general audience — describe what they'll SEE, FEEL, and experience in plain language.
 6. Photography sections should include "why" explanations for all settings.
-7. Golden hour peak is 10-15 MINUTES BEFORE official sunrise (6:00 AM).
-8. February-March: Post-monsoon clarity, winter air = Chennai's best sunrise season.
+7. Golden hour times MUST use the actual times provided above, not made-up times.
+8. Composition tips MUST reference specific named elements from the BEACH CONTEXT above — do not give generic tips.
+9. Beach comparison must be honest — if all beaches are poor, say so. If one is clearly better, explain why based on today's conditions interacting with that beach's physical features.
+10. The "overallPattern" should reference ${currentMonth} and actual conditions, not assume any particular season.
 
 Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
 {
@@ -105,13 +142,13 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
   "insight": "Two sentences describing what someone will actually see and experience at the beach this morning. Be specific about expected sky colors, light quality, and overall atmosphere. Match honesty to the ${score}/100 score.",
   "sunriseExperience": {
     "whatYoullSee": "2-3 sentences painting an honest picture of the visual experience — sky colors, cloud behavior, light quality. Be specific and grounded.",
-    "beachVibes": "1-2 sentences about the non-visual experience — temperature feel, wind on skin, crowd level, sounds of the beach at dawn. This stays pleasant regardless of sky conditions since it's about the beach itself.",
+    "beachVibes": "1-2 sentences about the non-visual experience — temperature feel, wind on skin, crowd level, sounds at dawn. Reference the specific beach's character from the context.",
     "worthWakingUp": "${score >= 70 ? 'Yes — explain why this is genuinely worth the early alarm' : score >= 50 ? 'Conditionally — it will be pleasant but not spectacular. Good if you are already a morning person or nearby.' : 'For the sunrise alone, probably not. But if you enjoy early morning beach walks regardless of sky conditions, the beach is always peaceful at dawn.'}"
   },
   "goldenHour": {
-    "start": "5:40 AM",
-    "peak": "5:50 AM",
-    "end": "6:20 AM",
+    "start": "${goldenHour?.start || 'estimate'}",
+    "peak": "${goldenHour?.peak || 'estimate'}",
+    "end": "${goldenHour?.end || 'estimate'}",
     "quality": "Excellent/Very Good/Good/Fair/Poor — match honestly to conditions",
     "tip": "One sentence on when to be there for the best light, appropriate to conditions"
   },
@@ -136,7 +173,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       "rating": "Calm/Light/Moderate/Strong",
       "impact": "One sentence on how wind affects clouds and the overall beach experience."
     },
-    "overallPattern": "Two sentences about today's weather pattern and what it means for the sunrise at Chennai beaches."
+    "overallPattern": "Two sentences about today's weather pattern and what it means for the sunrise. Reference ${currentMonth} and actual atmospheric conditions."
   },
   "dslr": {
     "cameraSettings": {
@@ -155,9 +192,9 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       "Advanced tip relevant to today's exact conditions"
     ],
     "compositionTips": [
-      "Specific composition using a named element at ${beach}",
-      "Framing or leading line technique using ${beach}'s geography",
-      "Light and shadow opportunity for these conditions at ${beach}"
+      "Specific composition using a NAMED element from the beach context (e.g. lighthouse, Karl Schmidt Memorial, rock formations, breakwater rocks)",
+      "Framing or leading line technique using THIS beach's specific geography",
+      "Light and shadow opportunity for these exact conditions at THIS beach"
     ]
   },
   "mobile": {
@@ -177,12 +214,21 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       "Post-processing tip for today's specific light"
     ],
     "compositionTips": [
-      "Phone-specific composition at ${beach}",
-      "Orientation decision for today's sky conditions",
-      "Foreground or reflection technique for ${beach}"
+      "Phone-specific composition at THIS beach using a named element from context",
+      "Orientation decision for today's sky conditions at THIS beach",
+      "Foreground or reflection technique using THIS beach's specific features"
     ]
   },
-  "beachComparison": null
+  "beachComparison": ${beachKeys.length > 1 ? `{
+    "todaysBest": "beach key (e.g. marina, elliot, covelong, thiruvanmiyur)",
+    "reason": "2-3 sentences explaining WHY this beach is best today based on how conditions interact with its physical features. If ALL beaches are poor, say so honestly and recommend the most convenient one.",
+    "beaches": {
+      "for each beach key": {
+        "suitability": "Best/Good/Fair/Poor",
+        "reason": "1-2 sentences about how today's specific conditions interact with this beach's features. Reference named elements. Be honest on poor days."
+      }
+    }
+  }` : 'null'}
 }`;
 
     const completion = await groqClient.chat.completions.create({
@@ -190,7 +236,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       messages: [
         {
           role: "system",
-          content: "You are a knowledgeable, honest local guide for Chennai's Bay of Bengal beaches. You give balanced sunrise forecasts — enthusiastic on great days, straightforward on poor days. Your priority is setting accurate expectations so people are never disappointed. You understand atmospheric science, photography, and what makes a sunrise worth seeing. Always respond with valid JSON only, no markdown or code blocks."
+          content: "You are a knowledgeable, honest local guide for coastal beaches. You give balanced sunrise forecasts — enthusiastic on great days, straightforward on poor days. Your priority is setting accurate expectations so people are never disappointed. You understand atmospheric science, photography, and what makes a sunrise worth seeing. Always respond with valid JSON only, no markdown or code blocks."
         },
         { role: "user", content: prompt }
       ],
@@ -210,10 +256,22 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
     const aiData = JSON.parse(cleanText);
     console.log('✅ Groq AI insights generated');
 
-    // Always override beachComparison with deterministic calculation
-    const beachComparison = generateBeachComparison(
-      beach, cloudCover, windSpeed, visibility, humidity, allWeatherData
-    );
+    // If AI returned beach comparison, use it directly.
+    // If not (single beach call), generate deterministic comparison.
+    let beachComparison = aiData.beachComparison;
+    if (!beachComparison && Object.keys(allWeatherData).length > 1) {
+      beachComparison = generateBeachComparison(allWeatherData);
+    }
+
+    // Ensure golden hour uses real data if available, even if AI hallucinated times
+    if (goldenHour) {
+      aiData.goldenHour = {
+        ...aiData.goldenHour,
+        start: goldenHour.start,
+        peak: goldenHour.peak,
+        end: goldenHour.end
+      };
+    }
 
     return {
       source: 'groq',
@@ -230,11 +288,12 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
 
 // ==========================================
 // RULE-BASED FALLBACK
-// Honest, balanced, dual-audience
+// Generic — no hardcoded beach names.
+// Uses beach context from weatherService config.
 // ==========================================
 
 function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
-  const { forecast, prediction, beach } = weatherData;
+  const { forecast, prediction, beach, goldenHour: realGoldenHour, beachContext } = weatherData;
   const { cloudCover, humidity, visibility, windSpeed, temperature, precipProbability } = forecast;
   const { score, verdict, atmosphericLabels } = prediction;
 
@@ -275,28 +334,38 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   // ── Sunrise experience (general audience) ──
   const sunriseExperience = generateSunriseExperience(score, cloudCover, humidity, visibility, windSpeed, temperature, beach);
 
-  // ── Golden hour ──
-  const goldenHour = {
-    start: '5:38 AM',
-    peak: '5:50 AM',
-    end: '6:20 AM',
-    quality: score >= 75 ? 'Very Good' : score >= 55 ? 'Good' : score >= 35 ? 'Fair' : 'Poor',
-    tip: score >= 55
-      ? 'Be at the beach by 5:35 AM — the richest colors appear 10-15 minutes before the sun clears the horizon.'
-      : 'Color window will be limited this morning. If you go, aim for 5:45-6:00 AM for whatever light is available.'
-  };
+  // ── Golden hour — use real data or fallback ──
+  const goldenHour = realGoldenHour
+    ? {
+        start: realGoldenHour.start,
+        peak: realGoldenHour.peak,
+        end: realGoldenHour.end,
+        quality: score >= 75 ? 'Very Good' : score >= 55 ? 'Good' : score >= 35 ? 'Fair' : 'Poor',
+        tip: score >= 55
+          ? `Be at the beach by ${realGoldenHour.start} — the richest colors appear 10-15 minutes before the sun clears the horizon.`
+          : `Color window will be limited this morning. If you go, aim for around ${realGoldenHour.peak} for whatever light is available.`
+      }
+    : {
+        start: 'N/A',
+        peak: 'N/A',
+        end: 'N/A',
+        quality: score >= 75 ? 'Very Good' : score >= 55 ? 'Good' : score >= 35 ? 'Fair' : 'Poor',
+        tip: 'Sunrise time unavailable — arrive 20 minutes before expected sunrise for best color window.'
+      };
 
   // ── Atmospheric analysis ──
   const atmosphericAnalysis = generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed);
 
-  // ── DSLR settings ──
-  const dslr = generateDSLRSettings(beach, cloudCover, humidity, visibility, windSpeed, score);
+  // ── DSLR settings (generic, no beach-specific hardcoding) ──
+  const dslr = generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score);
 
-  // ── Mobile settings ──
-  const mobile = generateMobileSettings(beach, cloudCover, humidity, visibility, windSpeed, score);
+  // ── Mobile settings (generic, no beach-specific hardcoding) ──
+  const mobile = generateMobileSettings(cloudCover, humidity, visibility, windSpeed, score);
 
   // ── Beach comparison ──
-  const beachComparison = generateBeachComparison(beach, cloudCover, windSpeed, visibility, humidity, allWeatherData);
+  const beachComparison = Object.keys(allWeatherData).length > 1
+    ? generateBeachComparison(allWeatherData)
+    : null;
 
   return {
     source: 'rules',
@@ -313,6 +382,7 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
 
 // ==========================================
 // SUNRISE EXPERIENCE — General audience
+// No hardcoded beach names — uses beach param
 // ==========================================
 
 function generateSunriseExperience(score, cloudCover, humidity, visibility, windSpeed, temperature, beach) {
@@ -331,10 +401,10 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
     whatYoullSee = `The sunrise will likely not be visible this morning. ${cloudCover > 80 ? 'Thick cloud cover will block the sun entirely — the sky will shift from dark to overcast grey without any color.' : 'A combination of poor visibility and atmospheric moisture will make the horizon indistinguishable.'} The beach will still be dim well after the official sunrise time.`;
   }
 
-  // Beach vibes — always honest but acknowledges the beach itself is pleasant
+  // Beach vibes — generic, no hardcoded beach name checks
   let beachVibes;
   if (windSpeed <= 10) {
-    beachVibes = `At ${temperature}°C with barely any wind, the beach will feel calm and quiet at dawn. ${beach === 'Covelong Beach' || beach === "Elliot's Beach" ? 'Expect very few people around at this hour.' : 'Early risers and fishermen will be the only company.'}`;
+    beachVibes = `At ${temperature}°C with barely any wind, the beach will feel calm and quiet at dawn. Expect a peaceful setting with minimal foot traffic at this early hour.`;
   } else if (windSpeed <= 20) {
     beachVibes = `${temperature}°C with a light breeze off the water — comfortable for a morning walk. The beach will be peaceful at this hour with the sound of gentle waves.`;
   } else {
@@ -358,10 +428,15 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
 
 // ==========================================
 // ATMOSPHERIC ANALYSIS
+// No hardcoded city/season references
 // ==========================================
 
 function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed) {
   const cloudRating = (cloudCover >= 30 && cloudCover <= 60) ? 'Optimal' : cloudCover < 30 ? 'Too Clear' : cloudCover <= 75 ? 'Partly Overcast' : 'Overcast';
+
+  // Dynamic month reference
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const currentMonth = monthNames[new Date().getMonth()];
 
   return {
     cloudCover: {
@@ -379,7 +454,7 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
       value: humidity,
       rating: humidity <= 40 ? 'Excellent' : humidity <= 55 ? 'Very Good' : humidity <= 70 ? 'Moderate' : humidity <= 85 ? 'High' : 'Very High',
       impact: humidity <= 55
-        ? `At ${humidity}% humidity, the air is dry — colors will appear crisp, vivid and well-saturated. Low humidity is one of the key ingredients behind Chennai's best winter sunrises.`
+        ? `At ${humidity}% humidity, the air is dry — colors will appear crisp, vivid and well-saturated. Low humidity is one of the key ingredients behind the best sunrise conditions.`
         : humidity <= 70
         ? `At ${humidity}% humidity, atmospheric moisture will slightly soften and diffuse the light. Colors will be present but noticeably less saturated than on drier mornings — think warm pastels rather than vivid fire.`
         : `At ${humidity}% humidity, significant moisture in the air will scatter and absorb light. Colors will appear visibly washed out and hazy. The horizon may look milky rather than sharp.`
@@ -402,15 +477,16 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
         ? `Light wind at ${windSpeed}km/h will gently move cloud formations. The beach will feel pleasantly breezy at dawn.`
         : `Wind at ${windSpeed}km/h will keep clouds moving and the sea choppy. You'll feel the breeze, and sand may be kicked up occasionally.`
     },
-    overallPattern: `February marks Chennai's best sunrise season — post-northeast monsoon departure leaves cleaner air, and winter high-pressure systems reduce humidity to annual lows. ${humidity <= 55 && visibility >= 10 ? 'Today\'s conditions reflect this — dry air and good visibility are working in your favor.' : humidity > 70 ? 'However, humidity remains elevated today, limiting what would otherwise be Chennai\'s strongest sunrise conditions.' : 'Conditions today are mixed — some factors are favorable while others will limit the sunrise quality.'}`
+    overallPattern: `${currentMonth} conditions: ${humidity <= 55 && visibility >= 10 ? 'Dry air and good visibility are working in your favor today.' : humidity > 70 ? 'Elevated humidity is limiting what could otherwise be stronger sunrise conditions.' : 'Conditions today are mixed — some factors are favorable while others will limit the sunrise quality.'}`
   };
 }
 
 // ==========================================
-// DSLR SETTINGS
+// DSLR SETTINGS — generic, condition-based
+// No beach-specific hardcoding
 // ==========================================
 
-function generateDSLRSettings(beach, cloudCover, humidity, visibility, windSpeed, score) {
+function generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score) {
   const iso = cloudCover > 60 ? '400-800' : cloudCover > 30 ? '200-400' : '100-200';
   const shutter = cloudCover < 30 ? '1/125–1/250s' : cloudCover < 60 ? '1/60–1/125s' : '1/30–1/60s';
   const aperture = 'f/8–f/11';
@@ -446,15 +522,20 @@ function generateDSLRSettings(beach, cloudCover, humidity, visibility, windSpeed
         ? 'Wind is calm — perfect for 10-30 second exposures with an ND filter to smooth water into a glass-like surface.'
         : 'Bracket focus as well as exposure — shoot at different focal distances to ensure both foreground elements and the horizon are tack sharp.'
     ],
-    compositionTips: getBeachDSLRCompositionTips(beach, cloudCover, windSpeed, score)
+    compositionTips: [
+      'Use a prominent foreground element to anchor the composition and create depth.',
+      'Place the horizon in the lower third to emphasize whatever sky conditions are present.',
+      'Look for wet sand or tidal pools to reflect available light and add visual interest.'
+    ]
   };
 }
 
 // ==========================================
-// MOBILE SETTINGS
+// MOBILE SETTINGS — generic, condition-based
+// No beach-specific hardcoding
 // ==========================================
 
-function generateMobileSettings(beach, cloudCover, humidity, visibility, windSpeed, score) {
+function generateMobileSettings(cloudCover, humidity, visibility, windSpeed, score) {
   const nightMode = cloudCover > 70 ? 'On' : 'Off';
   const hdr = cloudCover > 20 ? 'Auto' : 'On';
   const exposure = cloudCover > 60 ? '+0.3' : cloudCover > 30 ? '0.0' : '-0.3';
@@ -481,138 +562,46 @@ function generateMobileSettings(beach, cloudCover, humidity, visibility, windSpe
         ? 'Use the 3-second self-timer after tapping to focus — eliminates hand-shake for the crispest possible image.'
         : `Wind at ${windSpeed}km/h creates subtle vibration. Brace your elbows against your body and exhale before shooting, or lean against something fixed.`,
       score >= 55
-        ? 'Best moment: the 3-5 minutes as the sun disk clears the horizon (around 5:58-6:03 AM) — use burst mode during this window.'
+        ? 'Best moment: the 3-5 minutes as the sun disk clears the horizon — use burst mode during this window.'
         : 'Timing is less critical on overcast mornings — the light changes gradually rather than in a brief dramatic window. Take your time with composition.',
       humidity <= 55
         ? 'Minimal post-processing needed — just bump clarity +10 and vibrance +15 in Snapseed or Lightroom Mobile.'
         : 'In Snapseed: reduce haze with +Clarity, pull back +Warmth to compensate for humidity\'s grey cast. Lift Highlights slightly to recover what sky color exists.'
     ],
-    compositionTips: getBeachMobileCompositionTips(beach, cloudCover, windSpeed, score)
-  };
-}
-
-// ==========================================
-// BEACH-SPECIFIC COMPOSITION — DSLR
-// ==========================================
-
-function getBeachDSLRCompositionTips(beach, cloudCover, windSpeed, score) {
-  const tips = {
-    'Marina Beach': [
-      'Position the lighthouse in the left third with the horizon low — it creates a strong silhouette anchor regardless of sky conditions.',
-      'Fishing boats (vallamkaran) launch between 5:30-6:00 AM — time a 1/500s shot to freeze a boat mid-launch against whatever light is available.',
-      score >= 55
-        ? 'The lighthouse casts a long shadow across wet sand at this angle — use it as a leading line toward the dawn sky.'
-        : 'On flat-light mornings like this, the lighthouse and boats become your primary subjects rather than the sky. Focus on strong foreground composition.'
-    ],
-    "Elliot's Beach": [
-      'The Karl Schmidt Memorial provides a natural frame — shoot through or beside it with the dawn sky as background.',
-      'Clean sand and few crowds mean you can get low-angle shots with wet sand reflections — even on grey mornings, reflections add visual interest.',
-      score >= 55
-        ? 'The Ashtalakshmi Temple dome catches early light — a long lens (200mm) compression shot with temple and sky together works well when there\'s color.'
-        : 'Elliot\'s clean, minimal environment suits overcast conditions better than busier beaches — lean into the minimalism with simple foreground-horizon compositions.'
-    ],
-    'Covelong Beach': [
-      'Rock formations on the south end offer natural framing — shoot between rocks to add depth regardless of sky conditions.',
-      windSpeed <= 15
-        ? 'Calm water means 20-30 second exposures on tidal pools will create glass-smooth reflections — even a grey sky reflected can look striking.'
-        : 'Wave action is photogenic in this wind — use 1/500s to freeze a wave crest against the sky for dynamic energy.',
-      'The natural cove shape concentrates attention — stand at the curve\'s apex and use the bay\'s arc as a sweeping leading line.'
-    ],
-    'Thiruvanmiyur Beach': [
-      'Tidal pools near the breakwater rocks are the signature here — position a rock with the sky reflected in the pool behind it.',
-      'Breakwater rocks provide reliable foreground interest — compose with rule of thirds to create depth from rock to horizon.',
-      score >= 55
-        ? 'Calm inshore water here creates good horizon reflections. Shoot wide and near water level.'
-        : 'On grey mornings, the rocks and pools become your subjects — focus on textures and shapes rather than chasing sky color.'
+    compositionTips: [
+      'Tap to lock focus and exposure on a mid-tone element, not the bright sky.',
+      'Try landscape orientation to maximize the horizon and sky.',
+      'Find reflections in wet sand or tidal pools — they add interest regardless of sky conditions.'
     ]
   };
-
-  return tips[beach] || [
-    'Use a prominent foreground element to anchor the composition and create depth.',
-    'Place the horizon in the lower third to emphasize whatever sky conditions are present.',
-    'Look for wet sand or tidal pools to reflect available light and add visual interest.'
-  ];
 }
 
 // ==========================================
-// BEACH-SPECIFIC COMPOSITION — MOBILE
+// BEACH COMPARISON — deterministic scoring
+// Uses allWeatherData, no hardcoded beach names
 // ==========================================
 
-function getBeachMobileCompositionTips(beach, cloudCover, windSpeed, score) {
-  const tips = {
-    'Marina Beach': [
-      'Tap the lighthouse to lock focus and exposure — your phone will correctly meter the scene from this mid-tone anchor.',
-      score >= 55
-        ? 'Walk to the waterline and shoot landscape orientation — wet sand reflections double the sky and make the image feel grander.'
-        : 'On flat-light mornings, try Portrait mode with the lighthouse as subject — the shallow depth effect gives interest even without dramatic sky color.',
-      'Landscape orientation works best here — Marina\'s long flat beach needs horizontal space.'
-    ],
-    "Elliot's Beach": [
-      'Tap to expose on the sky just above the horizon — this preserves whatever sky color exists while the foreground goes slightly darker, which looks intentional.',
-      'Portrait orientation works well — the beach is narrow and tall, and the clean sand acts as a leading line to the sky.',
-      'Minimalist compositions (sky, thin sand strip, waterline) play to Elliot\'s strengths and phone sensors alike.'
-    ],
-    'Covelong Beach': [
-      'Tap on a mid-tone rock to lock exposure — your phone will balance sky and rock. Avoid tapping the sky directly (underexposes everything else).',
-      'Landscape orientation is essential here — the cove and rock formations need horizontal space.',
-      windSpeed <= 15
-        ? 'Squat low near a tidal pool, phone near the water surface, tap a sky reflection to expose it correctly — works well even on overcast mornings.'
-        : 'Waves + rocks: use burst mode, shoot 20+ frames, pick the one where wave position is most dynamic.'
-    ],
-    'Thiruvanmiyur Beach': [
-      'Get close to a tidal pool — 15-20cm from the surface — and tap the sky reflection. Both portrait and landscape work for this intimate shot.',
-      score >= 55
-        ? 'Live Photos (iPhone) or Motion Photos (Samsung) capture gentle tidal pool ripples beautifully in the calm dawn.'
-        : 'Less dramatic skies make this a good morning to experiment with both orientations and find what works — there\'s no pressure to capture a fleeting color window.',
-      'Thiruvanmiyur\'s calm conditions suit deliberate, patient phone photography — take time framing each shot.'
-    ]
-  };
-
-  return tips[beach] || [
-    'Tap to lock focus and exposure on a mid-tone element, not the bright sky.',
-    'Try landscape orientation to maximize the horizon and sky.',
-    'Find reflections in wet sand or tidal pools — they add interest regardless of sky conditions.'
-  ];
-}
-
-// ==========================================
-// BEACH COMPARISON — uses real per-beach data
-// Honest: can recommend "none" on bad days
-// ==========================================
-
-function generateBeachComparison(currentBeach, cloudCover, windSpeed, visibility, humidity, allWeatherData = {}) {
-
-  function getBeachConditions(key) {
-    const d = allWeatherData[key];
-    if (d && d.forecast) {
-      return {
-        cloudCover: d.forecast.cloudCover,
-        windSpeed: d.forecast.windSpeed,
-        visibility: d.forecast.visibility,
-        humidity: d.forecast.humidity
-      };
-    }
-    return { cloudCover, windSpeed, visibility, humidity };
-  }
+function generateBeachComparison(allWeatherData) {
+  const beachKeys = Object.keys(allWeatherData);
+  if (beachKeys.length < 2) return null;
 
   function scoreBeach(key) {
-    const c = getBeachConditions(key);
-    const isCalm = c.windSpeed <= 15;
-    const isOptCloud = c.cloudCover >= 30 && c.cloudCover <= 60;
-    const isGoodVis = c.visibility >= 8;
-    const isLowHumid = c.humidity <= 55;
+    const d = allWeatherData[key];
+    if (!d || !d.forecast) return { score: 0 };
+    const c = d.forecast;
+    const isCalm = (c.windSpeed || 0) <= 15;
+    const isOptCloud = (c.cloudCover || 0) >= 30 && (c.cloudCover || 0) <= 60;
+    const isGoodVis = (c.visibility || 0) >= 8;
+    const isLowHumid = (c.humidity || 0) <= 55;
 
     let score = 50;
     if (isOptCloud) score += 20;
-    else if (c.cloudCover < 30 || c.cloudCover > 75) score -= 10;
+    else if ((c.cloudCover || 0) < 30 || (c.cloudCover || 0) > 75) score -= 10;
     if (isGoodVis) score += 15;
     if (isCalm) score += 10;
     if (isLowHumid) score += 5;
-    return { score, isCalm, isOptCloud, isGoodVis, c };
+    return { score, isCalm, isOptCloud, isGoodVis, isLowHumid };
   }
-
-  const scores = {};
-  ['marina', 'elliot', 'covelong', 'thiruvanmiyur'].forEach(k => { scores[k] = scoreBeach(k); });
 
   function suitLabel(score) {
     if (score >= 80) return 'Best';
@@ -621,61 +610,45 @@ function generateBeachComparison(currentBeach, cloudCover, windSpeed, visibility
     return 'Poor';
   }
 
-  // Honest beach reasons — no silver lining on genuinely poor conditions
-  function beachReason(key) {
-    const { isCalm, isOptCloud, isGoodVis, c, score } = scores[key];
-
-    if (score < 40) {
-      const reasons = {
-        marina: 'Conditions are poor across Chennai — Marina\'s lighthouse still works as a subject, but don\'t expect sky color.',
-        elliot: 'Conditions are poor — Elliot\'s clean environment won\'t compensate for the lack of color in the sky.',
-        covelong: 'Not worth the 40km drive in these conditions — save Covelong for a day when the sky will reward the trip.',
-        thiruvanmiyur: 'Below-average conditions. Thiruvanmiyur\'s tidal pools won\'t have much sky color to reflect.'
-      };
-      return reasons[key] || 'Poor conditions expected — limited sunrise visibility.';
+  function genericReason(key, scoreData) {
+    const d = allWeatherData[key];
+    const beachName = d?.beach || key;
+    if (scoreData.score < 40) {
+      return `Conditions are poor at ${beachName} — limited sunrise visibility expected.`;
     }
-
-    const reasons = {
-      marina: isOptCloud && isGoodVis
-        ? 'Optimal clouds + the lighthouse silhouette = strong potential for a dramatic sunrise. Marina shines brightest when skies are dynamic.'
-        : c.cloudCover < 30
-        ? 'Clear skies at Marina — the lighthouse makes a clean silhouette, but the sky itself will be pale rather than fiery.'
-        : 'Heavy clouds reduce Marina\'s drama. The lighthouse and fishing boats remain solid subjects regardless.',
-      elliot: isCalm
-        ? 'Calm wind means flat wet-sand reflections. Elliot\'s clean foreground makes it well-suited for reflection compositions today.'
-        : 'Elliot\'s clean, uncrowded environment works in most conditions. The Karl Schmidt Memorial provides a reliable anchor point.',
-      covelong: isCalm && isOptCloud
-        ? 'Calm water + optimal clouds at Covelong is a strong combination — tidal pool reflections under a colorful sky.'
-        : isCalm
-        ? 'Calm water at Covelong enables smooth reflections in the tidal pools. Worth the drive if you want a quiet, natural setting.'
-        : 'Wind will keep the water choppy at Covelong — better for wave photography than long-exposure reflections.',
-      thiruvanmiyur: isCalm
-        ? 'Thiruvanmiyur\'s calm, accessible setting with rocks and tidal pools makes it a solid choice for a relaxed morning.'
-        : 'Thiruvanmiyur is accessible and crowd-free — a good low-effort option, though wind may limit reflection opportunities.'
-    };
-    return reasons[key] || 'Conditions are adequate for a visit.';
+    const strengths = [];
+    if (scoreData.isOptCloud) strengths.push('optimal cloud coverage');
+    if (scoreData.isGoodVis) strengths.push('good visibility');
+    if (scoreData.isCalm) strengths.push('calm wind');
+    if (scoreData.isLowHumid) strengths.push('low humidity');
+    return strengths.length > 0
+      ? `${beachName} benefits from ${strengths.join(', ')} this morning.`
+      : `${beachName} has mixed conditions — some factors favorable, others limiting.`;
   }
 
+  const scores = {};
+  beachKeys.forEach(k => { scores[k] = scoreBeach(k); });
+
   // Find best beach
-  let bestBeach = 'marina';
+  let bestBeach = beachKeys[0];
   let bestScore = -1;
   Object.entries(scores).forEach(([k, v]) => {
     if (v.score > bestScore) { bestScore = v.score; bestBeach = k; }
   });
 
   const beaches = {};
-  ['marina', 'elliot', 'covelong', 'thiruvanmiyur'].forEach(k => {
+  beachKeys.forEach(k => {
     beaches[k] = {
       suitability: suitLabel(scores[k].score),
-      reason: beachReason(k)
+      reason: genericReason(k, scores[k])
     };
   });
 
   // If ALL beaches are poor, acknowledge it honestly
   const allPoor = Object.values(scores).every(s => s.score < 40);
   const compReason = allPoor
-    ? 'Conditions are poor across all Chennai beaches this morning — none are particularly recommended for sunrise viewing. If you still want to go, choose the closest one for convenience.'
-    : beachReason(bestBeach);
+    ? 'Conditions are poor across all beaches this morning — none are particularly recommended for sunrise viewing. If you still want to go, choose the closest one for convenience.'
+    : genericReason(bestBeach, scores[bestBeach]);
 
   return {
     todaysBest: bestBeach,

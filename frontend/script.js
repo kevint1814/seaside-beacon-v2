@@ -151,10 +151,10 @@ function initSunriseCanvas() {
     [0.34, [62, 38, 96]],
     [0.44, [72, 45, 88]],
     [0.56, [48, 62, 105]],
-    [0.68, [42, 82, 138]],
-    [0.80, [52, 98, 158]],
-    [0.90, [62, 112, 172]],
-    [1.0,  [72, 125, 185]]
+    [0.68, [38, 72, 118]],
+    [0.80, [35, 68, 115]],
+    [0.90, [32, 62, 108]],
+    [1.0,  [28, 55, 98]]
   ];
 
   // Mid-sky — richer magentas, warm blue that holds colour
@@ -166,9 +166,9 @@ function initSunriseCanvas() {
     [0.44, [192, 92, 68]],
     [0.52, [168, 80, 62]],
     [0.62, [108, 68, 78]],
-    [0.74, [68, 72, 108]],
-    [0.86, [58, 78, 118]],
-    [1.0,  [52, 85, 132]]
+    [0.74, [62, 58, 88]],
+    [0.86, [45, 52, 82]],
+    [1.0,  [35, 48, 75]]
   ];
 
   // Horizon — vivid fire, amber lingers to the very end
@@ -180,9 +180,9 @@ function initSunriseCanvas() {
     [0.42, [255, 175, 62]],
     [0.52, [255, 158, 55]],
     [0.62, [218, 118, 48]],
-    [0.74, [175, 105, 55]],
-    [0.86, [142, 92, 52]],
-    [1.0,  [118, 82, 48]]
+    [0.74, [165, 92, 45]],
+    [0.86, [118, 68, 38]],
+    [1.0,  [82, 52, 32]]
   ];
 
   // Glow — amber-orange, stays alive through the full page
@@ -240,12 +240,6 @@ function initSunriseCanvas() {
     { cx: 0.42, cy: 0.22, rx: 0.10, ry: 0.020, phase: 2.4,  speed: 0.000030 },
     { cx: 0.85, cy: 0.26, rx: 0.09, ry: 0.022, phase: 0.7,  speed: 0.000028 },
     { cx: 0.28, cy: 0.38, rx: 0.11, ry: 0.028, phase: 1.8,  speed: 0.000022 },
-    // Extra cloud banks for fuller sky
-    { cx: 0.55, cy: 0.18, rx: 0.13, ry: 0.024, phase: 3.1,  speed: 0.000018 },
-    { cx: 0.08, cy: 0.35, rx: 0.10, ry: 0.022, phase: 0.4,  speed: 0.000032 },
-    { cx: 0.92, cy: 0.20, rx: 0.11, ry: 0.026, phase: 2.0,  speed: 0.000024 },
-    { cx: 0.35, cy: 0.30, rx: 0.08, ry: 0.018, phase: 1.5,  speed: 0.000035 },
-    { cx: 0.65, cy: 0.42, rx: 0.15, ry: 0.032, phase: 0.9,  speed: 0.000016 },
   ];
 
   // 24 rays for denser god-ray fan
@@ -336,9 +330,9 @@ function initSunriseCanvas() {
       ctx.fillRect(0, 0, W, H * 0.75);
     }
 
-    // ── Puffy volumetric clouds — fade in from ~20%, lit by sun ──
-    if (sp > 0.20) {
-      const cloudFade = Math.min(1, (sp - 0.20) / 0.20);
+    // ── Puffy volumetric clouds — fade in from ~25%, lit by sun ──
+    if (sp > 0.25) {
+      const cloudFade = Math.min(1, (sp - 0.25) / 0.25);
       const cCol = multiLerp(cloudColorStops, sp);
       // Later in sunrise, clouds get a blue-white top-light
       const blueBlend = Math.max(0, (sp - 0.65) / 0.35);
@@ -356,7 +350,7 @@ function initSunriseCanvas() {
         // Distance from sun center affects brightness
         const distSun = Math.abs((pc.cx + drift) - 0.5);
         const litFactor = Math.max(0.3, 1 - distSun * 1.5);
-        const pAlpha = cloudFade * 0.22 * litFactor;
+        const pAlpha = cloudFade * 0.12 * litFactor;
 
         ctx.save();
         ctx.translate(px, py);
@@ -555,21 +549,20 @@ function initSunriseCanvas() {
       // Spread to frame the sun — nothing dead center to keep the glow clear
       const boats = [
         // Large trawlers — center horizon, flanking the sun path
-        { x: 0.38, y: 0.726, scale: 1.0,  bobSpeed: 0.0006, bobPhase: 0.0,  type: 'trawler', driftSpeed: 0.000008, driftRange: 0.04 },
-        { x: 0.62, y: 0.725, scale: 0.92, bobSpeed: 0.0007, bobPhase: 2.2,  type: 'trawler', driftSpeed: -0.000006, driftRange: 0.03 },
+        { x: 0.38, y: 0.718, scale: 1.0,  bobSpeed: 0.0006, bobPhase: 0.0,  type: 'trawler' },
+        { x: 0.62, y: 0.716, scale: 0.92, bobSpeed: 0.0007, bobPhase: 2.2,  type: 'trawler' },
         // Medium boats — wider spread
-        { x: 0.22, y: 0.728, scale: 0.65, bobSpeed: 0.0008, bobPhase: 1.0,  type: 'sail', driftSpeed: 0.000012, driftRange: 0.05 },
-        { x: 0.50, y: 0.727, scale: 0.55, bobSpeed: 0.0009, bobPhase: 3.0,  type: 'sail', driftSpeed: 0.000010, driftRange: 0.04 },
-        { x: 0.76, y: 0.729, scale: 0.60, bobSpeed: 0.0010, bobPhase: 0.7,  type: 'sail', driftSpeed: -0.000009, driftRange: 0.05 },
+        { x: 0.22, y: 0.724, scale: 0.65, bobSpeed: 0.0008, bobPhase: 1.0,  type: 'sail' },
+        { x: 0.50, y: 0.720, scale: 0.55, bobSpeed: 0.0009, bobPhase: 3.0,  type: 'sail' },
+        { x: 0.76, y: 0.725, scale: 0.60, bobSpeed: 0.0010, bobPhase: 0.7,  type: 'sail' },
         // Small distant boats — edges
-        { x: 0.12, y: 0.731, scale: 0.32, bobSpeed: 0.0012, bobPhase: 1.5,  type: 'small', driftSpeed: 0.000015, driftRange: 0.06 },
-        { x: 0.88, y: 0.732, scale: 0.28, bobSpeed: 0.0013, bobPhase: 4.0,  type: 'small', driftSpeed: -0.000011, driftRange: 0.05 },
+        { x: 0.12, y: 0.728, scale: 0.32, bobSpeed: 0.0012, bobPhase: 1.5,  type: 'small' },
+        { x: 0.88, y: 0.729, scale: 0.28, bobSpeed: 0.0013, bobPhase: 4.0,  type: 'small' },
       ];
 
       for (const b of boats) {
-        const drift = Math.sin(t * b.driftSpeed + b.bobPhase * 2) * b.driftRange;
-        const bx = (b.x + drift) * W;
-        const bob = Math.sin(t * b.bobSpeed + b.bobPhase) * 1.5 * b.scale;
+        const bx = b.x * W;
+        const bob = Math.sin(t * b.bobSpeed + b.bobPhase) * 2.5 * b.scale;
         const by = b.y * H + bob;
         const s = b.scale;
 
@@ -683,175 +676,6 @@ function initSunriseCanvas() {
       ctx.restore();
     }
 
-    // ── Airplane silhouettes — fixed sky altitudes, through sun's horizontal path ──
-    if (sp > 0.25) {
-      const planeAlpha = Math.min(0.85, (sp - 0.25) / 0.20);
-
-      const planes = [
-        // Flies at upper-mid sky — will cross sun as it rises through this altitude
-        { fixedY: 0.32, speed: 0.000012, phase: 0, scale: 0.7, angle: -0.03, dir: 1 },
-        // Lower altitude — near horizon, crosses sun early in sunrise
-        { fixedY: 0.52, speed: 0.000010, phase: 18000, scale: 0.55, angle: 0.02, dir: -1 },
-        // High altitude — small distant plane
-        { fixedY: 0.18, speed: 0.000016, phase: 35000, scale: 0.4, angle: -0.015, dir: 1 },
-      ];
-
-      ctx.save();
-      for (const pl of planes) {
-        const cycle = ((t + pl.phase) * pl.speed) % 1.5;
-        const px = pl.dir > 0
-          ? (-0.15 + cycle) * W
-          : (1.15 - cycle) * W;
-        // Fixed sky position — doesn't move with sun
-        const py = pl.fixedY * H * 0.72 + Math.sin(t * 0.00003 + pl.phase) * 2.5;
-        const s = pl.scale;
-
-        if (px < -60 || px > W + 60) continue;
-
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.scale(pl.dir, 1);
-        ctx.rotate(pl.angle);
-
-        ctx.fillStyle = `rgba(4,5,12,${planeAlpha * 0.82})`;
-
-        // Fuselage
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 18 * s, 2 * s, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Nose cone
-        ctx.beginPath();
-        ctx.moveTo(18 * s, 0);
-        ctx.lineTo(23 * s, -0.5 * s);
-        ctx.lineTo(23 * s, 0.5 * s);
-        ctx.closePath();
-        ctx.fill();
-
-        // Main wings — swept back
-        ctx.beginPath();
-        ctx.moveTo(-2 * s, 0);
-        ctx.lineTo(-8 * s, -15 * s);
-        ctx.lineTo(-4 * s, -14.5 * s);
-        ctx.lineTo(5 * s, -1 * s);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(-2 * s, 0);
-        ctx.lineTo(-8 * s, 15 * s);
-        ctx.lineTo(-4 * s, 14.5 * s);
-        ctx.lineTo(5 * s, 1 * s);
-        ctx.closePath();
-        ctx.fill();
-
-        // Tail fin
-        ctx.beginPath();
-        ctx.moveTo(-16 * s, 0);
-        ctx.lineTo(-21 * s, -7 * s);
-        ctx.lineTo(-17 * s, -6 * s);
-        ctx.lineTo(-14 * s, 0);
-        ctx.closePath();
-        ctx.fill();
-
-        // Horizontal stabilizers
-        ctx.beginPath();
-        ctx.moveTo(-15 * s, 0);
-        ctx.lineTo(-19 * s, -5 * s);
-        ctx.lineTo(-16 * s, -4.5 * s);
-        ctx.lineTo(-13 * s, 0);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(-15 * s, 0);
-        ctx.lineTo(-19 * s, 5 * s);
-        ctx.lineTo(-16 * s, 4.5 * s);
-        ctx.lineTo(-13 * s, 0);
-        ctx.closePath();
-        ctx.fill();
-
-        // Contrails
-        if (sp > 0.35) {
-          const trailAlpha = planeAlpha * 0.22;
-          const trailLen = 75 * s;
-          const trailGrad = ctx.createLinearGradient(-23 * s, 0, -23 * s - trailLen, 0);
-          trailGrad.addColorStop(0, `rgba(220,215,225,${trailAlpha})`);
-          trailGrad.addColorStop(0.3, `rgba(220,215,225,${trailAlpha * 0.45})`);
-          trailGrad.addColorStop(1, 'rgba(220,215,225,0)');
-          ctx.strokeStyle = trailGrad;
-          ctx.lineWidth = 1.0 * s;
-          ctx.beginPath();
-          ctx.moveTo(-23 * s, -1.5 * s);
-          ctx.lineTo(-23 * s - trailLen, -1.5 * s);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(-23 * s, 1.5 * s);
-          ctx.lineTo(-23 * s - trailLen, 1.5 * s);
-          ctx.stroke();
-        }
-
-        ctx.restore();
-      }
-      ctx.restore();
-    }
-
-    // ── Cinematic text — below the sun, 3 lines with brand (CINEMA MODE ONLY) ──
-    if (sp > 0.80 && document.body.classList.contains('cinema-mode')) {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-      // Current sun Y for positioning text below it
-      const sunPT = sp > 0.18 ? Math.min(1, (sp - 0.18) / 0.58) : 0;
-      const sunYT = horizonY - ease(sunPT) * H * 0.38;
-      const textAnchor = sunYT + H * 0.16;
-
-      // Line 1: hook — bold, cinematic
-      const fade1 = Math.min(1, (sp - 0.80) / 0.08);
-      const e1 = ease(fade1);
-
-      ctx.save();
-
-      const line1Size = Math.round(Math.min(W * 0.042, 48) * dpr) / dpr;
-      ctx.font = `600 italic ${line1Size}px "Cormorant Garamond", Georgia, serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      const y1 = textAnchor + (1 - e1) * H * 0.02;
-      ctx.fillStyle = `rgba(0,0,0,${e1 * 0.40})`;
-      ctx.fillText('Some mornings stop you cold.', W * 0.5, y1 + 2);
-      ctx.fillStyle = `rgba(255,252,248,${e1 * 0.95})`;
-      ctx.fillText('Some mornings stop you cold.', W * 0.5, y1);
-
-      // Line 2: brand payoff
-      if (sp > 0.86) {
-        const fade2 = Math.min(1, (sp - 0.86) / 0.08);
-        const e2 = ease(fade2);
-
-        const line2Size = Math.round(Math.min(W * 0.032, 36) * dpr) / dpr;
-        ctx.font = `600 italic ${line2Size}px "Cormorant Garamond", Georgia, serif`;
-
-        const y2 = y1 + line1Size * 1.7 + (1 - e2) * H * 0.015;
-        ctx.fillStyle = `rgba(0,0,0,${e2 * 0.35})`;
-        ctx.fillText('Seaside Beacon finds them for you.', W * 0.5, y2 + 2);
-        ctx.fillStyle = `rgba(255,225,170,${e2 * 0.94})`;
-        ctx.fillText('Seaside Beacon finds them for you.', W * 0.5, y2);
-
-        // Line 3: tagline — spaced, lighter weight
-        if (sp > 0.92) {
-          const fade3 = Math.min(1, (sp - 0.92) / 0.07);
-          const e3 = ease(fade3);
-
-          const line3Size = Math.round(Math.min(W * 0.014, 15) * dpr) / dpr;
-          ctx.font = `500 ${line3Size}px "Instrument Sans", -apple-system, BlinkMacSystemFont, sans-serif`;
-
-          const y3 = y2 + line2Size * 2.2 + (1 - e3) * H * 0.01;
-          ctx.fillStyle = `rgba(0,0,0,${e3 * 0.22})`;
-          ctx.fillText("T O M O R R O W ' S   S K Y ,   R E A D   T O N I G H T", W * 0.5, y3 + 1.5);
-          ctx.fillStyle = `rgba(255,240,210,${e3 * 0.65})`;
-          ctx.fillText("T O M O R R O W ' S   S K Y ,   R E A D   T O N I G H T", W * 0.5, y3);
-        }
-      }
-
-      ctx.restore();
-    }
     // ── Stars ──
     const starAlpha = Math.max(0, 1 - sp * 2.2);
     const parallaxOffset = scrollProgress * H * 0.08;
@@ -879,7 +703,7 @@ function initSunriseCanvas() {
       const cwx = (t * cc.speed + cc.phase) % 1.5 - 0.25;
       const cw  = W * (cc.wMul + pseudoRand(c*7) * 0.15);
       const distFromHorizon = 1 - Math.abs(cc.yBase - 0.58) / 0.25;
-      const cAlpha = (0.032 + cloudBright * 0.18) * Math.max(0.25, distFromHorizon);
+      const cAlpha = (0.018 + cloudBright * 0.12) * Math.max(0.25, distFromHorizon);
 
       const cGrad = ctx.createLinearGradient(cwx*W, 0, cwx*W + cw, 0);
       cGrad.addColorStop(0,    'rgba(0,0,0,0)');
@@ -1274,8 +1098,8 @@ function renderForecast() {
   vEl.className = 'score-verdict sv-' + pred.verdict.toLowerCase().replace(/\s+/g,'-');
 
   const gh = p?.goldenHour||{};
-  document.getElementById('fmrgTime').textContent = `${gh.start||'5:38 AM'} — ${gh.end||'6:20 AM'}`;
-  document.getElementById('fmrgPeak').textContent = gh.peak||gh.start||'5:50 AM';
+  document.getElementById('fmrgTime').textContent = `${gh.start||'--'} — ${gh.end||'--'}`;
+  document.getElementById('fmrgPeak').textContent = gh.peak||gh.start||'--';
 
   const labels = pred.atmosphericLabels||{};
   document.getElementById('conditionsStrip').innerHTML = [

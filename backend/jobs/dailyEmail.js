@@ -117,6 +117,12 @@ async function sendDailyPredictions() {
           continue;
         }
 
+        // Build beach name lookup from config for email template
+        const allBeaches = weatherService.getBeaches();
+        const allBeachNames = {};
+        allBeaches.forEach(b => { allBeachNames[b.key] = b.name; });
+        weatherData.allBeachNames = allBeachNames;
+
         const photographyInsights = await aiService.generatePhotographyInsights(weatherData);
 
         await emailService.sendDailyPredictionEmail(

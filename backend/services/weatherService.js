@@ -19,25 +19,29 @@ const BEACHES = {
     name: 'Marina Beach',
     key: 'marina',
     locationKey: CHENNAI_LOCATION_KEY,
-    coordinates: { lat: 13.0499, lon: 80.2824 }
+    coordinates: { lat: 13.0499, lon: 80.2824 },
+    context: 'The world\'s longest urban beach. Key elements: lighthouse (north end), fishing boats (colorful vallamkaran boats launch at dawn), the pier, long flat sand, urban Chennai skyline as backdrop, large tidal pools during low tide.'
   },
   elliot: {
     name: "Elliot's Beach",
     key: 'elliot',
     locationKey: CHENNAI_LOCATION_KEY,
-    coordinates: { lat: 13.0067, lon: 80.2669 }
+    coordinates: { lat: 13.0067, lon: 80.2669 },
+    context: 'Quieter, upscale Besant Nagar beach. Key elements: Karl Schmidt Memorial (stone structure on beach), clean white sand, Ashtalakshmi Temple visible in background, fewer crowds, calm water.'
   },
   covelong: {
     name: 'Covelong Beach',
     key: 'covelong',
     locationKey: CHENNAI_LOCATION_KEY,
-    coordinates: { lat: 12.7925, lon: 80.2514 }
+    coordinates: { lat: 12.7925, lon: 80.2514 },
+    context: 'Secluded surf beach 40km south. Key elements: natural rock formations and tidal pools, rolling waves, dramatic cliffs to the south, isolated and pristine, minimal urban intrusion.'
   },
   thiruvanmiyur: {
     name: 'Thiruvanmiyur Beach',
     key: 'thiruvanmiyur',
     locationKey: CHENNAI_LOCATION_KEY,
-    coordinates: { lat: 12.9826, lon: 80.2589 }
+    coordinates: { lat: 12.9826, lon: 80.2589 },
+    context: 'Residential neighborhood beach. Key elements: tidal pools, natural breakwater rocks, calmer than Marina, accessible parking and walkways.'
   }
 };
 
@@ -78,7 +82,8 @@ function getBeaches() {
   return Object.values(BEACHES).map(beach => ({
     key: beach.key,
     name: beach.name,
-    coordinates: beach.coordinates
+    coordinates: beach.coordinates,
+    context: beach.context || ''
   }));
 }
 
@@ -97,6 +102,68 @@ async function fetchAccuWeatherHourly(locationKey) {
     console.error('❌ AccuWeather API Error:', error.response?.data || error.message);
     throw new Error(`AccuWeather API failed: ${error.message}`);
   }
+}
+
+/**
+ * Fetch 1-day daily forecast from AccuWeather
+ * Returns Sun.Rise, Sun.Set and daily summary
+ */
+async function fetchAccuWeatherDaily(locationKey) {
+  try {
+    const url = `http://dataservice.accuweather.com/forecasts/v1/daily/1day/${locationKey}`;
+    const response = await axios.get(url, {
+      params: { apikey: ACCUWEATHER_API_KEY, details: true, metric: true }
+    });
+    const daily = response.data?.DailyForecasts?.[0];
+    if (!daily) return null;
+
+    const sunRiseRaw = daily.Sun?.Rise;
+    const sunSetRaw = daily.Sun?.Set;
+
+    const sunRise = sunRiseRaw ? new Date(sunRiseRaw) : null;
+    const sunSet = sunSetRaw ? new Date(sunSetRaw) : null;
+
+    console.log(`🌅 Sunrise: ${sunRise ? sunRise.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' }) : 'N/A'}`);
+    console.log(`🌇 Sunset: ${sunSet ? sunSet.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' }) : 'N/A'}`);
+
+    return {
+      sunRise,
+      sunSet,
+      hoursOfSun: daily.HoursOfSun || null,
+      moonPhase: daily.Moon?.Phase || null
+    };
+  } catch (error) {
+    console.warn('⚠️ AccuWeather daily forecast failed:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Calculate golden hour times from actual sunrise
+ * Start = 20 min before sunrise (first color)
+ * Peak = 10 min before sunrise (richest light)
+ * End = 30 min after sunrise (warm light fading)
+ */
+function calculateGoldenHour(sunRise) {
+  if (!sunRise) return null;
+
+  const start = new Date(sunRise.getTime() - 20 * 60 * 1000);
+  const peak = new Date(sunRise.getTime() - 10 * 60 * 1000);
+  const end = new Date(sunRise.getTime() + 30 * 60 * 1000);
+
+  const fmt = (d) => d.toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  }).toUpperCase();
+
+  return {
+    start: fmt(start),
+    peak: fmt(peak),
+    end: fmt(end),
+    sunriseExact: fmt(sunRise)
+  };
 }
 
 /**
@@ -431,7 +498,12 @@ async function getTomorrow6AMForecast(beachKey) {
   const currentIST = new Date(now.getTime() + istOffset);
   console.log(`🕐 Current IST: ${currentIST.toISOString()}`);
 
-  const hourlyData = await fetchAccuWeatherHourly(beach.locationKey);
+  // Fetch hourly + daily in parallel
+  const [hourlyData, dailyData] = await Promise.all([
+    fetchAccuWeatherHourly(beach.locationKey),
+    fetchAccuWeatherDaily(beach.locationKey)
+  ]);
+
   const forecast6AM = findNext6AM(hourlyData);
 
   const forecastTime = new Date(forecast6AM.DateTime);
@@ -462,10 +534,14 @@ async function getTomorrow6AMForecast(beachKey) {
   const recommendation = getRecommendation(score);
   const atmosphericLabels = getAtmosphericLabels(weatherData);
 
+  // Calculate golden hour from actual sunrise time
+  const goldenHour = dailyData?.sunRise ? calculateGoldenHour(dailyData.sunRise) : null;
+
   return {
     available: true,
     beach: beach.name,
     beachKey: beach.key,
+    beachContext: beach.context || '',
     coordinates: beach.coordinates,
     forecast: {
       ...weatherData,
@@ -475,6 +551,13 @@ async function getTomorrow6AMForecast(beachKey) {
         timeStyle: 'short'
       })
     },
+    sunTimes: dailyData ? {
+      sunRise: dailyData.sunRise,
+      sunSet: dailyData.sunSet,
+      hoursOfSun: dailyData.hoursOfSun,
+      moonPhase: dailyData.moonPhase
+    } : null,
+    goldenHour,
     prediction: {
       score,
       verdict,

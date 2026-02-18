@@ -122,79 +122,158 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-    .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #D64828, #E8834A); color: white; padding: 48px 36px; text-align: center; }
-    .header h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 700; }
-    .header p { margin: 0; opacity: 0.9; font-size: 15px; }
-    .content { padding: 40px 36px; color: #1a1a1a; }
-    .content h2 { font-size: 22px; margin: 0 0 16px 0; color: #1a1a1a; }
-    .content p { line-height: 1.7; color: #555; margin-bottom: 16px; }
-    .beach-badge { display: inline-block; background: linear-gradient(135deg, #E8834A20, #D4A84320); border: 1px solid #E8834A40; border-radius: 20px; padding: 6px 16px; font-weight: 600; color: #D64828; font-size: 14px; margin-bottom: 24px; }
-    .features { background: #FAFAFA; border-radius: 12px; padding: 24px; margin: 24px 0; }
-    .feature { display: flex; align-items: flex-start; margin-bottom: 16px; }
-    .feature:last-child { margin-bottom: 0; }
-    .feature-icon { font-size: 22px; margin-right: 14px; flex-shrink: 0; margin-top: 2px; }
-    .feature-text strong { display: block; font-size: 15px; color: #1a1a1a; margin-bottom: 2px; }
-    .feature-text span { font-size: 13px; color: #777; line-height: 1.5; }
-    .highlight { background: linear-gradient(135deg, #FFF4ED, #FFF9F0); border-left: 3px solid #E8834A; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 24px 0; font-size: 14px; color: #555; line-height: 1.6; }
-    .footer { background: #F9F9F9; padding: 24px 36px; text-align: center; border-top: 1px solid #eee; }
-    .footer p { font-size: 12px; color: #999; margin: 0 0 6px 0; line-height: 1.5; }
-    .footer a { color: #E8834A; text-decoration: none; }
-  </style>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <!--[if mso]><style>*{font-family:Arial,sans-serif!important;}</style><![endif]-->
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🌅 Welcome to Seaside Beacon</h1>
-      <p>Honest sunrise forecasts for Chennai beaches</p>
-    </div>
-    <div class="content">
-      <h2>You're all set!</h2>
-      <div class="beach-badge">📍 ${beachDisplay}</div>
-      <p>Every morning at <strong>4:00 AM IST</strong>, we'll send you an honest sunrise forecast for your beach — what the sky will actually look like, whether it's worth waking up for, plus photography tips if you want them.</p>
-      <div class="features">
-        <div class="feature">
-          <div class="feature-icon">🌅</div>
-          <div class="feature-text">
-            <strong>Honest Verdict</strong>
-            <span>We'll tell you straight — is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</span>
-          </div>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">🌤️</div>
-          <div class="feature-text">
-            <strong>What You'll Actually See</strong>
-            <span>Specific descriptions of expected sky colors, light quality, and beach atmosphere — so you're never disappointed.</span>
-          </div>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">🏖️</div>
-          <div class="feature-text">
-            <strong>Beach Comparison</strong>
-            <span>All 4 Chennai beaches rated — or honestly told "none are great today" when that's the truth.</span>
-          </div>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">📸</div>
-          <div class="feature-text">
-            <strong>Photography Tips</strong>
-            <span>Camera settings and composition tips for photographers — with explanations of why each setting works for the day's conditions.</span>
-          </div>
-        </div>
-      </div>
-      <div class="highlight">
-        ⏰ <strong>Your first forecast arrives tomorrow at 4:00 AM IST.</strong><br>
-        If conditions are good, set your alarm for 5:30 AM to arrive at the beach for the peak color window (10-15 minutes before sunrise).
-      </div>
-    </div>
-    <div class="footer">
-      <p><strong>Seaside Beacon</strong> · Made with ☀️ in Chennai</p>
-      <p>You're subscribed to daily sunrise forecasts for ${beachDisplay}.</p>
-      <p><a href="${unsubscribeUrl}">Unsubscribe</a> · <a href="${APP_URL}">Visit Website</a></p>
-    </div>
-  </div>
+<body style="margin:0;padding:0;background:#08070d;-webkit-text-size-adjust:none;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#08070d;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+        <!-- ═══ HEADER — Sunrise gradient with brand ═══ -->
+        <tr><td style="background:linear-gradient(180deg,#1a1208 0%,#2d1a0e 40%,#4a2818 70%,#6b3520 100%);border-radius:20px 20px 0 0;padding:52px 40px 42px;text-align:center;">
+
+          <!-- Sun icon -->
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 20px;">
+            <tr><td style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle,rgba(255,210,120,0.3) 0%,rgba(196,115,58,0.12) 60%,transparent 100%);text-align:center;line-height:44px;">
+              <span style="font-size:22px;">☀️</span>
+            </td></tr>
+          </table>
+
+          <!-- Brand -->
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,0.45);">Welcome to</p>
+          <h1 style="margin:0 0 12px;font-family:'Cormorant Garamond',Georgia,serif;font-size:36px;font-weight:600;color:rgba(255,252,245,0.95);letter-spacing:-0.5px;">Seaside Beacon</h1>
+          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;color:rgba(255,255,255,0.50);letter-spacing:0.3px;">Honest sunrise forecasts for Chennai beaches</p>
+
+        </td></tr>
+
+        <!-- ═══ BODY — Dark glass card ═══ -->
+        <tr><td style="background:#0f0e14;padding:0;">
+
+          <!-- Beach badge -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:36px 40px 0;text-align:center;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                <tr><td style="background:rgba(196,115,58,0.10);border:1px solid rgba(196,115,58,0.25);border-radius:50px;padding:8px 22px;">
+                  <span style="font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;font-weight:500;color:#c4733a;letter-spacing:0.3px;">📍 ${beachDisplay}</span>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+          <!-- Main message -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:28px 40px 0;text-align:center;">
+              <h2 style="margin:0 0 16px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;color:rgba(255,252,245,0.92);letter-spacing:-0.3px;">You're all set.</h2>
+              <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.75;color:rgba(255,255,255,0.55);">Every morning at <strong style="color:rgba(255,255,255,0.80);">4:00 AM IST</strong>, we study the atmosphere and send you an honest forecast — what tomorrow's sky will actually look like at your beach, and whether it's worth the early alarm.</p>
+            </td></tr>
+          </table>
+
+          <!-- Divider -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:32px 40px;">
+              <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(196,115,58,0.18),transparent);"></div>
+            </td></tr>
+          </table>
+
+          <!-- What you'll get — 4 items stacked -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px;">
+              <p style="margin:0 0 20px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.35);">What you'll get</p>
+
+              <!-- Feature 1 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
+                <tr>
+                  <td style="width:36px;vertical-align:top;padding-top:2px;">
+                    <div style="width:32px;height:32px;border-radius:10px;background:rgba(196,115,58,0.08);border:1px solid rgba(196,115,58,0.15);text-align:center;line-height:32px;font-size:15px;">🌅</div>
+                  </td>
+                  <td style="padding-left:14px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:rgba(255,252,245,0.88);">Honest Verdict</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.42);">Is tomorrow's sunrise worth the early alarm, or should you sleep in? No sugarcoating.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 2 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
+                <tr>
+                  <td style="width:36px;vertical-align:top;padding-top:2px;">
+                    <div style="width:32px;height:32px;border-radius:10px;background:rgba(196,115,58,0.08);border:1px solid rgba(196,115,58,0.15);text-align:center;line-height:32px;font-size:15px;">🌤️</div>
+                  </td>
+                  <td style="padding-left:14px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:rgba(255,252,245,0.88);">What You'll Actually See</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.42);">Specific sky colors, light quality, and beach atmosphere — so you're never disappointed.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 3 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
+                <tr>
+                  <td style="width:36px;vertical-align:top;padding-top:2px;">
+                    <div style="width:32px;height:32px;border-radius:10px;background:rgba(196,115,58,0.08);border:1px solid rgba(196,115,58,0.15);text-align:center;line-height:32px;font-size:15px;">🏖️</div>
+                  </td>
+                  <td style="padding-left:14px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:rgba(255,252,245,0.88);">Beach Comparison</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.42);">All 4 Chennai beaches rated — or honestly told "none are great today" when that's the truth.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 4 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px;">
+                <tr>
+                  <td style="width:36px;vertical-align:top;padding-top:2px;">
+                    <div style="width:32px;height:32px;border-radius:10px;background:rgba(196,115,58,0.08);border:1px solid rgba(196,115,58,0.15);text-align:center;line-height:32px;font-size:15px;">📸</div>
+                  </td>
+                  <td style="padding-left:14px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:rgba(255,252,245,0.88);">Photography Tips</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.42);">Camera settings and composition tips — with explanations of why each setting works for the day's conditions.</p>
+                  </td>
+                </tr>
+              </table>
+
+            </td></tr>
+          </table>
+
+          <!-- Divider -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:28px 40px;">
+              <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(196,115,58,0.18),transparent);"></div>
+            </td></tr>
+          </table>
+
+          <!-- First forecast callout -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(196,115,58,0.06);border:1px solid rgba(196,115,58,0.14);border-radius:14px;">
+                <tr><td style="padding:22px 24px;text-align:center;">
+                  <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:600;color:rgba(255,252,245,0.90);">Your first forecast arrives tomorrow</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.45);">4:00 AM IST · If conditions are good, set your alarm for 5:30 AM to catch the peak color window.</p>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+        </td></tr>
+
+        <!-- ═══ FOOTER ═══ -->
+        <tr><td style="background:#0a0913;border-radius:0 0 20px 20px;padding:28px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.04);">
+
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:rgba(255,255,255,0.35);">Seaside Beacon · Made with ☀️ in Chennai</p>
+          <p style="margin:0 0 10px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:rgba(255,255,255,0.25);">You're subscribed to daily sunrise forecasts for ${beachDisplay}.</p>
+          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
+            <a href="${unsubscribeUrl}" style="color:rgba(196,115,58,0.65);text-decoration:none;">Unsubscribe</a>
+            <span style="color:rgba(255,255,255,0.15);margin:0 8px;">·</span>
+            <a href="${APP_URL}" style="color:rgba(196,115,58,0.65);text-decoration:none;">Visit Website</a>
+          </p>
+
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>`
     };
@@ -218,6 +297,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     const unsubscribeUrl = getUnsubscribeUrl(subscriberEmail);
 
     const { beach, forecast, prediction } = weatherData;
+    const beachDisplayNames = weatherData.allBeachNames || {};
     const { score, verdict, breakdown, atmosphericLabels } = prediction;
     const { cloudCover, humidity, visibility, windSpeed, temperature, precipProbability } = forecast;
 
@@ -227,7 +307,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     // Extract insights
     const insight = photographyInsights.insight || '';
     const greeting = photographyInsights.greeting || '';
-    const goldenHour = photographyInsights.goldenHour || { start: '5:45 AM', peak: '5:50 AM', end: '6:20 AM', quality: 'Good' };
+    const goldenHour = photographyInsights.goldenHour || { start: 'N/A', peak: 'N/A', end: 'N/A', quality: 'N/A' };
     const sunriseExp = photographyInsights.sunriseExperience || {};
     const dslrSettings = photographyInsights.dslr?.cameraSettings || {};
     const dslrTips = photographyInsights.dslr?.compositionTips || [];
@@ -261,147 +341,268 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f0f0f0; }
-    .container { max-width: 600px; margin: 32px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, ${statusColor}, ${statusColor}CC); color: white; padding: 36px; text-align: center; }
-    .header .verdict-emoji { font-size: 36px; margin-bottom: 8px; }
-    .header h1 { margin: 0 0 4px 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
-    .header p { margin: 0; opacity: 0.9; font-size: 14px; }
-    .score-section { background: #FAFAFA; padding: 28px 36px; text-align: center; border-bottom: 1px solid #eee; }
-    .score-number { font-size: 64px; font-weight: 800; color: ${statusColor}; line-height: 1; margin: 0; }
-    .score-label { font-size: 14px; color: #888; margin: 6px 0 0 0; }
-    .rec-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 12px; color: ${recColor}; background: ${recColor}12; border: 1px solid ${recColor}30; }
-    .golden-hour { display: inline-block; background: linear-gradient(135deg, #FFF4ED, #FFF0E0); border: 1px solid #E8834A30; border-radius: 10px; padding: 10px 20px; margin-top: 12px; font-size: 14px; color: #D64828; font-weight: 600; }
-    .content { padding: 28px 36px; }
-    .section-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin: 0 0 14px 0; padding-bottom: 8px; border-bottom: 2px solid #f0f0f0; }
-    .insight-box { background: linear-gradient(135deg, #FFF4ED, #FFF9F4); border-left: 3px solid #E8834A; border-radius: 0 10px 10px 0; padding: 16px 20px; margin-bottom: 24px; font-size: 14px; color: #444; line-height: 1.7; }
-    .experience-box { background: #F9F9F9; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-    .exp-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 6px; font-weight: 600; }
-    .exp-text { font-size: 14px; color: #555; line-height: 1.65; margin-bottom: 14px; }
-    .exp-text:last-child { margin-bottom: 0; }
-    .exp-verdict-box { background: linear-gradient(135deg, #FFF4ED, #FFF9F4); border-left: 3px solid ${recColor}; border-radius: 0 10px 10px 0; padding: 14px 18px; margin-bottom: 24px; }
-    .exp-verdict-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: ${recColor}; font-weight: 700; margin-bottom: 4px; }
-    .exp-verdict-text { font-size: 14px; color: #444; line-height: 1.6; }
-    .atm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-    .atm-card { background: #F9F9F9; border-radius: 10px; padding: 14px; }
-    .atm-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 4px; }
-    .atm-value { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
-    .atm-rating { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px; display: inline-block; }
-    .rating-good { background: #d1fae5; color: #065f46; }
-    .rating-ok { background: #fef3c7; color: #92400e; }
-    .rating-bad { background: #fee2e2; color: #991b1b; }
-    .settings-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-    .setting-card { background: #1a1a1a; color: white; border-radius: 10px; padding: 14px; text-align: center; }
-    .setting-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6; }
-    .setting-value { font-size: 17px; font-weight: 700; margin: 4px 0 0 0; }
-    .tips-list { padding: 0; margin: 0 0 24px 0; list-style: none; }
-    .tips-list li { font-size: 14px; color: #555; line-height: 1.6; padding: 10px 12px; background: #F9F9F9; border-radius: 8px; margin-bottom: 8px; }
-    .tips-list li::before { content: "📸 "; }
-    .beach-best { background: linear-gradient(135deg, #F0FDF4, #ECFDF5); border: 1px solid #6ee7b720; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
-    .beach-best-label { font-size: 11px; text-transform: uppercase; color: #059669; font-weight: 700; margin-bottom: 4px; }
-    .beach-best-name { font-size: 17px; font-weight: 700; color: #1a1a1a; }
-    .beach-best-reason { font-size: 13px; color: #555; margin-top: 4px; line-height: 1.5; }
-    .skip-note { background: #F9F9F9; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; }
-    .skip-note p { font-size: 14px; color: #777; line-height: 1.6; margin: 0; }
-    .footer { background: #F9F9F9; padding: 20px 36px; text-align: center; border-top: 1px solid #eee; }
-    .footer p { font-size: 12px; color: #aaa; margin: 0 0 4px 0; }
-    .footer a { color: #E8834A; text-decoration: none; }
-  </style>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <!--[if mso]><style>*{font-family:Arial,sans-serif!important;}</style><![endif]-->
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="verdict-emoji">${verdictEmoji}</div>
-      <h1>${verdict}</h1>
-      <p>This Morning's Sunrise · ${beach}</p>
-    </div>
+<body style="margin:0;padding:0;background:#08070d;-webkit-text-size-adjust:none;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#08070d;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 
-    <div class="score-section">
-      <p class="score-number">${score}</p>
-      <p class="score-label">Sunrise Quality Score / 100</p>
-      <div class="rec-badge">${recLabel}</div>
-      ${score >= 50 ? `<br><div class="golden-hour">⏰ Peak Color: ${goldenHour.peak || goldenHour.start} · Window: ${goldenHour.start} – ${goldenHour.end}</div>` : ''}
-    </div>
+        <!-- ═══ HEADER — Score-colored sunrise gradient ═══ -->
+        <tr><td style="background:linear-gradient(180deg,#1a1208 0%,${score >= 70 ? '#1a2818' : score >= 50 ? '#2d1a0e' : '#1a1015'} 50%,${score >= 70 ? '#1e3a1e' : score >= 50 ? '#4a2818' : '#2a1520'} 100%);border-radius:20px 20px 0 0;padding:44px 40px 20px;text-align:center;">
 
-    <div class="content">
+          <!-- Brand -->
+          <p style="margin:0 0 24px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.35);">Seaside Beacon · ${beach}</p>
 
-      <div class="insight-box">
-        <strong>${greeting}</strong><br>${insight}
-      </div>
+          <!-- Verdict emoji -->
+          <p style="margin:0 0 10px;font-size:40px;line-height:1;">${verdictEmoji}</p>
 
-      ${sunriseExp.whatYoullSee || sunriseExp.beachVibes ? `
-      <h3 class="section-title">🌅 What to Expect</h3>
-      <div class="experience-box">
-        ${sunriseExp.whatYoullSee ? `<div class="exp-label">What you'll see</div><div class="exp-text">${sunriseExp.whatYoullSee}</div>` : ''}
-        ${sunriseExp.beachVibes ? `<div class="exp-label">Beach vibes</div><div class="exp-text">${sunriseExp.beachVibes}</div>` : ''}
-      </div>` : ''}
+          <!-- Verdict text -->
+          <h1 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:700;color:rgba(255,252,245,0.95);letter-spacing:-0.5px;">${verdict}</h1>
+          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;color:rgba(255,255,255,0.40);">This Morning's Sunrise Forecast</p>
 
-      ${sunriseExp.worthWakingUp ? `
-      <div class="exp-verdict-box">
-        <div class="exp-verdict-label">Worth waking up?</div>
-        <div class="exp-verdict-text">${sunriseExp.worthWakingUp}</div>
-      </div>` : ''}
+        </td></tr>
 
-      <h3 class="section-title">🌤️ Atmospheric Conditions</h3>
-      <div class="atm-grid">
-        <div class="atm-card">
-          <div class="atm-label">☁️ Cloud Cover</div>
-          <div class="atm-value">${cloudCover}%</div>
-          <span class="atm-rating ${cloudCover >= 30 && cloudCover <= 75 ? 'rating-good' : cloudCover < 30 ? 'rating-ok' : 'rating-bad'}">${cloudLabel}</span>
-        </div>
-        <div class="atm-card">
-          <div class="atm-label">💧 Humidity</div>
-          <div class="atm-value">${humidity}%</div>
-          <span class="atm-rating ${humidity <= 55 ? 'rating-good' : humidity <= 70 ? 'rating-ok' : 'rating-bad'}">${atmosphericLabels?.humidityLabel || (humidity <= 55 ? 'Very Good' : humidity <= 70 ? 'Moderate' : 'High')}</span>
-        </div>
-        <div class="atm-card">
-          <div class="atm-label">👁️ Visibility</div>
-          <div class="atm-value">${visibility}km</div>
-          <span class="atm-rating ${visibility >= 8 ? 'rating-good' : visibility >= 5 ? 'rating-ok' : 'rating-bad'}">${atmosphericLabels?.visibilityLabel || (visibility >= 10 ? 'Excellent' : visibility >= 8 ? 'Very Good' : 'Good')}</span>
-        </div>
-        <div class="atm-card">
-          <div class="atm-label">🌡️ Temperature</div>
-          <div class="atm-value">${temperature}°C</div>
-          <span class="atm-rating rating-good">At Sunrise</span>
-        </div>
-      </div>
+        <!-- ═══ SCORE SECTION ═══ -->
+        <tr><td style="background:#0f0e14;padding:0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:32px 40px;text-align:center;">
 
-      ${beachComp ? `
-      <h3 class="section-title">🏖️ Today's Best Beach</h3>
-      <div class="beach-best">
-        <div class="beach-best-label">⭐ Recommended</div>
-        <div class="beach-best-name">${{marina: 'Marina Beach', elliot: "Elliot's Beach", covelong: 'Covelong Beach', thiruvanmiyur: 'Thiruvanmiyur Beach'}[beachComp.todaysBest] || beach}</div>
-        <div class="beach-best-reason">${beachComp.reason || ''}</div>
-      </div>` : ''}
+              <!-- Score number -->
+              <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:72px;font-weight:700;color:${statusColor};line-height:1;letter-spacing:-2px;">${score}</p>
+              <p style="margin:4px 0 16px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.30);">Sunrise Quality Score / 100</p>
 
-      ${includePhotography ? `
-      <h3 class="section-title">📷 Photography Settings</h3>
-      <div class="settings-grid">
-        <div class="setting-card"><div class="setting-label">ISO</div><div class="setting-value">${dslrSettings.iso || '200'}</div></div>
-        <div class="setting-card"><div class="setting-label">Shutter</div><div class="setting-value">${dslrSettings.shutterSpeed || '1/125s'}</div></div>
-        <div class="setting-card"><div class="setting-label">Aperture</div><div class="setting-value">${dslrSettings.aperture || 'f/8'}</div></div>
-        <div class="setting-card"><div class="setting-label">White Balance</div><div class="setting-value">${dslrSettings.whiteBalance || '5500K'}</div></div>
-      </div>
+              <!-- Recommendation badge -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                <tr><td style="background:${recColor}12;border:1px solid ${recColor}35;border-radius:50px;padding:7px 18px;">
+                  <span style="font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:600;color:${recColor};">${recLabel}</span>
+                </td></tr>
+              </table>
 
-      ${dslrTips.length ? `
-      <h3 class="section-title">💡 Composition Tips</h3>
-      <ul class="tips-list">
-        ${dslrTips.map(tip => `<li>${tip}</li>`).join('')}
-      </ul>` : ''}
-      ` : `
-      <div class="skip-note">
-        <p>Photography section skipped — conditions aren't favorable enough to warrant camera settings today. We'll include them when the sky is worth shooting. 📷</p>
-      </div>
-      `}
+              ${score >= 50 ? `
+              <!-- Golden hour -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px auto 0;">
+                <tr><td style="background:rgba(196,115,58,0.08);border:1px solid rgba(196,115,58,0.18);border-radius:12px;padding:10px 20px;">
+                  <span style="font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;font-weight:600;color:#c4733a;">⏰ Peak Color: ${goldenHour.peak || goldenHour.start} · Window: ${goldenHour.start} – ${goldenHour.end}</span>
+                </td></tr>
+              </table>` : ''}
 
-    </div>
-    <div class="footer">
-      <p><strong>Seaside Beacon</strong> · Daily at 4:00 AM IST · <a href="${APP_URL}">seasidebeacon.com</a></p>
-      <p>You're receiving this because you subscribed for ${beach} forecasts.</p>
-      <p><a href="${unsubscribeUrl}">Unsubscribe</a></p>
-    </div>
-  </div>
+            </td></tr>
+          </table>
+
+          <!-- Divider -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px;">
+              <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(196,115,58,0.15),transparent);"></div>
+            </td></tr>
+          </table>
+
+          <!-- ═══ INSIGHT BOX ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:28px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(196,115,58,0.05);border:1px solid rgba(196,115,58,0.12);border-radius:14px;">
+                <tr><td style="padding:20px 22px;">
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.7;color:rgba(255,255,255,0.55);"><strong style="color:rgba(255,252,245,0.88);">${greeting}</strong><br>${insight}</p>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+          ${sunriseExp.whatYoullSee || sunriseExp.beachVibes ? `
+          <!-- ═══ WHAT TO EXPECT ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 24px;">
+              <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.30);">🌅 What to Expect</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;">
+                <tr><td style="padding:20px 22px;">
+                  ${sunriseExp.whatYoullSee ? `<p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.30);">What you'll see</p><p style="margin:0 0 ${sunriseExp.beachVibes ? '16px' : '0'};font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.65;color:rgba(255,255,255,0.55);">${sunriseExp.whatYoullSee}</p>` : ''}
+                  ${sunriseExp.beachVibes ? `<p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.30);">Beach vibes</p><p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.65;color:rgba(255,255,255,0.55);">${sunriseExp.beachVibes}</p>` : ''}
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>` : ''}
+
+          ${sunriseExp.worthWakingUp ? `
+          <!-- ═══ WORTH WAKING UP ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${recColor}08;border:1px solid ${recColor}20;border-radius:14px;">
+                <tr><td style="padding:18px 22px;">
+                  <p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600;color:${recColor};">Worth waking up?</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:rgba(255,255,255,0.55);">${sunriseExp.worthWakingUp}</p>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>` : ''}
+
+          <!-- Divider -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:4px 40px 24px;">
+              <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(196,115,58,0.12),transparent);"></div>
+            </td></tr>
+          </table>
+
+          <!-- ═══ ATMOSPHERIC CONDITIONS — 2x2 grid ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 24px;">
+              <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.30);">🌤️ Atmospheric Conditions</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="48%" style="padding:0 6px 10px 0;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;">
+                      <tr><td style="padding:14px 16px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:rgba(255,255,255,0.30);">☁️ Cloud Cover</p>
+                        <p style="margin:0 0 4px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:rgba(255,252,245,0.90);">${cloudCover}%</p>
+                        <span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:${cloudCover >= 30 && cloudCover <= 75 ? 'rgba(16,185,129,0.12);color:#34d399' : cloudCover < 30 ? 'rgba(245,158,11,0.12);color:#fbbf24' : 'rgba(239,68,68,0.12);color:#f87171'};">${cloudLabel}</span>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="48%" style="padding:0 0 10px 6px;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;">
+                      <tr><td style="padding:14px 16px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:rgba(255,255,255,0.30);">💧 Humidity</p>
+                        <p style="margin:0 0 4px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:rgba(255,252,245,0.90);">${humidity}%</p>
+                        <span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:${humidity <= 55 ? 'rgba(16,185,129,0.12);color:#34d399' : humidity <= 70 ? 'rgba(245,158,11,0.12);color:#fbbf24' : 'rgba(239,68,68,0.12);color:#f87171'};">${atmosphericLabels?.humidityLabel || (humidity <= 55 ? 'Very Good' : humidity <= 70 ? 'Moderate' : 'High')}</span>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="48%" style="padding:0 6px 0 0;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;">
+                      <tr><td style="padding:14px 16px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:rgba(255,255,255,0.30);">👁️ Visibility</p>
+                        <p style="margin:0 0 4px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:rgba(255,252,245,0.90);">${visibility}km</p>
+                        <span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:${visibility >= 8 ? 'rgba(16,185,129,0.12);color:#34d399' : visibility >= 5 ? 'rgba(245,158,11,0.12);color:#fbbf24' : 'rgba(239,68,68,0.12);color:#f87171'};">${atmosphericLabels?.visibilityLabel || (visibility >= 10 ? 'Excellent' : visibility >= 8 ? 'Very Good' : 'Good')}</span>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="48%" style="padding:0 0 0 6px;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;">
+                      <tr><td style="padding:14px 16px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:rgba(255,255,255,0.30);">🌡️ Temperature</p>
+                        <p style="margin:0 0 4px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:rgba(255,252,245,0.90);">${temperature}°C</p>
+                        <span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:rgba(16,185,129,0.12);color:#34d399;">At Sunrise</span>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+
+          ${beachComp ? `
+          <!-- ═══ TODAY'S BEST BEACH ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 24px;">
+              <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.30);">🏖️ Today's Best Beach</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:14px;">
+                <tr><td style="padding:18px 22px;">
+                  <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600;color:#34d399;">⭐ Recommended</p>
+                  <p style="margin:0 0 4px;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:600;color:rgba(255,252,245,0.90);">${beachDisplayNames[beachComp.todaysBest] || beach}</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.42);">${beachComp.reason || ''}</p>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>` : ''}
+
+          <!-- Divider -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:4px 40px 24px;">
+              <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(196,115,58,0.12),transparent);"></div>
+            </td></tr>
+          </table>
+
+          ${includePhotography ? `
+          <!-- ═══ PHOTOGRAPHY SETTINGS — 2x2 dark cards ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 20px;">
+              <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.30);">📷 Photography Settings</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="48%" style="padding:0 6px 10px 0;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.06);border-radius:12px;">
+                      <tr><td style="padding:14px 16px;text-align:center;">
+                        <p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.30);">ISO</p>
+                        <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:rgba(255,252,245,0.92);">${dslrSettings.iso || '200'}</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="48%" style="padding:0 0 10px 6px;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.06);border-radius:12px;">
+                      <tr><td style="padding:14px 16px;text-align:center;">
+                        <p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.30);">Shutter</p>
+                        <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:rgba(255,252,245,0.92);">${dslrSettings.shutterSpeed || '1/125s'}</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="48%" style="padding:0 6px 0 0;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.06);border-radius:12px;">
+                      <tr><td style="padding:14px 16px;text-align:center;">
+                        <p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.30);">Aperture</p>
+                        <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:rgba(255,252,245,0.92);">${dslrSettings.aperture || 'f/8'}</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="48%" style="padding:0 0 0 6px;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.06);border-radius:12px;">
+                      <tr><td style="padding:14px 16px;text-align:center;">
+                        <p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.30);">White Balance</p>
+                        <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:rgba(255,252,245,0.92);">${dslrSettings.whiteBalance || '5500K'}</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+
+          ${dslrTips.length ? `
+          <!-- ═══ COMPOSITION TIPS ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 28px;">
+              <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.30);">💡 Composition Tips</p>
+              ${dslrTips.map(tip => `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
+                <tr><td style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:12px 16px;">
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:rgba(255,255,255,0.50);">📸 ${tip}</p>
+                </td></tr>
+              </table>`).join('')}
+            </td></tr>
+          </table>` : ''}
+          ` : `
+          <!-- ═══ PHOTOGRAPHY SKIPPED ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:14px;">
+                <tr><td style="padding:22px 24px;text-align:center;">
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:rgba(255,255,255,0.35);">Photography section skipped — conditions aren't favorable enough today. We'll include camera settings when the sky is worth shooting. 📷</p>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+          `}
+
+        </td></tr>
+
+        <!-- ═══ FOOTER ═══ -->
+        <tr><td style="background:#0a0913;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.04);">
+
+          <p style="margin:0 0 5px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:rgba(255,255,255,0.32);">Seaside Beacon · Daily at 4:00 AM IST · <a href="${APP_URL}" style="color:rgba(196,115,58,0.60);text-decoration:none;">seasidebeacon.com</a></p>
+          <p style="margin:0 0 8px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:rgba(255,255,255,0.22);">You're receiving this because you subscribed for ${beach} forecasts.</p>
+          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
+            <a href="${unsubscribeUrl}" style="color:rgba(196,115,58,0.55);text-decoration:none;">Unsubscribe</a>
+          </p>
+
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>`
     };

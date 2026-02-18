@@ -105,6 +105,12 @@ router.get('/predict/:beach', async (req, res) => {
     }
 
     // ── Generate insights, passing real multi-beach data ─────
+    // Attach beach name lookup for downstream consumers
+    const beachList = weatherService.getBeaches();
+    const allBeachNames = {};
+    beachList.forEach(b => { allBeachNames[b.key] = b.name; });
+    primaryWeather.allBeachNames = allBeachNames;
+
     const photographyInsights = await aiService.generatePhotographyInsights(
       primaryWeather,
       allWeatherData
