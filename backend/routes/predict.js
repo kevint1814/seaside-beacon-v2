@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const weatherService = require('../services/weatherService');
 const aiService = require('../services/aiService');
-const { trackPrediction, getStats } = require('../services/visitTracker');
+const { trackPrediction } = require('../services/visitTracker');
 
 /**
  * GET /api/stats
@@ -21,24 +21,25 @@ const { trackPrediction, getStats } = require('../services/visitTracker');
  *             windDirection, visibility, uvIndex, precipProbability,
  *             weatherDescription, hasPrecipitation
  */
+const SiteStats = require('../models/SiteStats');
+
+/**
+ * GET /api/stats
+ * Returns live metrics from SiteStats (source of truth).
+ * SiteStats is incremented by the daily cron job — scales
+ * automatically as new beaches/cities are added.
+ */
 router.get('/stats', async (req, res) => {
   try {
-    const stats = await getStats();
-    const LAUNCH_DATE = new Date('2026-02-14T04:00:00+05:30');
-    const daysLive = Math.max(1, Math.floor((Date.now() - LAUNCH_DATE.getTime()) / 86400000) + 1);
-
-    const BEACHES = 4;
-    const HOURS_FETCHED = 12;
-    const FIELDS_PER_HOUR = 11;
+    const siteStats = await SiteStats.getPublicStats();
 
     res.json({
       success: true,
       data: {
-        forecastsGenerated: daysLive * BEACHES,
-        consecutiveDays: daysLive,
-        dataPointsProcessed: daysLive * BEACHES * HOURS_FETCHED * FIELDS_PER_HOUR,
-        visitors: stats.lifetime.visits,
-        predictions: stats.lifetime.predictions
+        forecastsGenerated: siteStats.forecastsGenerated,
+        consecutiveDays: siteStats.consecutiveDays,
+        dataPointsProcessed: siteStats.dataPointsProcessed,
+        emailsSent: siteStats.emailsSent
       }
     });
   } catch (error) {

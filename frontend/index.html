@@ -571,53 +571,6 @@
     </div>
   </section>
 
-  <!-- Live Metrics Calculator -->
-  <script>
-  (function(){
-    const LAUNCH_DATE = new Date('2026-02-14T04:00:00+05:30');
-    const BEACHES = 4;
-    const HOURS_FETCHED = 12;    // 12-hour AccuWeather forecast
-    const FIELDS_PER_HOUR = 11;  // temp, feelsLike, cloud, humidity, wind, windDir, vis, uv, precip, desc, hasPrecip
-
-    function updateMetrics(){
-      const ms = Date.now() - LAUNCH_DATE.getTime();
-      if(ms < 0) return;
-      const days = Math.floor(ms / 86400000) + 1;
-      const forecasts = days * BEACHES;
-      const dataPoints = days * BEACHES * HOURS_FETCHED * FIELDS_PER_HOUR;
-
-      document.querySelectorAll('.metric-val').forEach(el => {
-        const k = el.dataset.key;
-        el.dataset.target = k === 'forecastsGenerated' ? forecasts
-          : k === 'consecutiveDays' ? days : dataPoints;
-      });
-
-      const strip = document.getElementById('metricsStrip');
-      if(!strip) return;
-      new IntersectionObserver((entries, obs) => {
-        entries.forEach(e => {
-          if(e.isIntersecting){
-            e.target.querySelectorAll('.metric-val').forEach(el => {
-              const to = parseInt(el.dataset.target);
-              if(!to){ el.textContent = '0'; return; }
-              const t0 = performance.now();
-              (function tick(now){
-                const p = Math.min((now - t0) / 1200, 1);
-                el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))).toLocaleString('en-IN');
-                if(p < 1) requestAnimationFrame(tick);
-              })(t0);
-            });
-            obs.unobserve(e.target);
-          }
-        });
-      }, {threshold: 0.3}).observe(strip);
-    }
-
-    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateMetrics);
-    else updateMetrics();
-  })();
-  </script>
-
   <!-- ── THE CRAFT SECTION ─────────────────────────── -->
   <section class="craft-section" id="craft">
     <div class="craft-inner">
