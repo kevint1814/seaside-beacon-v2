@@ -133,21 +133,17 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const currentMonth = monthNames[new Date().getMonth()];
 
-    const prompt = `You are a knowledgeable local guide who gives honest, balanced sunrise forecasts. Your audience is GENERAL PUBLIC first (people wondering "should I wake up early?") and photography enthusiasts second.
+    const prompt = `You are a knowledgeable local guide who gives honest sunrise forecasts for Chennai beaches. Your audience is GENERAL PUBLIC first (people wondering "should I wake up early?") and photography enthusiasts second.
 
-YOUR CORE PRINCIPLE: Set accurate expectations. If someone follows your advice, they should never be disappointed. On great days, help them appreciate what makes it special. On bad days, tell them exactly what they'll see so they can decide for themselves.
-
-TONE INSTRUCTION FOR TODAY (score: ${score}/100):
+TONE INSTRUCTION (score: ${score}/100):
 ${toneInstruction}
 
-CURRENT MONTH: ${currentMonth}
-
 ATMOSPHERIC CONDITIONS:
-- Temperature: ${temperature}°C
 - Cloud Cover: ${cloudCover}% (${atmosphericLabels?.cloudLabel || 'measured'})
 - Humidity: ${humidity}% (${atmosphericLabels?.humidityLabel || 'measured'})
 - Visibility: ${visibility} km (${atmosphericLabels?.visibilityLabel || 'measured'})
 - Wind: ${windSpeed} km/h (${atmosphericLabels?.windLabel || 'measured'})
+- Temperature: ${temperature}°C
 - Precipitation Probability: ${precipProbability}%
 - Conditions: ${weatherDescription}
 - Sunrise Score: ${score}/100 (${verdict})
@@ -158,114 +154,39 @@ BEACH: ${beach}
 BEACH CONTEXT: ${context}
 ${comparisonContext}
 
-CRITICAL RULES:
-1. NEVER use phrases like "every sunrise is unique", "you might still catch something beautiful", "embrace the mood", or any positive spin on objectively poor conditions.
-2. For cloud cover: 30-60% is OPTIMAL (acts as canvas for color). Clear skies (under 20%) = pale, underwhelming. Over 75% = sunrise likely not visible.
-3. For humidity: Under 55% = vibrant colors. Over 70% = visibly muted and washed out.
-4. The "greeting" must match the score honestly. A 30/100 greeting should NOT sound exciting.
-5. The "sunriseExperience" section is for general audience — describe what they'll SEE, FEEL, and experience in plain language.
-6. Photography sections should include "why" explanations for all settings.
-7. Golden hour times MUST use the actual times provided above, not made-up times.
-8. Composition tips MUST reference specific named elements from the BEACH CONTEXT above — do not give generic tips.
-9. Beach comparison must be honest — if all beaches are poor, say so. If one is clearly better, explain why based on today's conditions interacting with that beach's physical features.
-10. The "overallPattern" should reference ${currentMonth} and actual conditions, not assume any particular season.
+RULES:
+1. NEVER use positive spin on poor conditions. No "every sunrise is unique" or "embrace the mood."
+2. Cloud 30-60% = OPTIMAL canvas for color. Clear <20% = pale. Over 75% = blocked.
+3. Humidity under 55% = vivid. Over 70% = washed out.
+4. Greeting MUST match the score. A 30/100 should NOT sound exciting.
+5. Each beach comparison reason MUST be unique, referencing that beach's specific features from BEACH CONTEXT.
 
-Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
+Respond ONLY with valid JSON:
 {
-  "greeting": "One honest sentence setting expectations for this morning's sunrise at ${beach}",
-  "insight": "Two sentences describing what someone will actually see and experience at the beach this morning. Be specific about expected sky colors, light quality, and overall atmosphere. Match honesty to the ${score}/100 score.",
+  "greeting": "One honest sentence setting expectations for this morning's sunrise at ${beach}. Match tone to ${score}/100.",
+  "insight": "Two sentences describing what someone will actually see — specific sky colors, light quality. Match honesty to ${score}/100.",
   "sunriseExperience": {
-    "whatYoullSee": "2-3 sentences painting an honest picture of the visual experience — sky colors, cloud behavior, light quality. Be specific and grounded.",
-    "beachVibes": "1-2 sentences about the non-visual experience — temperature feel, wind on skin, crowd level, sounds at dawn. Reference the specific beach's character from the context.",
-    "worthWakingUp": "${score >= 70 ? 'Yes — explain why this is genuinely worth the early alarm' : score >= 50 ? 'Conditionally — it will be pleasant but not spectacular. Good if you are already a morning person or nearby.' : 'For the sunrise alone, probably not. But if you enjoy early morning beach walks regardless of sky conditions, the beach is always peaceful at dawn.'}"
+    "whatYoullSee": "2-3 sentences: honest visual picture — sky colors, cloud behavior, light. Be specific.",
+    "beachVibes": "1-2 sentences: temperature feel, wind, crowd level, sounds. Reference ${beach}'s specific character.",
+    "worthWakingUp": "${score >= 70 ? 'Yes — explain why genuinely worth the early alarm' : score >= 50 ? 'Conditionally — pleasant but not spectacular' : 'For sunrise alone, probably not. Beach walk still peaceful.'}"
   },
   "goldenHour": {
-    "start": "${goldenHour?.start || 'estimate'}",
-    "peak": "${goldenHour?.peak || 'estimate'}",
-    "end": "${goldenHour?.end || 'estimate'}",
-    "quality": "Excellent/Very Good/Good/Fair/Poor — match honestly to conditions",
-    "tip": "One sentence on when to be there for the best light, appropriate to conditions"
-  },
-  "atmosphericAnalysis": {
-    "cloudCover": {
-      "value": ${cloudCover},
-      "rating": "Optimal/Good/Fair/Poor",
-      "impact": "Two sentences explaining what this cloud % physically does to sunrise colors. Be scientifically accurate (30-60% = best canvas)."
-    },
-    "humidity": {
-      "value": ${humidity},
-      "rating": "Excellent/Very Good/Moderate/High/Very High",
-      "impact": "Two sentences on how this humidity level affects what you'll see — color saturation, haze, atmospheric clarity."
-    },
-    "visibility": {
-      "value": ${visibility},
-      "rating": "Exceptional/Excellent/Very Good/Good/Poor",
-      "impact": "One sentence on how visibility affects the horizon and color intensity."
-    },
-    "wind": {
-      "value": ${windSpeed},
-      "rating": "Calm/Light/Moderate/Strong",
-      "impact": "One sentence on how wind affects clouds and the overall beach experience."
-    },
-    "overallPattern": "Two sentences about today's weather pattern and what it means for the sunrise. Reference ${currentMonth} and actual atmospheric conditions."
-  },
-  "dslr": {
-    "cameraSettings": {
-      "iso": "recommended ISO value",
-      "isoWhy": "Why this ISO for these conditions",
-      "shutterSpeed": "recommended shutter speed",
-      "shutterWhy": "Why this shutter speed",
-      "aperture": "recommended aperture",
-      "apertureWhy": "Why this aperture",
-      "whiteBalance": "recommended white balance in Kelvin",
-      "wbWhy": "Why this WB setting"
-    },
-    "proTips": [
-      "Specific technical tip for these conditions",
-      "Specific technique tip for these conditions",
-      "Advanced tip relevant to today's exact conditions"
-    ],
-    "compositionTips": [
-      "Specific composition using a NAMED element from the beach context (e.g. lighthouse, Karl Schmidt Memorial, rock formations, breakwater rocks)",
-      "Framing or leading line technique using THIS beach's specific geography",
-      "Light and shadow opportunity for these exact conditions at THIS beach"
-    ]
-  },
-  "mobile": {
-    "phoneSettings": {
-      "nightMode": "On or Off",
-      "nightModeWhy": "Why — specific to these light conditions",
-      "hdr": "On, Off, or Auto",
-      "hdrWhy": "Why — specific to today's dynamic range",
-      "exposure": "adjustment value like -0.3 or +0.3",
-      "exposureWhy": "Why this compensation",
-      "additionalSetting": "One more relevant setting",
-      "additionalWhy": "Why it helps today"
-    },
-    "proTips": [
-      "Stability or technique tip for these conditions",
-      "Timing tip for the best moment to shoot",
-      "Post-processing tip for today's specific light"
-    ],
-    "compositionTips": [
-      "Phone-specific composition at THIS beach using a named element from context",
-      "Orientation decision for today's sky conditions at THIS beach",
-      "Foreground or reflection technique using THIS beach's specific features"
-    ]
+    "quality": "${score >= 85 ? 'Excellent' : score >= 70 ? 'Very Good' : score >= 55 ? 'Good' : score >= 40 ? 'Fair' : 'Poor'}",
+    "tip": "One sentence: when to arrive for best light, appropriate to conditions"
   },
   "beachComparison": ${beachKeys.length > 1 ? `{
-    "todaysBest": "MUST be exactly one of these strings: ${beachKeys.join(', ')}",
-    "reason": "2-3 sentences explaining WHY this beach is best today based on how conditions interact with its physical features. If ALL beaches are poor, say so honestly and recommend the most convenient one.",
+    "todaysBest": "MUST be exactly one of: ${beachKeys.join(', ')}",
+    "reason": "2-3 sentences: WHY this beach is best today. If ALL poor, say so honestly.",
     "beaches": {
       ${beachKeys.map(k => `"${k}": {
         "suitability": "Best/Good/Fair/Poor",
-        "reason": "1-2 sentences about how today's specific conditions interact with this beach's features. Reference named elements from the BEACH CONTEXT. Be honest on poor days. IMPORTANT: Each beach MUST have a UNIQUE reason that references its specific features — do NOT repeat the same text across beaches."
+        "reason": "1-2 sentences: how today's conditions interact with THIS beach's unique features. Reference specific elements from BEACH CONTEXT. Must be DIFFERENT from other beaches."
       }`).join(',\n      ')}
     }
   }` : 'null'}
+}
 
-CRITICAL: The "beaches" object MUST use exactly these keys: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A'}. Do NOT use full beach names as keys (wrong: "Marina Beach", right: "marina").
-}`;
+CRITICAL: Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A'}. NOT full names (wrong: "Marina Beach", right: "marina").`;
 
     const completion = await groqClient.chat.completions.create({
       model: "llama-3.3-70b-versatile",
@@ -277,7 +198,7 @@ CRITICAL: The "beaches" object MUST use exactly these keys: ${beachKeys.length >
         { role: "user", content: prompt }
       ],
       temperature: 0.7,
-      max_tokens: 3000,
+      max_tokens: 1200,
       response_format: { type: "json_object" }
     });
 
@@ -325,20 +246,33 @@ CRITICAL: The "beaches" object MUST use exactly these keys: ${beachKeys.length >
       }
     }
 
-    // Ensure golden hour uses real data if available, even if AI hallucinated times
-    if (goldenHour) {
-      aiData.goldenHour = {
-        ...aiData.goldenHour,
-        start: goldenHour.start,
-        peak: goldenHour.peak,
-        end: goldenHour.end
-      };
-    }
+    // Ensure golden hour uses real AccuWeather data, not AI-generated times
+    const goldenHourFinal = goldenHour
+      ? {
+          start: goldenHour.start,
+          peak: goldenHour.peak,
+          end: goldenHour.end,
+          quality: aiData.goldenHour?.quality || (score >= 85 ? 'Excellent' : score >= 70 ? 'Very Good' : score >= 55 ? 'Good' : score >= 40 ? 'Fair' : 'Poor'),
+          tip: aiData.goldenHour?.tip || `Arrive by ${goldenHour.start} for the best color window.`
+        }
+      : aiData.goldenHour || null;
+
+    // Camera settings and atmospheric analysis come from deterministic code
+    // — they're formulaic (if cloud>60 → ISO 400-800) and don't benefit from AI
+    const dslr = generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score);
+    const mobile = generateMobileSettings(cloudCover, humidity, visibility, windSpeed, score);
+    const atmosphericAnalysis = generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed);
 
     return {
       source: 'groq',
       model: 'llama-3.3-70b',
-      ...aiData,
+      greeting: aiData.greeting,
+      insight: aiData.insight,
+      sunriseExperience: aiData.sunriseExperience,
+      goldenHour: goldenHourFinal,
+      atmosphericAnalysis,
+      dslr,
+      mobile,
       beachComparison
     };
 
