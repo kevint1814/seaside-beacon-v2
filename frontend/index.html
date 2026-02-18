@@ -135,8 +135,11 @@
   </script>
 
   <!-- ── FONTS & STYLES ────────────────────────── -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+  <link rel="preconnect" href="https://api.seasidebeacon.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -146,9 +149,9 @@
 <div class="scroll-progress" id="scrollProgress"></div>
 
 <!-- ── SUBSCRIBE MODAL ───────────────────────────────── -->
-<div class="modal-overlay" id="emailModal">
+<div class="modal-overlay" id="emailModal" aria-hidden="true">
   <div class="modal-panel sub-form-card">
-    <button class="modal-close" id="closeModal" aria-label="Close">
+    <button type="button" class="modal-close" id="closeModal" aria-label="Close">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <p class="modal-eyebrow">Daily Briefing</p>
@@ -200,6 +203,7 @@
 </div>
 
 <div class="page">
+  <a href="#mainContent" class="skip-link">Skip to main content</a>
 
   <!-- ── NAV ──────────────────────────────────────── -->
   <nav class="nav" id="nav">
@@ -216,9 +220,9 @@
       <a href="#community" class="nav-link">Community</a>
       <a href="#story" class="nav-link">The Story</a>
       <a href="#contact" class="nav-link">Contact</a>
-      <button class="btn-nav-cta" id="navSubscribeBtn">Daily Briefing</button>
+      <button type="button" class="btn-nav-cta" id="navSubscribeBtn">Daily Briefing</button>
     </div>
-    <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+    <button type="button" class="nav-hamburger" id="navHamburger" aria-label="Menu">
       <span></span><span></span>
     </button>
   </nav>
@@ -230,10 +234,11 @@
     <a href="#community" class="drawer-link">Community</a>
     <a href="#story" class="drawer-link">The Story</a>
     <a href="#contact" class="drawer-link">Contact</a>
-    <button class="drawer-cta" id="drawerSubscribeBtn">Daily Briefing</button>
+    <button type="button" class="drawer-cta" id="drawerSubscribeBtn">Daily Briefing</button>
   </div>
 
   <!-- ── HERO ─────────────────────────────────────── -->
+  <main id="mainContent" role="main">
   <section class="hero" id="home">
     <div class="hero-body">
       <div class="hero-kicker">
@@ -251,7 +256,7 @@
 
       <div class="hero-ctas">
         <a href="#forecast" class="btn-primary">Read tomorrow's sky</a>
-        <button class="btn-text" id="heroSubscribeBtn">
+        <button type="button" class="btn-text" id="heroSubscribeBtn">
           Get the 4 AM briefing
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
@@ -295,19 +300,19 @@
 
       <!-- Beach selector -->
       <div class="beach-selector" id="beachSelector">
-        <button class="bsel active" data-beach="marina" data-lat="13.0499" data-lon="80.2824">
+        <button type="button" class="bsel active" data-beach="marina" data-lat="13.0499" data-lon="80.2824">
           <span class="bsel-name">Marina</span>
           <span class="bsel-sub">North Chennai</span>
         </button>
-        <button class="bsel" data-beach="elliot" data-lat="13.0067" data-lon="80.2669">
+        <button type="button" class="bsel" data-beach="elliot" data-lat="13.0067" data-lon="80.2669">
           <span class="bsel-name">Elliot's</span>
           <span class="bsel-sub">Besant Nagar</span>
         </button>
-        <button class="bsel" data-beach="covelong" data-lat="12.7925" data-lon="80.2514">
+        <button type="button" class="bsel" data-beach="covelong" data-lat="12.7925" data-lon="80.2514">
           <span class="bsel-name">Covelong</span>
           <span class="bsel-sub">ECR</span>
         </button>
-        <button class="bsel" data-beach="thiruvanmiyur" data-lat="12.9826" data-lon="80.2589">
+        <button type="button" class="bsel" data-beach="thiruvanmiyur" data-lat="12.9826" data-lon="80.2589">
           <span class="bsel-name">Thiruvanmiyur</span>
           <span class="bsel-sub">South Chennai</span>
         </button>
@@ -325,7 +330,7 @@
               <p class="fmi-desc">Tomorrow's atmospheric conditions — what you'll see, whether it's worth the trip.</p>
             </div>
           </div>
-          <button class="btn-forecast" id="predictBtn">
+          <button type="button" class="btn-forecast" id="predictBtn">
             Read the forecast
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
@@ -407,7 +412,7 @@
           <div class="fmr-intel-col">
             <p class="fmri-label">What to expect</p>
             <p class="fmri-insight" id="fmriInsight">—</p>
-            <button class="btn-view-analysis" id="btnViewAnalysis">
+            <button type="button" class="btn-view-analysis" id="btnViewAnalysis">
               Full atmospheric analysis
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 10l5 5 5-5"/></svg>
             </button>
@@ -417,16 +422,16 @@
           <div class="share-bar hidden" id="shareBar">
             <span class="share-label">Share this forecast</span>
             <div class="share-btns">
-              <button class="share-btn share-wa" id="shareWhatsApp" title="WhatsApp">
+              <button type="button" class="share-btn share-wa" id="shareWhatsApp" title="WhatsApp">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               </button>
-              <button class="share-btn share-tw" id="shareTwitter" title="Twitter / X">
+              <button type="button" class="share-btn share-tw" id="shareTwitter" title="Twitter / X">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
               </button>
-              <button class="share-btn share-copy" id="shareCopy" title="Copy link">
+              <button type="button" class="share-btn share-copy" id="shareCopy" title="Copy link">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
               </button>
-              <button class="share-btn share-native" id="shareNative" title="Share">
+              <button type="button" class="share-btn share-native" id="shareNative" title="Share">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               </button>
             </div>
@@ -470,7 +475,7 @@
                 <span class="uf-text">Wind direction at dawn is set by pressure gradients that form after sunset</span>
               </div>
             </div>
-            <button class="btn-text" id="unavailSubscribeBtn">
+            <button type="button" class="btn-text" id="unavailSubscribeBtn">
               Get tomorrow's forecast at 4 AM instead
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
@@ -512,16 +517,16 @@
             <h3 class="ap-title">Atmospheric Analysis</h3>
             <p class="ap-sub" id="deepSubtitle">For Marina Beach · Tomorrow morning</p>
           </div>
-          <button class="ap-collapse" id="deepCollapse">
+          <button type="button" class="ap-collapse" id="deepCollapse">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 14l5-5 5 5"/></svg>
           </button>
         </div>
 
         <div class="ap-tabs" role="tablist">
-          <button class="ap-tab active" data-tab="analysis" role="tab">Conditions</button>
-          <button class="ap-tab" data-tab="dslr" role="tab">DSLR</button>
-          <button class="ap-tab" data-tab="mobile" role="tab">Mobile</button>
-          <button class="ap-tab" data-tab="composition" role="tab">Beach Comparison</button>
+          <button type="button" class="ap-tab active" data-tab="analysis" role="tab">Conditions</button>
+          <button type="button" class="ap-tab" data-tab="dslr" role="tab">DSLR</button>
+          <button type="button" class="ap-tab" data-tab="mobile" role="tab">Mobile</button>
+          <button type="button" class="ap-tab" data-tab="composition" role="tab">Beach Comparison</button>
           <div class="ap-tab-ink" id="apTabInk"></div>
         </div>
 
@@ -903,7 +908,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
               <span>Facebook</span>
             </a>
-            <button class="community-share-btn" id="comShareIG" aria-label="Copy for Instagram">
+            <button type="button" class="community-share-btn" id="comShareIG" aria-label="Copy for Instagram">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
               <span>Instagram</span>
             </button>
@@ -980,7 +985,7 @@
               <option value="thiruvanmiyur">Thiruvanmiyur Beach</option>
             </select>
           </div>
-          <button class="btn-subscribe" id="stripSubscribeBtn">
+          <button type="button" class="btn-subscribe" id="stripSubscribeBtn">
             Start daily briefing — free
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
@@ -1040,6 +1045,8 @@
   </section>
 
   <!-- ── FOOTER ───────────────────────────────────── -->
+  </main>
+
   <footer class="footer" role="contentinfo">
     <div class="footer-wave">
       <svg viewBox="0 0 1440 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -1066,7 +1073,7 @@
   </footer>
 
   <!-- ── CINEMA MODE TOGGLE ─────────────────────── -->
-  <button class="cinema-toggle" id="cinemaToggle" aria-label="Toggle cinema mode">
+  <button type="button" class="cinema-toggle" id="cinemaToggle" aria-label="Toggle cinema mode">
     <svg class="cinema-icon cinema-icon-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
     <svg class="cinema-icon cinema-icon-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="3"/><path d="M9 2v20M15 2v20M2 9h20M2 15h20"/></svg>
     <span class="cinema-label">Cinema</span>
@@ -1074,6 +1081,6 @@
 
 </div><!-- /page -->
 
-<script src="script.js"></script>
+<script src="script.js" defer></script>
 </body>
 </html>
