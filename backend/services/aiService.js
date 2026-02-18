@@ -640,17 +640,37 @@ function generateBeachComparison(allWeatherData) {
   function genericReason(key, scoreData) {
     const d = allWeatherData[key];
     const beachName = d?.beach || key;
+    const context = d?.beachContext || '';
+
+    // Extract a short identifying feature from beachContext
+    let feature = '';
+    if (context.includes('lighthouse')) feature = 'the lighthouse and fishing boats';
+    else if (context.includes('Karl Schmidt')) feature = 'the Karl Schmidt Memorial and calm waters';
+    else if (context.includes('rock formations')) feature = 'the rock formations and tidal pools';
+    else if (context.includes('breakwater')) feature = 'the breakwater rocks and tidal pools';
+    else if (context.includes('surf')) feature = 'the surf and cliffs';
+
     if (scoreData.score < 40) {
-      return `Conditions are poor at ${beachName} — limited sunrise visibility expected.`;
+      return feature
+        ? `Conditions are poor at ${beachName} — limited sunrise visibility expected, though ${feature} still make for a scenic walk.`
+        : `Conditions are poor at ${beachName} — limited sunrise visibility expected.`;
     }
+
     const strengths = [];
     if (scoreData.isOptCloud) strengths.push('optimal cloud coverage');
     if (scoreData.isGoodVis) strengths.push('good visibility');
     if (scoreData.isCalm) strengths.push('calm wind');
     if (scoreData.isLowHumid) strengths.push('low humidity');
-    return strengths.length > 0
-      ? `${beachName} benefits from ${strengths.join(', ')} this morning.`
-      : `${beachName} has mixed conditions — some factors favorable, others limiting.`;
+
+    const weatherPart = strengths.length > 0
+      ? `benefits from ${strengths.join(', ')}`
+      : 'has mixed conditions';
+
+    // Combine weather + beach character for unique descriptions
+    if (feature) {
+      return `${beachName} ${weatherPart} this morning — ${feature} provide strong foreground interest for the conditions.`;
+    }
+    return `${beachName} ${weatherPart} this morning.`;
   }
 
   const scores = {};
