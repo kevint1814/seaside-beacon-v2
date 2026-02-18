@@ -400,34 +400,46 @@ function scoreWind(windSpeedKmh) {
 function getSynergyAdjustment(cloudCover, humidity, visibilityKm) {
   let adjustment = 0;
 
-  // PENALTY: High humidity + sparse clouds — washed-out and boring
+  // ── HARD OVERRIDE: Fog/heavy mist — nothing else matters if you can't see ──
+  // At <5km visibility, the horizon is obscured. Cloud/humidity scores are moot.
+  if (visibilityKm < 3) {
+    return -5; // Fog: complete override, no bonuses
+  } else if (visibilityKm < 5) {
+    return -3; // Heavy mist: severely limits any color display, no bonuses
+  }
+
+  // ── PENALTIES ──
+
+  // High humidity + sparse clouds — washed-out and boring
   if (humidity > 85 && cloudCover < 25) {
     adjustment -= 3;
   } else if (humidity > 80 && cloudCover < 20) {
     adjustment -= 2;
   }
 
-  // PENALTY: Very clear sky — even with perfect vis/humidity, limited drama
+  // Very clear sky — even with perfect vis/humidity, limited drama
   if (cloudCover < 15 && humidity < 70) {
     adjustment -= 3; // Vivid but boring — needs clouds for drama
   } else if (cloudCover < 15) {
     adjustment -= 2; // Clear + humid = bland
   }
 
-  // PENALTY: Very high humidity washes out colors even with good cloud canvas
+  // Very high humidity washes out colors even with good cloud canvas
   // (NOAA: "Higher humidity gives a milky look" — Mie scattering from water droplets)
   if (humidity > 85 && cloudCover >= 30) {
     adjustment -= 3; // Clouds are there but colors are muted to pastels
   }
 
-  // BONUS: Low humidity + optimal clouds — the dream combo
+  // ── BONUSES ──
+
+  // Low humidity + optimal clouds — the dream combo
   if (humidity < 70 && cloudCover >= 30 && cloudCover <= 60) {
     adjustment += 4;
   } else if (humidity < 75 && cloudCover >= 25 && cloudCover <= 65) {
     adjustment += 2;
   }
 
-  // PENALTY: Very high humidity negates visibility advantage
+  // Very high humidity negates visibility advantage
   if (humidity > 90 && visibilityKm > 10) {
     adjustment -= 2;
   }
