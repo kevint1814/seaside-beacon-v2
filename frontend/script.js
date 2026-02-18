@@ -429,19 +429,38 @@ function initSunriseCanvas() {
       }
     }
 
-    // ── Sea ───────────────────────────────────
+    // ── Sea — brightens as sun rises (real physics) ────
     const seaC = multiLerp(seaStops, sp);
+    // Mix sky color into sea as light increases
+    const skyBlend = Math.min(0.35, sp * 0.45); // water picks up sky colour
+    const litSea = [
+      Math.round(seaC[0] + (zenith[0] * 0.3 + horizon[0] * 0.2) * skyBlend),
+      Math.round(seaC[1] + (zenith[1] * 0.3 + horizon[1] * 0.2) * skyBlend),
+      Math.round(seaC[2] + (zenith[2] * 0.3 + horizon[2] * 0.2) * skyBlend)
+    ];
     const seaGrad = ctx.createLinearGradient(0, H*0.72, 0, H);
-    seaGrad.addColorStop(0, `rgb(${seaC[0]},${seaC[1]},${seaC[2]})`);
-    seaGrad.addColorStop(1, `rgb(${Math.max(0,seaC[0]-4)},${Math.max(0,seaC[1]-3)},${Math.max(0,seaC[2]-5)})`);
+    seaGrad.addColorStop(0, `rgb(${litSea[0]},${litSea[1]},${litSea[2]})`);
+    seaGrad.addColorStop(0.4, `rgb(${Math.round(litSea[0]*0.92)},${Math.round(litSea[1]*0.92)},${Math.round(litSea[2]*0.95)})`);
+    seaGrad.addColorStop(1, `rgb(${Math.max(0,litSea[0]-6)},${Math.max(0,litSea[1]-5)},${Math.max(0,litSea[2]-3)})`);
     ctx.fillStyle = seaGrad;
     ctx.fillRect(0, H*0.72, W, H * 0.28);
+
+    // ── Diffuse sky reflection on water — whole surface lightens ──
+    if (sp > 0.30) {
+      const diffuse = Math.min(0.12, (sp - 0.30) * 0.20);
+      const diffGrad = ctx.createLinearGradient(0, H*0.72, 0, H);
+      diffGrad.addColorStop(0, `rgba(${zenith[0]},${zenith[1]},${zenith[2]},${diffuse})`);
+      diffGrad.addColorStop(0.5, `rgba(${mid[0]},${mid[1]},${mid[2]},${diffuse * 0.5})`);
+      diffGrad.addColorStop(1, `rgba(0,0,0,0)`);
+      ctx.fillStyle = diffGrad;
+      ctx.fillRect(0, H*0.72, W, H * 0.28);
+    }
 
     // ── Sea reflection — bigger, brighter ─────────
     const reflC = multiLerp(glowStops, sp);
     const reflIntensity = 0.08 + glowPeak * 0.30 + warmth;
     const refX = W * 0.5;
-    const reflW = W * (0.12 + sp * 0.18);
+    const reflW = W * (0.12 + sp * 0.20);
     const seaTop = H * 0.72;
     const seaH = H * 0.28;
 
@@ -464,7 +483,7 @@ function initSunriseCanvas() {
     // Bright horizon kiss
     if (sp > 0.25) {
       const coreP = Math.min(1, (sp - 0.25) / 0.28);
-      const coreFade = sp > 0.72 ? Math.max(0, 1 - (sp - 0.72) / 0.22) : 1;
+      const coreFade = sp > 0.72 ? Math.max(0.15, 1 - (sp - 0.72) / 0.3) : 1;
       const coreStr = coreP * coreFade * 0.35;
       if (coreStr > 0.01) {
         const coreRx = reflW * 0.75;
@@ -485,9 +504,10 @@ function initSunriseCanvas() {
       }
     }
 
-    // Scattered shimmer fragments — more of them
+    // Scattered shimmer fragments — scale with sun brightness
     if (sp > 0.20) {
-      const shimmerAlpha = Math.min(1, (sp - 0.20) / 0.22) * glowPeak;
+      const shimBase = Math.min(1, (sp - 0.20) / 0.22);
+      const shimmerAlpha = shimBase * Math.max(0.25, glowPeak);
       for (let s = 0; s < 26; s++) {
         const sx = refX + (pseudoRand(s*31+5) - 0.5) * reflW * 3.2;
         const sy = H * (0.735 + pseudoRand(s*17+3) * 0.22);
@@ -511,6 +531,142 @@ function initSunriseCanvas() {
         ctx.fill();
         ctx.restore();
       }
+    }
+
+    // ── Fishermen boat silhouettes — cinematic horizon spread ──
+    if (sp > 0.12) {
+      const boatAlpha = Math.min(1, (sp - 0.12) / 0.25);
+      ctx.save();
+
+      // 7 boats: 2 large center-horizon, 3 medium flanking, 2 small distant
+      // Spread to frame the sun — nothing dead center to keep the glow clear
+      const boats = [
+        // Large trawlers — center horizon, flanking the sun path
+        { x: 0.38, y: 0.718, scale: 1.0,  bobSpeed: 0.0006, bobPhase: 0.0,  type: 'trawler' },
+        { x: 0.62, y: 0.716, scale: 0.92, bobSpeed: 0.0007, bobPhase: 2.2,  type: 'trawler' },
+        // Medium boats — wider spread
+        { x: 0.22, y: 0.724, scale: 0.65, bobSpeed: 0.0008, bobPhase: 1.0,  type: 'sail' },
+        { x: 0.50, y: 0.720, scale: 0.55, bobSpeed: 0.0009, bobPhase: 3.0,  type: 'sail' },
+        { x: 0.76, y: 0.725, scale: 0.60, bobSpeed: 0.0010, bobPhase: 0.7,  type: 'sail' },
+        // Small distant boats — edges
+        { x: 0.12, y: 0.728, scale: 0.32, bobSpeed: 0.0012, bobPhase: 1.5,  type: 'small' },
+        { x: 0.88, y: 0.729, scale: 0.28, bobSpeed: 0.0013, bobPhase: 4.0,  type: 'small' },
+      ];
+
+      for (const b of boats) {
+        const bx = b.x * W;
+        const bob = Math.sin(t * b.bobSpeed + b.bobPhase) * 2.5 * b.scale;
+        const by = b.y * H + bob;
+        const s = b.scale;
+
+        ctx.fillStyle = `rgba(4,5,12,${boatAlpha * 0.88})`;
+
+        if (b.type === 'trawler') {
+          // Larger fishing trawler — wider hull, cabin, tall mast
+          const hw = 28 * s;
+          const hh = 5 * s;
+
+          // Hull
+          ctx.beginPath();
+          ctx.moveTo(bx - hw, by);
+          ctx.quadraticCurveTo(bx - hw * 0.7, by + hh * 1.1, bx - hw * 0.1, by + hh);
+          ctx.lineTo(bx + hw * 0.3, by + hh);
+          ctx.quadraticCurveTo(bx + hw * 0.8, by + hh * 0.8, bx + hw, by + hh * 0.2);
+          ctx.lineTo(bx + hw * 0.95, by);
+          ctx.closePath();
+          ctx.fill();
+
+          // Cabin block
+          const cabX = bx - hw * 0.15;
+          const cabW = 10 * s;
+          const cabH = 7 * s;
+          ctx.fillRect(cabX, by - cabH, cabW, cabH);
+          // Cabin roof
+          ctx.fillRect(cabX - 1*s, by - cabH - 1.5*s, cabW + 2*s, 1.5*s);
+
+          // Main mast
+          const mastH = 26 * s;
+          const mastX = bx + 4 * s;
+          ctx.beginPath();
+          ctx.moveTo(mastX, by - 1);
+          ctx.lineTo(mastX, by - mastH);
+          ctx.strokeStyle = `rgba(4,5,12,${boatAlpha * 0.82})`;
+          ctx.lineWidth = 1.5 * s;
+          ctx.stroke();
+
+          // Boom/crossbar
+          ctx.beginPath();
+          ctx.moveTo(mastX, by - mastH * 0.65);
+          ctx.lineTo(mastX + 14 * s, by - mastH * 0.55);
+          ctx.lineWidth = 1 * s;
+          ctx.stroke();
+
+          // Rigging lines — thin
+          ctx.beginPath();
+          ctx.moveTo(mastX, by - mastH);
+          ctx.lineTo(bx - hw * 0.5, by);
+          ctx.moveTo(mastX, by - mastH);
+          ctx.lineTo(bx + hw * 0.7, by);
+          ctx.strokeStyle = `rgba(4,5,12,${boatAlpha * 0.35})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+
+          // Fisherman figures — 1-2 on trawlers
+          ctx.fillStyle = `rgba(4,5,12,${boatAlpha * 0.85})`;
+          const fx1 = bx - hw * 0.4;
+          ctx.fillRect(fx1 - 1, by - 9*s, 2.2, 6*s);
+          ctx.beginPath(); ctx.arc(fx1, by - 10.5*s, 2*s, 0, Math.PI*2); ctx.fill();
+
+          if (s > 0.95) {
+            const fx2 = bx + hw * 0.3;
+            ctx.fillRect(fx2 - 1, by - 8*s, 2, 5.5*s);
+            ctx.beginPath(); ctx.arc(fx2, by - 9.5*s, 1.8*s, 0, Math.PI*2); ctx.fill();
+          }
+
+        } else {
+          // Sail boat / small — original style
+          const hw = 22 * s;
+          const hh = 4 * s;
+
+          ctx.beginPath();
+          ctx.moveTo(bx - hw, by);
+          ctx.quadraticCurveTo(bx - hw * 0.8, by + hh, bx, by + hh * 0.7);
+          ctx.quadraticCurveTo(bx + hw * 0.8, by + hh, bx + hw, by);
+          ctx.quadraticCurveTo(bx + hw * 0.5, by - hh * 0.3, bx, by - hh * 0.2);
+          ctx.quadraticCurveTo(bx - hw * 0.5, by - hh * 0.3, bx - hw, by);
+          ctx.fill();
+
+          // Mast
+          const mastH = 18 * s;
+          const mastX = bx + 2 * s;
+          ctx.beginPath();
+          ctx.moveTo(mastX, by - hh * 0.2);
+          ctx.lineTo(mastX, by - mastH);
+          ctx.strokeStyle = `rgba(4,5,12,${boatAlpha * 0.80})`;
+          ctx.lineWidth = 1.2 * s;
+          ctx.stroke();
+
+          // Sail
+          if (b.type === 'sail') {
+            ctx.beginPath();
+            ctx.moveTo(mastX, by - mastH);
+            ctx.lineTo(mastX + 10 * s, by - mastH * 0.4);
+            ctx.lineTo(mastX, by - mastH * 0.25);
+            ctx.closePath();
+            ctx.fillStyle = `rgba(4,5,12,${boatAlpha * 0.60})`;
+            ctx.fill();
+          }
+
+          // Fisherman on medium boats
+          if (s > 0.5) {
+            ctx.fillStyle = `rgba(4,5,12,${boatAlpha * 0.82})`;
+            const fx = bx - 4 * s;
+            ctx.fillRect(fx - 1, by - hh*0.2 - 7*s, 1.8, 5*s);
+            ctx.beginPath(); ctx.arc(fx, by - hh*0.2 - 8.5*s, 1.6*s, 0, Math.PI*2); ctx.fill();
+          }
+        }
+      }
+      ctx.restore();
     }
 
     // ── Stars ──
@@ -592,9 +748,17 @@ function initSunriseCanvas() {
       ctx.restore();
     }
 
-    // ── Sea waves — 12 layers, richer motion ─────────
+    // ── Sea waves — 12 layers, stay alive as light increases ───
     const waveColor = multiLerp(glowStops, sp);
-    const waveAlpha = 0.032 + glowPeak * 0.09;
+    // Waves get more visible with daylight, not less
+    const daylight = Math.min(1, sp * 1.5);
+    const waveAlpha = 0.025 + glowPeak * 0.08 + daylight * 0.04;
+    // Late waves pick up sky/blue tint instead of only glow color
+    const waveBlueMix = Math.max(0, (sp - 0.6) / 0.4);
+    const wR = Math.round(waveColor[0] * (1 - waveBlueMix * 0.4) + zenith[0] * waveBlueMix * 0.4);
+    const wG = Math.round(waveColor[1] * (1 - waveBlueMix * 0.3) + zenith[1] * waveBlueMix * 0.3);
+    const wB = Math.round(waveColor[2] * (1 - waveBlueMix * 0.2) + zenith[2] * waveBlueMix * 0.5);
+
     for (let w = 0; w < 12; w++) {
       const wy   = H * (0.73 + w * 0.022);
       const amp  = 5.5 - w * 0.35;
@@ -607,7 +771,7 @@ function initSunriseCanvas() {
                      + amp * 0.3 * Math.sin(x * freq * 2.3 + t * spd * 1.7 + w);
         x===0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
-      ctx.strokeStyle = `rgba(${waveColor[0]},${waveColor[1]},${waveColor[2]},${(waveAlpha) * (1-w*0.07)})`;
+      ctx.strokeStyle = `rgba(${wR},${wG},${wB},${(waveAlpha) * (1-w*0.06)})`;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
