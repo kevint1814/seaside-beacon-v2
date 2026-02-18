@@ -1109,7 +1109,9 @@ function renderForecast() {
     {lbl:'Wind',     val:`${f.windSpeed}km/h`,   sub:labels.windLabel     ||(f.windSpeed<=15?'Calm':'Breezy')}
   ].map(c=>`<div class="cond-item"><div class="cond-label">${c.lbl}</div><div class="cond-val">${c.val}</div><div class="cond-sub">${c.sub}</div></div>`).join('');
 
-  document.getElementById('fmriInsight').textContent = p?.insight||`${pred.verdict} conditions forecast for ${w.beach} at dawn.`;
+  const greetingText = p?.greeting || '';
+  const insightText = p?.insight || `${pred.verdict} conditions forecast for ${w.beach} at dawn.`;
+  document.getElementById('fmriInsight').textContent = greetingText ? `${greetingText} ${insightText}` : insightText;
 
   // Render sunrise experience panel (general audience)
   renderExperiencePanel(pred.score, p, w.beach);
