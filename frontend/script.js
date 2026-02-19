@@ -1495,7 +1495,10 @@ function renderExperiencePanel(score, p, beachName) {
 
   show('experiencePanel');
 
-  document.getElementById('expTitle').textContent = `What tomorrow's sunrise will look like at ${beachName}`;
+  // Time-aware: "this morning" before 10 AM IST, "tomorrow" after 6 PM, neutral midday
+  const istHour = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getHours();
+  const timeLabel = istHour < 10 ? "this morning's" : istHour >= 18 ? "tomorrow's" : "the next";
+  document.getElementById('expTitle').textContent = `What ${timeLabel} sunrise will look like at ${beachName}`;
 
   // Recommendation badge
   const recEl = document.getElementById('expRecommendation');
@@ -1549,7 +1552,10 @@ function countUp(id, from, to, ms) {
 // ANALYSIS PANEL
 // ─────────────────────────────────────────────
 function renderAnalysisPanel(f,pred,p,beachName) {
-  document.getElementById('deepSubtitle').textContent = `For ${beachName} · Tomorrow morning`;
+  // Time-aware subtitle
+  const istH = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getHours();
+  const morningLabel = istH < 10 ? 'This morning' : istH >= 18 ? 'Tomorrow morning' : 'Next sunrise';
+  document.getElementById('deepSubtitle').textContent = `For ${beachName} · ${morningLabel}`;
   show('deepPanel');
   renderConditionsTab(f,pred,p);
   renderDSLRTab(p);

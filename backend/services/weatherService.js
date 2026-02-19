@@ -928,13 +928,14 @@ function scoreHumidity(humidity) {
     score = 15 - Math.round((humidity - 65) / 10 * 5);
   } else if (humidity <= 85) {
     // Moderate — noticeable color muting begins
-    score = 10 - Math.round((humidity - 75) / 10 * 5);
-  } else if (humidity <= 93) {
+    score = 10 - Math.round((humidity - 75) / 10 * 4);
+  } else if (humidity <= 95) {
     // High — milky horizon, washed-out pastels
-    score = 5 - Math.round((humidity - 85) / 8 * 3);
+    // Smoothed: 85%→6, 90%→4, 95%→2 (no cliff between 84-95%)
+    score = 6 - Math.round((humidity - 85) / 10 * 4);
   } else {
     // Very high — fog/mist territory, colors severely muted
-    score = Math.max(0, 2 - Math.round((humidity - 93) / 7 * 2));
+    score = Math.max(0, 2 - Math.round((humidity - 95) / 5 * 2));
   }
 
   return Math.max(0, Math.min(20, score));

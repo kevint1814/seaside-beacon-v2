@@ -160,17 +160,17 @@ CONTEXT: ${context}
 ${comparisonContext}
 
 WRITING STYLE:
-- Talk like a friend texting someone about tomorrow's sunrise. Simple, warm, honest.
+- Talk like a friend texting someone about this morning's sunrise (emails go out at 4 AM, sunrise is ~6:30 AM same day). Say "this morning" or "today", NEVER "tomorrow". Simple, warm, honest.
 - Describe what the sky will LOOK like in plain words anyone understands: "orange and pink streaks across the clouds", "grey and flat, no color", "soft warm glow near the horizon."
 - Do NOT use weather numbers in your text (no "45% cloud cover" or "87% humidity"). The data is shown separately — your job is to describe the EXPERIENCE.
-- On bad days: be honest and brief. "The sky will be mostly grey tomorrow — not much color expected." Don't try to make it sound better than it is.
+- On bad days: be honest and brief. "The sky will be mostly grey this morning — not much color expected." Don't try to make it sound better than it is.
 - On good days: be genuinely excited. "This is the kind of morning that makes you glad you woke up early."
 - NEVER use: "spectacular", "breathtaking", "nature's canvas", "painted sky", "embrace the mood", "serene", "magical", "treat yourself", "every sunrise is unique."
 - Beach comparisons: mention what makes each beach DIFFERENT (the lighthouse at Marina, the quiet at Elliot's, the rocks at Covelong) and whether today's sky helps or hurts that spot specifically.
 
 JSON response:
 {
-  "greeting": "One friendly, honest sentence. Like texting a friend: 'Tomorrow's looking really good at Marina — set that alarm' or 'Not worth the early wake-up tomorrow, honestly.'",
+  "greeting": "One friendly, honest sentence. Like texting a friend: 'This morning's looking really good at Marina — set that alarm' or 'Not worth the early wake-up today, honestly.' IMPORTANT: Say 'this morning' or 'today', NEVER 'tomorrow'.",
   "insight": "Two sentences describing what the sky will look like and feel like. Plain language — someone's grandma should understand it.",
   "sunriseExperience": {
     "whatYoullSee": "2-3 sentences painting a picture anyone can visualize. What colors, where in the sky, how it changes as the sun comes up. No technical terms.",
@@ -187,7 +187,7 @@ JSON response:
     "beaches": {
       ${beachKeys.map(k => `"${k}": {
         "suitability": "Best/Good/Fair/Poor",
-        "reason": "1-2 sentences. What makes THIS beach different from the others for tomorrow's conditions? Mention a specific feature from CONTEXT. Must be UNIQUE — don't repeat the same thing for every beach."
+        "reason": "1-2 sentences. What makes THIS beach different from the others for this morning's conditions? Mention a specific feature from CONTEXT. Must be UNIQUE — don't repeat the same thing for every beach."
       }`).join(',\n      ')}
     }
   }` : 'null'}
@@ -323,19 +323,19 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   let greeting;
   if (score >= 85) {
     const postRainNote = isPostRain ? ' The air is crystal clear after the rain — colors will be extra vivid.' : '';
-    greeting = `Tomorrow's looking really good at ${beach} — the kind of morning where the whole sky lights up orange and pink. Set that alarm.${postRainNote}`;
+    greeting = `This morning's looking really good at ${beach} — the kind of morning where the whole sky lights up orange and pink. Set that alarm.${postRainNote}`;
   } else if (score >= 70) {
     const clearAirNote = aodValue != null && aodValue < 0.2 ? ' The air is super clean today, so colors should pop.' : '';
     greeting = `Solid morning ahead at ${beach} — you should see some nice warm colors across the sky. Worth the early wake-up.${clearAirNote}`;
   } else if (score >= 55) {
-    greeting = `Tomorrow at ${beach} will be pleasant but nothing dramatic. You'll see some color near the horizon, just don't expect the sky to light up.`;
+    greeting = `This morning at ${beach} will be pleasant but nothing dramatic. You'll see some color near the horizon, just don't expect the sky to light up.`;
   } else if (score >= 40) {
     const lowCloudNote = lowCloud != null && lowCloud >= 60 ? ' Low clouds are sitting heavy on the horizon.' : '';
     greeting = `Not the best morning for sunrise at ${beach}, honestly. The sky will be mostly flat without much color.${lowCloudNote} Nice for a quiet beach walk though.`;
   } else if (score >= 25) {
-    greeting = `Tomorrow's sunrise at ${beach} won't have much to show — the sky will be washed out and grey. Not worth the early alarm for the view.`;
+    greeting = `This morning's sunrise at ${beach} won't have much to show — the sky will be washed out and grey. Not worth the early alarm for the view.`;
   } else {
-    greeting = `No real sunrise to see at ${beach} tomorrow — overcast and grey. Save your sleep.`;
+    greeting = `No real sunrise to see at ${beach} this morning — overcast and grey. Save your sleep.`;
   }
 
   // ── Insight — plain language anyone understands ──
