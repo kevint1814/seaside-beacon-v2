@@ -85,23 +85,18 @@ router.get('/predict/:beach', async (req, res) => {
       });
     }
 
-    // ── Fetch all other beaches in parallel ──────────────────
+    // ── Fetch other beaches sequentially (avoids Open-Meteo rate-limit bursts) ──
     const ALL_BEACHES = weatherService.getBeaches().map(b => b.key);
     const otherBeaches = ALL_BEACHES.filter(b => b !== beach);
 
     let allWeatherData = { [beach]: primaryWeather };
 
-    try {
-      const otherResults = await Promise.allSettled(
-        otherBeaches.map(b => weatherService.getTomorrow6AMForecast(b))
-      );
-      otherBeaches.forEach((b, i) => {
-        if (otherResults[i].status === 'fulfilled') {
-          allWeatherData[b] = otherResults[i].value;
-        }
-      });
-    } catch (e) {
-      console.warn('⚠️  Could not fetch all beach weather:', e.message);
+    for (const b of otherBeaches) {
+      try {
+        allWeatherData[b] = await weatherService.getTomorrow6AMForecast(b);
+      } catch (e) {
+        console.warn(`⚠️  Could not fetch ${b} weather:`, e.message);
+      }
     }
 
     // ── Generate insights, passing real multi-beach data ─────

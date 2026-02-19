@@ -171,22 +171,36 @@ async function fetchAccuWeatherDaily(locationKey) {
 // ==========================================
 
 const _aodCache = {};
+const _aodFailCache = {};
+const _aodInFlight = {};
 /**
  * Fetch aerosol data from Open-Meteo (free, no API key)
  * Returns { aod, pm25 } at 6 AM IST, or null if unavailable
+ * Same 3-layer protection as fetchOpenMeteoForecast.
  */
 async function fetchOpenMeteoAirQuality(lat, lon) {
-  // Round to 1 decimal (~11km grid) so all Chennai beaches share one cached result.
-  // CAMS model resolution is 0.4° (~44km) — even coarser than GFS.
   const roundedLat = Math.round(lat * 10) / 10;
   const roundedLon = Math.round(lon * 10) / 10;
   const cacheKey = `${roundedLat},${roundedLon}`;
+
   const cached = _aodCache[cacheKey];
   if (cached && (Date.now() - cached.fetchedAt < 2 * 60 * 60 * 1000)) {
     console.log('🌫️ Using cached AOD data');
     return cached.data;
   }
 
+  const failCached = _aodFailCache[cacheKey];
+  if (failCached && (Date.now() - failCached.failedAt < 90 * 1000)) {
+    console.log('🌫️ Skipping Open-Meteo AQ (recent 429) — using fallback');
+    return null;
+  }
+
+  if (_aodInFlight[cacheKey]) {
+    console.log('🌫️ Waiting for in-flight Open-Meteo AQ request...');
+    return _aodInFlight[cacheKey];
+  }
+
+  const fetchPromise = (async () => {
   try {
     const url = 'https://air-quality-api.open-meteo.com/v1/air-quality';
     let response;
@@ -202,12 +216,15 @@ async function fetchOpenMeteoAirQuality(lat, lon) {
           },
           timeout: 6000
         });
-        break; // success
+        break;
       } catch (err) {
         if (err.response?.status === 429 && attempt < 2) {
-          console.warn(`⚠️ Open-Meteo AQ 429 rate limit — retry ${attempt + 1}/2 after ${(attempt + 1) * 2}s`);
-          await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
+          console.warn(`⚠️ Open-Meteo AQ 429 rate limit — retry ${attempt + 1}/2 after ${(attempt + 1) * 5}s`);
+          await new Promise(r => setTimeout(r, (attempt + 1) * 5000));
           continue;
+        }
+        if (err.response?.status === 429) {
+          _aodFailCache[cacheKey] = { failedAt: Date.now() };
         }
         throw err;
       }
@@ -250,9 +267,17 @@ async function fetchOpenMeteoAirQuality(lat, lon) {
     console.log(`🌫️ AOD at 6 AM: ${result.aod?.toFixed(3) ?? 'N/A'} | PM2.5: ${result.pm25?.toFixed(1) ?? 'N/A'}`);
     _aodCache[cacheKey] = { data: result, fetchedAt: Date.now() };
     return result;
-  } catch (error) {
-    console.warn(`⚠️ Open-Meteo AOD unavailable: ${error.message} — using visibility alone`);
-    return null;
+    } catch (error) {
+      console.warn(`⚠️ Open-Meteo AOD unavailable: ${error.message} — using visibility alone`);
+      return null;
+    }
+  })();
+
+  _aodInFlight[cacheKey] = fetchPromise;
+  try {
+    return await fetchPromise;
+  } finally {
+    delete _aodInFlight[cacheKey];
   }
 }
 
@@ -264,9 +289,16 @@ async function fetchOpenMeteoAirQuality(lat, lon) {
 // ==========================================
 
 const _forecastCache = {};
+const _forecastFailCache = {};  // Negative cache: prevents cascading 429 retries
+const _forecastInFlight = {};   // In-flight dedup: same cache key waits for first request
 /**
  * Fetch multi-level cloud cover + pressure from Open-Meteo forecast API (free, no key)
  * Returns { highCloud, midCloud, lowCloud, pressureMsl[] } at 6 AM IST, or null
+ *
+ * Three layers of protection against Open-Meteo 429 rate limiting:
+ * 1. Coordinate rounding — all Chennai beaches share one cache key
+ * 2. In-flight deduplication — parallel requests wait for the first one
+ * 3. Negative cache — after a 429, skip retries for 90 seconds
  */
 async function fetchOpenMeteoForecast(lat, lon) {
   // Round to 1 decimal (~11km grid) so all Chennai beaches share one cached result.
@@ -274,37 +306,58 @@ async function fetchOpenMeteoForecast(lat, lon) {
   const roundedLat = Math.round(lat * 10) / 10;
   const roundedLon = Math.round(lon * 10) / 10;
   const cacheKey = `${roundedLat},${roundedLon}`;
+
+  // Layer 1: positive cache (2-hour TTL)
   const cached = _forecastCache[cacheKey];
   if (cached && (Date.now() - cached.fetchedAt < 2 * 60 * 60 * 1000)) {
     console.log('🌥️ Using cached Open-Meteo forecast data');
     return cached.data;
   }
 
-  try {
-    const url = 'https://api.open-meteo.com/v1/forecast';
-    let response;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        response = await axios.get(url, {
-          params: {
-            latitude: roundedLat,
-            longitude: roundedLon,
-            hourly: 'cloud_cover_low,cloud_cover_mid,cloud_cover_high,pressure_msl',
-            timezone: 'Asia/Kolkata',
-            forecast_days: 2
-          },
-          timeout: 8000
-        });
-        break; // success
-      } catch (err) {
-        if (err.response?.status === 429 && attempt < 2) {
-          console.warn(`⚠️ Open-Meteo 429 rate limit — retry ${attempt + 1}/2 after ${(attempt + 1) * 2}s`);
-          await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
-          continue;
+  // Layer 2: negative cache — skip if recently 429'd (90s TTL)
+  const failCached = _forecastFailCache[cacheKey];
+  if (failCached && (Date.now() - failCached.failedAt < 90 * 1000)) {
+    console.log('🌥️ Skipping Open-Meteo forecast (recent 429) — using fallback');
+    return null;
+  }
+
+  // Layer 3: in-flight dedup — wait for existing request instead of firing a new one
+  if (_forecastInFlight[cacheKey]) {
+    console.log('🌥️ Waiting for in-flight Open-Meteo forecast request...');
+    return _forecastInFlight[cacheKey];
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const url = 'https://api.open-meteo.com/v1/forecast';
+      let response;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          response = await axios.get(url, {
+            params: {
+              latitude: roundedLat,
+              longitude: roundedLon,
+              hourly: 'cloud_cover_low,cloud_cover_mid,cloud_cover_high,pressure_msl',
+              timezone: 'Asia/Kolkata',
+              forecast_days: 2
+            },
+            timeout: 8000
+          });
+          break; // success
+        } catch (err) {
+          if (err.response?.status === 429 && attempt < 2) {
+            console.warn(`⚠️ Open-Meteo 429 rate limit — retry ${attempt + 1}/2 after ${(attempt + 1) * 5}s`);
+            await new Promise(r => setTimeout(r, (attempt + 1) * 5000)); // 5s, 10s backoff
+            continue;
+          }
+          if (err.response?.status === 429) {
+            // Final 429 — cache the failure so other beaches don't retry
+            _forecastFailCache[cacheKey] = { failedAt: Date.now() };
+            console.warn('⚠️ Open-Meteo forecast 429 persists — negative-cached for 90s');
+          }
+          throw err;
         }
-        throw err; // non-429 or final attempt
       }
-    }
 
     const hourly = response.data?.hourly;
     if (!hourly || !hourly.time || !hourly.cloud_cover_high) {
@@ -357,9 +410,17 @@ async function fetchOpenMeteoForecast(lat, lon) {
 
     _forecastCache[cacheKey] = { data: result, fetchedAt: Date.now() };
     return result;
-  } catch (error) {
-    console.warn(`⚠️ Open-Meteo forecast unavailable: ${error.message} — using ceiling fallback`);
-    return null;
+    } catch (error) {
+      console.warn(`⚠️ Open-Meteo forecast unavailable: ${error.message} — using ceiling fallback`);
+      return null;
+    }
+  })();
+
+  _forecastInFlight[cacheKey] = fetchPromise;
+  try {
+    return await fetchPromise;
+  } finally {
+    delete _forecastInFlight[cacheKey];
   }
 }
 
@@ -1393,6 +1454,50 @@ async function getTomorrow6AMForecast(beachKey) {
     source: 'AccuWeather'
   };
 }
+
+/**
+ * Warm-up: pre-fetch Open-Meteo data on server startup.
+ * Called once when the module loads — populates the cache before any user requests.
+ * Uses Chennai center coords (rounded to match cache keys).
+ */
+async function warmUpOpenMeteoCache() {
+  const CHENNAI_CENTER = { lat: 13.0, lon: 80.3 };  // Rounded — matches Marina/Elliot's/Thiruvanmiyur key
+  const COVELONG_AREA = { lat: 12.8, lon: 80.3 };   // Rounded — matches Covelong key
+
+  console.log('🔥 Warming up Open-Meteo cache...');
+
+  // Stagger requests to avoid rate limit on cold start
+  try {
+    await fetchOpenMeteoForecast(CHENNAI_CENTER.lat, CHENNAI_CENTER.lon);
+    console.log('  ✅ Forecast cache (Chennai center) warm');
+  } catch (e) { console.warn('  ⚠️ Forecast warm-up failed:', e.message); }
+
+  await new Promise(r => setTimeout(r, 3000)); // 3s gap between API calls
+
+  try {
+    await fetchOpenMeteoAirQuality(CHENNAI_CENTER.lat, CHENNAI_CENTER.lon);
+    console.log('  ✅ AQ cache (Chennai center) warm');
+  } catch (e) { console.warn('  ⚠️ AQ warm-up failed:', e.message); }
+
+  await new Promise(r => setTimeout(r, 3000));
+
+  try {
+    await fetchOpenMeteoForecast(COVELONG_AREA.lat, COVELONG_AREA.lon);
+    console.log('  ✅ Forecast cache (Covelong area) warm');
+  } catch (e) { console.warn('  ⚠️ Covelong forecast warm-up failed:', e.message); }
+
+  await new Promise(r => setTimeout(r, 3000));
+
+  try {
+    await fetchOpenMeteoAirQuality(COVELONG_AREA.lat, COVELONG_AREA.lon);
+    console.log('  ✅ AQ cache (Covelong area) warm');
+  } catch (e) { console.warn('  ⚠️ Covelong AQ warm-up failed:', e.message); }
+
+  console.log('🔥 Open-Meteo cache warm-up complete');
+}
+
+// Fire warm-up on module load (non-blocking — doesn't delay server start)
+warmUpOpenMeteoCache().catch(() => {});
 
 module.exports = {
   getTomorrow6AMForecast,
