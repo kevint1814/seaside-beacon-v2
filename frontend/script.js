@@ -1064,19 +1064,19 @@ function initSunriseCanvas() {
       const centerY = sunYApprox + H * 0.12;
 
       // Line 1 — "Some mornings stop you cold."
-      const l1Size = Math.max(22, Math.round(W * 0.045));
+      const l1Size = Math.min(44, Math.max(22, Math.round(W * 0.045)));
       ctx.font = `italic 600 ${l1Size}px 'Cormorant Garamond', Georgia, serif`;
       ctx.fillStyle = `rgba(255,250,240,${line1Alpha * 0.88})`;
       ctx.fillText('Some mornings stop you cold.', W * 0.5, centerY);
 
       // Line 2 — "Seaside Beacon finds them for you."
-      const l2Size = Math.max(15, Math.round(W * 0.030));
+      const l2Size = Math.min(30, Math.max(15, Math.round(W * 0.030)));
       ctx.font = `italic 600 ${l2Size}px 'Cormorant Garamond', Georgia, serif`;
       ctx.fillStyle = `rgba(222,195,160,${line2Alpha * 0.72})`;
       ctx.fillText('Seaside Beacon finds them for you.', W * 0.5, centerY + l1Size * 1.35);
 
       // Tagline — "TOMORROW'S SKY, READ TONIGHT"
-      const tagSize = Math.max(9, Math.round(W * 0.014));
+      const tagSize = Math.min(17, Math.max(9, Math.round(W * 0.014)));
       ctx.font = `500 ${tagSize}px 'Instrument Sans', -apple-system, sans-serif`;
       ctx.fillStyle = `rgba(210,175,130,${tagAlpha * 0.72})`;
       ctx.fillText('T O M O R R O W \u2019 S   S K Y ,   R E A D   T O N I G H T', W * 0.5, centerY + l1Size * 1.35 + l2Size * 1.8);
