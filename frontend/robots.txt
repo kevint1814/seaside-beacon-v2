@@ -7,7 +7,7 @@ Disallow: /api/
 Disallow: /admin
 
 # Sitemaps
-Sitemap: https://seasidebeacon.com/sitemap.xml
+Sitemap: https://www.seasidebeacon.com/sitemap.xml
 
 # Crawl-delay (be kind to hosting)
 User-agent: Googlebot

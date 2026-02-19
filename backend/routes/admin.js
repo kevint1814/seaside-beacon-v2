@@ -181,7 +181,7 @@ router.post('/admin/send-email', requireAuth, async (req, res) => {
   </div>
 </td></tr>
 <tr><td bgcolor="#F0E8DE" style="padding:20px 40px;text-align:center;border-top:1px solid #E0D5C8;">
-  <p style="margin:0;font-family:'Instrument Sans',-apple-system,sans-serif;font-size:11px;color:#8a7e72;">Seaside Beacon · <a href="https://seasidebeacon.com" style="color:#C4733A;text-decoration:none;">seasidebeacon.com</a></p>
+  <p style="margin:0;font-family:'Instrument Sans',-apple-system,sans-serif;font-size:11px;color:#8a7e72;">Seaside Beacon · <a href="https://www.seasidebeacon.com" style="color:#C4733A;text-decoration:none;">seasidebeacon.com</a></p>
 </td></tr>
 </table>
 </td></tr>

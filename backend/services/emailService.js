@@ -10,7 +10,7 @@ let nodemailerSendgrid;
 try { nodemailerSendgrid = require('nodemailer-sendgrid'); }
 catch (e) { /* SendGrid transport not installed — Brevo only */ }
 
-const APP_URL = process.env.APP_URL || 'https://seasidebeacon.com';
+const APP_URL = process.env.APP_URL || 'https://www.seasidebeacon.com';
 const API_URL = process.env.API_URL || 'https://api.seasidebeacon.com';
 
 const EMAIL_PROVIDER = (process.env.EMAIL_PROVIDER || 'brevo').toLowerCase();

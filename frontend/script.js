@@ -2023,7 +2023,7 @@ function initCommunity() {
   });
 
   // ── Community share buttons ──
-  const siteUrl = 'https://seasidebeacon.com';
+  const siteUrl = 'https://www.seasidebeacon.com';
   const shareTextGeneral = `Found something interesting — there's a website that scores tomorrow's sunrise 0 to 100 and tells you if it's actually worth waking up for. Built for Chennai beaches. Free daily forecast at 4 AM.\n${siteUrl}`;
   const shareTextX = `This website scores tomorrow's sunrise 0–100 and tells you if it's worth the 5 AM alarm. Built for Chennai beaches. Kind of obsessed with it. ${siteUrl} 🌅`;
   const shareTextIG = `If you're in Chennai and love sunrises, check out seasidebeacon.com — they score tomorrow's sky 0 to 100 and tell you honestly if it's worth waking up for. Free 4 AM forecast. 🌅`;
@@ -2122,12 +2122,12 @@ function initShare() {
 
 function updateShareLinks(beach, score, verdict) {
   state._shareText = `Tomorrow's sunrise at ${beach}: ${score}/100 (${verdict}). Check the forecast on Seaside Beacon`;
-  state._shareUrl = 'https://seasidebeacon.com';
+  state._shareUrl = 'https://www.seasidebeacon.com';
 }
 
 function shareVia(platform) {
   const text = state._shareText || 'Check out Seaside Beacon — honest sunrise forecasts for Chennai beaches';
-  const url = state._shareUrl || 'https://seasidebeacon.com';
+  const url = state._shareUrl || 'https://www.seasidebeacon.com';
 
   switch (platform) {
     case 'whatsapp':
