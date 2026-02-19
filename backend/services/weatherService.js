@@ -193,7 +193,7 @@ async function fetchOpenMeteoAirQuality(lat, lon) {
         timezone: 'Asia/Kolkata',
         forecast_days: 2
       },
-      timeout: 3000 // 3s timeout — don't block main request
+      timeout: 6000 // 6s — generous for Render free tier networking
     });
 
     const hourly = response.data?.hourly;
@@ -269,7 +269,7 @@ async function fetchOpenMeteoForecast(lat, lon) {
         timezone: 'Asia/Kolkata',
         forecast_days: 2
       },
-      timeout: 3000
+      timeout: 8000  // 8s — GFS model responses are heavier than AQ, Render free tier needs headroom
     });
 
     const hourly = response.data?.hourly;
