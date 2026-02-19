@@ -142,6 +142,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .rcpt-row input[type=checkbox]{accent-color:var(--blue);cursor:pointer}
 .rcpt-beach{font-size:10px;color:var(--t3)}
 
+/* Drop zone */
+.drop-zone{border:1px dashed var(--border);border-radius:6px;padding:16px;text-align:center;transition:.15s;cursor:pointer}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--blue);background:var(--blue-bg)}
+.att-item{display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--surface2);border-radius:5px;font-size:11px;margin:3px 0}
+.att-item .att-name{flex:1;color:var(--t2);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att-item .att-size{color:var(--t4);font-family:var(--mono);font-size:10px}
+.att-item .att-preview{width:28px;height:28px;border-radius:3px;object-fit:cover;flex-shrink:0}
+.att-remove{background:none;border:none;color:var(--t4);cursor:pointer;font-size:14px;padding:0 4px;line-height:1}
+.att-remove:hover{color:var(--red)}
+
 /* Refresh bar */
 .refresh-line{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:100;transition:width .3s;opacity:0;pointer-events:none}
 </style>
@@ -289,6 +299,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
       <div style="margin-bottom:12px">
         <label style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Body <span style="color:var(--t4);text-transform:none;letter-spacing:0">(plain text — auto-wrapped in Seaside Beacon template)</span></label>
         <textarea id="emailBody" rows="6" placeholder="Write your message here..." style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:var(--sans);outline:none;resize:vertical;line-height:1.6;box-sizing:border-box"></textarea>
+      </div>
+
+      <!-- Attachments -->
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Attachments <span style="color:var(--t4);text-transform:none;letter-spacing:0">(images, PDFs — max 20MB total)</span></label>
+        <div id="dropZone" class="drop-zone">
+          <input type="file" id="fileInput" multiple accept="image/*,.pdf,.jpg,.jpeg,.png,.webp" style="display:none">
+          <span style="color:var(--t3);font-size:12px">Drop files here or <span style="color:var(--blue);cursor:pointer;text-decoration:underline" id="fileBrowse">browse</span></span>
+        </div>
+        <div id="attachmentList" style="margin-top:6px"></div>
       </div>
 
       <!-- Send button -->
@@ -533,6 +553,79 @@ function setEmailMode(mode) {
   updateRecipientCount();
 }
 
+// ── Attachments ──
+let attachments = []; // { name, size, base64, type, previewUrl }
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function addFiles(files) {
+  const maxTotal = 20 * 1024 * 1024; // 20MB
+  for (const file of files) {
+    const currentTotal = attachments.reduce((sum, a) => sum + a.size, 0);
+    if (currentTotal + file.size > maxTotal) {
+      alert('Total attachment size would exceed 20MB. Skipping: ' + file.name);
+      continue;
+    }
+    if (attachments.some(a => a.name === file.name)) continue; // skip duplicates
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64Full = e.target.result; // data:type;base64,xxxx
+      const base64Data = base64Full.split(',')[1];
+      const isImage = file.type.startsWith('image/');
+      attachments.push({
+        name: file.name,
+        size: file.size,
+        base64: base64Data,
+        type: file.type || 'application/octet-stream',
+        previewUrl: isImage ? base64Full : null
+      });
+      renderAttachments();
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function removeAttachment(idx) {
+  attachments.splice(idx, 1);
+  renderAttachments();
+}
+
+function renderAttachments() {
+  const el = document.getElementById('attachmentList');
+  if (!attachments.length) { el.innerHTML = ''; return; }
+  const totalSize = attachments.reduce((s, a) => s + a.size, 0);
+  el.innerHTML = attachments.map((a, i) => {
+    const preview = a.previewUrl ? '<img class="att-preview" src="' + a.previewUrl + '">' : '<span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--surface3);border-radius:3px;font-size:12px;flex-shrink:0">📎</span>';
+    return '<div class="att-item">' + preview + '<span class="att-name">' + esc(a.name) + '</span><span class="att-size">' + formatSize(a.size) + '</span><button class="att-remove" data-idx="' + i + '">✕</button></div>';
+  }).join('') + '<div style="font-size:10px;color:var(--t4);margin-top:4px">' + attachments.length + ' file' + (attachments.length !== 1 ? 's' : '') + ' · ' + formatSize(totalSize) + ' total</div>';
+  // Bind remove buttons
+  el.querySelectorAll('.att-remove').forEach(btn => {
+    btn.addEventListener('click', function() { removeAttachment(parseInt(this.dataset.idx)); });
+  });
+}
+
+function initDropZone() {
+  const zone = document.getElementById('dropZone');
+  const input = document.getElementById('fileInput');
+  const browse = document.getElementById('fileBrowse');
+
+  browse.addEventListener('click', (e) => { e.stopPropagation(); input.click(); });
+  zone.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => { if (input.files.length) addFiles(input.files); input.value = ''; });
+
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+  });
+}
+
 async function sendBroadcast() {
   const subject = document.getElementById('emailSubject').value.trim();
   const body = document.getElementById('emailBody').value.trim();
@@ -546,8 +639,9 @@ async function sendBroadcast() {
   const recipients = emailMode === 'all' ? allSubEmails.map(s => s.email) : [...selectedEmails];
   if (!recipients.length) { resultEl.style.color = 'var(--red)'; resultEl.textContent = 'No recipients selected'; return; }
 
-  // Confirm
-  if (!confirm('Send "' + subject + '" to ' + recipients.length + ' recipient' + (recipients.length !== 1 ? 's' : '') + ' from ' + senderAddress + '?')) return;
+  // Build confirm message
+  const attMsg = attachments.length ? ' with ' + attachments.length + ' attachment' + (attachments.length !== 1 ? 's' : '') : '';
+  if (!confirm('Send "' + subject + '"' + attMsg + ' to ' + recipients.length + ' recipient' + (recipients.length !== 1 ? 's' : '') + ' from ' + senderAddress + '?')) return;
 
   btn.disabled = true;
   btn.className = 'email-send-btn sending';
@@ -555,11 +649,14 @@ async function sendBroadcast() {
   resultEl.style.color = 'var(--t3)';
   resultEl.textContent = 'Sending to ' + recipients.length + ' recipients...';
 
+  // Prepare attachments payload
+  const attPayload = attachments.map(a => ({ name: a.name, base64: a.base64, type: a.type }));
+
   try {
     const res = await fetch(API + '/api/admin/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-      body: JSON.stringify({ subject, body, senderAddress, recipients })
+      body: JSON.stringify({ subject, body, senderAddress, recipients, attachments: attPayload })
     });
     const data = await res.json();
     if (data.success) {
@@ -569,6 +666,8 @@ async function sendBroadcast() {
       // Clear form
       document.getElementById('emailSubject').value = '';
       document.getElementById('emailBody').value = '';
+      attachments = [];
+      renderAttachments();
     } else {
       resultEl.style.color = 'var(--red)';
       resultEl.textContent = data.error || 'Send failed';
@@ -593,6 +692,7 @@ document.getElementById('selCustom').addEventListener('click', ()=>{setEmailMode
 document.getElementById('selNone').addEventListener('click', ()=>{selectedEmails.clear();buildRecipientList();updateRecipientCount();});
 document.getElementById('recipientSearch').addEventListener('input', e=>buildRecipientList(e.target.value));
 document.getElementById('emailSendBtn').addEventListener('click', sendBroadcast);
+initDropZone();
 
 // ── Auto-login ──
 if(token){fetch(API+'/api/admin/metrics',{headers:{'X-Admin-Token':token}}).then(r=>{if(r.ok)show();else logout();}).catch(()=>logout());}

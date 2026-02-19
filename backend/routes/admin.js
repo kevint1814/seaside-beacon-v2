@@ -140,10 +140,18 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
 // ── Send broadcast email ─────────────────────
 router.post('/admin/send-email', requireAuth, async (req, res) => {
   try {
-    const { subject, body, senderAddress, recipients } = req.body;
+    const { subject, body, senderAddress, recipients, attachments } = req.body;
 
     if (!subject || !body || !recipients || !recipients.length) {
       return res.status(400).json({ error: 'Subject, body, and recipients are required' });
+    }
+
+    // Validate attachments size (20MB total max)
+    if (attachments && attachments.length) {
+      const totalBytes = attachments.reduce((sum, a) => sum + (a.base64 ? Buffer.from(a.base64, 'base64').length : 0), 0);
+      if (totalBytes > 20 * 1024 * 1024) {
+        return res.status(400).json({ error: 'Total attachments exceed 20MB limit' });
+      }
     }
 
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -202,6 +210,15 @@ router.post('/admin/send-email', requireAuth, async (req, res) => {
             'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
           }
         };
+
+        // Add attachments if present (Brevo supports base64 attachments)
+        if (attachments && attachments.length) {
+          payload.attachment = attachments.map(a => ({
+            name: a.name,
+            content: a.base64,
+            type: a.type || 'application/octet-stream'
+          }));
+        }
 
         const apiRes = await fetch('https://api.brevo.com/v3/smtp/email', {
           method: 'POST',
