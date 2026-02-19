@@ -1403,12 +1403,32 @@ function renderForecast() {
   document.getElementById('fmrgPeak').textContent = gh.peak||gh.start||'--';
 
   const labels = pred.atmosphericLabels||{};
-  document.getElementById('conditionsStrip').innerHTML = [
+  const bd = pred.breakdown||{};
+  const condItems = [
     {lbl:'Cloud Cover',val:`${f.cloudCover}%`,    sub:labels.cloudLabel    ||(f.cloudCover>=30&&f.cloudCover<=60?'Optimal':f.cloudCover<30?'Clear':'Heavy')},
     {lbl:'Humidity', val:`${f.humidity}%`,       sub:labels.humidityLabel ||(f.humidity<=55?'Low':'High')},
     {lbl:'Visibility',val:`${f.visibility}km`,   sub:labels.visibilityLabel||(f.visibility>=18?'Exceptional':f.visibility>=12?'Excellent':f.visibility>=8?'Good':'Fair')},
     {lbl:'Wind',     val:`${f.windSpeed}km/h`,   sub:labels.windLabel     ||(f.windSpeed<=15?'Calm':'Breezy')}
-  ].map(c=>`<div class="cond-item"><div class="cond-label">${c.lbl}</div><div class="cond-val">${c.val}</div><div class="cond-sub">${c.sub}</div></div>`).join('');
+  ];
+  // v5: Add cloud layers if available
+  const hc = bd.multiLevelCloud?.high ?? bd.highCloud ?? null;
+  const mc = bd.multiLevelCloud?.mid ?? bd.midCloud ?? null;
+  const lc = bd.multiLevelCloud?.low ?? bd.lowCloud ?? null;
+  if (hc != null) {
+    condItems.push({lbl:'Cloud Layers', val:`H${hc}% M${mc}% L${lc}%`, sub:labels.cloudLayers||(hc>=30&&lc<40?'Ideal':'Mixed')});
+  }
+  // v5: Add air clarity (AOD) if available
+  const aodVal = bd.aod?.value ?? null;
+  if (aodVal != null) {
+    condItems.push({lbl:'Air Clarity', val:aodVal.toFixed(2), sub:labels.aod||(aodVal<0.2?'Very Clean':aodVal<0.4?'Clean':aodVal<0.7?'Hazy':'Polluted')});
+  }
+  // v5: Add pressure trend if available
+  const pTrend = bd.pressureTrend?.value ?? null;
+  if (pTrend != null) {
+    condItems.push({lbl:'Pressure', val:`${pTrend>=0?'+':''}${pTrend.toFixed(1)}hPa`, sub:labels.pressureTrend||(pTrend<-2?'Clearing':pTrend<=0.5?'Stable':'Rising')});
+  }
+  document.getElementById('conditionsStrip').innerHTML = condItems
+    .map(c=>`<div class="cond-item"><div class="cond-label">${c.lbl}</div><div class="cond-val">${c.val}</div><div class="cond-sub">${c.sub}</div></div>`).join('');
 
   const greetingText = p?.greeting || '';
   const insightText = p?.insight || `${pred.verdict} conditions forecast for ${w.beach} at dawn.`;
@@ -1540,6 +1560,7 @@ function renderAnalysisPanel(f,pred,p,beachName) {
 
 function renderConditionsTab(f,pred,p) {
   const labels=pred.atmosphericLabels||{}, atm=p?.atmosphericAnalysis||{};
+  const bd = pred.breakdown||{};
   const items=[
     {lbl:'Cloud Cover',val:`${f.cloudCover}%`,
      rating:labels.cloudLabel||(f.cloudCover>=30&&f.cloudCover<=60?'Optimal':f.cloudCover<30?'Too Clear':'Heavy'),
@@ -1579,6 +1600,62 @@ function renderConditionsTab(f,pred,p) {
        ?`Calm at ${f.windSpeed}km/h. Cloud formations will hold their shape. Long exposures of 20–30 seconds are fully viable.`
        :`${f.windSpeed}km/h will drift cloud formations across the sky. Keep exposures under 5 seconds for sharp cloud edges, or embrace the motion blur deliberately.`)}
   ];
+
+  // v5: Cloud Structure card (if multi-level data available)
+  const cs = atm.cloudStructure;
+  const hc = bd.multiLevelCloud?.high ?? bd.highCloud ?? null;
+  const mc2 = bd.multiLevelCloud?.mid ?? bd.midCloud ?? null;
+  const lc2 = bd.multiLevelCloud?.low ?? bd.lowCloud ?? null;
+  if (hc != null || cs) {
+    const csRating = cs?.rating || (hc>=30&&lc2<40?'Ideal':lc2>=75?'Blocked':lc2>=50?'Heavy Low':'Mixed');
+    const csCls = (hc>=30&&lc2<40)?'ab-good':lc2>=50?'ab-bad':'ab-ok';
+    items.push({
+      lbl:'Cloud Layers', val:`High ${hc??'?'}% · Mid ${mc2??'?'}% · Low ${lc2??'?'}%`,
+      rating:csRating, cls:csCls,
+      body: cs?.impact || (hc>=30&&lc2<40
+        ? `High clouds at ${hc}% act as the primary colour canvas — thin cirrus catches pre-sunrise light and glows vivid orange and red. Low clouds at ${lc2}% leave the horizon clear.`
+        : lc2>=75
+        ? `Low clouds at ${lc2}% form a thick blanket blocking the horizon. Even high clouds above won't produce visible colour through this barrier.`
+        : `Mixed cloud layers — high at ${hc}%, mid at ${mc2}%, low at ${lc2}%. Results will depend on how the layers interact at sunrise.`)
+    });
+  }
+
+  // v5: Air Clarity / AOD card
+  const ac = atm.airClarity;
+  const aodVal = bd.aod?.value ?? null;
+  if (aodVal != null || ac) {
+    const acRating = ac?.rating || (aodVal<0.2?'Very Clean':aodVal<0.4?'Clean':aodVal<0.7?'Hazy':'Polluted');
+    const acCls = aodVal!=null&&aodVal<0.2?'ab-good':aodVal!=null&&aodVal<0.4?'ab-ok':'ab-bad';
+    items.push({
+      lbl:'Air Clarity (AOD)', val:aodVal!=null?aodVal.toFixed(2):'N/A',
+      rating:acRating, cls:acCls,
+      body: ac?.impact || (aodVal<0.2
+        ? `Very clean air — minimal aerosols mean sunrise colours will look vivid and saturated with a sharp, contrasty horizon.`
+        : aodVal<0.4
+        ? `Mild aerosol presence — colours will be slightly softened but still vibrant. A thin warm haze near the horizon can add depth.`
+        : `Significant haze (AOD ${aodVal?.toFixed(2)}) — sunrise colours will be visibly muted and washed out. The horizon will appear soft and milky.`)
+    });
+  }
+
+  // v5: Pressure Pattern card
+  const pp = atm.pressurePattern;
+  const pTrend = bd.pressureTrend?.value ?? null;
+  if (pTrend != null || pp) {
+    const ppRating = pp?.rating || (pTrend<-5?'Storm Risk':pTrend<-2?'Clearing Front':pTrend<-0.5?'Slight Fall':pTrend<=0.5?'Stable':'Rising');
+    const ppCls = (pTrend!=null&&pTrend<-2&&pTrend>=-5)?'ab-good':pTrend!=null&&(pTrend<-5||pTrend>2)?'ab-bad':'ab-ok';
+    items.push({
+      lbl:'Pressure Trend', val:pTrend!=null?`${pTrend>=0?'+':''}${pTrend.toFixed(1)} hPa`:'N/A',
+      rating:ppRating, cls:ppCls,
+      body: pp?.impact || (pTrend<-5
+        ? `Rapidly falling pressure signals a major weather system — heavy cloud and possible rain, but if skies clear near dawn, dramatic cloud formations are possible.`
+        : pTrend<-2
+        ? `Falling pressure signals an approaching front — the best setup for dramatic sunrises. Cloud breakup with vivid colour through gaps creates high-contrast skies.`
+        : pTrend<=0.5
+        ? `Stable pressure indicates calm, predictable conditions. The sky will be consistent but may lack dramatic cloud dynamics.`
+        : `Rising pressure (+${pTrend?.toFixed(1)} hPa) indicates high pressure building — clear and calm conditions. Good for gentle colour but unlikely to produce dramatic formations.`)
+    });
+  }
+
   document.getElementById('atmGrid').innerHTML = items.map(d=>`
     <div class="atm-card reveal">
       <div class="atm-top"><span class="atm-lbl">${d.lbl}</span><span class="atm-badge ${d.cls}">${d.rating}</span></div>

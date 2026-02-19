@@ -72,13 +72,23 @@ async function storeDailyScores(allWeatherData) {
           weatherDescription: data.forecast.weatherDescription
         },
         breakdown: {
-          cloudCover:  { value: data.prediction.breakdown.cloudCover.value,  score: data.prediction.breakdown.cloudCover.score },
-          visibility:  { value: data.prediction.breakdown.visibility.value,  score: data.prediction.breakdown.visibility.score },
-          humidity:    { value: data.prediction.breakdown.humidity.value,    score: data.prediction.breakdown.humidity.score },
-          weather:     { value: data.prediction.breakdown.weather.value,     score: data.prediction.breakdown.weather.score },
-          wind:        { value: data.prediction.breakdown.wind.value,        score: data.prediction.breakdown.wind.score },
-          synergy:     data.prediction.breakdown.synergy || 0,
-          postRainBonus: data.prediction.breakdown.postRainBonus || 0
+          // v5 structured base factors
+          cloudCover:     data.prediction.breakdown.cloudCover,
+          multiLevelCloud:data.prediction.breakdown.multiLevelCloud,
+          humidity:       data.prediction.breakdown.humidity,
+          pressureTrend:  data.prediction.breakdown.pressureTrend,
+          aod:            data.prediction.breakdown.aod,
+          visibility:     data.prediction.breakdown.visibility,
+          weather:        data.prediction.breakdown.weather,
+          wind:           data.prediction.breakdown.wind,
+          synergy:        data.prediction.breakdown.synergy || 0,
+          postRainBonus:  data.prediction.breakdown.postRainBonus || 0,
+          isPostRain:     data.prediction.breakdown.isPostRain || false,
+          solarBonus:     data.prediction.breakdown.solarBonus || 0,
+          // Denormalized for quick queries
+          highCloud:      data.prediction.breakdown.highCloud ?? null,
+          midCloud:       data.prediction.breakdown.midCloud ?? null,
+          lowCloud:       data.prediction.breakdown.lowCloud ?? null
         }
       };
 

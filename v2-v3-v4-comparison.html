@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seaside Beacon — v2 → v3 → v4 Algorithm Comparison</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;padding:24px;max-width:1200px;margin:0 auto}
+  h1{font-size:1.5rem;color:#f8fafc;margin-bottom:4px}
+  .sub{color:#94a3b8;font-size:0.85rem;margin-bottom:28px}
+  .sec{font-size:1.1rem;font-weight:600;color:#f1f5f9;margin:28px 0 14px}
+
+  /* Summary cards */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+  .card{background:#1e293b;border-radius:12px;padding:18px;border:1px solid #334155}
+  .card-l{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:4px}
+  .card-v{font-size:1.7rem;font-weight:700}
+  .card-s{font-size:.78rem;color:#64748b;margin-top:3px}
+  .grn{color:#4ade80} .amb{color:#fbbf24} .red{color:#f87171} .blu{color:#60a5fa} .pur{color:#c084fc}
+
+  /* Evolution timeline */
+  .evo{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:28px}
+  .evo-card{background:#1e293b;border-radius:12px;padding:18px;border:1px solid #334155;position:relative}
+  .evo-card h3{font-size:.95rem;color:#f1f5f9;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .evo-card ul{list-style:none;padding:0}
+  .evo-card li{font-size:.78rem;color:#94a3b8;padding:3px 0;padding-left:14px;position:relative;line-height:1.45}
+  .evo-card li::before{content:'';position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%}
+  .evo-card.v2 li::before{background:#64748b}
+  .evo-card.v3 li::before{background:#60a5fa}
+  .evo-card.v4 li::before{background:#c084fc}
+  .ver{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.65rem;font-weight:700}
+  .ver-v2{background:#334155;color:#94a3b8}
+  .ver-v3{background:#1e3a5f;color:#60a5fa}
+  .ver-v4{background:#3b1f6e;color:#c084fc}
+
+  /* Main table */
+  .tw{overflow-x:auto;border-radius:12px;border:1px solid #334155;margin-bottom:28px}
+  table{width:100%;border-collapse:collapse;font-size:.76rem}
+  thead{background:#1e293b}
+  th{padding:10px 8px;font-weight:600;color:#94a3b8;font-size:.67rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #334155;text-align:center;white-space:nowrap}
+  th:first-child{text-align:left;min-width:190px}
+  td{padding:8px;text-align:center;border-bottom:1px solid #1e293b}
+  td:first-child{text-align:left;color:#cbd5e1;font-weight:500;font-size:.78rem}
+  tr:nth-child(even){background:#0f172a}
+  tr:nth-child(odd){background:#131c31}
+  tr:hover{background:#1e293b}
+  .gl{font-size:.68rem;padding:5px 8px;text-align:center;font-weight:700;letter-spacing:.06em}
+  .gl-b{color:#3b82f6;background:#1e293b}
+  .gl-3{color:#60a5fa;background:#1e293b}
+  .gl-4{color:#c084fc;background:#1e293b}
+  .gl-r{color:#22c55e;background:#1e293b}
+  .sc{font-weight:700;font-size:.9rem}
+  .vb{font-size:.65rem;font-weight:600;padding:2px 6px;border-radius:3px;display:inline-block}
+  .vb-ex{background:#166534;color:#4ade80}
+  .vb-vg{background:#155e75;color:#22d3ee}
+  .vb-g{background:#1e40af;color:#60a5fa}
+  .vb-f{background:#92400e;color:#fbbf24}
+  .vb-p{background:#7c2d12;color:#fb923c}
+  .vb-u{background:#7f1d1d;color:#f87171}
+  .dp{color:#4ade80;font-weight:700} .dn{color:#f87171;font-weight:700} .dz{color:#475569}
+  .ap{color:#4ade80;font-size:.73rem} .an{color:#f87171;font-size:.73rem} .az{color:#475569;font-size:.73rem}
+
+  /* Reliability meters */
+  .rel{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:28px}
+  .rc{background:#1e293b;border-radius:12px;padding:18px;border:1px solid #334155}
+  .rc h3{font-size:.95rem;margin-bottom:12px}
+  .cri{margin-bottom:12px}
+  .cri-n{font-size:.78rem;color:#cbd5e1;margin-bottom:2px}
+  .meter{height:8px;background:#334155;border-radius:4px;overflow:hidden;margin:4px 0}
+  .mf{height:100%;border-radius:4px}
+  .ml{display:flex;justify-content:space-between;font-size:.72rem;color:#94a3b8}
+
+  /* Key insights */
+  .ig{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+  .ic{background:#1e293b;border-radius:10px;padding:16px;border:1px solid #334155}
+  .ic h3{font-size:.9rem;color:#e2e8f0;margin-bottom:6px}
+  .ic p{font-size:.78rem;color:#94a3b8;line-height:1.5}
+
+  .fn{font-size:.72rem;color:#475569;margin-top:20px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<h1>Seaside Beacon — Algorithm Evolution: v2 → v3 → v4</h1>
+<p class="sub">Full validation comparison across 12 realistic Chennai weather scenarios</p>
+
+<!-- Summary -->
+<div class="cards">
+  <div class="card">
+    <div class="card-l">Algorithm Reliability</div>
+    <div class="card-v"><span class="dz" style="font-size:1rem">68→</span><span class="blu" style="font-size:1rem">78→</span><span class="pur">85</span><span style="font-size:.9rem;color:#64748b">/100</span></div>
+    <div class="card-s">v2 → v3 → v4</div>
+  </div>
+  <div class="card">
+    <div class="card-l">Scoring Factors</div>
+    <div class="card-v"><span class="dz" style="font-size:1rem">7→</span><span class="blu" style="font-size:1rem">11→</span><span class="pur">13</span></div>
+    <div class="card-s">base + adjustment factors</div>
+  </div>
+  <div class="card">
+    <div class="card-l">Data Sources</div>
+    <div class="card-v"><span class="dz" style="font-size:1rem">1→</span><span class="blu" style="font-size:1rem">2→</span><span class="pur">3</span></div>
+    <div class="card-s">AW + OM Air + OM Forecast</div>
+  </div>
+  <div class="card">
+    <div class="card-l">Unit Tests</div>
+    <div class="card-v"><span class="grn">174/174</span></div>
+    <div class="card-s">100% pass rate</div>
+  </div>
+</div>
+
+<!-- Version Evolution -->
+<div class="sec">Version Evolution</div>
+<div class="evo">
+  <div class="evo-card v2">
+    <h3><span class="ver ver-v2">v2</span> Original Audit (68/100)</h3>
+    <ul>
+      <li>AccuWeather hourly API only ($2/mo)</li>
+      <li>6 factors: Cloud, Vis, Humidity, Weather, Wind, Synergy</li>
+      <li>Post-rain: heuristic data signature only</li>
+      <li>No aerosol measurement (visibility proxy)</li>
+      <li>No cloud altitude differentiation</li>
+      <li>No seasonal adjustment</li>
+      <li>No pressure data</li>
+    </ul>
+  </div>
+  <div class="evo-card v3">
+    <h3><span class="ver ver-v3">v3</span> First Upgrade (78/100)</h3>
+    <ul>
+      <li>+ Open-Meteo Air Quality API (free)</li>
+      <li>+ AOD measurement ±4 pts (aerosol optical depth)</li>
+      <li>+ Cloud ceiling analysis ±3 pts (AccuWeather Ceiling field)</li>
+      <li>+ Seasonal solar angle ±2 pts (declination model)</li>
+      <li>+ Temporal post-rain detection (Night.HoursOfRain)</li>
+      <li>Gaps: single ceiling value, no pressure tendency</li>
+    </ul>
+  </div>
+  <div class="evo-card v4">
+    <h3><span class="ver ver-v4">v4</span> Current (85/100)</h3>
+    <ul>
+      <li>+ Open-Meteo Forecast API (free, GFS-based)</li>
+      <li>+ Multi-level cloud cover ±5 pts (high/mid/low from GFS)</li>
+      <li>+ Pressure tendency ±3 pts (midnight→6AM trend)</li>
+      <li>Ceiling kept as fallback when Open-Meteo unavailable</li>
+      <li>Matches SunsetWx's top 2 variables</li>
+      <li>Remaining gap: raw NWP resolution only</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Main Comparison Table -->
+<div class="sec">Score Comparison: v2 vs v3 vs v4 Across 12 Scenarios</div>
+<div class="tw">
+<table>
+<thead>
+<tr>
+  <td class="gl" colspan="1"></td>
+  <td class="gl gl-b" colspan="7">BASE (unchanged)</td>
+  <td class="gl gl-3" colspan="3">v3 ADJ</td>
+  <td class="gl gl-4" colspan="2">v4 NEW</td>
+  <td class="gl gl-r" colspan="5">RESULTS</td>
+</tr>
+<tr>
+  <th style="text-align:left">Scenario</th>
+  <th>Cloud<br>/35</th><th>Vis<br>/20</th><th>Hum<br>/25</th><th>Wx<br>/10</th><th>Wind<br>/5</th><th>Syn<br>±5</th><th>Rain<br>+5</th>
+  <th>AOD<br>±4</th><th>Solar<br>±2</th><th>Ceil<br>±3</th>
+  <th>ML Cloud<br>±5</th><th>P.Trend<br>±3</th>
+  <th>v2</th><th>v3</th><th>v4</th><th>Δ v2→v4</th><th>Verdict</th>
+</tr>
+</thead>
+<tbody id="tb"></tbody>
+</table>
+</div>
+
+<!-- Reliability Comparison -->
+<div class="sec">Reliability Assessment Across Versions</div>
+<div class="rel">
+  <div class="rc">
+    <h3 style="color:#64748b">v2 — Original (68/100)</h3>
+    <div class="cri"><div class="cri-n">Cloud cover curve</div><div class="meter"><div class="mf" style="width:85%;background:#3b82f6"></div></div><div class="ml"><span>Optimal 30-60%</span><span>85%</span></div></div>
+    <div class="cri"><div class="cri-n">Humidity calibration</div><div class="meter"><div class="mf" style="width:80%;background:#3b82f6"></div></div><div class="ml"><span>Chennai 6AM curve</span><span>80%</span></div></div>
+    <div class="cri"><div class="cri-n">Aerosol measurement</div><div class="meter"><div class="mf" style="width:35%;background:#ef4444"></div></div><div class="ml"><span>Visibility proxy only</span><span>35%</span></div></div>
+    <div class="cri"><div class="cri-n">Cloud altitude</div><div class="meter"><div class="mf" style="width:0%;background:#ef4444"></div></div><div class="ml"><span>Not measured</span><span>0%</span></div></div>
+    <div class="cri"><div class="cri-n">Seasonal adjustment</div><div class="meter"><div class="mf" style="width:0%;background:#ef4444"></div></div><div class="ml"><span>Not measured</span><span>0%</span></div></div>
+    <div class="cri"><div class="cri-n">Pressure tendency</div><div class="meter"><div class="mf" style="width:0%;background:#ef4444"></div></div><div class="ml"><span>Not measured</span><span>0%</span></div></div>
+    <div class="cri"><div class="cri-n">Post-rain detection</div><div class="meter"><div class="mf" style="width:50%;background:#f59e0b"></div></div><div class="ml"><span>Heuristic only</span><span>50%</span></div></div>
+  </div>
+  <div class="rc">
+    <h3 style="color:#60a5fa">v3 — First Upgrade (78/100)</h3>
+    <div class="cri"><div class="cri-n">Cloud cover curve</div><div class="meter"><div class="mf" style="width:85%;background:#3b82f6"></div></div><div class="ml"><span>Unchanged</span><span>85%</span></div></div>
+    <div class="cri"><div class="cri-n">Humidity calibration</div><div class="meter"><div class="mf" style="width:80%;background:#3b82f6"></div></div><div class="ml"><span>Unchanged</span><span>80%</span></div></div>
+    <div class="cri"><div class="cri-n">Aerosol measurement</div><div class="meter"><div class="mf" style="width:82%;background:#22c55e"></div></div><div class="ml"><span>Open-Meteo AOD</span><span>82%</span></div></div>
+    <div class="cri"><div class="cri-n">Cloud altitude</div><div class="meter"><div class="mf" style="width:65%;background:#22c55e"></div></div><div class="ml"><span>AW Ceiling (single value)</span><span>65%</span></div></div>
+    <div class="cri"><div class="cri-n">Seasonal adjustment</div><div class="meter"><div class="mf" style="width:75%;background:#22c55e"></div></div><div class="ml"><span>Solar declination</span><span>75%</span></div></div>
+    <div class="cri"><div class="cri-n">Pressure tendency</div><div class="meter"><div class="mf" style="width:0%;background:#ef4444"></div></div><div class="ml"><span>Not measured</span><span>0%</span></div></div>
+    <div class="cri"><div class="cri-n">Post-rain detection</div><div class="meter"><div class="mf" style="width:78%;background:#22c55e"></div></div><div class="ml"><span>Night.HoursOfRain</span><span>78%</span></div></div>
+  </div>
+  <div class="rc">
+    <h3 style="color:#c084fc">v4 — Current (85/100)</h3>
+    <div class="cri"><div class="cri-n">Cloud cover curve</div><div class="meter"><div class="mf" style="width:85%;background:#3b82f6"></div></div><div class="ml"><span>Unchanged</span><span>85%</span></div></div>
+    <div class="cri"><div class="cri-n">Humidity calibration</div><div class="meter"><div class="mf" style="width:80%;background:#3b82f6"></div></div><div class="ml"><span>Unchanged</span><span>80%</span></div></div>
+    <div class="cri"><div class="cri-n">Aerosol measurement</div><div class="meter"><div class="mf" style="width:82%;background:#22c55e"></div></div><div class="ml"><span>Open-Meteo AOD</span><span>82%</span></div></div>
+    <div class="cri"><div class="cri-n">Cloud altitude</div><div class="meter"><div class="mf" style="width:88%;background:#a855f7"></div></div><div class="ml"><span>GFS high/mid/low (3-layer)</span><span>88%</span></div></div>
+    <div class="cri"><div class="cri-n">Seasonal adjustment</div><div class="meter"><div class="mf" style="width:75%;background:#22c55e"></div></div><div class="ml"><span>Solar declination</span><span>75%</span></div></div>
+    <div class="cri"><div class="cri-n">Pressure tendency</div><div class="meter"><div class="mf" style="width:80%;background:#a855f7"></div></div><div class="ml"><span>Midnight→6AM trend</span><span>80%</span></div></div>
+    <div class="cri"><div class="cri-n">Post-rain detection</div><div class="meter"><div class="mf" style="width:78%;background:#22c55e"></div></div><div class="ml"><span>Night.HoursOfRain</span><span>78%</span></div></div>
+  </div>
+</div>
+
+<!-- Key Insights -->
+<div class="sec">Key Findings</div>
+<div class="ig">
+  <div class="ic">
+    <h3 style="color:#c084fc">Biggest v4 Winner: Post-Monsoon Clearing (+5 over v3)</h3>
+    <p>Scenario 7 goes 75→85→90 across versions. v4's multi-level cloud adjustment (+4 for high cirrus with clear low sky) plus pressure trend (+3 for falling pressure = clearing front) stack perfectly with v3's post-rain bonus. These are genuinely Chennai's most stunning sunrises — and now the algorithm captures all three signals.</p>
+  </div>
+  <div class="ic">
+    <h3 style="color:#c084fc">New Scenario: Clearing Front at Dawn → 100</h3>
+    <p>Added specifically to test v4's pressure sensing. The 4.2 hPa pressure drop (midnight→6AM) signals a fast-moving cold front. v2 scored 93 (lucky base), v3 hit 100, v4 confirms 100 — but now for the right reasons. The +3 pressure trend bonus correctly identifies the dramatic-sky meteorological pattern.</p>
+  </div>
+  <div class="ic">
+    <h3 style="color:#4ade80">v3→v4 Is More Nuanced Than v2→v3</h3>
+    <p>v3 was a big jump (+10 reliability). v4 is more surgical: it sometimes scores lower than v3 (scenarios 2, 3, 4) because multi-level cloud data is more honest — when there's no high cloud canvas, ±5 is harsher than ceiling's ±3. This is scientifically correct: SunsetWx considers high clouds essential for "Vivid" rating.</p>
+  </div>
+  <div class="ic">
+    <h3 style="color:#f87171">Remaining Gap: Wind + Field Validation</h3>
+    <p>Wind's 5-point weight still lacks strong sunrise-specific justification (SunsetWx doesn't even use it). And our reliability is self-assessed against meteorological principles — not field-validated against actual sunrise photos. To close the final 3-5% gap, you'd need a photo-scoring dataset like Stanford's approach.</p>
+  </div>
+</div>
+
+<p class="fn">
+  Sources: NOAA/Corfidi atmospheric optics, SunsetWx model documentation, Stanford CS sunset prediction paper, NASA MODIS AOD research.<br>
+  Open-Meteo forecast API: free GFS-based cloud_cover_high/mid/low + pressure_msl. No API key required. 10k calls/day limit.<br>
+  All base weights unchanged across v2→v3→v4. Adjustments are purely additive. 174 unit tests, 100% pass rate.
+</p>
+
+<script>
+const data = [
+  {l:"Perfect post-rain winter dawn",cs:34,vs:20,hs:21,ws:10,wi:5,sy:4,pr:5,aod:4,sol:2,ceil:3,ml:5,pt:3,v2:99,v3:100,v4:100},
+  {l:"Good dry-season morning (Feb)",cs:32,vs:16,hs:16,ws:10,wi:4,sy:2,pr:0,aod:1,sol:2,ceil:2,ml:-1,pt:0,v2:80,v3:85,v4:82},
+  {l:"Typical Chennai winter morning",cs:26,vs:12,hs:11,ws:10,wi:5,sy:0,pr:0,aod:1,sol:2,ceil:1,ml:-1,pt:0,v2:64,v3:68,v4:66},
+  {l:"Clear sky, low humidity (rare)",cs:11,vs:20,hs:25,ws:10,wi:5,sy:-3,pr:0,aod:3,sol:2,ceil:0,ml:-1,pt:0,v2:68,v3:73,v4:72},
+  {l:"Overcast monsoon morning",cs:10,vs:5,hs:2,ws:4,wi:4,sy:-3,pr:0,aod:-1,sol:-2,ceil:-3,ml:-3,pt:3,v2:22,v3:16,v4:19},
+  {l:"Summer hazy morning (Jun)",cs:16,vs:6,hs:4,ws:7,wi:3,sy:-3,pr:0,aod:-2,sol:-2,ceil:-3,ml:-3,pt:0,v2:33,v3:26,v4:26},
+  {l:"Post-monsoon clearing (Oct)",cs:33,vs:14,hs:13,ws:10,wi:5,sy:0,pr:5,aod:1,sol:2,ceil:2,ml:4,pt:3,v2:75,v3:85,v4:90},
+  {l:"Heavy pollution event (Nov)",cs:17,vs:4,hs:13,ws:8,wi:5,sy:-3,pr:0,aod:-4,sol:2,ceil:0,ml:-1,pt:0,v2:44,v3:42,v4:41},
+  {l:"Foggy morning",cs:3,vs:1,hs:1,ws:7,wi:5,sy:-5,pr:0,aod:-1,sol:2,ceil:-3,ml:-3,pt:0,v2:12,v3:10,v4:10},
+  {l:"Active thunderstorm at dawn",cs:0,vs:2,hs:1,ws:0,wi:2,sy:-5,pr:0,aod:-1,sol:-1,ceil:-3,ml:-3,pt:-3,v2:0,v3:0,v4:0},
+  {l:"Clearing front at dawn (dramatic)",cs:33,vs:18,hs:19,ws:10,wi:4,sy:2,pr:5,aod:3,sol:2,ceil:2,ml:5,pt:3,v2:93,v3:100,v4:100},
+  {l:"High cirrus only (ideal canvas)",cs:33,vs:20,hs:22,ws:10,wi:5,sy:4,pr:0,aod:4,sol:2,ceil:3,ml:5,pt:1,v2:99,v3:100,v4:100},
+];
+
+function ac(v){return v>0?'ap':v<0?'an':'az'}
+function as(v){return v>0?'+'+v:v===0?'·':''+v}
+function vc(s){if(s>=85)return'vb-ex';if(s>=70)return'vb-vg';if(s>=55)return'vb-g';if(s>=40)return'vb-f';if(s>=25)return'vb-p';return'vb-u'}
+function vl(s){if(s>=85)return'EXCELLENT';if(s>=70)return'VERY GOOD';if(s>=55)return'GOOD';if(s>=40)return'FAIR';if(s>=25)return'POOR';return'UNFAVORABLE'}
+
+const tb=document.getElementById('tb');
+data.forEach(d=>{
+  const d24=d.v4-d.v2;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td>${d.l}</td>
+    <td>${d.cs}</td><td>${d.vs}</td><td>${d.hs}</td><td>${d.ws}</td><td>${d.wi}</td>
+    <td class="${ac(d.sy)}">${as(d.sy)}</td><td class="${ac(d.pr)}">${as(d.pr)}</td>
+    <td class="${ac(d.aod)}">${as(d.aod)}</td><td class="${ac(d.sol)}">${as(d.sol)}</td>
+    <td class="${ac(d.ceil)}" style="opacity:0.5">${as(d.ceil)}</td>
+    <td class="${ac(d.ml)}" style="font-weight:600">${as(d.ml)}</td>
+    <td class="${ac(d.pt)}" style="font-weight:600">${as(d.pt)}</td>
+    <td class="sc" style="color:#64748b">${d.v2}</td>
+    <td class="sc" style="color:#60a5fa">${d.v3}</td>
+    <td class="sc" style="color:#c084fc">${d.v4}</td>
+    <td class="${d24>0?'dp':d24<0?'dn':'dz'}">${d24>0?'+'+d24:d24===0?'—':d24}</td>
+    <td><span class="vb ${vc(d.v4)}">${vl(d.v4)}</span></td>`;
+  tb.appendChild(tr);
+});
+</script>
+</body>
+</html>

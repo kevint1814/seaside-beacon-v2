@@ -21,13 +21,23 @@ const beachScoreSchema = new mongoose.Schema({
     weatherDescription:String
   },
   breakdown: {
-    cloudCover:  { value: Number, score: Number },
-    visibility:  { value: Number, score: Number },
-    humidity:    { value: Number, score: Number },
-    weather:     { value: Number, score: Number },
-    wind:        { value: Number, score: Number },
-    synergy:       Number,
-    postRainBonus: Number
+    // v5 base factors (all promoted to base weights)
+    cloudCover:     { value: Number, score: Number, maxScore: Number },
+    multiLevelCloud:{ high: Number, mid: Number, low: Number, score: Number, maxScore: Number },
+    humidity:       { value: Number, score: Number, maxScore: Number },
+    pressureTrend:  { value: Number, score: Number, maxScore: Number },
+    aod:            { value: Number, score: Number, maxScore: Number },
+    visibility:     { value: Number, score: Number, maxScore: Number },
+    weather:        { value: Number, score: Number, maxScore: Number },
+    wind:           { value: Number, score: Number, maxScore: Number },
+    synergy:         Number,   // ±4
+    postRainBonus:   Number,   // 0 or +5
+    isPostRain:      Boolean,
+    solarBonus:      Number,   // ±2 seasonal angle
+    // Denormalized fields for quick queries
+    highCloud:       Number,
+    midCloud:        Number,
+    lowCloud:        Number
   }
 }, { _id: false });
 

@@ -293,8 +293,16 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
 
     const { beach, forecast, prediction } = weatherData;
     const beachDisplayNames = weatherData.allBeachNames || {};
-    const { score, verdict, atmosphericLabels } = prediction;
+    const { score, verdict, atmosphericLabels, breakdown } = prediction;
     const { cloudCover, humidity, visibility, windSpeed, temperature, precipProbability } = forecast;
+
+    // v5 breakdown fields for expanded conditions grid
+    const highCloud = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
+    const midCloud = breakdown?.multiLevelCloud?.mid ?? breakdown?.midCloud ?? null;
+    const lowCloud = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
+    const aodValue = breakdown?.aod?.value ?? null;
+    const pressureTrend = breakdown?.pressureTrend?.value ?? null;
+    const isPostRain = breakdown?.isPostRain ?? false;
 
     // Score-dependent colors — all visible on white/light bg
     const statusColor = score >= 85 ? '#059669' : score >= 70 ? '#0284c7' : score >= 55 ? '#D97706' : score >= 40 ? '#EA580C' : '#DC2626';
@@ -331,6 +339,16 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     const humidBadgeBg = humidity <= 55 ? '#ECFDF5' : humidity <= 70 ? '#FFFBEB' : '#FEF2F2';
     const visBadgeColor = visibility >= 8 ? '#059669' : visibility >= 5 ? '#B45A06' : '#B91C1C';
     const visBadgeBg = visibility >= 8 ? '#ECFDF5' : visibility >= 5 ? '#FFFBEB' : '#FEF2F2';
+
+    // v5: Cloud layers badge
+    const cloudLayerLabel = atmosphericLabels?.cloudLayers || (highCloud != null ? (highCloud >= 30 && lowCloud < 40 ? 'Ideal Layers' : lowCloud >= 75 ? 'Low Blanket' : 'Mixed') : null);
+    const cloudLayerColor = highCloud != null && highCloud >= 30 && lowCloud < 40 ? '#059669' : lowCloud != null && lowCloud >= 75 ? '#B91C1C' : '#B45A06';
+    const cloudLayerBg = highCloud != null && highCloud >= 30 && lowCloud < 40 ? '#ECFDF5' : lowCloud != null && lowCloud >= 75 ? '#FEF2F2' : '#FFFBEB';
+
+    // v5: AOD / air clarity badge
+    const aodLabel = atmosphericLabels?.aod || (aodValue != null ? (aodValue < 0.2 ? 'Very Clean' : aodValue < 0.4 ? 'Clean' : aodValue < 0.7 ? 'Hazy' : 'Polluted') : null);
+    const aodBadgeColor = aodValue != null && aodValue < 0.2 ? '#059669' : aodValue != null && aodValue < 0.4 ? '#B45A06' : '#B91C1C';
+    const aodBadgeBg = aodValue != null && aodValue < 0.2 ? '#ECFDF5' : aodValue != null && aodValue < 0.4 ? '#FFFBEB' : '#FEF2F2';
 
     const mailOptions = {
       from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
@@ -444,11 +462,12 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
             </td></tr>
           </table>
 
-          <!-- ═══ CONDITIONS 2x2 ═══ -->
+          <!-- ═══ CONDITIONS 3x2 ═══ -->
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:0 40px 24px;">
               <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#a09080;">🌤️ Atmospheric Conditions</p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <!-- Row 1: Cloud Cover + Humidity -->
                 <tr>
                   <td width="48%" style="padding:0 6px 10px 0;vertical-align:top;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -469,8 +488,46 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
                     </table>
                   </td>
                 </tr>
+                <!-- Row 2: Cloud Layers + Air Clarity (v5 NEW) -->
                 <tr>
-                  <td width="48%" style="padding:0 6px 0 0;vertical-align:top;">
+                  ${highCloud != null ? `<td width="48%" style="padding:0 6px 10px 0;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:14px 16px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#a09080;">🌥️ Cloud Layers</p>
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#6b6058;">H:${highCloud}% M:${midCloud}% L:${lowCloud}%</p>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${cloudLayerBg}" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:${cloudLayerColor};">${cloudLayerLabel}</span></td></tr></table>
+                      </td></tr>
+                    </table>
+                  </td>` : `<td width="48%" style="padding:0 6px 10px 0;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:14px 16px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#a09080;">👁️ Visibility</p>
+                        <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:#2a2420;">${visibility}km</p>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${visBadgeBg}" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:${visBadgeColor};">${atmosphericLabels?.visibilityLabel || (visibility >= 10 ? 'Excellent' : visibility >= 8 ? 'Good' : 'Fair')}</span></td></tr></table>
+                      </td></tr>
+                    </table>
+                  </td>`}
+                  ${aodValue != null ? `<td width="48%" style="padding:0 0 10px 6px;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:14px 16px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#a09080;">✨ Air Clarity</p>
+                        <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:#2a2420;">${aodValue.toFixed(2)}</p>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${aodBadgeBg}" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:${aodBadgeColor};">${aodLabel}${isPostRain ? ' · Post-Rain' : ''}</span></td></tr></table>
+                      </td></tr>
+                    </table>
+                  </td>` : `<td width="48%" style="padding:0 0 10px 6px;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:14px 16px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#a09080;">🌡️ Temperature</p>
+                        <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:#2a2420;">${temperature}°C</p>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ECFDF5" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:#059669;">At Sunrise</span></td></tr></table>
+                      </td></tr>
+                    </table>
+                  </td>`}
+                </tr>
+                <!-- Row 3: Visibility + Temperature (shifts down when v5 data available) -->
+                <tr>
+                  ${highCloud != null ? `<td width="48%" style="padding:0 6px 0 0;vertical-align:top;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:14px 16px;">
                         <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#a09080;">👁️ Visibility</p>
@@ -487,7 +544,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
                         <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ECFDF5" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:#059669;">At Sunrise</span></td></tr></table>
                       </td></tr>
                     </table>
-                  </td>
+                  </td>` : ''}
                 </tr>
               </table>
             </td></tr>

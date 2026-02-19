@@ -81,7 +81,17 @@ async function generateGroqInsights(weatherData, allWeatherData = {}) {
 
     const { beach, forecast, prediction, beachContext, goldenHour, sunTimes } = weatherData;
     const { cloudCover, humidity, visibility, windSpeed, temperature, precipProbability, weatherDescription } = forecast;
-    const { score, verdict, atmosphericLabels } = prediction;
+    const { score, verdict, atmosphericLabels, breakdown } = prediction;
+
+    // Extract v5 breakdown fields for the prompt
+    const highCloud = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
+    const midCloud = breakdown?.multiLevelCloud?.mid ?? breakdown?.midCloud ?? null;
+    const lowCloud = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
+    const aodValue = breakdown?.aod?.value ?? null;
+    const aodLabel = atmosphericLabels?.aod ?? 'N/A';
+    const pressureTrend = breakdown?.pressureTrend?.value ?? null;
+    const pressureLabel = atmosphericLabels?.pressureTrend ?? 'N/A';
+    const isPostRain = breakdown?.isPostRain ?? false;
 
     // Use context from weatherService BEACHES config (single source of truth)
     const context = beachContext || 'Beach with natural foreground elements and ocean horizon.';
@@ -138,6 +148,10 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
 TONE: ${toneInstruction}
 
 CONDITIONS: Cloud ${cloudCover}%, Humidity ${humidity}%, Visibility ${visibility}km, Wind ${windSpeed}km/h, ${temperature}°C, Precip ${precipProbability}%, ${weatherDescription}.
+CLOUD LAYERS: ${highCloud != null ? `High ${highCloud}% Mid ${midCloud}% Low ${lowCloud}%` : 'N/A'}.
+AIR CLARITY (AOD): ${aodValue != null ? `${aodValue.toFixed(2)} (${aodLabel})` : 'N/A'}.
+PRESSURE TREND: ${pressureTrend != null ? `Δ${pressureTrend >= 0 ? '+' : ''}${pressureTrend}hPa (${pressureLabel})` : 'N/A'}.
+POST-RAIN: ${isPostRain ? 'Yes — recent rain washed the air clean' : 'No'}.
 
 ${goldenHourInstruction}
 
@@ -187,7 +201,16 @@ Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A
       messages: [
         {
           role: "system",
-          content: "You are Beacon — a friendly, straight-talking sunrise guide for Chennai beaches. You talk like a local friend who checks the sky every morning and texts you whether it's worth waking up. Simple language, no jargon, no weather-nerd talk. When it's good, you're excited but specific about what people will see. When it's bad, you say so plainly without padding. You describe what the sky LOOKS like in everyday words anyone understands — 'orange and pink streaks', 'grey and flat', 'soft warm glow' — not cloud percentages or humidity numbers. Always respond with valid JSON only."
+          content: `You are Beacon — a friendly, straight-talking sunrise guide for Chennai beaches. You talk like a local friend who checks the sky every morning and texts you whether it's worth waking up. Simple language, no jargon, no weather-nerd talk. When it's good, you're excited but specific about what people will see. When it's bad, you say so plainly without padding. You describe what the sky LOOKS like in everyday words anyone understands — 'orange and pink streaks', 'grey and flat', 'soft warm glow' — not cloud percentages or humidity numbers. Always respond with valid JSON only.
+
+KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms):
+- High clouds (>6km altitude, cirrus) = the color canvas. They catch pre-sunrise light and glow vivid orange/red. More high clouds = more color.
+- Low clouds (<2km, stratus) = horizon blockers. They sit in front of the sunrise and turn everything grey.
+- Low AOD (Aerosol Optical Depth) = crystal clear air. Colors look vivid, saturated, intense. Think post-rain clarity.
+- High AOD = hazy, polluted air. Colors look washed out, muted, milky.
+- Falling pressure (2-5 hPa drop) = clearing front approaching. Often produces the MOST dramatic skies — cloud breakup with vivid color through gaps.
+- Rapidly falling pressure (>5 hPa) = storm. Too much cloud and rain.
+- Post-rain conditions = exceptionally clear air (aerosol washout). Often the best possible mornings.`
         },
         { role: "user", content: prompt }
       ],
@@ -253,9 +276,9 @@ Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A
 
     // Camera settings and atmospheric analysis come from deterministic code
     // — they're formulaic (if cloud>60 → ISO 400-800) and don't benefit from AI
-    const dslr = generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score);
-    const mobile = generateMobileSettings(cloudCover, humidity, visibility, windSpeed, score);
-    const atmosphericAnalysis = generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed);
+    const dslr = generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score, breakdown);
+    const mobile = generateMobileSettings(cloudCover, humidity, visibility, windSpeed, score, breakdown);
+    const atmosphericAnalysis = generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed, breakdown);
 
     return {
       source: 'groq',
@@ -285,18 +308,30 @@ Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A
 function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   const { forecast, prediction, beach, goldenHour: realGoldenHour, beachContext } = weatherData;
   const { cloudCover, humidity, visibility, windSpeed, temperature, precipProbability } = forecast;
-  const { score, verdict, atmosphericLabels } = prediction;
+  const { score, verdict, atmosphericLabels, breakdown } = prediction;
+
+  // Extract v5 breakdown fields
+  const highCloud = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
+  const midCloud = breakdown?.multiLevelCloud?.mid ?? breakdown?.midCloud ?? null;
+  const lowCloud = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
+  const aodValue = breakdown?.aod?.value ?? null;
+  const pressureTrend = breakdown?.pressureTrend?.value ?? null;
+  const isPostRain = breakdown?.isPostRain ?? false;
 
   // ── Greeting — friendly, direct, like texting a friend ──
+  // Enhanced with v5 factor awareness
   let greeting;
   if (score >= 85) {
-    greeting = `Tomorrow's looking really good at ${beach} — the kind of morning where the whole sky lights up orange and pink. Set that alarm.`;
+    const postRainNote = isPostRain ? ' The air is crystal clear after the rain — colors will be extra vivid.' : '';
+    greeting = `Tomorrow's looking really good at ${beach} — the kind of morning where the whole sky lights up orange and pink. Set that alarm.${postRainNote}`;
   } else if (score >= 70) {
-    greeting = `Solid morning ahead at ${beach} — you should see some nice warm colors across the sky. Worth the early wake-up.`;
+    const clearAirNote = aodValue != null && aodValue < 0.2 ? ' The air is super clean today, so colors should pop.' : '';
+    greeting = `Solid morning ahead at ${beach} — you should see some nice warm colors across the sky. Worth the early wake-up.${clearAirNote}`;
   } else if (score >= 55) {
     greeting = `Tomorrow at ${beach} will be pleasant but nothing dramatic. You'll see some color near the horizon, just don't expect the sky to light up.`;
   } else if (score >= 40) {
-    greeting = `Not the best morning for sunrise at ${beach}, honestly. The sky will be mostly flat without much color. Nice for a quiet beach walk though.`;
+    const lowCloudNote = lowCloud != null && lowCloud >= 60 ? ' Low clouds are sitting heavy on the horizon.' : '';
+    greeting = `Not the best morning for sunrise at ${beach}, honestly. The sky will be mostly flat without much color.${lowCloudNote} Nice for a quiet beach walk though.`;
   } else if (score >= 25) {
     greeting = `Tomorrow's sunrise at ${beach} won't have much to show — the sky will be washed out and grey. Not worth the early alarm for the view.`;
   } else {
@@ -304,10 +339,14 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   }
 
   // ── Insight — plain language anyone understands ──
+  // Enhanced with cloud layer, AOD, and pressure awareness
   let insight;
   if (cloudCover >= 30 && cloudCover <= 60) {
     if (humidity <= 55) {
-      insight = `There are enough clouds in the sky to catch the sunrise light, and the air is clear enough that the colors will look really vivid — think deep oranges and warm pinks. One of the better combinations you can get.`;
+      const layerDetail = highCloud != null && highCloud >= 30 && lowCloud < 40
+        ? ' High-altitude clouds are perfectly positioned to catch the earliest pre-sunrise light.'
+        : '';
+      insight = `There are enough clouds in the sky to catch the sunrise light, and the air is clear enough that the colors will look really vivid — think deep oranges and warm pinks.${layerDetail} One of the better combinations you can get.`;
     } else if (humidity <= 70) {
       insight = `The clouds should pick up some nice warm colors as the sun comes up, though the moisture in the air will soften things a bit. Expect warm amber tones rather than intense fiery reds.`;
     } else {
@@ -316,7 +355,10 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   } else if (cloudCover < 30) {
     insight = `The sky is mostly clear, which sounds good but actually means less color — the sunrise needs clouds to bounce light off of. Expect pale yellows and light blues, pleasant but not the colorful show you might be hoping for.`;
   } else if (cloudCover <= 75) {
-    insight = `The sky is pretty cloudy, so the sunrise will be hit or miss. If the sun finds a gap in the clouds you might get a nice burst of color, but mostly it'll be soft, diffused light.`;
+    const pressureNote = pressureTrend != null && pressureTrend < -2
+      ? ' A shifting weather front could break the clouds apart near sunrise — watch for dramatic color through the gaps.'
+      : '';
+    insight = `The sky is pretty cloudy, so the sunrise will be hit or miss. If the sun finds a gap in the clouds you might get a nice burst of color, but mostly it'll be soft, diffused light.${pressureNote}`;
   } else {
     insight = `The clouds are too thick for any real sunrise color to come through. The sky will just gradually get lighter — from dark grey to lighter grey — without the warm colors you'd normally see.`;
   }
@@ -344,13 +386,13 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
       };
 
   // ── Atmospheric analysis ──
-  const atmosphericAnalysis = generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed);
+  const atmosphericAnalysis = generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed, breakdown);
 
   // ── DSLR settings (generic, no beach-specific hardcoding) ──
-  const dslr = generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score);
+  const dslr = generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score, breakdown);
 
   // ── Mobile settings (generic, no beach-specific hardcoding) ──
-  const mobile = generateMobileSettings(cloudCover, humidity, visibility, windSpeed, score);
+  const mobile = generateMobileSettings(cloudCover, humidity, visibility, windSpeed, score, breakdown);
 
   // ── Beach comparison ──
   const beachComparison = Object.keys(allWeatherData).length > 1
@@ -423,14 +465,22 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
 // No hardcoded city/season references
 // ==========================================
 
-function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed) {
+function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed, breakdown) {
   const cloudRating = (cloudCover >= 30 && cloudCover <= 60) ? 'Optimal' : cloudCover < 30 ? 'Too Clear' : cloudCover <= 75 ? 'Partly Overcast' : 'Overcast';
 
   // Dynamic month reference
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const currentMonth = monthNames[new Date().getMonth()];
 
-  return {
+  // Extract v5 fields from breakdown
+  const highCloud = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
+  const midCloud = breakdown?.multiLevelCloud?.mid ?? breakdown?.midCloud ?? null;
+  const lowCloud = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
+  const aodValue = breakdown?.aod?.value ?? null;
+  const pressureTrend = breakdown?.pressureTrend?.value ?? null;
+  const isPostRain = breakdown?.isPostRain ?? false;
+
+  const analysis = {
     cloudCover: {
       value: cloudCover,
       rating: cloudRating,
@@ -442,6 +492,22 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
         ? `At ${cloudCover}%, cloud cover is heavier than ideal. Some gaps may let color through, but much of the light will be blocked or diffused. Expect patchy, muted tones rather than a full color display.`
         : `At ${cloudCover}%, dense cloud cover will block most direct sunlight. The sunrise will likely not produce visible color — the sky will brighten gradually from dark grey to lighter grey without the warm tones of a clear sunrise.`
     },
+    // v5 NEW: Cloud structure (multi-level analysis)
+    cloudStructure: highCloud != null ? {
+      high: highCloud,
+      mid: midCloud,
+      low: lowCloud,
+      rating: highCloud >= 30 && lowCloud < 40 ? 'Ideal' : highCloud >= 30 && lowCloud >= 40 ? 'Mixed' : lowCloud >= 75 ? 'Blocked' : lowCloud >= 50 ? 'Heavy Low' : 'Limited',
+      impact: highCloud >= 30 && lowCloud < 40
+        ? `High clouds at ${highCloud}% provide an excellent color canvas — thin cirrus catches the earliest pre-sunrise light and glows vivid orange and red while the horizon stays clear. ${midCloud < 30 ? 'With minimal mid-level clouds, the view is unobstructed.' : `Mid-level clouds at ${midCloud}% add additional layers of color.`}`
+        : highCloud >= 30 && lowCloud >= 40
+        ? `High clouds are present at ${highCloud}% (good for color), but low clouds at ${lowCloud}% will partially block the horizon. You may see vivid colors above with a grey band at the horizon line.`
+        : lowCloud >= 75
+        ? `Low clouds at ${lowCloud}% form a thick blanket below 2km altitude, blocking the horizon almost entirely. Even with high clouds above, the sunrise will struggle to show through this barrier.`
+        : lowCloud >= 50
+        ? `Low clouds at ${lowCloud}% are heavy enough to reduce horizon visibility. Limited high cloud coverage at ${highCloud}% means less color canvas above.`
+        : `Minimal cloud structure overall — high clouds at ${highCloud}% don't provide much canvas for color. ${midCloud >= 50 ? `Mid-level clouds at ${midCloud}% offer some canvas.` : 'The sky will be relatively plain.'}`
+    } : null,
     humidity: {
       value: humidity,
       rating: humidity <= 55 ? 'Excellent' : humidity <= 65 ? 'Very Good' : humidity <= 75 ? 'Good' : humidity <= 85 ? 'Moderate' : 'High',
@@ -451,6 +517,34 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
         ? `At ${humidity}% humidity, atmospheric moisture will slightly soften and diffuse the light. Colors will be present but noticeably less saturated than on drier mornings — think warm pastels rather than vivid fire.`
         : `At ${humidity}% humidity, significant moisture in the air will scatter and absorb light. Colors will appear visibly washed out and hazy. The horizon may look milky rather than sharp.`
     },
+    // v5 NEW: Air clarity / AOD
+    airClarity: aodValue != null ? {
+      value: aodValue,
+      rating: aodValue < 0.1 ? 'Crystal Clear' : aodValue < 0.2 ? 'Very Clean' : aodValue < 0.4 ? 'Clean' : aodValue < 0.7 ? 'Hazy' : aodValue < 1.0 ? 'Very Hazy' : 'Polluted',
+      impact: aodValue < 0.1
+        ? `Aerosol levels are exceptionally low (${aodValue.toFixed(2)}) — this is post-rain or rare crystal-clear air. Colors will be the most vivid and saturated possible, with a sharp, contrasty horizon. These are the mornings that produce the best photos.`
+        : aodValue < 0.2
+        ? `Very clean air (AOD ${aodValue.toFixed(2)}) — minimal particles means sunrise colors will look vivid and well-saturated. The horizon will appear sharp with good contrast between sky and sea.`
+        : aodValue < 0.4
+        ? `Mild aerosol presence (AOD ${aodValue.toFixed(2)}) — colors will be slightly softened but still vibrant. A thin warm haze near the horizon can actually add depth to photographs.`
+        : aodValue < 0.7
+        ? `Noticeable haze in the air (AOD ${aodValue.toFixed(2)}) — sunrise colors will be visibly muted and diffused. The horizon will appear soft and washed rather than sharp. Reds and oranges will fade to dull amber.`
+        : `Heavy aerosol load (AOD ${aodValue.toFixed(2)}) — significant dust or pollution in the air will severely mute all colors. The sunrise will appear as a pale disc behind a grey-brown haze. ${isPostRain ? 'This is unusual after rain — check if conditions improve by morning.' : 'This is typical of dusty or high-pollution days.'}`
+    } : null,
+    // v5 NEW: Pressure pattern
+    pressurePattern: pressureTrend != null ? {
+      value: pressureTrend,
+      rating: pressureTrend < -5 ? 'Storm Risk' : pressureTrend < -2 ? 'Clearing Front' : pressureTrend < -0.5 ? 'Slight Fall' : pressureTrend <= 0.5 ? 'Stable' : pressureTrend <= 2 ? 'Rising' : 'Strong Rise',
+      impact: pressureTrend < -5
+        ? `Pressure is dropping rapidly (${pressureTrend.toFixed(1)} hPa over 6 hours) — this signals a significant weather system approaching. Expect heavy cloud, possible rain, and poor sunrise visibility. However, if skies clear near dawn, the dramatic cloud formations can produce exceptional — though risky — sunrise conditions.`
+        : pressureTrend < -2
+        ? `Falling pressure (${pressureTrend.toFixed(1)} hPa over 6 hours) signals an approaching frontal system — and this is actually the BEST setup for dramatic sunrises. As clouds break up ahead of the front, sunlight pierces through gaps creating vivid color bands against darker cloud backgrounds. High-contrast, dramatic skies.`
+        : pressureTrend < -0.5
+        ? `Slight pressure drop (${pressureTrend.toFixed(1)} hPa) suggests mild atmospheric instability — enough to create some interesting cloud textures without the risk of heavy weather. The sky may have more character than a stable-pressure morning.`
+        : pressureTrend <= 0.5
+        ? `Pressure is stable (${pressureTrend >= 0 ? '+' : ''}${pressureTrend.toFixed(1)} hPa) — indicating high pressure dominance. Conditions are predictable and calm, but the sky may lack the dramatic cloud dynamics that pressure changes create. Solid but not spectacular.`
+        : `Rising pressure (+${pressureTrend.toFixed(1)} hPa) indicates high pressure building — clear, stable conditions. The sky will be predictable and calm, good for consistent gentle color but unlikely to produce dramatic cloud formations.`
+    } : null,
     visibility: {
       value: visibility,
       rating: visibility >= 18 ? 'Exceptional' : visibility >= 12 ? 'Excellent' : visibility >= 8 ? 'Good' : visibility >= 5 ? 'Fair' : 'Poor',
@@ -469,8 +563,10 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
         ? `Light wind at ${windSpeed}km/h will gently move cloud formations. The beach will feel pleasantly breezy at dawn.`
         : `Wind at ${windSpeed}km/h will keep clouds moving and the sea choppy. You'll feel the breeze, and sand may be kicked up occasionally.`
     },
-    overallPattern: `${currentMonth} conditions: ${humidity <= 55 && visibility >= 10 ? 'Dry air and good visibility are working in your favor today.' : humidity > 70 ? 'Elevated humidity is limiting what could otherwise be stronger sunrise conditions.' : 'Conditions today are mixed — some factors are favorable while others will limit the sunrise quality.'}`
+    overallPattern: `${currentMonth} conditions: ${isPostRain ? 'Post-rain clarity is the highlight today — the air has been washed clean, creating ideal conditions for vivid colors.' : humidity <= 55 && visibility >= 10 ? 'Dry air and good visibility are working in your favor today.' : humidity > 70 ? 'Elevated humidity is limiting what could otherwise be stronger sunrise conditions.' : 'Conditions today are mixed — some factors are favorable while others will limit the sunrise quality.'}`
   };
+
+  return analysis;
 }
 
 // ==========================================
@@ -478,7 +574,7 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
 // No beach-specific hardcoding
 // ==========================================
 
-function generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score) {
+function generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score, breakdown) {
   const iso = cloudCover > 60 ? '400-800' : cloudCover > 30 ? '200-400' : '100-200';
   const shutter = cloudCover < 30 ? '1/125–1/250s' : cloudCover < 60 ? '1/60–1/125s' : '1/30–1/60s';
   const aperture = 'f/8–f/11';
@@ -512,7 +608,17 @@ function generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score
         : 'Focus on composition over exposure when clouds are heavy — HDR blending in post can recover shadow and highlight detail.',
       windSpeed <= 15
         ? 'Wind is calm — perfect for 10-30 second exposures with an ND filter to smooth water into a glass-like surface.'
-        : 'Bracket focus as well as exposure — shoot at different focal distances to ensure both foreground elements and the horizon are tack sharp.'
+        : 'Bracket focus as well as exposure — shoot at different focal distances to ensure both foreground elements and the horizon are tack sharp.',
+      // v5: AOD-based post-processing tip
+      ...(breakdown?.aod?.value != null ? [
+        breakdown.aod.value < 0.2
+          ? 'Air clarity is exceptional — minimal post-processing needed. Boost vibrance +10-15 and clarity +10 to bring out the natural saturation.'
+          : breakdown.aod.value >= 0.7
+          ? 'Heavy haze today — use a dehaze filter aggressively in post (+40-60). A polarizing filter on-camera can cut through some of the atmospheric scatter.'
+          : breakdown.aod.value >= 0.4
+          ? 'Moderate haze in the air — apply +20-30 dehaze in Lightroom/Camera Raw. A light CPL filter can help cut atmospheric scatter.'
+          : 'Clean air with slight haze near the horizon — minimal dehaze (+10-15) in post will sharpen the horizon line without making the sky look artificial.'
+      ] : [])
     ],
     compositionTips: [
       'Use a prominent foreground element to anchor the composition and create depth.',
@@ -527,7 +633,7 @@ function generateDSLRSettings(cloudCover, humidity, visibility, windSpeed, score
 // No beach-specific hardcoding
 // ==========================================
 
-function generateMobileSettings(cloudCover, humidity, visibility, windSpeed, score) {
+function generateMobileSettings(cloudCover, humidity, visibility, windSpeed, score, breakdown) {
   const nightMode = cloudCover > 70 ? 'On' : 'Off';
   const hdr = cloudCover > 20 ? 'Auto' : 'On';
   const exposure = cloudCover > 60 ? '+0.3' : cloudCover > 30 ? '0.0' : '-0.3';
@@ -558,7 +664,11 @@ function generateMobileSettings(cloudCover, humidity, visibility, windSpeed, sco
         : 'Timing is less critical on overcast mornings — the light changes gradually rather than in a brief dramatic window. Take your time with composition.',
       humidity <= 55
         ? 'Minimal post-processing needed — just bump clarity +10 and vibrance +15 in Snapseed or Lightroom Mobile.'
-        : 'In Snapseed: reduce haze with +Clarity, pull back +Warmth to compensate for humidity\'s grey cast. Lift Highlights slightly to recover what sky color exists.'
+        : 'In Snapseed: reduce haze with +Clarity, pull back +Warmth to compensate for humidity\'s grey cast. Lift Highlights slightly to recover what sky color exists.',
+      // v5: AOD-based mobile post-processing
+      ...(breakdown?.aod?.value != null && breakdown.aod.value >= 0.4 ? [
+        'Hazy air today — in Snapseed, use Structure +30 and HDR Scape to cut through the atmospheric haze. In Lightroom Mobile, try Dehaze +30-50.'
+      ] : [])
     ],
     compositionTips: [
       'Tap to lock focus and exposure on a mid-tone element, not the bright sky.',
