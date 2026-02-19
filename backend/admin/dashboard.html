@@ -4,135 +4,144 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Seaside Beacon — Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0b10;--bg2:#12131a;--bg3:#1a1b24;--bg4:#22232e;
-  --t1:#e8e9ed;--t2:#9fa1ab;--t3:#6b6d78;--t4:#44464f;
-  --green:#22c55e;--green-dim:#166534;--red:#ef4444;--red-dim:#7f1d1d;
-  --amber:#f59e0b;--amber-dim:#78350f;--blue:#3b82f6;--blue-dim:#1e3a5f;
-  --cyan:#06b6d4;--purple:#a855f7;--accent:#f97316;
-  --glass:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.06);
-  --mono:'SF Mono','Fira Code','Cascadia Code',monospace;
-  --sans:'Inter',-apple-system,system-ui,sans-serif;
-  --radius:10px;
+  --bg:#09090b;--surface:#111113;--surface2:#18181b;--surface3:#1f1f23;
+  --border:#27272a;--border-light:#3f3f46;
+  --t1:#fafafa;--t2:#a1a1aa;--t3:#71717a;--t4:#52525b;
+  --green:#22c55e;--green-bg:rgba(34,197,94,0.1);
+  --red:#ef4444;--red-bg:rgba(239,68,68,0.1);
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,0.1);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,0.1);
+  --violet:#8b5cf6;--violet-bg:rgba(139,92,246,0.1);
+  --cyan:#06b6d4;
+  --accent:#f97316;
+  --sans:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono','SF Mono',monospace;
+  --radius:8px;--radius-lg:12px;
 }
-html{font-size:14px;scroll-behavior:smooth}
-body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
+html{font-size:13px}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
 
-/* ── Login Screen ── */
-.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:40px;width:100%;max-width:380px;text-align:center}
-.login-box h1{font-size:18px;font-weight:600;margin-bottom:4px;color:var(--t1)}
-.login-box p{font-size:12px;color:var(--t3);margin-bottom:28px}
-.login-box input{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:13px;margin-bottom:12px;outline:none;transition:border 0.2s}
-.login-box input:focus{border-color:var(--accent)}
-.login-box button{width:100%;padding:10px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.2s}
-.login-box button:hover{opacity:0.9}
-.login-error{color:var(--red);font-size:12px;margin-top:8px;display:none}
+/* ── Login ── */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px 40px;width:360px;text-align:center}
+.login-card h1{font-size:15px;font-weight:600;letter-spacing:-.2px;margin-bottom:2px}
+.login-card .sub{font-size:12px;color:var(--t3);margin-bottom:32px}
+.login-card input{display:block;width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:var(--sans);outline:none;margin-bottom:10px;transition:.15s}
+.login-card input:focus{border-color:var(--t3)}
+.login-card input::placeholder{color:var(--t4)}
+.login-card button{width:100%;padding:9px;background:var(--t1);border:none;border-radius:6px;color:var(--bg);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;font-family:var(--sans)}
+.login-card button:hover{opacity:.9}
+.login-error{color:var(--red);font-size:11px;margin-top:10px;display:none}
 
-/* ── Dashboard Layout ── */
-.dashboard{display:none;padding:20px;max-width:1440px;margin:0 auto}
-.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
-.dash-title{display:flex;align-items:center;gap:10px}
-.dash-title h1{font-size:20px;font-weight:700;letter-spacing:-0.3px}
-.dash-title .beacon-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.dash-meta{display:flex;align-items:center;gap:16px;font-size:11px;color:var(--t3)}
-.dash-meta .live-badge{background:var(--green-dim);color:var(--green);padding:3px 8px;border-radius:4px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:0.5px}
-.logout-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 14px;color:var(--t2);font-size:11px;cursor:pointer;transition:all 0.2s}
-.logout-btn:hover{color:var(--t1);border-color:var(--t3)}
+/* ── Dashboard ── */
+#dashboard{display:none;padding:24px 32px;max-width:1380px;margin:0 auto}
+@media(max-width:768px){#dashboard{padding:16px}}
 
-/* ── Grid ── */
-.grid{display:grid;gap:16px;margin-bottom:16px}
-.grid-4{grid-template-columns:repeat(4,1fr)}
-.grid-3{grid-template-columns:repeat(3,1fr)}
-.grid-2{grid-template-columns:repeat(2,1fr)}
-.grid-1-2{grid-template-columns:1fr 2fr}
-.grid-2-1{grid-template-columns:2fr 1fr}
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-left h1{font-size:16px;font-weight:600;letter-spacing:-.3px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.header-right{display:flex;align-items:center;gap:14px;font-size:11px;color:var(--t3)}
+.header-right .tag{padding:3px 8px;border-radius:4px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+.tag-live{background:var(--green-bg);color:var(--green)}
+.sign-out{background:none;border:1px solid var(--border);border-radius:5px;padding:5px 12px;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--sans);transition:.15s}
+.sign-out:hover{color:var(--t1);border-color:var(--t3)}
 
-/* ── Cards ── */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.card-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
-.card-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
-.card-value{font-size:28px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1}
-.card-sub{font-size:11px;color:var(--t3);margin-top:4px}
-.card-trend{font-size:11px;font-weight:600;margin-top:6px}
-.trend-up{color:var(--green)}
-.trend-down{color:var(--red)}
-.trend-flat{color:var(--t3)}
+/* Grid */
+.row{display:grid;gap:14px;margin-bottom:14px}
+.cols-4{grid-template-columns:repeat(4,1fr)}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.cols-2{grid-template-columns:1fr 1fr}
+.cols-5-7{grid-template-columns:5fr 7fr}
+.cols-7-5{grid-template-columns:7fr 5fr}
+@media(max-width:900px){.cols-4,.cols-3,.cols-5-7,.cols-7-5{grid-template-columns:1fr}}
+@media(max-width:600px){.cols-2{grid-template-columns:1fr}}
 
-/* ── Status Indicators ── */
-.status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px}
-.status-dot.green{background:var(--green)}
-.status-dot.red{background:var(--red)}
-.status-dot.amber{background:var(--amber)}
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px}
+.card-title{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.card-title .badge{font-size:10px;padding:2px 6px;border-radius:3px;text-transform:none;letter-spacing:0;font-weight:500}
 
-/* ── Service Status Grid ── */
-.service-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
-.service-row:last-child{border-bottom:none}
-.service-name{font-size:12px;color:var(--t2);display:flex;align-items:center;gap:6px}
-.service-stat{font-family:var(--mono);font-size:12px;color:var(--t1)}
-.service-cache{font-size:11px;color:var(--cyan);margin-left:8px}
+/* Stat */
+.stat-val{font-size:26px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1}
+.stat-label{font-size:11px;color:var(--t4);margin-top:3px}
+.stat-row{display:flex;align-items:baseline;gap:8px}
+.stat-change{font-size:11px;font-weight:600}
 
-/* ── Chart Area ── */
-.chart-area{height:140px;display:flex;align-items:flex-end;gap:3px;padding-top:12px}
-.chart-bar{flex:1;background:var(--blue);border-radius:3px 3px 0 0;min-height:2px;position:relative;transition:height 0.3s}
-.chart-bar:hover{opacity:0.8}
-.chart-bar .tooltip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--bg4);color:var(--t1);font-size:10px;padding:4px 8px;border-radius:4px;white-space:nowrap;margin-bottom:4px;font-family:var(--mono)}
-.chart-bar:hover .tooltip{display:block}
-.chart-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--t4);font-family:var(--mono)}
+/* Status dot */
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-green{background:var(--green)}.dot-red{background:var(--red)}.dot-amber{background:var(--amber)}
 
-/* ── Table ── */
-.data-table{width:100%;border-collapse:collapse;font-size:12px}
-.data-table th{text-align:left;padding:8px 10px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
-.data-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--t2)}
-.data-table tr:last-child td{border-bottom:none}
-.data-table .mono{font-family:var(--mono);color:var(--t1)}
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;padding:7px 10px;color:var(--t4);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.tbl td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--t2)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--surface2)}
+.mono{font-family:var(--mono)}
 
-/* ── Score Badge ── */
-.score-badge{display:inline-flex;align-items:center;justify-content:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;font-family:var(--mono)}
-.score-go{background:var(--green-dim);color:var(--green)}
-.score-maybe{background:var(--amber-dim);color:var(--amber)}
-.score-skip{background:var(--blue-dim);color:var(--blue)}
-.score-no{background:var(--red-dim);color:var(--red)}
+/* Score badge */
+.sb{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;font-family:var(--mono)}
+.sb-go{background:var(--green-bg);color:var(--green)}
+.sb-maybe{background:var(--amber-bg);color:var(--amber)}
+.sb-skip{background:var(--blue-bg);color:var(--blue)}
+.sb-no{background:var(--red-bg);color:var(--red)}
 
-/* ── Error Log ── */
-.error-log{max-height:200px;overflow-y:auto;font-family:var(--mono);font-size:11px}
-.error-log::-webkit-scrollbar{width:4px}
-.error-log::-webkit-scrollbar-track{background:transparent}
-.error-log::-webkit-scrollbar-thumb{background:var(--t4);border-radius:2px}
-.error-entry{padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px}
-.error-entry:last-child{border-bottom:none}
-.error-time{color:var(--t4);white-space:nowrap}
-.error-svc{color:var(--amber);white-space:nowrap}
-.error-msg{color:var(--t2);word-break:break-all}
-.no-errors{color:var(--t4);font-style:italic;padding:12px 0;text-align:center;font-size:12px}
+/* Service row */
+.svc{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
+.svc:last-child{border-bottom:none}
+.svc-name{font-size:12px;color:var(--t2);display:flex;align-items:center;gap:7px}
+.svc-val{font-family:var(--mono);font-size:12px;color:var(--t1)}
+.svc-sub{font-size:11px;color:var(--cyan);margin-left:8px}
 
-/* ── Progress Bar ── */
-.progress-bar{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:8px}
-.progress-fill{height:100%;border-radius:3px;transition:width 0.5s}
+/* Chart */
+.chart{height:120px;display:flex;align-items:flex-end;gap:2px;padding-top:8px}
+.bar{flex:1;border-radius:2px 2px 0 0;min-height:1px;transition:.3s;position:relative;cursor:crosshair}
+.bar:hover{opacity:.75}
+.bar .tip{display:none;position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border);color:var(--t1);font-size:10px;padding:4px 8px;border-radius:4px;white-space:nowrap;font-family:var(--mono);z-index:5;pointer-events:none}
+.bar:hover .tip{display:block}
+.chart-x{display:flex;justify-content:space-between;padding-top:5px;font-size:9px;color:var(--t4);font-family:var(--mono)}
 
-/* ── Responsive ── */
-@media(max-width:1024px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3,.grid-1-2,.grid-2-1{grid-template-columns:1fr}}
-@media(max-width:600px){.grid-4,.grid-2{grid-template-columns:1fr}.dash-header{flex-direction:column;align-items:flex-start}}
+/* Progress */
+.prog{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:2px;transition:.5s}
 
-/* ── Refresh indicator ── */
-.refresh-bar{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:100;transition:width 0.3s;opacity:0}
+/* Scroll */
+.scroll-y{max-height:260px;overflow-y:auto}
+.scroll-y::-webkit-scrollbar{width:3px}
+.scroll-y::-webkit-scrollbar-thumb{background:var(--t4);border-radius:2px}
+
+/* Error log */
+.err-entry{padding:5px 0;border-bottom:1px solid var(--border);display:flex;gap:6px;font-family:var(--mono);font-size:11px}
+.err-time{color:var(--t4);white-space:nowrap;flex-shrink:0}
+.err-svc{color:var(--amber);flex-shrink:0}
+.err-msg{color:var(--t2);word-break:break-all}
+.empty-state{color:var(--t4);text-align:center;padding:20px 0;font-size:12px}
+
+/* Sub pill */
+.beach-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;background:var(--surface2);margin:3px 2px}
+.beach-pill .ct{font-family:var(--mono);font-weight:600;color:var(--t1)}
+
+/* Refresh bar */
+.refresh-line{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:100;transition:width .3s;opacity:0;pointer-events:none}
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="refresh-bar" id="refreshBar"></div>
+<div class="refresh-line" id="refreshBar"></div>
 
-<!-- ── LOGIN ── -->
-<div class="login-screen" id="loginScreen">
-  <div class="login-box">
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
     <h1>Seaside Beacon</h1>
-    <p>Command Center</p>
+    <p class="sub">Command Center</p>
     <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
     <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
     <button id="loginBtn">Sign In</button>
@@ -140,431 +149,290 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
   </div>
 </div>
 
-<!-- ── DASHBOARD ── -->
-<div class="dashboard" id="dashboard">
+<!-- DASHBOARD -->
+<div id="dashboard">
 
-  <!-- Header -->
-  <div class="dash-header">
-    <div class="dash-title">
-      <div class="beacon-dot"></div>
-      <h1>Command Center</h1>
-    </div>
-    <div class="dash-meta">
-      <span class="live-badge">Live</span>
-      <span id="lastRefresh">Refreshing...</span>
-      <span id="uptimeDisplay">—</span>
-      <button class="logout-btn" id="logoutBtn">Sign Out</button>
+  <div class="header">
+    <div class="header-left"><div class="live-dot"></div><h1>Command Center</h1></div>
+    <div class="header-right">
+      <span class="tag tag-live">Live</span>
+      <span id="lastUpdate">—</span>
+      <span id="uptime">—</span>
+      <button class="sign-out" id="logoutBtn">Sign Out</button>
     </div>
   </div>
 
-  <!-- Row 1: Key Metrics -->
-  <div class="grid grid-4">
+  <!-- ROW 1: Headline numbers (LIFETIME) -->
+  <div class="row cols-4">
     <div class="card">
-      <div class="card-header"><span class="card-label">Visitors Today</span><div class="card-icon" style="background:var(--blue-dim);color:var(--blue)">&#128101;</div></div>
-      <div class="card-value" id="visitorsToday">—</div>
-      <div class="card-sub" id="uniqueToday">— unique</div>
+      <div class="card-title">Total Visitors <span class="badge" style="background:var(--blue-bg);color:var(--blue)" id="todayVisitsBadge">—</span></div>
+      <div class="stat-val" id="lifetimeVisits">—</div>
+      <div class="stat-label" id="lifetimeUnique">— unique</div>
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-label">Predictions Today</span><div class="card-icon" style="background:var(--green-dim);color:var(--green)">&#9728;</div></div>
-      <div class="card-value" id="predictionsToday">—</div>
-      <div class="card-sub" id="predictionCacheRate">— cache rate</div>
+      <div class="card-title">Total Predictions <span class="badge" style="background:var(--green-bg);color:var(--green)" id="todayPredBadge">—</span></div>
+      <div class="stat-val" id="lifetimePredictions">—</div>
+      <div class="stat-label" id="lifetimeDays">— days tracked</div>
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-label">Active Subscribers</span><div class="card-icon" style="background:var(--purple);color:#fff">&#9993;</div></div>
-      <div class="card-value" id="totalSubs">—</div>
-      <div class="card-sub" id="subsUtil">— / 300 Brevo limit</div>
-      <div class="progress-bar"><div class="progress-fill" id="subsFill" style="background:var(--purple);width:0%"></div></div>
+      <div class="card-title">Active Subscribers <span class="badge" style="background:var(--violet-bg);color:var(--violet)" id="subCapBadge">—</span></div>
+      <div class="stat-val" id="totalSubs">—</div>
+      <div class="prog"><div class="prog-fill" id="subBar" style="width:0%;background:var(--violet)"></div></div>
+      <div class="stat-label" style="margin-top:4px" id="subCapLabel">— / 300 Brevo limit</div>
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-label">Emails Sent (Session)</span><div class="card-icon" style="background:var(--amber-dim);color:var(--amber)">&#128232;</div></div>
-      <div class="card-value" id="emailsSent">—</div>
-      <div class="card-sub" id="emailErrors">— failed</div>
+      <div class="card-title">Emails Delivered</div>
+      <div class="stat-val" id="lifetimeEmails">—</div>
+      <div class="stat-label" id="lifetimeForecasts">— forecasts generated</div>
     </div>
   </div>
 
-  <!-- Row 2: Services + Performance -->
-  <div class="grid grid-2">
-    <!-- API Services Status -->
+  <!-- ROW 2: Traffic chart + API status -->
+  <div class="row cols-7-5">
     <div class="card">
-      <div class="card-header"><span class="card-label">API Services</span></div>
-      <div id="servicesGrid">
-        <div class="service-row"><span class="service-name"><span class="status-dot green" id="awHourlyDot"></span>AccuWeather Hourly</span><span class="service-stat" id="awHourlyStat">0 calls</span><span class="service-cache" id="awHourlyCache">0% cached</span></div>
-        <div class="service-row"><span class="service-name"><span class="status-dot green" id="awDailyDot"></span>AccuWeather Daily</span><span class="service-stat" id="awDailyStat">0 calls</span><span class="service-cache" id="awDailyCache">0% cached</span></div>
-        <div class="service-row"><span class="service-name"><span class="status-dot green" id="omForecastDot"></span>Open-Meteo Forecast</span><span class="service-stat" id="omForecastStat">0 calls</span><span class="service-cache" id="omForecastCache">0% cached</span></div>
-        <div class="service-row"><span class="service-name"><span class="status-dot green" id="omAQDot"></span>Open-Meteo AQ</span><span class="service-stat" id="omAQStat">0 calls</span><span class="service-cache" id="omAQCache">0% cached</span></div>
-        <div class="service-row"><span class="service-name"><span class="status-dot green" id="groqDot"></span>Groq AI</span><span class="service-stat" id="groqStat">0 calls</span><span class="service-cache" id="groqFallbacks">0 fallbacks</span></div>
-        <div class="service-row"><span class="service-name"><span class="status-dot green" id="dbDot"></span>MongoDB</span><span class="service-stat" id="dbStat">Connected</span><span class="service-cache" id="dbHost"></span></div>
-      </div>
+      <div class="card-title">Traffic — Last 30 Days</div>
+      <div class="chart" id="chart"></div>
+      <div class="chart-x" id="chartX"></div>
     </div>
-
-    <!-- Performance -->
     <div class="card">
-      <div class="card-header"><span class="card-label">Performance</span></div>
-      <div class="grid grid-2" style="gap:12px">
-        <div>
-          <div class="card-label" style="margin-bottom:4px">Avg Response</div>
-          <div class="card-value" style="font-size:24px" id="avgResponse">—</div>
-          <div class="card-sub">milliseconds</div>
-        </div>
-        <div>
-          <div class="card-label" style="margin-bottom:4px">P95 Response</div>
-          <div class="card-value" style="font-size:24px" id="p95Response">—</div>
-          <div class="card-sub">milliseconds</div>
-        </div>
-        <div>
-          <div class="card-label" style="margin-bottom:4px">Memory (RSS)</div>
-          <div class="card-value" style="font-size:24px" id="memRSS">—</div>
-          <div class="card-sub">MB</div>
-        </div>
-        <div>
-          <div class="card-label" style="margin-bottom:4px">Heap Used</div>
-          <div class="card-value" style="font-size:24px" id="heapUsed">—</div>
-          <div class="card-sub" id="heapTotal">/ — MB</div>
-        </div>
-      </div>
-      <div style="margin-top:16px">
-        <div class="card-label" style="margin-bottom:4px">Server</div>
-        <div style="font-size:11px;color:var(--t3);font-family:var(--mono)" id="serverInfo">—</div>
+      <div class="card-title">Services</div>
+      <div id="services">
+        <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-awh"></span>AccuWeather Hourly</span><span class="svc-val" id="v-awh">—</span><span class="svc-sub" id="c-awh">—</span></div>
+        <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-awd"></span>AccuWeather Daily</span><span class="svc-val" id="v-awd">—</span><span class="svc-sub" id="c-awd">—</span></div>
+        <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-omf"></span>Open-Meteo Forecast</span><span class="svc-val" id="v-omf">—</span><span class="svc-sub" id="c-omf">—</span></div>
+        <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-oma"></span>Open-Meteo AQ</span><span class="svc-val" id="v-oma">—</span><span class="svc-sub" id="c-oma">—</span></div>
+        <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-groq"></span>Groq AI</span><span class="svc-val" id="v-groq">—</span><span class="svc-sub" id="c-groq">—</span></div>
+        <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-db"></span>MongoDB</span><span class="svc-val" id="v-db">—</span></div>
       </div>
     </div>
   </div>
 
-  <!-- Row 3: Traffic Chart + Subscriber Breakdown -->
-  <div class="grid grid-2-1">
-    <!-- 7-Day Traffic Chart -->
+  <!-- ROW 3: Subscribers + Performance -->
+  <div class="row cols-7-5">
     <div class="card">
-      <div class="card-header"><span class="card-label">7-Day Traffic</span></div>
-      <div class="chart-area" id="trafficChart"></div>
-      <div class="chart-labels" id="trafficLabels"></div>
-    </div>
-
-    <!-- Subscriber Breakdown -->
-    <div class="card">
-      <div class="card-header"><span class="card-label">Subscribers by Beach</span></div>
-      <div id="subsByBeach"></div>
-      <div style="margin-top:16px">
-        <div class="card-label" style="margin-bottom:8px">Lifetime Stats</div>
-        <div class="service-row"><span class="service-name">Forecasts Generated</span><span class="service-stat mono" id="lifetimeForecasts">—</span></div>
-        <div class="service-row"><span class="service-name">Emails Sent</span><span class="service-stat mono" id="lifetimeEmails">—</span></div>
-        <div class="service-row"><span class="service-name">Days Live</span><span class="service-stat mono" id="lifetimeDays">—</span></div>
-        <div class="service-row"><span class="service-name">Data Points</span><span class="service-stat mono" id="lifetimeData">—</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Row 4: Recent Scores + Error Log -->
-  <div class="grid grid-2">
-    <!-- Recent Scores -->
-    <div class="card">
-      <div class="card-header"><span class="card-label">Recent Forecast Scores</span></div>
-      <div style="overflow-x:auto">
-        <table class="data-table" id="scoresTable">
-          <thead><tr><th>Date</th><th>Marina</th><th>Elliot's</th><th>Covelong</th><th>Thiruvanmiyur</th><th>Avg</th></tr></thead>
-          <tbody id="scoresBody"></tbody>
+      <div class="card-title">Subscribers <span class="badge" style="background:var(--surface2);color:var(--t2)" id="subCountBadge">—</span></div>
+      <div style="margin-bottom:12px" id="beachPills"></div>
+      <div class="scroll-y">
+        <table class="tbl" id="subTable">
+          <thead><tr><th>#</th><th>Email</th><th>Beach</th><th>Joined</th><th>Last Email</th></tr></thead>
+          <tbody id="subBody"></tbody>
         </table>
       </div>
     </div>
-
-    <!-- Error Log -->
     <div class="card">
-      <div class="card-header"><span class="card-label">Error Log (Session)</span><span class="card-label" id="errorCount" style="color:var(--red)">0 errors</span></div>
-      <div class="error-log" id="errorLog">
-        <div class="no-errors">No errors recorded this session</div>
+      <div class="card-title">Performance <span class="badge" style="background:var(--surface2);color:var(--t2)">This Session</span></div>
+      <div class="row cols-2" style="gap:10px;margin-bottom:12px">
+        <div><div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Avg Response</div><div class="stat-val" style="font-size:22px" id="avgMs">—<span style="font-size:11px;color:var(--t4);font-weight:400">ms</span></div></div>
+        <div><div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">P95 Response</div><div class="stat-val" style="font-size:22px" id="p95Ms">—<span style="font-size:11px;color:var(--t4);font-weight:400">ms</span></div></div>
+        <div><div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Memory RSS</div><div class="stat-val" style="font-size:22px" id="memRss">—<span style="font-size:11px;color:var(--t4);font-weight:400">MB</span></div></div>
+        <div><div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Heap</div><div class="stat-val" style="font-size:22px" id="heapVal">—<span style="font-size:11px;color:var(--t4);font-weight:400">MB</span></div></div>
       </div>
+      <div class="card-title" style="margin-top:8px">Cache Hit Rates</div>
+      <div class="svc"><span class="svc-name">Prediction (10min)</span><span class="svc-val" id="cr-pred">—</span></div>
+      <div class="svc"><span class="svc-name">AW Hourly (30min)</span><span class="svc-val" id="cr-awh">—</span></div>
+      <div class="svc"><span class="svc-name">AW Daily (2h)</span><span class="svc-val" id="cr-awd">—</span></div>
+      <div class="svc"><span class="svc-name">OM Forecast (6h)</span><span class="svc-val" id="cr-omf">—</span></div>
+      <div class="svc"><span class="svc-name">OM AQ (6h)</span><span class="svc-val" id="cr-oma">—</span></div>
     </div>
   </div>
 
-  <!-- Row 5: Caching Layers -->
-  <div class="grid grid-1-2">
+  <!-- ROW 4: Scores + Errors -->
+  <div class="row cols-7-5">
     <div class="card">
-      <div class="card-header"><span class="card-label">Cache Layers</span></div>
-      <div class="service-row"><span class="service-name">Prediction (10min)</span><span class="service-stat" id="cachePredRate">—</span></div>
-      <div class="service-row"><span class="service-name">AW Hourly (30min)</span><span class="service-stat" id="cacheAWHRate">—</span></div>
-      <div class="service-row"><span class="service-name">AW Daily (2h)</span><span class="service-stat" id="cacheAWDRate">—</span></div>
-      <div class="service-row"><span class="service-name">OM Forecast (6h)</span><span class="service-stat" id="cacheOMFRate">—</span></div>
-      <div class="service-row"><span class="service-name">OM AirQuality (6h)</span><span class="service-stat" id="cacheOMAQRate">—</span></div>
-    </div>
-
-    <!-- Request Breakdown -->
-    <div class="card">
-      <div class="card-header"><span class="card-label">Request Breakdown (Session)</span></div>
-      <div class="grid grid-4" style="gap:10px">
-        <div style="text-align:center">
-          <div class="card-value" style="font-size:22px" id="reqTotal">0</div>
-          <div class="card-sub">Total</div>
-        </div>
-        <div style="text-align:center">
-          <div class="card-value" style="font-size:22px" id="reqPredict">0</div>
-          <div class="card-sub">Predict</div>
-        </div>
-        <div style="text-align:center">
-          <div class="card-value" style="font-size:22px" id="reqSubscribe">0</div>
-          <div class="card-sub">Subscribe</div>
-        </div>
-        <div style="text-align:center">
-          <div class="card-value" style="font-size:22px;color:var(--red)" id="reqErrors">0</div>
-          <div class="card-sub">Errors</div>
-        </div>
+      <div class="card-title">Forecast History</div>
+      <div class="scroll-y">
+        <table class="tbl">
+          <thead><tr><th>Date</th><th>Marina</th><th>Elliot's</th><th>Covelong</th><th>Thiruvanmiyur</th><th>Avg</th><th>Best</th></tr></thead>
+          <tbody id="scoreBody"></tbody>
+        </table>
       </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Error Log <span class="badge" style="background:var(--red-bg);color:var(--red)" id="errBadge">0</span></div>
+      <div class="scroll-y" id="errLog"><div class="empty-state">No errors this session</div></div>
     </div>
   </div>
 
 </div>
 
 <script>
-const API_BASE = window.location.origin;
-let token = localStorage.getItem('sb_admin_token');
-let refreshInterval;
+const API = window.location.origin;
+let token = localStorage.getItem('sb_token');
+let interval;
 
-// ── Login ──
-async function doLogin() {
-  const user = document.getElementById('loginUser').value;
-  const pass = document.getElementById('loginPass').value;
-  const err = document.getElementById('loginError');
-  try {
-    const res = await fetch(`${API_BASE}/api/admin/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: user, password: pass })
-    });
-    const data = await res.json();
-    if (data.success) {
-      token = data.token;
-      localStorage.setItem('sb_admin_token', token);
-      showDashboard();
-    } else {
-      err.style.display = 'block';
-      err.textContent = data.error || 'Invalid credentials';
-    }
-  } catch (e) {
-    err.style.display = 'block';
-    err.textContent = 'Connection failed';
-  }
+// ── Auth ──
+function login() {
+  const u = document.getElementById('loginUser').value;
+  const p = document.getElementById('loginPass').value;
+  const e = document.getElementById('loginError');
+  fetch(API + '/api/admin/login', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({username:u, password:p})
+  }).then(r=>r.json()).then(d=>{
+    if(d.success){token=d.token;localStorage.setItem('sb_token',token);show();}
+    else{e.style.display='block';e.textContent=d.error||'Invalid credentials';}
+  }).catch(()=>{e.style.display='block';e.textContent='Connection failed';});
+}
+function logout(){token=null;localStorage.removeItem('sb_token');clearInterval(interval);document.getElementById('dashboard').style.display='none';document.getElementById('loginScreen').style.display='flex';}
+function show(){document.getElementById('loginScreen').style.display='none';document.getElementById('dashboard').style.display='block';poll();interval=setInterval(poll,6000);}
+
+// ── Poll ──
+function poll(){
+  const bar=document.getElementById('refreshBar');bar.style.opacity='1';bar.style.width='50%';
+  fetch(API+'/api/admin/metrics',{headers:{'X-Admin-Token':token}})
+    .then(r=>{if(r.status===401){logout();throw'auth';}return r.json();})
+    .then(d=>{bar.style.width='100%';setTimeout(()=>{bar.style.opacity='0';bar.style.width='0'},200);render(d);})
+    .catch(e=>{if(e!=='auth'){bar.style.background='var(--red)';bar.style.width='100%';setTimeout(()=>{bar.style.opacity='0';bar.style.width='0';bar.style.background='var(--accent)'},800);}});
 }
 
-function doLogout() {
-  token = null;
-  localStorage.removeItem('sb_admin_token');
-  clearInterval(refreshInterval);
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
-}
+// ── Render ──
+function render(d){
+  const t=d.traffic, s=d.subscribers, ss=d.siteStats, se=d.session, db=d.database;
+  const now=new Date();
+  $('lastUpdate','Updated '+now.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour12:false})+' IST');
+  $('uptime', se?.server?.uptimeFormatted||'—');
 
-function showDashboard() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-  fetchMetrics();
-  refreshInterval = setInterval(fetchMetrics, 5000);
-}
+  // Headline — LIFETIME numbers
+  $('lifetimeVisits', fmt(t.lifetime.visits));
+  $('lifetimeUnique', fmt(t.lifetime.unique)+' unique');
+  $('todayVisitsBadge', (t.today.visits||0)+' today');
+  $('lifetimePredictions', fmt(t.lifetime.predictions));
+  $('todayPredBadge', (t.today.predictions||0)+' today');
+  $('lifetimeDays', t.totalDays+' days tracked');
 
-// Enter key on login
-document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+  $('totalSubs', s.total);
+  const pct=Math.min(100,Math.round(s.total/300*100));
+  document.getElementById('subBar').style.width=pct+'%';
+  document.getElementById('subBar').style.background=pct>80?'var(--red)':pct>50?'var(--amber)':'var(--violet)';
+  $('subCapBadge', pct+'%');
+  $('subCapLabel', s.total+' / 300 Brevo limit');
 
-// ── Fetch Metrics ──
-async function fetchMetrics() {
-  const bar = document.getElementById('refreshBar');
-  bar.style.opacity = '1';
-  bar.style.width = '60%';
+  $('lifetimeEmails', fmt(ss?.emailsSent||0));
+  $('lifetimeForecasts', fmt(ss?.forecastsGenerated||0)+' forecasts');
 
-  try {
-    const res = await fetch(`${API_BASE}/api/admin/metrics`, {
-      headers: { 'X-Admin-Token': token }
-    });
-    if (res.status === 401) { doLogout(); return; }
-    const d = await res.json();
-
-    bar.style.width = '100%';
-    setTimeout(() => { bar.style.opacity = '0'; bar.style.width = '0%'; }, 300);
-
-    updateDashboard(d);
-  } catch (e) {
-    bar.style.background = 'var(--red)';
-    bar.style.width = '100%';
-    setTimeout(() => { bar.style.opacity = '0'; bar.style.width = '0%'; bar.style.background = 'var(--accent)'; }, 1000);
-  }
-}
-
-// ── Update Dashboard ──
-function updateDashboard(d) {
-  // Timestamp
-  const now = new Date();
-  document.getElementById('lastRefresh').textContent = `Updated ${now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`;
-  document.getElementById('uptimeDisplay').textContent = `Uptime: ${d.server.uptimeFormatted}`;
-
-  // Key metrics
-  setText('visitorsToday', num(d.traffic?.today?.visits || 0));
-  setText('uniqueToday', `${num(d.traffic?.today?.unique || 0)} unique`);
-  setText('predictionsToday', num(d.traffic?.today?.predictions || 0));
-  setText('predictionCacheRate', `${d.cache?.predictionCacheRate || '0%'} cache hit rate`);
-
-  setText('totalSubs', num(d.subscribers?.total || 0));
-  setText('subsUtil', `${d.subscribers?.total || 0} / 300 Brevo limit`);
-  const subPct = Math.min(100, Math.round(((d.subscribers?.total || 0) / 300) * 100));
-  document.getElementById('subsFill').style.width = subPct + '%';
-  document.getElementById('subsFill').style.background = subPct > 80 ? 'var(--red)' : subPct > 50 ? 'var(--amber)' : 'var(--purple)';
-
-  setText('emailsSent', num(d.emails?.success || 0));
-  setText('emailErrors', `${d.emails?.failed || 0} failed`);
-
-  // API Services
-  updateService('awHourly', d.apis?.accuWeatherHourly, d.cache?.accuWeatherHourlyCacheRate);
-  updateService('awDaily', d.apis?.accuWeatherDaily, d.cache?.accuWeatherDailyCacheRate);
-  updateService('omForecast', d.apis?.openMeteoForecast, d.cache?.openMeteoForecastCacheRate);
-  updateService('omAQ', d.apis?.openMeteoAQ, d.cache?.openMeteoAQCacheRate);
-
-  // Groq
-  const g = d.apis?.groqAI || {};
-  setDot('groqDot', g.errors > 0 ? 'amber' : 'green');
-  setText('groqStat', `${g.calls || 0} calls`);
-  setText('groqFallbacks', `${g.fallbacks || 0} fallbacks`);
-
-  // DB
-  setDot('dbDot', d.database?.connected ? 'green' : 'red');
-  setText('dbStat', d.database?.connected ? 'Connected' : 'Disconnected');
-  setText('dbHost', d.database?.host || '');
+  // Services
+  svc('awh',se.apis?.accuWeatherHourly,se.cache?.accuWeatherHourlyCacheRate);
+  svc('awd',se.apis?.accuWeatherDaily,se.cache?.accuWeatherDailyCacheRate);
+  svc('omf',se.apis?.openMeteoForecast,se.cache?.openMeteoForecastCacheRate);
+  svc('oma',se.apis?.openMeteoAQ,se.cache?.openMeteoAQCacheRate);
+  const g=se.apis?.groqAI||{};
+  dot('d-groq',g.errors>0?'amber':'green');$('v-groq',(g.calls||0)+' calls');$('c-groq',(g.fallbacks||0)+' fallbacks');
+  dot('d-db',db?.connected?'green':'red');$('v-db',db?.connected?'Connected':'Down');
 
   // Performance
-  setText('avgResponse', d.performance?.avgResponseTime || 0);
-  setText('p95Response', d.performance?.p95ResponseTime || 0);
-  setText('memRSS', d.server?.memory?.rss || 0);
-  setText('heapUsed', d.server?.memory?.heapUsed || 0);
-  setText('heapTotal', `/ ${d.server?.memory?.heapTotal || 0} MB`);
-  setText('serverInfo', `${d.server?.nodeVersion || '?'} on ${d.server?.platform || '?'}`);
+  $('avgMs',(se.performance?.avgResponseTime||0));$('p95Ms',(se.performance?.p95ResponseTime||0));
+  $('memRss',(se.server?.memory?.rss||0));$('heapVal',(se.server?.memory?.heapUsed||0));
 
-  // Cache layers
-  setText('cachePredRate', d.cache?.predictionCacheRate || '0%');
-  setText('cacheAWHRate', d.cache?.accuWeatherHourlyCacheRate || '0%');
-  setText('cacheAWDRate', d.cache?.accuWeatherDailyCacheRate || '0%');
-  setText('cacheOMFRate', d.cache?.openMeteoForecastCacheRate || '0%');
-  setText('cacheOMAQRate', d.cache?.openMeteoAQCacheRate || '0%');
+  // Cache rates
+  $('cr-pred',se.cache?.predictionCacheRate||'0%');
+  $('cr-awh',se.cache?.accuWeatherHourlyCacheRate||'0%');
+  $('cr-awd',se.cache?.accuWeatherDailyCacheRate||'0%');
+  $('cr-omf',se.cache?.openMeteoForecastCacheRate||'0%');
+  $('cr-oma',se.cache?.openMeteoAQCacheRate||'0%');
 
-  // Request breakdown
-  const req = d.requests || {};
-  setText('reqTotal', num(req.total || 0));
-  setText('reqPredict', num(req.predict || 0));
-  setText('reqSubscribe', num(req.subscribe || 0));
-  setText('reqErrors', num(req.errors || 0));
+  // Chart
+  chart(t.last30||[]);
 
-  // Traffic chart
-  renderTrafficChart(d.traffic?.week || []);
+  // Subscribers
+  subTable(s);
 
-  // Subscribers by beach
-  renderSubsByBeach(d.subscribers?.byBeach || {});
+  // Scores
+  scoreTable(d.scores||[]);
 
-  // Lifetime
-  setText('lifetimeForecasts', num(d.siteStats?.forecastsGenerated || 0));
-  setText('lifetimeEmails', num(d.siteStats?.emailsSent || 0));
-  setText('lifetimeDays', d.siteStats?.consecutiveDays || 0);
-  setText('lifetimeData', num(d.siteStats?.dataPointsProcessed || 0));
-
-  // Scores table
-  renderScoresTable(d.scores || []);
-
-  // Error log
-  renderErrors(d.recentErrors || []);
+  // Errors
+  errLog(se.recentErrors||[]);
 }
 
-function updateService(prefix, api, cacheRate) {
-  const a = api || {};
-  const hasErrors = a.errors > 0;
-  const dot = hasErrors ? 'amber' : 'green';
-  setDot(`${prefix}Dot`, dot);
-  setText(`${prefix}Stat`, `${a.calls || 0} calls`);
-  setText(`${prefix}Cache`, cacheRate || '0%');
+function svc(key,api,cacheRate){
+  const a=api||{};
+  dot('d-'+key, a.errors>0?'amber':'green');
+  $('v-'+key, (a.calls||0)+' calls');
+  $('c-'+key, cacheRate||'0%');
 }
 
-function renderTrafficChart(week) {
-  const container = document.getElementById('trafficChart');
-  const labels = document.getElementById('trafficLabels');
-  if (!week.length) { container.innerHTML = '<div class="no-errors">No traffic data yet</div>'; labels.innerHTML = ''; return; }
-
-  const maxVisits = Math.max(...week.map(d => d.visits || 0), 1);
-  container.innerHTML = week.map(d => {
-    const h = Math.max(2, ((d.visits || 0) / maxVisits) * 120);
-    const day = new Date(d.date + 'T00:00:00+05:30');
-    const label = day.toLocaleDateString('en-IN', { weekday: 'short' });
-    return `<div class="chart-bar" style="height:${h}px"><div class="tooltip">${label}: ${d.visits || 0} visits, ${d.predictions || 0} predictions</div></div>`;
+function chart(days){
+  const el=document.getElementById('chart');
+  const xEl=document.getElementById('chartX');
+  if(!days.length){el.innerHTML='<div class="empty-state">No data</div>';xEl.innerHTML='';return;}
+  const max=Math.max(...days.map(d=>d.visits||0),1);
+  el.innerHTML=days.map(d=>{
+    const h=Math.max(1,((d.visits||0)/max)*110);
+    const dt=new Date(d.date+'T00:00:00+05:30');
+    const lbl=dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    return '<div class="bar" style="height:'+h+'px;background:var(--blue)"><div class="tip">'+lbl+': '+fmt(d.visits||0)+' visits, '+(d.predictions||0)+' pred</div></div>';
   }).join('');
-
-  labels.innerHTML = week.map(d => {
-    const day = new Date(d.date + 'T00:00:00+05:30');
-    return `<span>${day.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>`;
-  }).join('');
-}
-
-function renderSubsByBeach(byBeach) {
-  const container = document.getElementById('subsByBeach');
-  const beaches = { marina: 'Marina', elliot: "Elliot's", covelong: 'Covelong', thiruvanmiyur: 'Thiruvanmiyur' };
-  const total = Object.values(byBeach).reduce((s, v) => s + v, 0) || 1;
-  const colors = { marina: 'var(--blue)', elliot: 'var(--purple)', covelong: 'var(--green)', thiruvanmiyur: 'var(--amber)' };
-
-  container.innerHTML = Object.entries(beaches).map(([key, name]) => {
-    const count = byBeach[key] || 0;
-    const pct = Math.round((count / total) * 100);
-    return `<div class="service-row">
-      <span class="service-name"><span style="width:8px;height:8px;border-radius:2px;background:${colors[key]};display:inline-block;margin-right:6px"></span>${name}</span>
-      <span class="service-stat">${count} <span style="color:var(--t4)">(${pct}%)</span></span>
-    </div>`;
-  }).join('');
-}
-
-function renderScoresTable(scores) {
-  const tbody = document.getElementById('scoresBody');
-  if (!scores.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--t4)">No scores yet</td></tr>'; return; }
-
-  tbody.innerHTML = scores.slice(0, 7).map(s => {
-    const beachScores = {};
-    (s.beaches || []).forEach(b => { beachScores[b.beachKey] = b; });
-    return `<tr>
-      <td class="mono">${s.date}</td>
-      ${['marina', 'elliot', 'covelong', 'thiruvanmiyur'].map(k => {
-        const b = beachScores[k];
-        if (!b) return '<td>—</td>';
-        const cls = b.recommendation === 'GO' ? 'score-go' : b.recommendation === 'MAYBE' ? 'score-maybe' : b.recommendation === 'SKIP' ? 'score-skip' : 'score-no';
-        return `<td><span class="score-badge ${cls}">${b.score}</span></td>`;
-      }).join('')}
-      <td class="mono">${s.averageScore ? Math.round(s.averageScore) : '—'}</td>
-    </tr>`;
-  }).join('');
-}
-
-function renderErrors(errors) {
-  const container = document.getElementById('errorLog');
-  const countEl = document.getElementById('errorCount');
-  countEl.textContent = `${errors.length} error${errors.length !== 1 ? 's' : ''}`;
-
-  if (!errors.length) {
-    container.innerHTML = '<div class="no-errors">No errors recorded this session</div>';
-    return;
+  // show first, mid, last labels
+  if(days.length>=3){
+    const f=new Date(days[0].date+'T00:00:00+05:30').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    const l=new Date(days[days.length-1].date+'T00:00:00+05:30').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    xEl.innerHTML='<span>'+f+'</span><span>'+l+'</span>';
   }
+}
 
-  container.innerHTML = errors.reverse().map(e => {
-    const t = new Date(e.timestamp);
-    return `<div class="error-entry">
-      <span class="error-time">${t.toLocaleTimeString('en-IN', { hour12: false })}</span>
-      <span class="error-svc">${e.service}</span>
-      <span class="error-msg">${escHtml(e.message)}</span>
-    </div>`;
+function subTable(s){
+  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const colors={marina:'var(--blue)',elliot:'var(--violet)',covelong:'var(--green)',thiruvanmiyur:'var(--amber)'};
+  // Pills
+  document.getElementById('beachPills').innerHTML=Object.entries(beaches).map(([k,v])=>{
+    return '<span class="beach-pill"><span style="width:6px;height:6px;border-radius:2px;background:'+colors[k]+';display:inline-block"></span>'+v+' <span class="ct">'+(s.byBeach[k]||0)+'</span></span>';
+  }).join('');
+  $('subCountBadge', s.total+' total');
+
+  // Table
+  const body=document.getElementById('subBody');
+  if(!s.list||!s.list.length){body.innerHTML='<tr><td colspan="5" class="empty-state">No subscribers</td></tr>';return;}
+  body.innerHTML=s.list.map((sub,i)=>{
+    const joined=new Date(sub.subscribedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    const lastMail=sub.lastEmailSent?timeAgo(new Date(sub.lastEmailSent)):'Never';
+    const bName=beaches[sub.preferredBeach]||sub.preferredBeach;
+    const bColor=colors[sub.preferredBeach]||'var(--t3)';
+    return '<tr><td class="mono" style="color:var(--t4)">'+(i+1)+'</td><td class="mono" style="color:var(--t1)">'+esc(sub.email)+'</td><td><span style="color:'+bColor+'">'+bName+'</span></td><td style="color:var(--t3)">'+joined+'</td><td style="color:var(--t3)">'+lastMail+'</td></tr>';
+  }).join('');
+}
+
+function scoreTable(scores){
+  const body=document.getElementById('scoreBody');
+  if(!scores.length){body.innerHTML='<tr><td colspan="7" class="empty-state">No scores yet</td></tr>';return;}
+  body.innerHTML=scores.map(s=>{
+    const bs={};(s.beaches||[]).forEach(b=>{bs[b.beachKey]=b;});
+    const best=s.bestBeach?.beachKey||'';
+    return '<tr><td class="mono">'+s.date+'</td>'+
+      ['marina','elliot','covelong','thiruvanmiyur'].map(k=>{
+        const b=bs[k];if(!b)return'<td>—</td>';
+        const cls=b.recommendation==='GO'?'sb-go':b.recommendation==='MAYBE'?'sb-maybe':b.recommendation==='SKIP'?'sb-skip':'sb-no';
+        return '<td><span class="sb '+cls+'">'+b.score+'</span></td>';
+      }).join('')+
+      '<td class="mono">'+(s.averageScore?Math.round(s.averageScore):'—')+'</td>'+
+      '<td style="color:var(--green);font-size:11px">'+(best?cap(best):'—')+'</td></tr>';
+  }).join('');
+}
+
+function errLog(errors){
+  const el=document.getElementById('errLog');
+  $('errBadge', errors.length);
+  if(!errors.length){el.innerHTML='<div class="empty-state">No errors this session</div>';return;}
+  el.innerHTML=[...errors].reverse().map(e=>{
+    const t=new Date(e.timestamp);
+    return '<div class="err-entry"><span class="err-time">'+t.toLocaleTimeString('en-IN',{hour12:false})+'</span><span class="err-svc">'+e.service+'</span><span class="err-msg">'+esc(e.message)+'</span></div>';
   }).join('');
 }
 
 // ── Helpers ──
-function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
-function setDot(id, color) { const el = document.getElementById(id); if (el) { el.className = `status-dot ${color}`; } }
-function num(n) { return Number(n).toLocaleString(); }
-function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function $(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function dot(id,c){const e=document.getElementById(id);if(e)e.className='dot dot-'+c;}
+function fmt(n){return Number(n).toLocaleString();}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function timeAgo(d){const s=Math.floor((Date.now()-d)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 
-// ── Event listeners (no inline onclick) ──
-document.getElementById('loginBtn').addEventListener('click', doLogin);
-document.getElementById('logoutBtn').addEventListener('click', doLogout);
+// ── Bind ──
+document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('logoutBtn').addEventListener('click', logout);
+document.getElementById('loginPass').addEventListener('keydown', e=>{if(e.key==='Enter')login();});
+document.getElementById('loginUser').addEventListener('keydown', e=>{if(e.key==='Enter')document.getElementById('loginPass').focus();});
 
-// ── Auto-login if token exists ──
-if (token) {
-  fetch(`${API_BASE}/api/admin/metrics`, { headers: { 'X-Admin-Token': token } })
-    .then(r => { if (r.ok) showDashboard(); else doLogout(); })
-    .catch(() => doLogout());
-}
+// ── Auto-login ──
+if(token){fetch(API+'/api/admin/metrics',{headers:{'X-Admin-Token':token}}).then(r=>{if(r.ok)show();else logout();}).catch(()=>logout());}
 </script>
 </body>
 </html>

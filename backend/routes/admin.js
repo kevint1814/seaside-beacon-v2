@@ -14,6 +14,7 @@ const { getMetricsSnapshot } = require('../services/metricsCollector');
 const { getStats } = require('../services/visitTracker');
 const Subscriber = require('../models/Subscriber');
 const DailyScore = require('../models/DailyScore');
+const DailyVisit = require('../models/DailyVisit');
 const SiteStats = require('../models/SiteStats');
 const mongoose = require('mongoose');
 
@@ -40,7 +41,6 @@ function isValidSession(token) {
   return true;
 }
 
-// Auth middleware for API endpoints
 function requireAuth(req, res, next) {
   const token = req.headers['x-admin-token'] || req.query.token;
   if (!isValidSession(token)) {
@@ -60,31 +60,53 @@ router.post('/admin/login', (req, res) => {
   res.status(401).json({ success: false, error: 'Invalid credentials' });
 });
 
-// ── Real-time metrics (polled every 5s by dashboard) ──
+// ── Full metrics — lifetime from MongoDB + session from memory ──
 router.get('/admin/metrics', requireAuth, async (req, res) => {
   try {
     const snapshot = getMetricsSnapshot();
     const visitStats = await getStats();
 
-    // Subscriber breakdown
-    const totalSubs = await Subscriber.countDocuments({ isActive: true });
-    const subsByBeach = await Subscriber.aggregate([
-      { $match: { isActive: true } },
-      { $group: { _id: '$preferredBeach', count: { $sum: 1 } } }
-    ]);
-
-    // Recent scores (last 7 days)
-    const sevenAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      .toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-    const recentScores = await DailyScore.find({ date: { $gte: sevenAgo } })
-      .sort({ date: -1 })
-      .select('date beaches.beachKey beaches.score beaches.recommendation averageScore bestBeach -_id')
+    // ── Subscribers: full list with emails ──
+    const allSubscribers = await Subscriber.find({ isActive: true })
+      .sort({ subscribedAt: -1 })
+      .select('email preferredBeach subscribedAt lastEmailSent')
       .lean();
 
-    // Lifetime stats
+    const subsByBeach = {};
+    allSubscribers.forEach(s => {
+      subsByBeach[s.preferredBeach] = (subsByBeach[s.preferredBeach] || 0) + 1;
+    });
+
+    // ── Lifetime traffic from MongoDB (all days) ──
+    const allTraffic = await DailyVisit.find({})
+      .sort({ date: -1 })
+      .select('date visits uniqueVisits predictions newSubs unsubs -_id')
+      .lean();
+
+    const lifetimeTraffic = allTraffic.reduce((acc, d) => {
+      acc.visits += d.visits || 0;
+      acc.unique += d.uniqueVisits || 0;
+      acc.predictions += d.predictions || 0;
+      acc.newSubs += d.newSubs || 0;
+      acc.unsubs += d.unsubs || 0;
+      return acc;
+    }, { visits: 0, unique: 0, predictions: 0, newSubs: 0, unsubs: 0 });
+
+    // Last 30 days for chart
+    const last30 = allTraffic.slice(0, 30).reverse();
+
+    // ── Scores: last 14 days ──
+    const fourteenAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+      .toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    const recentScores = await DailyScore.find({ date: { $gte: fourteenAgo } })
+      .sort({ date: -1 })
+      .select('date beaches.beachKey beaches.beachName beaches.score beaches.recommendation beaches.verdict averageScore bestBeach -_id')
+      .lean();
+
+    // ── Lifetime site stats ──
     const siteStats = await SiteStats.getPublicStats();
 
-    // Database stats
+    // ── Database ──
     const dbStats = {
       connected: mongoose.connection.readyState === 1,
       collections: Object.keys(mongoose.connection.collections).length,
@@ -92,13 +114,18 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
     };
 
     res.json({
-      ...snapshot,
-      traffic: visitStats,
+      session: snapshot,
+      traffic: {
+        today: visitStats.today,
+        lifetime: lifetimeTraffic,
+        last30: last30,
+        totalDays: allTraffic.length
+      },
       subscribers: {
-        total: totalSubs,
-        byBeach: subsByBeach.reduce((acc, s) => { acc[s._id] = s.count; return acc; }, {}),
-        limit: 300,  // Brevo free tier
-        utilization: Math.round((totalSubs / 300) * 100) + '%'
+        total: allSubscribers.length,
+        list: allSubscribers,
+        byBeach: subsByBeach,
+        limit: 300
       },
       scores: recentScores,
       siteStats,

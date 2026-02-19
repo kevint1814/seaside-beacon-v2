@@ -28,10 +28,12 @@ const PORT = process.env.PORT || 3000;
 
 // ========== MIDDLEWARE ==========
 
-// Helmet for all routes except /admin (dashboard needs inline scripts)
+// Helmet — skip CSP entirely for /admin dashboard
+const helmetDefault = helmet();
+const helmetNoCSP = helmet({ contentSecurityPolicy: false });
 app.use((req, res, next) => {
-  if (req.path === '/admin') return next();
-  helmet()(req, res, next);
+  if (req.path.startsWith('/admin')) return helmetNoCSP(req, res, next);
+  helmetDefault(req, res, next);
 });
 
 // CORS — handle multiple allowed origins properly
