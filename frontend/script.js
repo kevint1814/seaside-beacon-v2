@@ -152,9 +152,9 @@ function initSunriseCanvas() {
     [0.44, [72, 45, 88]],
     [0.56, [48, 62, 105]],
     [0.68, [38, 72, 118]],
-    [0.80, [35, 68, 115]],
-    [0.90, [32, 62, 108]],
-    [1.0,  [28, 55, 98]]
+    [0.80, [45, 88, 148]],
+    [0.90, [58, 108, 168]],
+    [1.0,  [72, 125, 185]]
   ];
 
   // Mid-sky — richer magentas, warm blue that holds colour
@@ -166,9 +166,9 @@ function initSunriseCanvas() {
     [0.44, [192, 92, 68]],
     [0.52, [168, 80, 62]],
     [0.62, [108, 68, 78]],
-    [0.74, [62, 58, 88]],
-    [0.86, [45, 52, 82]],
-    [1.0,  [35, 48, 75]]
+    [0.74, [72, 68, 105]],
+    [0.86, [58, 65, 108]],
+    [1.0,  [52, 62, 102]]
   ];
 
   // Horizon — vivid fire, amber lingers to the very end
@@ -180,9 +180,9 @@ function initSunriseCanvas() {
     [0.42, [255, 175, 62]],
     [0.52, [255, 158, 55]],
     [0.62, [218, 118, 48]],
-    [0.74, [165, 92, 45]],
-    [0.86, [118, 68, 38]],
-    [1.0,  [82, 52, 32]]
+    [0.74, [178, 100, 50]],
+    [0.86, [148, 85, 45]],
+    [1.0,  [118, 78, 48]]
   ];
 
   // Glow — amber-orange, stays alive through the full page
@@ -200,14 +200,14 @@ function initSunriseCanvas() {
 
   // Sea — warm reflections held, deeper but never dead
   const seaStops = [
-    [0.0,  [8, 6, 16]],
-    [0.15, [18, 15, 30]],
-    [0.28, [45, 25, 35]],
-    [0.40, [65, 42, 42]],
-    [0.52, [58, 40, 45]],
-    [0.65, [45, 38, 48]],
-    [0.80, [35, 35, 48]],
-    [1.0,  [25, 28, 40]]
+    [0.0,  [6, 8, 18]],
+    [0.15, [12, 18, 38]],
+    [0.28, [18, 28, 52]],
+    [0.40, [22, 35, 58]],
+    [0.52, [20, 32, 55]],
+    [0.65, [18, 30, 52]],
+    [0.80, [16, 28, 48]],
+    [1.0,  [14, 25, 45]]
   ];
 
   // Cloud color — golden lit during peak, warm-tinted later (not grey)
@@ -235,11 +235,18 @@ function initSunriseCanvas() {
 
   // Puffy cloud bank configs — larger, softer, appear mid-sunrise
   const puffConfigs = [
-    { cx: 0.18, cy: 0.28, rx: 0.12, ry: 0.025, phase: 0.0,  speed: 0.000025 },
-    { cx: 0.72, cy: 0.32, rx: 0.14, ry: 0.030, phase: 1.2,  speed: 0.000020 },
-    { cx: 0.42, cy: 0.22, rx: 0.10, ry: 0.020, phase: 2.4,  speed: 0.000030 },
-    { cx: 0.85, cy: 0.26, rx: 0.09, ry: 0.022, phase: 0.7,  speed: 0.000028 },
-    { cx: 0.28, cy: 0.38, rx: 0.11, ry: 0.028, phase: 1.8,  speed: 0.000022 },
+    // Original 5 — boosted sizes
+    { cx: 0.18, cy: 0.28, rx: 0.14, ry: 0.030, phase: 0.0,  speed: 0.000025 },
+    { cx: 0.72, cy: 0.32, rx: 0.16, ry: 0.035, phase: 1.2,  speed: 0.000020 },
+    { cx: 0.42, cy: 0.22, rx: 0.12, ry: 0.025, phase: 2.4,  speed: 0.000030 },
+    { cx: 0.85, cy: 0.26, rx: 0.11, ry: 0.026, phase: 0.7,  speed: 0.000028 },
+    { cx: 0.28, cy: 0.38, rx: 0.13, ry: 0.032, phase: 1.8,  speed: 0.000022 },
+    // 5 new cloud banks — varied altitudes
+    { cx: 0.55, cy: 0.18, rx: 0.15, ry: 0.028, phase: 3.1,  speed: 0.000018 },
+    { cx: 0.08, cy: 0.35, rx: 0.10, ry: 0.024, phase: 0.4,  speed: 0.000032 },
+    { cx: 0.92, cy: 0.20, rx: 0.13, ry: 0.026, phase: 2.0,  speed: 0.000024 },
+    { cx: 0.35, cy: 0.42, rx: 0.11, ry: 0.022, phase: 1.5,  speed: 0.000026 },
+    { cx: 0.65, cy: 0.15, rx: 0.17, ry: 0.032, phase: 0.9,  speed: 0.000015 },
   ];
 
   // 24 rays for denser god-ray fan
@@ -269,6 +276,10 @@ function initSunriseCanvas() {
     { angle:  0.48, width: 10, lenMul: 0.65 },
     { angle: -0.02, width: 55, lenMul: 1.22 },
   ];
+
+  // ── Airplane configs — blinking lights crossing the sky ──
+  // ── Cinematic text — single Apple-ad sequence, cinema mode only ──
+  // Appears after sun is fully up (sp > 0.65)
 
   function draw(t) {
     const sp = ease(scrollProgress);
@@ -330,9 +341,9 @@ function initSunriseCanvas() {
       ctx.fillRect(0, 0, W, H * 0.75);
     }
 
-    // ── Puffy volumetric clouds — fade in from ~25%, lit by sun ──
-    if (sp > 0.25) {
-      const cloudFade = Math.min(1, (sp - 0.25) / 0.25);
+    // ── Puffy volumetric clouds — fade in from ~20%, lit by sun ──
+    if (sp > 0.20) {
+      const cloudFade = Math.min(1, (sp - 0.20) / 0.20);
       const cCol = multiLerp(cloudColorStops, sp);
       // Later in sunrise, clouds get a blue-white top-light
       const blueBlend = Math.max(0, (sp - 0.65) / 0.35);
@@ -350,7 +361,7 @@ function initSunriseCanvas() {
         // Distance from sun center affects brightness
         const distSun = Math.abs((pc.cx + drift) - 0.5);
         const litFactor = Math.max(0.3, 1 - distSun * 1.5);
-        const pAlpha = cloudFade * 0.12 * litFactor;
+        const pAlpha = cloudFade * 0.22 * litFactor;
 
         ctx.save();
         ctx.translate(px, py);
@@ -540,6 +551,98 @@ function initSunriseCanvas() {
       }
     }
 
+    // ── Sky/sea transition — seamless blend ──
+    // Paint a soft gradient that bridges the horizon color into the sea
+    {
+      const transH = H * 0.08;
+      const transY = H * 0.72 - transH * 0.35;
+      const hc = multiLerp(horizonStops, sp);
+      const sc = multiLerp(seaStops, sp);
+      const transGrad = ctx.createLinearGradient(0, transY, 0, transY + transH);
+      transGrad.addColorStop(0, `rgba(${hc[0]},${hc[1]},${hc[2]},0)`);
+      transGrad.addColorStop(0.35, `rgba(${Math.round((hc[0]+sc[0])*0.5)},${Math.round((hc[1]+sc[1])*0.5)},${Math.round((hc[2]+sc[2])*0.5)},0.35)`);
+      transGrad.addColorStop(0.65, `rgba(${sc[0]},${sc[1]},${sc[2]},0.25)`);
+      transGrad.addColorStop(1, `rgba(${sc[0]},${sc[1]},${sc[2]},0)`);
+      ctx.fillStyle = transGrad;
+      ctx.fillRect(0, transY, W, transH);
+    }
+
+    // ── Lens flare — sun-centered bloom + soft radial rays ──
+    if (sp > 0.25) {
+      const sunY = H * (0.72 - sp * 0.35);
+      const sunX = W * 0.5;
+      const sunR = W * (0.04 + sp * 0.06);
+      const flarePeak = sp < 0.55 ? (sp - 0.25) / 0.30 : Math.max(0.25, 1 - (sp - 0.55) / 0.55);
+
+      // Large soft bloom around the sun
+      const bloomR = sunR * (3.5 + flarePeak * 2);
+      const bloomAlpha = flarePeak * 0.28;
+      const bloom = ctx.createRadialGradient(sunX, sunY, sunR * 0.5, sunX, sunY, bloomR);
+      bloom.addColorStop(0, `rgba(255,250,230,${bloomAlpha})`);
+      bloom.addColorStop(0.3, `rgba(255,240,200,${bloomAlpha * 0.5})`);
+      bloom.addColorStop(0.6, `rgba(255,225,170,${bloomAlpha * 0.15})`);
+      bloom.addColorStop(1, `rgba(255,210,150,0)`);
+      ctx.fillStyle = bloom;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, bloomR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Soft radial rays from sun — varied length, thin, natural
+      if (flarePeak > 0.15) {
+        const rayAlpha = (flarePeak - 0.15) * 0.16;
+        ctx.save();
+        ctx.translate(sunX, sunY);
+        for (let r = 0; r < 12; r++) {
+          const angle = (r / 12) * Math.PI * 2 + 0.18;
+          const len = sunR * (2.2 + pseudoRand(r * 7 + 3) * 3.5);
+          const width = 1 + pseudoRand(r * 11) * 2;
+          const rAlpha = rayAlpha * (0.4 + pseudoRand(r * 13) * 0.6);
+
+          ctx.save();
+          ctx.rotate(angle);
+          const rGrad = ctx.createLinearGradient(sunR * 0.7, 0, len, 0);
+          rGrad.addColorStop(0, `rgba(255,248,220,${rAlpha})`);
+          rGrad.addColorStop(0.3, `rgba(255,238,195,${rAlpha * 0.4})`);
+          rGrad.addColorStop(0.7, `rgba(255,228,175,${rAlpha * 0.08})`);
+          rGrad.addColorStop(1, `rgba(255,220,160,0)`);
+          ctx.fillStyle = rGrad;
+          ctx.fillRect(sunR * 0.7, -width * 0.5, len - sunR * 0.7, width);
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+    }
+
+    // ── Cinematic color grading — warm tint overlay ──
+    {
+      // Warm amber wash — stronger across the whole sunrise
+      const gradeWarm = sp < 0.5 ? sp * 0.14 : Math.max(0.03, 0.07 - (sp - 0.5) * 0.06);
+      if (gradeWarm > 0.005) {
+        ctx.fillStyle = `rgba(200,110,35,${gradeWarm})`;
+        ctx.fillRect(0, 0, W, H);
+      }
+      // Secondary golden wash — concentrated around horizon
+      const horizGold = sp < 0.55 ? sp * 0.10 : Math.max(0.02, 0.055 - (sp - 0.55) * 0.05);
+      if (horizGold > 0.005) {
+        const goldG = ctx.createLinearGradient(0, H * 0.4, 0, H * 0.85);
+        goldG.addColorStop(0, `rgba(220,140,40,0)`);
+        goldG.addColorStop(0.4, `rgba(220,140,40,${horizGold})`);
+        goldG.addColorStop(0.7, `rgba(200,100,30,${horizGold * 0.6})`);
+        goldG.addColorStop(1, `rgba(180,80,25,0)`);
+        ctx.fillStyle = goldG;
+        ctx.fillRect(0, H * 0.4, W, H * 0.45);
+      }
+      // Cool blue vignette on edges — cinematic framing
+      const vigStr = 0.12 + sp * 0.06;
+      const vigR = Math.max(W, H) * 0.75;
+      const vig = ctx.createRadialGradient(W * 0.5, H * 0.45, vigR * 0.45, W * 0.5, H * 0.45, vigR);
+      vig.addColorStop(0, `rgba(0,0,0,0)`);
+      vig.addColorStop(0.7, `rgba(0,0,0,0)`);
+      vig.addColorStop(1, `rgba(8,10,25,${vigStr})`);
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, W, H);
+    }
+
     // ── Fishermen boat silhouettes — cinematic horizon spread ──
     if (sp > 0.12) {
       const boatAlpha = Math.min(1, (sp - 0.12) / 0.25);
@@ -549,19 +652,20 @@ function initSunriseCanvas() {
       // Spread to frame the sun — nothing dead center to keep the glow clear
       const boats = [
         // Large trawlers — center horizon, flanking the sun path
-        { x: 0.38, y: 0.718, scale: 1.0,  bobSpeed: 0.0006, bobPhase: 0.0,  type: 'trawler' },
-        { x: 0.62, y: 0.716, scale: 0.92, bobSpeed: 0.0007, bobPhase: 2.2,  type: 'trawler' },
+        { x: 0.38, y: 0.718, scale: 1.0,  bobSpeed: 0.0006, bobPhase: 0.0,  type: 'trawler', driftSpeed: 0.00003, driftRange: 0.04 },
+        { x: 0.62, y: 0.716, scale: 0.92, bobSpeed: 0.0007, bobPhase: 2.2,  type: 'trawler', driftSpeed: 0.000025, driftRange: 0.035 },
         // Medium boats — wider spread
-        { x: 0.22, y: 0.724, scale: 0.65, bobSpeed: 0.0008, bobPhase: 1.0,  type: 'sail' },
-        { x: 0.50, y: 0.720, scale: 0.55, bobSpeed: 0.0009, bobPhase: 3.0,  type: 'sail' },
-        { x: 0.76, y: 0.725, scale: 0.60, bobSpeed: 0.0010, bobPhase: 0.7,  type: 'sail' },
+        { x: 0.22, y: 0.724, scale: 0.65, bobSpeed: 0.0008, bobPhase: 1.0,  type: 'sail', driftSpeed: 0.000035, driftRange: 0.05 },
+        { x: 0.50, y: 0.720, scale: 0.55, bobSpeed: 0.0009, bobPhase: 3.0,  type: 'sail', driftSpeed: 0.000028, driftRange: 0.04 },
+        { x: 0.76, y: 0.725, scale: 0.60, bobSpeed: 0.0010, bobPhase: 0.7,  type: 'sail', driftSpeed: 0.000032, driftRange: 0.045 },
         // Small distant boats — edges
-        { x: 0.12, y: 0.728, scale: 0.32, bobSpeed: 0.0012, bobPhase: 1.5,  type: 'small' },
-        { x: 0.88, y: 0.729, scale: 0.28, bobSpeed: 0.0013, bobPhase: 4.0,  type: 'small' },
+        { x: 0.12, y: 0.728, scale: 0.32, bobSpeed: 0.0012, bobPhase: 1.5,  type: 'small', driftSpeed: 0.00004, driftRange: 0.055 },
+        { x: 0.88, y: 0.729, scale: 0.28, bobSpeed: 0.0013, bobPhase: 4.0,  type: 'small', driftSpeed: 0.000038, driftRange: 0.06 },
       ];
 
       for (const b of boats) {
-        const bx = b.x * W;
+        const driftX = Math.sin(t * b.driftSpeed + b.bobPhase * 2) * b.driftRange * W;
+        const bx = b.x * W + driftX;
         const bob = Math.sin(t * b.bobSpeed + b.bobPhase) * 2.5 * b.scale;
         const by = b.y * H + bob;
         const s = b.scale;
@@ -755,32 +859,229 @@ function initSunriseCanvas() {
       ctx.restore();
     }
 
-    // ── Sea waves — 12 layers, stay alive as light increases ───
+    // ── Sea waves — 18 layers, visible and alive ───
     const waveColor = multiLerp(glowStops, sp);
-    // Waves get more visible with daylight, not less
+    // Waves much more visible
     const daylight = Math.min(1, sp * 1.5);
-    const waveAlpha = 0.025 + glowPeak * 0.08 + daylight * 0.04;
-    // Late waves pick up sky/blue tint instead of only glow color
+    const waveAlpha = 0.05 + glowPeak * 0.12 + daylight * 0.06;
+    // Late waves pick up sky/blue tint
     const waveBlueMix = Math.max(0, (sp - 0.6) / 0.4);
     const wR = Math.round(waveColor[0] * (1 - waveBlueMix * 0.4) + zenith[0] * waveBlueMix * 0.4);
     const wG = Math.round(waveColor[1] * (1 - waveBlueMix * 0.3) + zenith[1] * waveBlueMix * 0.3);
     const wB = Math.round(waveColor[2] * (1 - waveBlueMix * 0.2) + zenith[2] * waveBlueMix * 0.5);
 
-    for (let w = 0; w < 12; w++) {
-      const wy   = H * (0.73 + w * 0.022);
-      const amp  = 5.5 - w * 0.35;
-      const freq = 0.0035 + w * 0.0012;
-      const spd  = 0.00035 + w * 0.00010;
+    // Primary wave lines — long horizontal ripples
+    for (let w = 0; w < 18; w++) {
+      const wy   = H * (0.73 + w * 0.015);
+      const amp  = 4.5 - w * 0.18;
+      const freq = 0.003 + w * 0.001;
+      const spd  = 0.0004 + w * 0.00008;
       const wPhase = w * 1.4 + (w % 2 === 0 ? 0 : Math.PI * 0.6);
       ctx.beginPath();
       for (let x = 0; x <= W; x += 3) {
         const y = wy + amp * Math.sin(x * freq + t * spd + wPhase)
-                     + amp * 0.3 * Math.sin(x * freq * 2.3 + t * spd * 1.7 + w);
+                     + amp * 0.35 * Math.sin(x * freq * 2.3 + t * spd * 1.7 + w);
         x===0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
-      ctx.strokeStyle = `rgba(${wR},${wG},${wB},${(waveAlpha) * (1-w*0.06)})`;
-      ctx.lineWidth = 1;
+      const distFromTop = w / 18;
+      ctx.strokeStyle = `rgba(${wR},${wG},${wB},${waveAlpha * (1 - distFromTop * 0.5)})`;
+      ctx.lineWidth = 1.2 - distFromTop * 0.4;
       ctx.stroke();
+    }
+
+    // Secondary fine ripples — shorter, faster, fill in between
+    if (sp > 0.15) {
+      const rippleAlpha = waveAlpha * 0.35;
+      for (let r = 0; r < 12; r++) {
+        const ry = H * (0.735 + r * 0.020 + pseudoRand(r * 7) * 0.008);
+        const rAmp = 1.5 + pseudoRand(r * 13) * 2;
+        const rFreq = 0.008 + pseudoRand(r * 3) * 0.006;
+        const rSpd = 0.0006 + pseudoRand(r * 11) * 0.0004;
+        const rLen = W * (0.15 + pseudoRand(r * 19) * 0.25);
+        const rStart = pseudoRand(r * 23) * (W - rLen);
+
+        ctx.beginPath();
+        for (let x = rStart; x <= rStart + rLen; x += 3) {
+          const localX = (x - rStart) / rLen;
+          const fade = Math.sin(localX * Math.PI); // fade edges
+          const y = ry + rAmp * fade * Math.sin(x * rFreq + t * rSpd + r * 2.7);
+          x === rStart ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = `rgba(${Math.min(255, wR + 30)},${Math.min(255, wG + 20)},${Math.min(255, wB + 15)},${rippleAlpha})`;
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+      }
+    }
+
+    // ── Sun reflection on water — bright golden ripple lines in the sun's column ──
+    if (sp > 0.20) {
+      const sunX = W * 0.5;
+      const reflWidth = W * (0.08 + sp * 0.14); // widens as sun rises
+      const reflAlpha = Math.min(0.35, (sp - 0.20) * 0.55);
+      const reflC = multiLerp(glowStops, sp);
+
+      for (let r = 0; r < 22; r++) {
+        const ry = H * (0.725 + r * 0.012);
+        const distFromHorizon = r / 22;
+        // Reflection narrows and fades further from horizon
+        const localWidth = reflWidth * (1 - distFromHorizon * 0.6);
+        const localAlpha = reflAlpha * (1 - distFromHorizon * 0.7);
+        const rAmp = 2 + pseudoRand(r * 17) * 3;
+        const rFreq = 0.006 + pseudoRand(r * 7) * 0.008;
+        const rSpd = 0.0005 + pseudoRand(r * 11) * 0.0003;
+
+        // Only draw within the sun's reflection column
+        const startX = sunX - localWidth;
+        const endX = sunX + localWidth;
+
+        ctx.beginPath();
+        for (let x = startX; x <= endX; x += 3) {
+          const normalX = (x - startX) / (endX - startX); // 0→1
+          const fade = Math.sin(normalX * Math.PI); // fade at edges
+          const y = ry + rAmp * fade * Math.sin(x * rFreq + t * rSpd + r * 1.9);
+          x === startX ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = `rgba(${Math.min(255, reflC[0] + 40)},${Math.min(255, reflC[1] + 30)},${Math.min(255, reflC[2] + 20)},${localAlpha})`;
+        ctx.lineWidth = 1.2 - distFromHorizon * 0.6;
+        ctx.stroke();
+      }
+    }
+
+    // ── Airplane silhouettes — cinematic sun-crossing flights ──
+    if (sp > 0.15) {
+      const planeAlpha = Math.min(0.75, (sp - 0.15) / 0.25);
+      const skyH = H * 0.72; // sea starts at 72%
+
+      const planes = [
+        // Fixed altitude bands in the sky — NOT tied to sun
+        { startX: -0.10, yFrac: 0.35, speed: 0.000028, phase: 0.0,    scale: 0.45, angle: -0.03 },
+        { startX: 1.10,  yFrac: 0.25, speed: -0.000016, phase: 15000, scale: 0.55, angle: 0.02 },
+        { startX: -0.15, yFrac: 0.15, speed: 0.000024, phase: 32000, scale: 0.4, angle: -0.02 },
+        // Sun-crosser — flies right through the sun disc
+        { startX: -0.08, yFrac: 0.48, speed: 0.000019, phase: 8000, scale: 0.85, angle: -0.01 },
+      ];
+
+      ctx.save();
+      for (const pl of planes) {
+        const cycle = ((t + pl.phase) * Math.abs(pl.speed)) % 1.35;
+        const px = pl.speed > 0
+          ? (pl.startX + cycle) * W
+          : (pl.startX - cycle + 1.35) * W;
+        // Fixed y in the sky band — tiny wobble for realism, NOT scroll-dependent
+        const py = skyH * pl.yFrac + Math.sin(t * 0.00005 + pl.phase) * 4;
+        const s = pl.scale;
+        const dir = pl.speed > 0 ? 1 : -1;
+
+        if (px < -50 || px > W + 50) continue;
+
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.scale(dir, 1);
+        ctx.rotate(pl.angle);
+
+        ctx.fillStyle = `rgba(4,5,12,${planeAlpha * 0.78})`;
+
+        // Fuselage
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 18 * s, 2 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Nose cone
+        ctx.beginPath();
+        ctx.moveTo(18 * s, 0);
+        ctx.lineTo(22 * s, -0.5 * s);
+        ctx.lineTo(22 * s, 0.5 * s);
+        ctx.closePath();
+        ctx.fill();
+
+        // Main wings — swept back
+        ctx.beginPath();
+        ctx.moveTo(-2 * s, 0);
+        ctx.lineTo(-8 * s, -14 * s);
+        ctx.lineTo(-5 * s, -14 * s);
+        ctx.lineTo(4 * s, -1 * s);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(-2 * s, 0);
+        ctx.lineTo(-8 * s, 14 * s);
+        ctx.lineTo(-5 * s, 14 * s);
+        ctx.lineTo(4 * s, 1 * s);
+        ctx.closePath();
+        ctx.fill();
+
+        // Tail fin — vertical stabilizer
+        ctx.beginPath();
+        ctx.moveTo(-16 * s, 0);
+        ctx.lineTo(-20 * s, -7 * s);
+        ctx.lineTo(-17 * s, -6 * s);
+        ctx.lineTo(-14 * s, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Tail wings — horizontal stabilizers
+        ctx.beginPath();
+        ctx.moveTo(-15 * s, 0); ctx.lineTo(-19 * s, -5 * s); ctx.lineTo(-17 * s, -4.5 * s); ctx.lineTo(-13 * s, 0);
+        ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-15 * s, 0); ctx.lineTo(-19 * s, 5 * s); ctx.lineTo(-17 * s, 4.5 * s); ctx.lineTo(-13 * s, 0);
+        ctx.closePath(); ctx.fill();
+
+        // Contrails — dual fading lines
+        if (sp > 0.3) {
+          const trailAlpha = planeAlpha * 0.2;
+          const trailLen = 65 * s;
+          const trailGrad = ctx.createLinearGradient(-22 * s, 0, -22 * s - trailLen, 0);
+          trailGrad.addColorStop(0, `rgba(210,210,220,${trailAlpha})`);
+          trailGrad.addColorStop(0.4, `rgba(210,210,220,${trailAlpha * 0.35})`);
+          trailGrad.addColorStop(1, `rgba(210,210,220,0)`);
+          ctx.strokeStyle = trailGrad;
+          ctx.lineWidth = 1 * s;
+          ctx.beginPath(); ctx.moveTo(-22 * s, -1.5 * s); ctx.lineTo(-22 * s - trailLen, -1.5 * s); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-22 * s, 1.5 * s); ctx.lineTo(-22 * s - trailLen, 1.5 * s); ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    // ── Cinematic text — Apple-ad style, cinema mode only, after sun rises ──
+    if (document.body.classList.contains('cinema-mode') && sp > 0.65) {
+      const textEntry = Math.min(1, (sp - 0.65) / 0.15); // fades in between sp 0.65–0.80
+
+      // Three lines appear in staggered sequence
+      const line1Alpha = Math.min(1, textEntry * 1.8);                         // first to appear
+      const line2Alpha = Math.max(0, Math.min(1, (textEntry - 0.3) * 1.8));   // slight delay
+      const tagAlpha   = Math.max(0, Math.min(1, (textEntry - 0.55) * 2.0));  // last
+
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const sunYApprox = H * (0.72 - sp * 0.35);
+      const centerY = sunYApprox + H * 0.12;
+
+      // Line 1 — "Some mornings stop you cold."
+      const l1Size = Math.max(22, Math.round(W * 0.045));
+      ctx.font = `italic 600 ${l1Size}px 'Cormorant Garamond', Georgia, serif`;
+      ctx.fillStyle = `rgba(255,250,240,${line1Alpha * 0.88})`;
+      ctx.fillText('Some mornings stop you cold.', W * 0.5, centerY);
+
+      // Line 2 — "Seaside Beacon finds them for you."
+      const l2Size = Math.max(15, Math.round(W * 0.030));
+      ctx.font = `italic 600 ${l2Size}px 'Cormorant Garamond', Georgia, serif`;
+      ctx.fillStyle = `rgba(222,195,160,${line2Alpha * 0.72})`;
+      ctx.fillText('Seaside Beacon finds them for you.', W * 0.5, centerY + l1Size * 1.35);
+
+      // Tagline — "TOMORROW'S SKY, READ TONIGHT"
+      const tagSize = Math.max(9, Math.round(W * 0.014));
+      ctx.font = `500 ${tagSize}px 'Instrument Sans', -apple-system, sans-serif`;
+      ctx.fillStyle = `rgba(210,175,130,${tagAlpha * 0.72})`;
+      ctx.fillText('T O M O R R O W \u2019 S   S K Y ,   R E A D   T O N I G H T', W * 0.5, centerY + l1Size * 1.35 + l2Size * 1.8);
+
+      ctx.restore();
     }
 
     requestAnimationFrame(draw);
