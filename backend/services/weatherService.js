@@ -102,68 +102,155 @@ function getBeaches() {
 
 /**
  * Fetch 12-hour hourly forecast from AccuWeather
+ * Cached per locationKey — all Chennai beaches share 206671,
+ * so one API call serves every beach for 30 minutes.
+ *
+ * Resilience layers:
+ *   1. Positive cache (30-min TTL) — serves repeated requests
+ *   2. Negative cache (2-min TTL) — prevents hammering when API is down
+ *   3. Retry with backoff (2 attempts) — handles transient failures
+ *   4. Stale cache fallback — returns expired data if API fails
  */
+const _hourlyCache = {};
+const _hourlyFailCache = {};
+
 async function fetchAccuWeatherHourly(locationKey) {
-  try {
-    const url = `http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/${locationKey}`;
-    const response = await axios.get(url, {
-      params: { apikey: ACCUWEATHER_API_KEY, details: true, metric: true }
-    });
-    console.log(`✅ Fetched ${response.data.length} hours of forecast data`);
-    return response.data;
-  } catch (error) {
-    console.error('❌ AccuWeather API Error:', error.response?.data || error.message);
-    throw new Error(`AccuWeather API failed: ${error.message}`);
+  // Layer 1: positive cache (30-min TTL)
+  const cached = _hourlyCache[locationKey];
+  if (cached && (Date.now() - cached.fetchedAt < 30 * 60 * 1000)) {
+    console.log('⚡ Using cached hourly forecast (AccuWeather)');
+    return cached.data;
   }
+
+  // Layer 2: negative cache (2-min TTL) — don't retry if we just failed
+  const failCached = _hourlyFailCache[locationKey];
+  if (failCached && (Date.now() - failCached.failedAt < 2 * 60 * 1000)) {
+    console.warn('⏸️  AccuWeather hourly skipped (recent failure, using stale cache or null)');
+    return cached?.data || null;  // return stale data if available
+  }
+
+  // Layer 3: retry with backoff
+  const MAX_RETRIES = 2;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const url = `https://dataservice.accuweather.com/forecasts/v1/hourly/12hour/${locationKey}`;
+      const response = await axios.get(url, {
+        params: { apikey: ACCUWEATHER_API_KEY, details: true, metric: true },
+        timeout: 10000
+      });
+      console.log(`✅ Fetched ${response.data.length} hours of forecast data`);
+
+      // Cache it
+      _hourlyCache[locationKey] = { data: response.data, fetchedAt: Date.now() };
+      delete _hourlyFailCache[locationKey];
+
+      return response.data;
+    } catch (error) {
+      const status = error.response?.status;
+      console.error(`❌ AccuWeather hourly attempt ${attempt + 1}/${MAX_RETRIES}: ${status || error.message}`);
+
+      // Don't retry on 401/403 (auth issues) — immediate fail
+      if (status === 401 || status === 403) break;
+
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
+      }
+    }
+  }
+
+  // All retries failed — mark negative cache
+  _hourlyFailCache[locationKey] = { failedAt: Date.now() };
+
+  // Layer 4: stale cache fallback — better to show slightly old data than nothing
+  if (cached?.data) {
+    const staleMinutes = Math.round((Date.now() - cached.fetchedAt) / 60000);
+    console.warn(`🔄 AccuWeather failed, serving stale hourly cache (${staleMinutes}min old)`);
+    return cached.data;
+  }
+
+  throw new Error('AccuWeather API failed and no cached data available');
 }
 
 /**
  * Fetch 1-day daily forecast from AccuWeather
  * Returns Sun.Rise, Sun.Set and daily summary
- * Cached per locationKey — sunrise is the same for all beaches in the same city
+ * Cached per locationKey — sunrise times identical across all Chennai beaches
+ *
+ * Same resilience pattern as hourly: positive cache → negative cache → retry → stale fallback
  */
 const _dailyCache = {};
+const _dailyFailCache = {};
+
 async function fetchAccuWeatherDaily(locationKey) {
-  // Return cached result if fetched within last 2 hours
+  // Layer 1: positive cache (2-hour TTL — sunrise/sunset don't change within hours)
   const cached = _dailyCache[locationKey];
   if (cached && (Date.now() - cached.fetchedAt < 2 * 60 * 60 * 1000)) {
     console.log('🌅 Using cached daily forecast');
     return cached.data;
   }
 
-  try {
-    const url = `http://dataservice.accuweather.com/forecasts/v1/daily/1day/${locationKey}`;
-    const response = await axios.get(url, {
-      params: { apikey: ACCUWEATHER_API_KEY, details: true, metric: true }
-    });
-    const daily = response.data?.DailyForecasts?.[0];
-    if (!daily) return null;
-
-    const sunRiseRaw = daily.Sun?.Rise;
-    const sunSetRaw = daily.Sun?.Set;
-
-    const sunRise = sunRiseRaw ? new Date(sunRiseRaw) : null;
-    const sunSet = sunSetRaw ? new Date(sunSetRaw) : null;
-
-    console.log(`🌅 Sunrise: ${sunRise ? sunRise.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' }) : 'N/A'}`);
-    console.log(`🌇 Sunset: ${sunSet ? sunSet.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' }) : 'N/A'}`);
-
-    const result = {
-      sunRise,
-      sunSet,
-      hoursOfSun: daily.HoursOfSun || null,
-      moonPhase: daily.Moon?.Phase || null,
-      nightHoursOfRain: daily.Night?.HoursOfRain || 0  // v3: temporal post-rain signal
-    };
-
-    // Cache it
-    _dailyCache[locationKey] = { data: result, fetchedAt: Date.now() };
-
-    return result;
-  } catch (error) {
-    console.warn('⚠️ AccuWeather daily forecast failed:', error.message);
-    return null;
+  // Layer 2: negative cache (2-min TTL)
+  const failCached = _dailyFailCache[locationKey];
+  if (failCached && (Date.now() - failCached.failedAt < 2 * 60 * 1000)) {
+    console.warn('⏸️  AccuWeather daily skipped (recent failure)');
+    return cached?.data || null;
   }
+
+  // Layer 3: retry with backoff
+  const MAX_RETRIES = 2;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const url = `https://dataservice.accuweather.com/forecasts/v1/daily/1day/${locationKey}`;
+      const response = await axios.get(url, {
+        params: { apikey: ACCUWEATHER_API_KEY, details: true, metric: true },
+        timeout: 10000
+      });
+      const daily = response.data?.DailyForecasts?.[0];
+      if (!daily) return null;
+
+      const sunRiseRaw = daily.Sun?.Rise;
+      const sunSetRaw = daily.Sun?.Set;
+
+      const sunRise = sunRiseRaw ? new Date(sunRiseRaw) : null;
+      const sunSet = sunSetRaw ? new Date(sunSetRaw) : null;
+
+      console.log(`🌅 Sunrise: ${sunRise ? sunRise.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' }) : 'N/A'}`);
+      console.log(`🌇 Sunset: ${sunSet ? sunSet.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' }) : 'N/A'}`);
+
+      const result = {
+        sunRise,
+        sunSet,
+        hoursOfSun: daily.HoursOfSun || null,
+        moonPhase: daily.Moon?.Phase || null,
+        nightHoursOfRain: daily.Night?.HoursOfRain || 0
+      };
+
+      // Cache it
+      _dailyCache[locationKey] = { data: result, fetchedAt: Date.now() };
+      delete _dailyFailCache[locationKey];
+
+      return result;
+    } catch (error) {
+      const status = error.response?.status;
+      console.warn(`⚠️ AccuWeather daily attempt ${attempt + 1}/${MAX_RETRIES}: ${status || error.message}`);
+      if (status === 401 || status === 403) break;
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
+      }
+    }
+  }
+
+  // All retries failed
+  _dailyFailCache[locationKey] = { failedAt: Date.now() };
+
+  // Layer 4: stale cache fallback
+  if (cached?.data) {
+    const staleMinutes = Math.round((Date.now() - cached.fetchedAt) / 60000);
+    console.warn(`🔄 AccuWeather daily failed, serving stale cache (${staleMinutes}min old)`);
+    return cached.data;
+  }
+
+  return null;
 }
 
 // ==========================================

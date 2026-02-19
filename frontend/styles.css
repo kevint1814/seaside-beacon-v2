@@ -2436,7 +2436,10 @@ body.cinema-mode .section-divider {
    FOOTER
 ═══════════════════════════════════════════════════════ */
 .footer {
-  border-top:1px solid var(--glass-border); padding:28px clamp(20px,4vw,56px);
+  border-top:1px solid var(--glass-border);
+  padding:28px clamp(20px,4vw,56px);
+  /* Extra bottom padding so mobile browser chrome / safe-area doesn't clip content */
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
   position:relative;
 }
 .footer-wave { position:absolute; top:-36px; left:0; right:0; height:36px; pointer-events:none; }

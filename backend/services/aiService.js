@@ -2,7 +2,6 @@
 // AI Service - Groq AI Sunrise Insights
 // Balanced, honest, general-audience-first
 // Photography tips as secondary layer
-// Model: llama-3.3-70b-versatile
 //
 // ZERO hardcoded beach content — AI generates
 // everything from weather data + beach context.
@@ -12,11 +11,16 @@
 
 const Groq = require('groq-sdk');
 
+// Configurable via env — swap models without redeploying
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MAX_TOKENS = parseInt(process.env.GROQ_MAX_TOKENS) || 1200;
+const GROQ_TEMPERATURE = parseFloat(process.env.GROQ_TEMPERATURE) || 0.7;
+
 let groqClient;
 try {
   if (process.env.GROQ_API_KEY) {
     groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    console.log('✅ Groq AI initialized');
+    console.log(`✅ Groq AI initialized (model: ${GROQ_MODEL})`);
   } else {
     console.warn('⚠️  Groq API not configured, using fallback');
   }
@@ -197,7 +201,7 @@ Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A
 
 
     const completion = await groqClient.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
       messages: [
         {
           role: "system",
@@ -214,8 +218,8 @@ KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms)
         },
         { role: "user", content: prompt }
       ],
-      temperature: 0.7,
-      max_tokens: 1200,
+      temperature: GROQ_TEMPERATURE,
+      max_tokens: GROQ_MAX_TOKENS,
       response_format: { type: "json_object" }
     });
 

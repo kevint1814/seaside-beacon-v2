@@ -78,13 +78,30 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check endpoint for external monitoring
-app.get('/health', (req, res) => {
-  res.json({
+// Health check endpoint for UptimeRobot + diagnostics
+app.get('/health', async (req, res) => {
+  const uptimeSec = process.uptime();
+  const uptimeH = Math.floor(uptimeSec / 3600);
+  const uptimeM = Math.floor((uptimeSec % 3600) / 60);
+
+  const health = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+    uptime: `${uptimeH}h ${uptimeM}m`,
+    memory: `${Math.round(process.memoryUsage().rss / 1024 / 1024)}MB`,
+    services: {
+      accuWeather: !!process.env.ACCUWEATHER_API_KEY,
+      openMeteoProxy: !!process.env.OPENMETEO_PROXY_URL,
+      groqAI: !!process.env.GROQ_API_KEY,
+      email: !!(process.env.BREVO_API_KEY || process.env.SENDGRID_API_KEY),
+      database: mongoose.connection.readyState === 1
+    }
+  };
+
+  const allUp = Object.values(health.services).every(Boolean);
+  health.status = allUp ? 'healthy' : 'degraded';
+
+  res.status(allUp ? 200 : 503).json(health);
 });
 
 app.use('/api', subscribeRoutes);
@@ -123,14 +140,15 @@ async function startServer() {
 
     app.listen(PORT, () => {
       console.log('═══════════════════════════════════════');
-      console.log('🌅 SEASIDE BEACON SERVER v3.0');
+      console.log('🌅 SEASIDE BEACON SERVER v4.0');
       console.log('═══════════════════════════════════════');
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📧 Email: ${process.env.BREVO_API_KEY ? 'Brevo ✓' : 'Not configured'}`);
-      console.log(`🤖 AI: ${process.env.GROQ_API_KEY ? 'Groq ✓' : 'Fallback mode'}`);
-      console.log(`🌤️  Weather: ${process.env.ACCUWEATHER_API_KEY ? 'AccuWeather ✓' : 'Not configured'}`);
+      console.log(`📧 Email: ${process.env.BREVO_API_KEY ? 'Brevo ✓' : 'Not configured'}${process.env.SENDGRID_API_KEY ? ' + SendGrid fallback ✓' : ''}`);
+      console.log(`🤖 AI: ${process.env.GROQ_API_KEY ? `Groq ✓ (${process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'})` : 'Fallback mode'}`);
+      console.log(`🌤️  Weather: ${process.env.ACCUWEATHER_API_KEY ? 'AccuWeather ✓ (cached 30min)' : 'Not configured'}`);
       console.log(`🌥️  Open-Meteo: ${process.env.OPENMETEO_PROXY_URL ? 'CF Worker proxy ✓' : 'Direct (shared IP limits)'}`);
+      console.log(`⚡ Caching: Prediction 10min | Hourly 30min | Daily 2h | Open-Meteo 6h`);
       console.log(`📊 Analytics: Visit tracking ✓`);
       console.log('═══════════════════════════════════════');
     });

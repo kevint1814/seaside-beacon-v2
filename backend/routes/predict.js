@@ -1,7 +1,10 @@
 // ==========================================
-// Predict Routes v3
+// Predict Routes v4
 // ==========================================
-// Added: trackPrediction() on each forecast request
+// v3: trackPrediction() on each forecast request
+// v4: Prediction-level cache (10-min TTL)
+//     — weather + AI insights cached per beach
+//     — eliminates duplicate API calls + Groq hits
 // ==========================================
 
 const express = require('express');
@@ -9,6 +12,25 @@ const router = express.Router();
 const weatherService = require('../services/weatherService');
 const aiService = require('../services/aiService');
 const { trackPrediction } = require('../services/visitTracker');
+
+// ── Prediction-level cache ──────────────────────────
+// Caches the FULL response (weather + AI) per beach.
+// 10-min TTL — weather data doesn't change faster than this,
+// and it saves both AccuWeather + Groq API calls.
+const PREDICTION_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const _predictionCache = {};
+
+function getCachedPrediction(beachKey) {
+  const cached = _predictionCache[beachKey];
+  if (cached && (Date.now() - cached.cachedAt < PREDICTION_CACHE_TTL)) {
+    return cached.data;
+  }
+  return null;
+}
+
+function cachePrediction(beachKey, data) {
+  _predictionCache[beachKey] = { data, cachedAt: Date.now() };
+}
 
 /**
  * GET /api/stats
@@ -75,14 +97,19 @@ router.get('/predict/:beach', async (req, res) => {
     // Track this forecast request (non-blocking)
     trackPrediction();
 
+    // ── Check prediction-level cache first ──
+    const cached = getCachedPrediction(beach);
+    if (cached) {
+      console.log(`⚡ Serving cached prediction for ${beach}`);
+      return res.json(cached);
+    }
+
     // ── Fetch selected beach first (fail fast if unavailable) ──
     const primaryWeather = await weatherService.getTomorrow6AMForecast(beach);
 
     if (!primaryWeather.available) {
-      return res.json({
-        success: true,
-        data: { weather: primaryWeather, photography: null }
-      });
+      const response = { success: true, data: { weather: primaryWeather, photography: null } };
+      return res.json(response);
     }
 
     // ── Fetch other beaches sequentially (avoids Open-Meteo rate-limit bursts) ──
@@ -100,7 +127,6 @@ router.get('/predict/:beach', async (req, res) => {
     }
 
     // ── Generate insights, passing real multi-beach data ─────
-    // Attach beach name lookup for downstream consumers
     const beachList = weatherService.getBeaches();
     const allBeachNames = {};
     beachList.forEach(b => { allBeachNames[b.key] = b.name; });
@@ -111,13 +137,19 @@ router.get('/predict/:beach', async (req, res) => {
       allWeatherData
     );
 
-    res.json({
+    const response = {
       success: true,
       data: {
         weather: primaryWeather,
         photography: photographyInsights
       }
-    });
+    };
+
+    // ── Cache the full response ──
+    cachePrediction(beach, response);
+    console.log(`💾 Cached prediction for ${beach} (TTL: ${PREDICTION_CACHE_TTL / 60000}min)`);
+
+    res.json(response);
   } catch (error) {
     console.error('Prediction error:', error.message);
     res.status(500).json({ success: false, message: error.message || 'Prediction failed' });
