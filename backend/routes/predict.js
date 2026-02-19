@@ -12,6 +12,7 @@ const router = express.Router();
 const weatherService = require('../services/weatherService');
 const aiService = require('../services/aiService');
 const { trackPrediction } = require('../services/visitTracker');
+const metrics = require('../services/metricsCollector');
 
 // ── Prediction-level cache ──────────────────────────
 // Caches the FULL response (weather + AI) per beach.
@@ -96,13 +97,18 @@ router.get('/predict/:beach', async (req, res) => {
 
     // Track this forecast request (non-blocking)
     trackPrediction();
+    metrics.trackRequest('predict');
+    const _startTime = Date.now();
 
     // ── Check prediction-level cache first ──
     const cached = getCachedPrediction(beach);
     if (cached) {
       console.log(`⚡ Serving cached prediction for ${beach}`);
+      metrics.trackPredictionCache(true);
+      metrics.trackResponseTime(Date.now() - _startTime);
       return res.json(cached);
     }
+    metrics.trackPredictionCache(false);
 
     // ── Fetch selected beach first (fail fast if unavailable) ──
     const primaryWeather = await weatherService.getTomorrow6AMForecast(beach);
@@ -147,11 +153,13 @@ router.get('/predict/:beach', async (req, res) => {
 
     // ── Cache the full response ──
     cachePrediction(beach, response);
+    metrics.trackResponseTime(Date.now() - _startTime);
     console.log(`💾 Cached prediction for ${beach} (TTL: ${PREDICTION_CACHE_TTL / 60000}min)`);
 
     res.json(response);
   } catch (error) {
     console.error('Prediction error:', error.message);
+    metrics.trackRequestError();
     res.status(500).json({ success: false, message: error.message || 'Prediction failed' });
   }
 });

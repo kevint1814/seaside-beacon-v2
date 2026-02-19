@@ -17,6 +17,7 @@ const rateLimit = require('express-rate-limit');
 const subscribeRoutes = require('./routes/subscribe');
 const predictRoutes = require('./routes/predict');
 const communityRoutes = require('./routes/community');
+const adminRoutes = require('./routes/admin');
 const { initializeDailyEmailJob } = require('./jobs/dailyEmail');
 const { initializeDailyDigest } = require('./services/notifyAdmin');
 const { trackVisitMiddleware } = require('./services/visitTracker');
@@ -68,7 +69,7 @@ app.get('/', (req, res) => {
   res.json({
     status: 'online',
     service: 'Seaside Beacon API',
-    version: '3.0.0',
+    version: '4.0.0',
     endpoints: {
       beaches: 'GET /api/beaches',
       predict: 'GET /api/predict/:beach',
@@ -107,6 +108,8 @@ app.get('/health', async (req, res) => {
 app.use('/api', subscribeRoutes);
 app.use('/api', predictRoutes);
 app.use('/api', communityRoutes);
+app.use('/api', adminRoutes);  // POST /api/admin/login + GET /api/admin/metrics
+app.use('/', adminRoutes);     // GET /admin (serves dashboard HTML)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Endpoint not found' });
@@ -150,6 +153,7 @@ async function startServer() {
       console.log(`🌥️  Open-Meteo: ${process.env.OPENMETEO_PROXY_URL ? 'CF Worker proxy ✓' : 'Direct (shared IP limits)'}`);
       console.log(`⚡ Caching: Prediction 10min | Hourly 30min | Daily 2h | Open-Meteo 6h`);
       console.log(`📊 Analytics: Visit tracking ✓`);
+      console.log(`🖥️  Admin: ${process.env.ADMIN_PASS ? '/admin (password set)' : '/admin (default pass — change ADMIN_PASS!)'}`);
       console.log('═══════════════════════════════════════');
     });
 

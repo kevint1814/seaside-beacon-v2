@@ -19,6 +19,7 @@
 // ==========================================
 
 const axios = require('axios');
+const metrics = require('./metricsCollector');
 
 const ACCUWEATHER_API_KEY = process.env.ACCUWEATHER_API_KEY;
 // Cloudflare Worker proxy URL — bypasses Render's shared-IP rate limits on Open-Meteo
@@ -119,6 +120,7 @@ async function fetchAccuWeatherHourly(locationKey) {
   const cached = _hourlyCache[locationKey];
   if (cached && (Date.now() - cached.fetchedAt < 30 * 60 * 1000)) {
     console.log('⚡ Using cached hourly forecast (AccuWeather)');
+    metrics.trackAPICall('accuWeatherHourly', true);
     return cached.data;
   }
 
@@ -126,7 +128,8 @@ async function fetchAccuWeatherHourly(locationKey) {
   const failCached = _hourlyFailCache[locationKey];
   if (failCached && (Date.now() - failCached.failedAt < 2 * 60 * 1000)) {
     console.warn('⏸️  AccuWeather hourly skipped (recent failure, using stale cache or null)');
-    return cached?.data || null;  // return stale data if available
+    metrics.trackAPICall('accuWeatherHourly', true);
+    return cached?.data || null;
   }
 
   // Layer 3: retry with backoff
@@ -139,6 +142,7 @@ async function fetchAccuWeatherHourly(locationKey) {
         timeout: 10000
       });
       console.log(`✅ Fetched ${response.data.length} hours of forecast data`);
+      metrics.trackAPICall('accuWeatherHourly', false);
 
       // Cache it
       _hourlyCache[locationKey] = { data: response.data, fetchedAt: Date.now() };
@@ -148,6 +152,7 @@ async function fetchAccuWeatherHourly(locationKey) {
     } catch (error) {
       const status = error.response?.status;
       console.error(`❌ AccuWeather hourly attempt ${attempt + 1}/${MAX_RETRIES}: ${status || error.message}`);
+      metrics.trackAPIError('accuWeatherHourly', `${status || error.message}`);
 
       // Don't retry on 401/403 (auth issues) — immediate fail
       if (status === 401 || status === 403) break;
@@ -186,6 +191,7 @@ async function fetchAccuWeatherDaily(locationKey) {
   const cached = _dailyCache[locationKey];
   if (cached && (Date.now() - cached.fetchedAt < 2 * 60 * 60 * 1000)) {
     console.log('🌅 Using cached daily forecast');
+    metrics.trackAPICall('accuWeatherDaily', true);
     return cached.data;
   }
 
@@ -193,6 +199,7 @@ async function fetchAccuWeatherDaily(locationKey) {
   const failCached = _dailyFailCache[locationKey];
   if (failCached && (Date.now() - failCached.failedAt < 2 * 60 * 1000)) {
     console.warn('⏸️  AccuWeather daily skipped (recent failure)');
+    metrics.trackAPICall('accuWeatherDaily', true);
     return cached?.data || null;
   }
 
@@ -228,11 +235,13 @@ async function fetchAccuWeatherDaily(locationKey) {
       // Cache it
       _dailyCache[locationKey] = { data: result, fetchedAt: Date.now() };
       delete _dailyFailCache[locationKey];
+      metrics.trackAPICall('accuWeatherDaily', false);
 
       return result;
     } catch (error) {
       const status = error.response?.status;
       console.warn(`⚠️ AccuWeather daily attempt ${attempt + 1}/${MAX_RETRIES}: ${status || error.message}`);
+      metrics.trackAPIError('accuWeatherDaily', `${status || error.message}`);
       if (status === 401 || status === 403) break;
       if (attempt < MAX_RETRIES - 1) {
         await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
