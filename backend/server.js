@@ -130,6 +130,7 @@ async function startServer() {
       console.log(`📧 Email: ${process.env.BREVO_API_KEY ? 'Brevo ✓' : 'Not configured'}`);
       console.log(`🤖 AI: ${process.env.GROQ_API_KEY ? 'Groq ✓' : 'Fallback mode'}`);
       console.log(`🌤️  Weather: ${process.env.ACCUWEATHER_API_KEY ? 'AccuWeather ✓' : 'Not configured'}`);
+      console.log(`🌥️  Open-Meteo: ${process.env.OPENMETEO_PROXY_URL ? 'CF Worker proxy ✓' : 'Direct (shared IP limits)'}`);
       console.log(`📊 Analytics: Visit tracking ✓`);
       console.log('═══════════════════════════════════════');
     });

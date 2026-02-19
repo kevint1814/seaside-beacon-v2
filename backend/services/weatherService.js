@@ -21,6 +21,9 @@
 const axios = require('axios');
 
 const ACCUWEATHER_API_KEY = process.env.ACCUWEATHER_API_KEY;
+// Cloudflare Worker proxy URL — bypasses Render's shared-IP rate limits on Open-Meteo
+// e.g. https://openmeteo-proxy.YOUR_SUBDOMAIN.workers.dev
+const OPENMETEO_PROXY = process.env.OPENMETEO_PROXY_URL || null;
 const CHENNAI_LOCATION_KEY = '206671';
 
 // Beach configurations
@@ -184,7 +187,7 @@ async function fetchOpenMeteoAirQuality(lat, lon) {
   const cacheKey = `${roundedLat},${roundedLon}`;
 
   const cached = _aodCache[cacheKey];
-  if (cached && (Date.now() - cached.fetchedAt < 2 * 60 * 60 * 1000)) {
+  if (cached && (Date.now() - cached.fetchedAt < 6 * 60 * 60 * 1000)) {
     console.log('🌫️ Using cached AOD data');
     return cached.data;
   }
@@ -202,7 +205,9 @@ async function fetchOpenMeteoAirQuality(lat, lon) {
 
   const fetchPromise = (async () => {
   try {
-    const url = 'https://air-quality-api.open-meteo.com/v1/air-quality';
+    const url = OPENMETEO_PROXY
+      ? `${OPENMETEO_PROXY}/air-quality`
+      : 'https://air-quality-api.open-meteo.com/v1/air-quality';
     let response;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -307,9 +312,9 @@ async function fetchOpenMeteoForecast(lat, lon) {
   const roundedLon = Math.round(lon * 10) / 10;
   const cacheKey = `${roundedLat},${roundedLon}`;
 
-  // Layer 1: positive cache (2-hour TTL)
+  // Layer 1: positive cache (6-hour TTL — GFS model only updates every 6h: 00Z/06Z/12Z/18Z)
   const cached = _forecastCache[cacheKey];
-  if (cached && (Date.now() - cached.fetchedAt < 2 * 60 * 60 * 1000)) {
+  if (cached && (Date.now() - cached.fetchedAt < 6 * 60 * 60 * 1000)) {
     console.log('🌥️ Using cached Open-Meteo forecast data');
     return cached.data;
   }
@@ -329,7 +334,9 @@ async function fetchOpenMeteoForecast(lat, lon) {
 
   const fetchPromise = (async () => {
     try {
-      const url = 'https://api.open-meteo.com/v1/forecast';
+      const url = OPENMETEO_PROXY
+        ? `${OPENMETEO_PROXY}/forecast`
+        : 'https://api.open-meteo.com/v1/forecast';
       let response;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
@@ -1459,39 +1466,37 @@ async function getTomorrow6AMForecast(beachKey) {
  * Warm-up: pre-fetch Open-Meteo data on server startup.
  * Called once when the module loads — populates the cache before any user requests.
  * Uses Chennai center coords (rounded to match cache keys).
+ *
+ * Delays 10s before starting so the server is fully online first,
+ * then uses 10s gaps between calls to stay well under rate limits.
  */
 async function warmUpOpenMeteoCache() {
   const CHENNAI_CENTER = { lat: 13.0, lon: 80.3 };  // Rounded — matches Marina/Elliot's/Thiruvanmiyur key
   const COVELONG_AREA = { lat: 12.8, lon: 80.3 };   // Rounded — matches Covelong key
 
-  console.log('🔥 Warming up Open-Meteo cache...');
+  // Wait 10s after server boot before hitting Open-Meteo — let rate-limit window breathe
+  await new Promise(r => setTimeout(r, 10000));
 
-  // Stagger requests to avoid rate limit on cold start
-  try {
-    await fetchOpenMeteoForecast(CHENNAI_CENTER.lat, CHENNAI_CENTER.lon);
-    console.log('  ✅ Forecast cache (Chennai center) warm');
-  } catch (e) { console.warn('  ⚠️ Forecast warm-up failed:', e.message); }
+  console.log(`🔥 Warming up Open-Meteo cache... ${OPENMETEO_PROXY ? '(via CF Worker proxy)' : '(direct — shared IP rate limits may apply)'}`);
 
-  await new Promise(r => setTimeout(r, 3000)); // 3s gap between API calls
+  const delay = () => new Promise(r => setTimeout(r, 10000)); // 10s between calls
 
-  try {
-    await fetchOpenMeteoAirQuality(CHENNAI_CENTER.lat, CHENNAI_CENTER.lon);
-    console.log('  ✅ AQ cache (Chennai center) warm');
-  } catch (e) { console.warn('  ⚠️ AQ warm-up failed:', e.message); }
+  let result;
 
-  await new Promise(r => setTimeout(r, 3000));
+  result = await fetchOpenMeteoForecast(CHENNAI_CENTER.lat, CHENNAI_CENTER.lon);
+  console.log(result ? '  ✅ Forecast cache (Chennai center) warm' : '  ⚠️ Forecast warm-up returned null');
+  await delay();
 
-  try {
-    await fetchOpenMeteoForecast(COVELONG_AREA.lat, COVELONG_AREA.lon);
-    console.log('  ✅ Forecast cache (Covelong area) warm');
-  } catch (e) { console.warn('  ⚠️ Covelong forecast warm-up failed:', e.message); }
+  result = await fetchOpenMeteoAirQuality(CHENNAI_CENTER.lat, CHENNAI_CENTER.lon);
+  console.log(result ? '  ✅ AQ cache (Chennai center) warm' : '  ⚠️ AQ warm-up returned null');
+  await delay();
 
-  await new Promise(r => setTimeout(r, 3000));
+  result = await fetchOpenMeteoForecast(COVELONG_AREA.lat, COVELONG_AREA.lon);
+  console.log(result ? '  ✅ Forecast cache (Covelong area) warm' : '  ⚠️ Covelong forecast warm-up returned null');
+  await delay();
 
-  try {
-    await fetchOpenMeteoAirQuality(COVELONG_AREA.lat, COVELONG_AREA.lon);
-    console.log('  ✅ AQ cache (Covelong area) warm');
-  } catch (e) { console.warn('  ⚠️ Covelong AQ warm-up failed:', e.message); }
+  result = await fetchOpenMeteoAirQuality(COVELONG_AREA.lat, COVELONG_AREA.lon);
+  console.log(result ? '  ✅ AQ cache (Covelong area) warm' : '  ⚠️ Covelong AQ warm-up returned null');
 
   console.log('🔥 Open-Meteo cache warm-up complete');
 }
