@@ -359,10 +359,10 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
         <!-- ═══ HEADER ═══ -->
         <tr><td bgcolor="${headerBg}" style="padding:44px 40px 24px;text-align:center;">
 
-          <p style="margin:0 0 24px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2.5px;color:#a09080;">Seaside Beacon · ${beach}</p>
+          <p style="margin:0 0 24px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2.5px;color:#f5e8d8;">Seaside Beacon · ${beach}</p>
           <p style="margin:0 0 10px;font-size:40px;line-height:1;">${verdictEmoji}</p>
           <h1 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">${verdict}</h1>
-          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;color:#8a7e72;">This Morning's Sunrise Forecast</p>
+          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;color:#f5e0cc;">This Morning's Sunrise Forecast</p>
 
         </td></tr>
 
