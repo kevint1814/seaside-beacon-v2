@@ -1,5 +1,17 @@
+# Seaside Beacon — seasidebeacon.com
+# India's first sunrise quality forecast for beaches
+
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /admin
 
+# Sitemaps
 Sitemap: https://seasidebeacon.com/sitemap.xml
+
+# Crawl-delay (be kind to hosting)
+User-agent: Googlebot
+Crawl-delay: 1
+
+User-agent: Bingbot
+Crawl-delay: 2
