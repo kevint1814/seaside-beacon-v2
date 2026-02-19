@@ -176,7 +176,11 @@ const _aodCache = {};
  * Returns { aod, pm25 } at 6 AM IST, or null if unavailable
  */
 async function fetchOpenMeteoAirQuality(lat, lon) {
-  const cacheKey = `${lat},${lon}`;
+  // Round to 1 decimal (~11km grid) so all Chennai beaches share one cached result.
+  // CAMS model resolution is 0.4° (~44km) — even coarser than GFS.
+  const roundedLat = Math.round(lat * 10) / 10;
+  const roundedLon = Math.round(lon * 10) / 10;
+  const cacheKey = `${roundedLat},${roundedLon}`;
   const cached = _aodCache[cacheKey];
   if (cached && (Date.now() - cached.fetchedAt < 2 * 60 * 60 * 1000)) {
     console.log('🌫️ Using cached AOD data');
@@ -185,16 +189,29 @@ async function fetchOpenMeteoAirQuality(lat, lon) {
 
   try {
     const url = 'https://air-quality-api.open-meteo.com/v1/air-quality';
-    const response = await axios.get(url, {
-      params: {
-        latitude: lat,
-        longitude: lon,
-        hourly: 'pm2_5,pm10,aerosol_optical_depth',
-        timezone: 'Asia/Kolkata',
-        forecast_days: 2
-      },
-      timeout: 6000 // 6s — generous for Render free tier networking
-    });
+    let response;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        response = await axios.get(url, {
+          params: {
+            latitude: roundedLat,
+            longitude: roundedLon,
+            hourly: 'pm2_5,pm10,aerosol_optical_depth',
+            timezone: 'Asia/Kolkata',
+            forecast_days: 2
+          },
+          timeout: 6000
+        });
+        break; // success
+      } catch (err) {
+        if (err.response?.status === 429 && attempt < 2) {
+          console.warn(`⚠️ Open-Meteo AQ 429 rate limit — retry ${attempt + 1}/2 after ${(attempt + 1) * 2}s`);
+          await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
+          continue;
+        }
+        throw err;
+      }
+    }
 
     const hourly = response.data?.hourly;
     if (!hourly || !hourly.time || !hourly.aerosol_optical_depth) {
@@ -252,7 +269,11 @@ const _forecastCache = {};
  * Returns { highCloud, midCloud, lowCloud, pressureMsl[] } at 6 AM IST, or null
  */
 async function fetchOpenMeteoForecast(lat, lon) {
-  const cacheKey = `${lat},${lon}`;
+  // Round to 1 decimal (~11km grid) so all Chennai beaches share one cached result.
+  // GFS resolution is 0.25° (~28km) — data is identical within a city.
+  const roundedLat = Math.round(lat * 10) / 10;
+  const roundedLon = Math.round(lon * 10) / 10;
+  const cacheKey = `${roundedLat},${roundedLon}`;
   const cached = _forecastCache[cacheKey];
   if (cached && (Date.now() - cached.fetchedAt < 2 * 60 * 60 * 1000)) {
     console.log('🌥️ Using cached Open-Meteo forecast data');
@@ -261,16 +282,29 @@ async function fetchOpenMeteoForecast(lat, lon) {
 
   try {
     const url = 'https://api.open-meteo.com/v1/forecast';
-    const response = await axios.get(url, {
-      params: {
-        latitude: lat,
-        longitude: lon,
-        hourly: 'cloud_cover_low,cloud_cover_mid,cloud_cover_high,pressure_msl',
-        timezone: 'Asia/Kolkata',
-        forecast_days: 2
-      },
-      timeout: 8000  // 8s — GFS model responses are heavier than AQ, Render free tier needs headroom
-    });
+    let response;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        response = await axios.get(url, {
+          params: {
+            latitude: roundedLat,
+            longitude: roundedLon,
+            hourly: 'cloud_cover_low,cloud_cover_mid,cloud_cover_high,pressure_msl',
+            timezone: 'Asia/Kolkata',
+            forecast_days: 2
+          },
+          timeout: 8000
+        });
+        break; // success
+      } catch (err) {
+        if (err.response?.status === 429 && attempt < 2) {
+          console.warn(`⚠️ Open-Meteo 429 rate limit — retry ${attempt + 1}/2 after ${(attempt + 1) * 2}s`);
+          await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
+          continue;
+        }
+        throw err; // non-429 or final attempt
+      }
+    }
 
     const hourly = response.data?.hourly;
     if (!hourly || !hourly.time || !hourly.cloud_cover_high) {
