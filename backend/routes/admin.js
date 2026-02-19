@@ -137,6 +137,115 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
   }
 });
 
+// ── Send broadcast email ─────────────────────
+router.post('/admin/send-email', requireAuth, async (req, res) => {
+  try {
+    const { subject, body, senderAddress, recipients } = req.body;
+
+    if (!subject || !body || !recipients || !recipients.length) {
+      return res.status(400).json({ error: 'Subject, body, and recipients are required' });
+    }
+
+    const BREVO_API_KEY = process.env.BREVO_API_KEY;
+    if (!BREVO_API_KEY) {
+      return res.status(500).json({ error: 'BREVO_API_KEY not configured on server' });
+    }
+
+    // Validate sender — only allow verified senders
+    const allowedSenders = ['hello@seasidebeacon.com', 'forecast@seasidebeacon.com'];
+    const sender = allowedSenders.includes(senderAddress) ? senderAddress : 'forecast@seasidebeacon.com';
+
+    // Build clean HTML email wrapping the body text
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f0ea;-webkit-text-size-adjust:none;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5f0ea">
+<tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr><td bgcolor="#C4733A" style="padding:36px 40px;text-align:center;">
+  <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2.5px;color:#f5e8d8;">Seaside Beacon</p>
+  <h1 style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:600;color:#ffffff;letter-spacing:-0.3px;">${subject}</h1>
+</td></tr>
+<tr><td bgcolor="#ffffff" style="padding:36px 40px;">
+  <div style="font-family:'Instrument Sans',-apple-system,sans-serif;font-size:14px;line-height:1.75;color:#4a4440;">
+    ${body.replace(/\n/g, '<br>')}
+  </div>
+</td></tr>
+<tr><td bgcolor="#F0E8DE" style="padding:20px 40px;text-align:center;border-top:1px solid #E0D5C8;">
+  <p style="margin:0;font-family:'Instrument Sans',-apple-system,sans-serif;font-size:11px;color:#8a7e72;">Seaside Beacon · <a href="https://seasidebeacon.com" style="color:#C4733A;text-decoration:none;">seasidebeacon.com</a></p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+    const plainText = body;
+
+    // Send to each recipient via Brevo
+    let sent = 0;
+    let failed = 0;
+    const errors = [];
+
+    // Brevo supports batch, but sending individually for reliability + unsubscribe headers
+    for (const email of recipients) {
+      try {
+        const unsubUrl = `${process.env.API_URL || 'https://api.seasidebeacon.com'}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+        const payload = {
+          sender: { name: 'Seaside Beacon', email: sender },
+          to: [{ email }],
+          subject,
+          htmlContent,
+          textContent: plainText,
+          headers: {
+            'List-Unsubscribe': `<${unsubUrl}>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+          }
+        };
+
+        const apiRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'api-key': BREVO_API_KEY,
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (apiRes.ok) {
+          sent++;
+        } else {
+          const errText = await apiRes.text();
+          failed++;
+          errors.push({ email, error: errText });
+        }
+
+        // Small delay to avoid rate limits (10 emails/sec on Brevo free)
+        if (recipients.length > 5) {
+          await new Promise(r => setTimeout(r, 150));
+        }
+      } catch (err) {
+        failed++;
+        errors.push({ email, error: err.message });
+      }
+    }
+
+    console.log(`📧 Admin broadcast: ${sent} sent, ${failed} failed (from: ${sender}, subject: "${subject}")`);
+
+    res.json({
+      success: true,
+      sent,
+      failed,
+      total: recipients.length,
+      errors: errors.length ? errors : undefined
+    });
+  } catch (error) {
+    console.error('Admin send-email error:', error.message);
+    res.status(500).json({ error: 'Failed to send emails' });
+  }
+});
+
 // ── Serve dashboard HTML ─────────────────────
 router.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'admin', 'dashboard.html'));

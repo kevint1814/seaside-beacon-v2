@@ -129,6 +129,19 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .beach-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;background:var(--surface2);margin:3px 2px}
 .beach-pill .ct{font-family:var(--mono);font-weight:600;color:var(--t1)}
 
+/* Email broadcast */
+.email-btn{padding:6px 14px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--t2);font-size:11px;font-family:var(--sans);cursor:pointer;transition:.15s}
+.email-btn:hover{border-color:var(--t3);color:var(--t1)}
+.email-btn-active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
+.email-send-btn{padding:9px 24px;border:none;border-radius:6px;background:var(--accent);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:.15s}
+.email-send-btn:hover{opacity:.9}
+.email-send-btn:disabled{opacity:.4;cursor:not-allowed}
+.email-send-btn.sending{background:var(--t3)}
+.rcpt-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px}
+.rcpt-row label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--t2);flex:1}
+.rcpt-row input[type=checkbox]{accent-color:var(--blue);cursor:pointer}
+.rcpt-beach{font-size:10px;color:var(--t3)}
+
 /* Refresh bar */
 .refresh-line{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:100;transition:width .3s;opacity:0;pointer-events:none}
 </style>
@@ -236,6 +249,56 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
     </div>
   </div>
 
+  <!-- ROW 3.5: Email Broadcast -->
+  <div class="row" style="grid-template-columns:1fr">
+    <div class="card" id="emailCard">
+      <div class="card-title">Broadcast Email <span class="badge" style="background:var(--surface2);color:var(--t2)" id="emailStatus"></span></div>
+
+      <!-- Recipient selection -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="email-btn email-btn-active" id="selAll">All Subscribers</button>
+        <button class="email-btn" id="selCustom">Select Recipients</button>
+        <span style="font-size:11px;color:var(--t3)" id="recipientCount">0 recipients</span>
+      </div>
+
+      <!-- Custom recipient list (hidden by default) -->
+      <div id="recipientPicker" style="display:none;margin-bottom:12px;max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+          <input type="text" id="recipientSearch" placeholder="Search emails..." style="flex:1;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--t1);font-size:11px;font-family:var(--sans);outline:none">
+          <button class="email-btn" id="selNone" style="font-size:10px;padding:4px 8px">Deselect All</button>
+        </div>
+        <div id="recipientList"></div>
+      </div>
+
+      <!-- Sender -->
+      <div style="margin-bottom:10px">
+        <label style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">From</label>
+        <select id="emailFrom" style="width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:var(--mono);outline:none;cursor:pointer;-webkit-appearance:none">
+          <option value="hello@seasidebeacon.com">hello@seasidebeacon.com</option>
+          <option value="forecast@seasidebeacon.com">forecast@seasidebeacon.com</option>
+        </select>
+      </div>
+
+      <!-- Subject -->
+      <div style="margin-bottom:10px">
+        <label style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Subject</label>
+        <input type="text" id="emailSubject" placeholder="e.g. Exciting update from Seaside Beacon" style="width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:var(--sans);outline:none;box-sizing:border-box">
+      </div>
+
+      <!-- Body -->
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Body <span style="color:var(--t4);text-transform:none;letter-spacing:0">(plain text — auto-wrapped in Seaside Beacon template)</span></label>
+        <textarea id="emailBody" rows="6" placeholder="Write your message here..." style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:var(--sans);outline:none;resize:vertical;line-height:1.6;box-sizing:border-box"></textarea>
+      </div>
+
+      <!-- Send button -->
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="email-send-btn" id="emailSendBtn">Send Broadcast</button>
+        <div id="emailResult" style="font-size:12px;color:var(--t3)"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ROW 4: Scores + Errors -->
   <div class="row cols-7-5">
     <div class="card">
@@ -336,6 +399,12 @@ function render(d){
   // Subscribers
   subTable(s);
 
+  // Feed subscriber list to email module
+  if (s.list && s.list.length) {
+    allSubEmails = s.list.map(sub => ({ email: sub.email, preferredBeach: sub.preferredBeach }));
+    if (emailMode === 'all') updateRecipientCount();
+  }
+
   // Scores
   scoreTable(d.scores||[]);
 
@@ -425,11 +494,105 @@ function esc(s){const d=document.createElement('div');d.textContent=s;return d.i
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function timeAgo(d){const s=Math.floor((Date.now()-d)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 
+// ── Email Broadcast ──
+let emailMode = 'all'; // 'all' or 'custom'
+let allSubEmails = []; // populated from poll data
+let selectedEmails = new Set();
+
+function updateRecipientCount() {
+  const count = emailMode === 'all' ? allSubEmails.length : selectedEmails.size;
+  $('recipientCount', count + ' recipient' + (count !== 1 ? 's' : ''));
+}
+
+function buildRecipientList(filter) {
+  const beaches = {marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const list = document.getElementById('recipientList');
+  const filtered = filter ? allSubEmails.filter(s => s.email.toLowerCase().includes(filter.toLowerCase())) : allSubEmails;
+  list.innerHTML = filtered.map(s => {
+    const checked = selectedEmails.has(s.email) ? 'checked' : '';
+    return '<div class="rcpt-row"><label><input type="checkbox" value="'+esc(s.email)+'" '+checked+'> <span class="mono">'+esc(s.email)+'</span></label><span class="rcpt-beach">'+(beaches[s.preferredBeach]||s.preferredBeach)+'</span></div>';
+  }).join('');
+  // Bind checkbox changes
+  list.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', function() {
+      if (this.checked) selectedEmails.add(this.value);
+      else selectedEmails.delete(this.value);
+      updateRecipientCount();
+    });
+  });
+}
+
+function setEmailMode(mode) {
+  emailMode = mode;
+  document.getElementById('selAll').className = 'email-btn' + (mode === 'all' ? ' email-btn-active' : '');
+  document.getElementById('selCustom').className = 'email-btn' + (mode === 'custom' ? ' email-btn-active' : '');
+  document.getElementById('recipientPicker').style.display = mode === 'custom' ? 'block' : 'none';
+  if (mode === 'all') {
+    selectedEmails = new Set(allSubEmails.map(s => s.email));
+  }
+  updateRecipientCount();
+}
+
+async function sendBroadcast() {
+  const subject = document.getElementById('emailSubject').value.trim();
+  const body = document.getElementById('emailBody').value.trim();
+  const senderAddress = document.getElementById('emailFrom').value;
+  const resultEl = document.getElementById('emailResult');
+  const btn = document.getElementById('emailSendBtn');
+
+  if (!subject) { resultEl.style.color = 'var(--red)'; resultEl.textContent = 'Subject is required'; return; }
+  if (!body) { resultEl.style.color = 'var(--red)'; resultEl.textContent = 'Body is required'; return; }
+
+  const recipients = emailMode === 'all' ? allSubEmails.map(s => s.email) : [...selectedEmails];
+  if (!recipients.length) { resultEl.style.color = 'var(--red)'; resultEl.textContent = 'No recipients selected'; return; }
+
+  // Confirm
+  if (!confirm('Send "' + subject + '" to ' + recipients.length + ' recipient' + (recipients.length !== 1 ? 's' : '') + ' from ' + senderAddress + '?')) return;
+
+  btn.disabled = true;
+  btn.className = 'email-send-btn sending';
+  btn.textContent = 'Sending...';
+  resultEl.style.color = 'var(--t3)';
+  resultEl.textContent = 'Sending to ' + recipients.length + ' recipients...';
+
+  try {
+    const res = await fetch(API + '/api/admin/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+      body: JSON.stringify({ subject, body, senderAddress, recipients })
+    });
+    const data = await res.json();
+    if (data.success) {
+      resultEl.style.color = 'var(--green)';
+      resultEl.textContent = data.sent + ' sent' + (data.failed ? ', ' + data.failed + ' failed' : '') + ' — done!';
+      $('emailStatus', data.sent + ' sent');
+      // Clear form
+      document.getElementById('emailSubject').value = '';
+      document.getElementById('emailBody').value = '';
+    } else {
+      resultEl.style.color = 'var(--red)';
+      resultEl.textContent = data.error || 'Send failed';
+    }
+  } catch (err) {
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = 'Network error: ' + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.className = 'email-send-btn';
+    btn.textContent = 'Send Broadcast';
+  }
+}
+
 // ── Bind ──
 document.getElementById('loginBtn').addEventListener('click', login);
 document.getElementById('logoutBtn').addEventListener('click', logout);
 document.getElementById('loginPass').addEventListener('keydown', e=>{if(e.key==='Enter')login();});
 document.getElementById('loginUser').addEventListener('keydown', e=>{if(e.key==='Enter')document.getElementById('loginPass').focus();});
+document.getElementById('selAll').addEventListener('click', ()=>setEmailMode('all'));
+document.getElementById('selCustom').addEventListener('click', ()=>{setEmailMode('custom');buildRecipientList();});
+document.getElementById('selNone').addEventListener('click', ()=>{selectedEmails.clear();buildRecipientList();updateRecipientCount();});
+document.getElementById('recipientSearch').addEventListener('input', e=>buildRecipientList(e.target.value));
+document.getElementById('emailSendBtn').addEventListener('click', sendBroadcast);
 
 // ── Auto-login ──
 if(token){fetch(API+'/api/admin/metrics',{headers:{'X-Admin-Token':token}}).then(r=>{if(r.ok)show();else logout();}).catch(()=>logout());}
