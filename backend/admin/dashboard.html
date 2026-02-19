@@ -135,7 +135,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
     <p>Command Center</p>
     <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
     <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
-    <button onclick="doLogin()">Sign In</button>
+    <button id="loginBtn">Sign In</button>
     <div class="login-error" id="loginError">Invalid credentials</div>
   </div>
 </div>
@@ -153,7 +153,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
       <span class="live-badge">Live</span>
       <span id="lastRefresh">Refreshing...</span>
       <span id="uptimeDisplay">—</span>
-      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+      <button class="logout-btn" id="logoutBtn">Sign Out</button>
     </div>
   </div>
 
@@ -554,6 +554,10 @@ function setText(id, val) { const el = document.getElementById(id); if (el) el.t
 function setDot(id, color) { const el = document.getElementById(id); if (el) { el.className = `status-dot ${color}`; } }
 function num(n) { return Number(n).toLocaleString(); }
 function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ── Event listeners (no inline onclick) ──
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('logoutBtn').addEventListener('click', doLogout);
 
 // ── Auto-login if token exists ──
 if (token) {

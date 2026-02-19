@@ -28,7 +28,11 @@ const PORT = process.env.PORT || 3000;
 
 // ========== MIDDLEWARE ==========
 
-app.use(helmet());
+// Helmet for all routes except /admin (dashboard needs inline scripts)
+app.use((req, res, next) => {
+  if (req.path === '/admin') return next();
+  helmet()(req, res, next);
+});
 
 // CORS — handle multiple allowed origins properly
 const allowedOrigins = (process.env.FRONTEND_URL || '*').split(',').map(s => s.trim());
