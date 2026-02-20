@@ -15,7 +15,7 @@ const OpenAI = require('openai');
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const GEMINI_FLASH_MODEL = process.env.GEMINI_FLASH_MODEL || 'gemini-2.5-flash';
 const GEMINI_LITE_MODEL = process.env.GEMINI_LITE_MODEL || 'gemini-2.5-flash-lite';
-const AI_MAX_TOKENS = parseInt(process.env.AI_MAX_TOKENS || process.env.GROQ_MAX_TOKENS) || 1200;
+const AI_MAX_TOKENS = parseInt(process.env.AI_MAX_TOKENS || process.env.GROQ_MAX_TOKENS) || 3000;
 const AI_TEMPERATURE = parseFloat(process.env.AI_TEMPERATURE || process.env.GROQ_TEMPERATURE) || 0.7;
 
 // ── Initialize providers ─────────────────────────────
@@ -185,34 +185,33 @@ CONTEXT: ${context}
 ${comparisonContext}
 
 WRITING STYLE:
-- Talk like a friend texting someone about this morning's sunrise (emails go out at 4 AM, sunrise is ~6:30 AM same day). Say "this morning" or "today", NEVER "tomorrow". Simple, warm, honest.
-- Describe what the sky will LOOK like in plain words anyone understands: "orange and pink streaks across the clouds", "grey and flat, no color", "soft warm glow near the horizon."
-- Do NOT use weather numbers in your text (no "45% cloud cover" or "87% humidity"). The data is shown separately — your job is to describe the EXPERIENCE.
-- On bad days: be honest and brief. "The sky will be mostly grey this morning — not much color expected." Don't try to make it sound better than it is.
-- On good days: be genuinely excited. "This is the kind of morning that makes you glad you woke up early."
-- NEVER use: "spectacular", "breathtaking", "nature's canvas", "painted sky", "embrace the mood", "serene", "magical", "treat yourself", "every sunrise is unique."
-- Beach comparisons: mention what makes each beach DIFFERENT (the lighthouse at Marina, the quiet at Elliot's, the rocks at Covelong) and whether today's sky helps or hurts that spot specifically.
+- Talk like a friend texting about this morning's sunrise. Say "this morning" or "today", NEVER "tomorrow".
+- Plain words: "orange and pink streaks", "grey and flat", "soft warm glow". No weather numbers.
+- Bad days: honest and brief. Good days: genuinely excited.
+- NEVER use: "spectacular", "breathtaking", "nature's canvas", "painted sky", "serene", "magical", "treat yourself", "every sunrise is unique."
+- Keep greeting and insight concise (1-2 sentences). The sunriseExperience fields can be a bit more descriptive (2-3 sentences each).
+- Beach comparisons: keep each beach reason to 1 sentence.
 
 JSON response:
 {
-  "greeting": "One friendly, honest sentence. Like texting a friend: 'This morning's looking really good at Marina — set that alarm' or 'Quiet morning at Marina — some soft color possible but nothing dramatic.' Match the tone to the score. IMPORTANT: Say 'this morning' or 'today', NEVER 'tomorrow'.",
-  "insight": "Two sentences describing what the sky will look like and feel like. Plain language — someone's grandma should understand it.",
+  "greeting": "One friendly sentence. Match tone to score. Say 'this morning' not 'tomorrow'.",
+  "insight": "2 sentences. What the sky will look like and feel like. Plain language.",
   "sunriseExperience": {
-    "whatYoullSee": "2-3 sentences painting a picture anyone can visualize. What colors, where in the sky, how it changes as the sun comes up. No technical terms.",
-    "beachVibes": "1-2 sentences about what being at ${beach} feels like at dawn — temperature, breeze, crowds, sounds. Use specific details from CONTEXT like the fishing boats or the memorial.",
-    "worthWakingUp": "${score >= 70 ? 'Yes — one enthusiastic sentence about why' : score >= 40 ? 'Maybe — honest about what you will and won\'t get. Don\'t say it\'s not worth it.' : 'Probably not for the sunrise — but say if the beach walk itself is still nice'}"
+    "whatYoullSee": "2-3 sentences painting a picture. What colors, where in the sky, how it builds as the sun comes up. No technical terms.",
+    "beachVibes": "2 sentences about what ${beach} feels like at dawn — temperature, breeze, crowds, sounds. Use specific details from CONTEXT.",
+    "worthWakingUp": "${score >= 70 ? 'Yes — 1-2 enthusiastic sentences about why' : score >= 40 ? 'Maybe — 2 sentences, honest about what you will and won\'t get. Don\'t say it\'s not worth it.' : 'Probably not for sunrise — but 1-2 sentences about whether the beach walk itself is nice'}"
   },
   "goldenHour": {
     "quality": "${score >= 85 ? 'Excellent' : score >= 70 ? 'Very Good' : score >= 55 ? 'Good' : score >= 40 ? 'Fair' : 'Poor'}",
-    "tip": "One simple sentence — when to get there and what to look for, in plain language."
+    "tip": "One sentence — when to arrive and what to look for."
   },
   "beachComparison": ${beachKeys.length > 1 ? `{
-    "todaysBest": "MUST be exactly one of: ${beachKeys.join(', ')}",
-    "reason": "1-2 friendly sentences. Why this beach is the best pick today — or if they're all similar, say that honestly.",
+    "todaysBest": "MUST be one of: ${beachKeys.join(', ')}",
+    "reason": "1 sentence why this beach wins today.",
     "beaches": {
       ${beachKeys.map(k => `"${k}": {
         "suitability": "Best/Good/Fair/Poor",
-        "reason": "1-2 sentences. What makes THIS beach different from the others for this morning's conditions? Mention a specific feature from CONTEXT. Must be UNIQUE — don't repeat the same thing for every beach."
+        "reason": "1 sentence. What's different about this beach for today's conditions."
       }`).join(',\n      ')}
     }
   }` : 'null'}
@@ -221,7 +220,7 @@ JSON response:
 Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A'}. NOT full names like "Marina Beach".`;
 
 
-    const systemPrompt = `You are Beacon — a friendly, straight-talking sunrise guide for Chennai beaches. You talk like a local friend who checks the sky every morning and texts you whether it's worth waking up. Simple language, no jargon, no weather-nerd talk. When it's good, you're excited but specific about what people will see. When it's bad, you say so plainly without padding. You describe what the sky LOOKS like in everyday words anyone understands — 'orange and pink streaks', 'grey and flat', 'soft warm glow' — not cloud percentages or humidity numbers. Always respond with valid JSON only.
+    const systemPrompt = `You are Beacon — a friendly sunrise guide for Chennai beaches. Talk like a friend texting about this morning's sky. Simple words, no jargon. Excited when good, honest when bad. Describe what the sky LOOKS like — 'orange streaks', 'grey and flat', 'soft warm glow'. No weather numbers. BE CONCISE — keep every field short. Always respond with valid JSON only.
 
 KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms):
 - High clouds (>6km altitude, cirrus) = the color canvas. They catch pre-sunrise light and glow vivid orange/red. More high clouds = more color.
@@ -248,15 +247,28 @@ KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms)
 
     const completion = await provider.client.chat.completions.create(requestOptions);
 
+    const finishReason = completion.choices[0]?.finish_reason;
     const responseText = completion.choices[0]?.message?.content;
     if (!responseText) throw new Error(`Empty response from ${provider.name}`);
+
+    // Detect truncated responses (hit max_tokens limit)
+    if (finishReason === 'length') {
+      console.warn(`⚠️  ${provider.name} response truncated (hit max_tokens=${AI_MAX_TOKENS}). First 200 chars: ${responseText.substring(0, 200)}`);
+      throw new Error(`Response truncated (finish_reason=length) — increase AI_MAX_TOKENS`);
+    }
 
     const cleanText = responseText
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim();
 
-    const aiData = JSON.parse(cleanText);
+    let aiData;
+    try {
+      aiData = JSON.parse(cleanText);
+    } catch (parseErr) {
+      console.error(`❌ ${provider.name} JSON parse failed. finish_reason=${finishReason}. First 300 chars: ${cleanText.substring(0, 300)}`);
+      throw parseErr;
+    }
     console.log(`✅ ${provider.name} AI insights generated (model: ${provider.model})`);
 
     // If AI returned beach comparison, use it directly.
