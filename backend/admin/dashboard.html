@@ -125,15 +125,55 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .err-msg{color:var(--t2);word-break:break-all}
 .empty-state{color:var(--t4);text-align:center;padding:20px 0;font-size:12px}
 
-/* Prediction cards */
-.pred-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative}
-.pred-card .pred-beach{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:8px}
-.pred-card .pred-score{font-size:36px;font-weight:700;font-family:var(--mono);line-height:1;letter-spacing:-1px}
-.pred-card .pred-verdict{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
-.pred-card .pred-conds{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--t3)}
-.pred-card .pred-conds .pred-val{font-family:var(--mono);color:var(--t1);font-weight:500}
-.pred-card .pred-insight{margin-top:10px;font-size:11px;color:var(--t3);line-height:1.5;border-top:1px solid var(--border);padding-top:8px}
-@media(max-width:900px){#predGrid{grid-template-columns:1fr 1fr}}
+/* Prediction cards — detailed 2-column layout */
+.pred-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;position:relative}
+.pred-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.pred-beach{font-size:14px;font-weight:600;color:var(--t1)}
+.pred-beach-sub{font-size:10px;color:var(--t4);margin-top:2px}
+.pred-score-block{text-align:right}
+.pred-score{font-size:42px;font-weight:700;font-family:var(--mono);line-height:1;letter-spacing:-2px}
+.pred-verdict{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.pred-rec{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.5px;margin-top:4px}
+
+/* Section headers */
+.pred-section{font-size:10px;font-weight:600;color:var(--t4);text-transform:uppercase;letter-spacing:.7px;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+
+/* Scoring breakdown table */
+.pred-scores{width:100%;font-size:11px;border-collapse:collapse}
+.pred-scores td{padding:4px 0;vertical-align:middle}
+.pred-scores td:first-child{color:var(--t3);width:40%}
+.pred-scores td:nth-child(2){font-family:var(--mono);color:var(--t1);font-weight:500;width:25%;text-align:right}
+.pred-scores td:nth-child(3){width:35%;padding-left:8px}
+.pred-bar-track{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.pred-bar-fill{height:100%;border-radius:2px;transition:.3s}
+
+/* Conditions grid */
+.pred-conds{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:11px}
+.pred-cond-item{display:flex;justify-content:space-between;align-items:center;padding:3px 0}
+.pred-cond-item .lbl{color:var(--t3)}
+.pred-cond-item .val{font-family:var(--mono);color:var(--t1);font-weight:500}
+.pred-cond-item .tag{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500;margin-left:6px}
+
+/* Cloud layers */
+.cloud-layers{display:flex;gap:6px;margin-top:6px}
+.cloud-layer{flex:1;text-align:center;padding:6px 4px;background:var(--surface3);border-radius:6px}
+.cloud-layer .cl-pct{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--t1);line-height:1}
+.cloud-layer .cl-name{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+/* Sun times */
+.sun-row{display:flex;gap:12px;font-size:11px;color:var(--t3)}
+.sun-row span{display:flex;align-items:center;gap:4px}
+.sun-row .sun-val{font-family:var(--mono);color:var(--t1);font-weight:500}
+
+/* AI insight */
+.pred-insight{font-size:11px;color:var(--t2);line-height:1.6;margin-top:6px}
+.pred-insight-worth{font-size:11px;color:var(--cyan);font-style:italic;margin-top:4px}
+
+/* Data sources */
+.pred-sources{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.pred-src{font-size:9px;padding:2px 6px;border-radius:3px;background:var(--surface3);color:var(--t4)}
+
+@media(max-width:900px){#predGrid{grid-template-columns:1fr}}
 
 /* Sub pill */
 .beach-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;background:var(--surface2);margin:3px 2px}
@@ -224,7 +264,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
   <div class="row" style="grid-template-columns:1fr">
     <div class="card">
       <div class="card-title">Live Predictions <span class="badge" style="background:var(--green-bg);color:var(--green);cursor:pointer" id="predRefreshBtn">↻ Refresh</span></div>
-      <div id="predGrid" style="display:grid;gap:12px;grid-template-columns:repeat(4,1fr)">
+      <div id="predGrid" style="display:grid;gap:16px;grid-template-columns:repeat(2,1fr)">
         <div class="empty-state" id="predLoading">Click Refresh to load predictions</div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:10px;color:var(--t4)">
@@ -720,46 +760,130 @@ initDropZone();
 
 // ── Live Predictions ──
 let predInterval;
+function scoreColor(sc){return sc>=85?'var(--green)':sc>=70?'var(--blue)':sc>=55?'var(--amber)':sc>=40?'var(--accent)':'var(--red)';}
+function scoreBg(sc){return sc>=85?'var(--green-bg)':sc>=70?'var(--blue-bg)':sc>=55?'var(--amber-bg)':sc>=40?'rgba(249,115,22,0.1)':'var(--red-bg)';}
+function recBg(r){return r==='GO'?'var(--green-bg)':r==='MAYBE'?'var(--amber-bg)':r==='SKIP'?'var(--blue-bg)':'var(--red-bg)';}
+function recCol(r){return r==='GO'?'var(--green)':r==='MAYBE'?'var(--amber)':r==='SKIP'?'var(--blue)':'var(--red)';}
+function pctBar(score,max,color){const pct=max>0?Math.round(score/max*100):0;return '<div class="pred-bar-track"><div class="pred-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div>';}
+function fmtTime(iso){if(!iso)return '—';try{return new Date(iso).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:true});}catch(e){return '—';}}
+function tagColor(label){const good=['Optimal','Excellent','Very Good','Crystal Clear','Very Clean','Clean','Exceptional','Calm','High Canvas','Stable','Light'];const ok=['Good','Decent','Fair','Hazy','Mid Canvas','Moderate','Slight Fall','Rising','Mixed Layers','Normal'];if(good.includes(label))return 'background:var(--green-bg);color:var(--green)';if(ok.includes(label))return 'background:var(--amber-bg);color:var(--amber)';return 'background:var(--red-bg);color:var(--red)';}
+
+function renderPredCard(k, p, beaches) {
+  if(!p||!p.available) return '<div class="pred-card"><div class="pred-beach">'+(beaches[k]||k)+'</div><div class="empty-state" style="padding:40px 0">Unavailable</div></div>';
+  const sc=p.score, col=scoreColor(sc), bg=scoreBg(sc);
+  const f=p.forecast||{}, b=p.breakdown||{}, labels=p.atmosphericLabels||{}, fac=p.factors||{};
+  const rec=p.recommendation||'';
+  const sun=p.sunTimes||{}, gh=p.goldenHour||{};
+  const ds=p.dataSources||{};
+  const ins=p.insights||{};
+
+  // Scoring breakdown rows
+  const rows=[
+    {name:'Cloud Cover',val:(b.cloudCover?.value??'?')+'%',score:b.cloudCover?.score??0,max:b.cloudCover?.maxScore??18,label:fac.cloudCover||labels.cloudLabel||''},
+    {name:'Multi-Level Cloud',val:(b.multiLevelCloud?.high??'?')+'h / '+(b.multiLevelCloud?.mid??'?')+'m / '+(b.multiLevelCloud?.low??'?')+'l',score:b.multiLevelCloud?.score??0,max:b.multiLevelCloud?.maxScore??20,label:fac.cloudLayers||labels.cloudLayerLabel||''},
+    {name:'Humidity',val:(b.humidity?.value??'?')+'%',score:b.humidity?.score??0,max:b.humidity?.maxScore??15,label:fac.humidity||labels.humidityLabel||''},
+    {name:'Pressure Trend',val:(b.pressureTrend?.value!=null?b.pressureTrend.value.toFixed(1)+' hPa':'?')+' ('+(b.pressureTrend?.pressureMsl!=null?Math.round(b.pressureTrend.pressureMsl):'')+' msl)',score:b.pressureTrend?.score??0,max:b.pressureTrend?.maxScore??11,label:fac.pressureTrend||labels.pressureLabel||''},
+    {name:'AOD (550nm)',val:b.aod?.value!=null?b.aod.value.toFixed(3):'N/A',score:b.aod?.score??0,max:b.aod?.maxScore??16,label:fac.aod||labels.aodLabel||''},
+    {name:'Visibility',val:(b.visibility?.value??'?')+' km',score:b.visibility?.score??0,max:b.visibility?.maxScore??5,label:fac.visibility||labels.visibilityLabel||''},
+    {name:'Weather',val:(b.weather?.value??'?')+'% precip',score:b.weather?.score??0,max:b.weather?.maxScore??5,label:''},
+    {name:'Wind',val:(b.wind?.value??'?')+' km/h',score:b.wind?.score??0,max:b.wind?.maxScore??5,label:fac.wind||labels.windLabel||''}
+  ];
+  const scoreRows=rows.map(r=>{
+    const barCol=r.max>0&&(r.score/r.max)>=0.7?'var(--green)':(r.score/r.max)>=0.4?'var(--amber)':'var(--red)';
+    return '<tr><td>'+r.name+(r.label?'<span class="tag" style="'+tagColor(r.label)+'">'+r.label+'</span>':'')+'</td><td>'+r.val+' <span style="color:var(--t4)">'+r.score+'/'+r.max+'</span></td><td>'+pctBar(r.score,r.max,barCol)+'</td></tr>';
+  }).join('');
+
+  // Bonuses
+  const bonuses=[];
+  if(b.synergy!=null&&b.synergy!==0) bonuses.push('Synergy: '+(b.synergy>0?'+':'')+b.synergy+'/±4');
+  if(b.postRainBonus>0) bonuses.push('Post-rain: +'+b.postRainBonus);
+  if(b.solarBonus!=null&&b.solarBonus!==0) bonuses.push('Solar angle: '+(b.solarBonus>0?'+':'')+b.solarBonus+'/±2');
+  const bonusHTML=bonuses.length?'<div style="margin-top:6px;font-size:11px;color:var(--t3)">'+bonuses.join(' · ')+'</div>':'';
+
+  // Cloud layers visual
+  const clHTML='<div class="cloud-layers">'+
+    '<div class="cloud-layer"><div class="cl-pct" style="color:'+(b.multiLevelCloud?.high>=30?'var(--blue)':'var(--t3)')+'">'+(b.multiLevelCloud?.high??'—')+'%</div><div class="cl-name">High</div></div>'+
+    '<div class="cloud-layer"><div class="cl-pct" style="color:'+(b.multiLevelCloud?.mid>=40?'var(--amber)':'var(--t3)')+'">'+(b.multiLevelCloud?.mid??'—')+'%</div><div class="cl-name">Mid</div></div>'+
+    '<div class="cloud-layer"><div class="cl-pct" style="color:'+(b.multiLevelCloud?.low>=50?'var(--red)':'var(--t3)')+'">'+(b.multiLevelCloud?.low??'—')+'%</div><div class="cl-name">Low</div></div>'+
+  '</div>';
+
+  // Sun times
+  const sunHTML='<div class="sun-row">'+
+    '<span>Sunrise <span class="sun-val">'+fmtTime(sun.sunRise)+'</span></span>'+
+    '<span>Sunset <span class="sun-val">'+fmtTime(sun.sunSet)+'</span></span>'+
+    (gh.start?'<span>Golden <span class="sun-val">'+fmtTime(gh.start)+' – '+fmtTime(gh.end)+'</span></span>':'')+
+    (sun.moonPhase?'<span>Moon <span class="sun-val">'+esc(sun.moonPhase)+'</span></span>':'')+
+  '</div>';
+
+  // Weather conditions
+  const condHTML='<div class="pred-conds">'+
+    '<div class="pred-cond-item"><span class="lbl">Temperature</span><span class="val">'+(f.temperature??'?')+'°C</span></div>'+
+    '<div class="pred-cond-item"><span class="lbl">Cloud Cover</span><span class="val">'+(f.cloudCover??'?')+'%</span></div>'+
+    '<div class="pred-cond-item"><span class="lbl">Humidity</span><span class="val">'+(f.humidity??'?')+'%</span></div>'+
+    '<div class="pred-cond-item"><span class="lbl">Visibility</span><span class="val">'+(f.visibility??'?')+' km</span></div>'+
+    '<div class="pred-cond-item"><span class="lbl">Wind</span><span class="val">'+(f.windSpeed??'?')+' km/h '+(f.windDirection||'')+'</span></div>'+
+    '<div class="pred-cond-item"><span class="lbl">Precip Prob</span><span class="val">'+(f.precipProbability??'?')+'%</span></div>'+
+    '<div class="pred-cond-item"><span class="lbl">UV Index</span><span class="val">'+(f.uvIndex??'?')+'</span></div>'+
+    '<div class="pred-cond-item"><span class="lbl">Description</span><span class="val">'+esc(f.weatherDescription||'—')+'</span></div>'+
+  '</div>';
+
+  // AI insights (full)
+  const insightHTML=(ins.insight?'<div class="pred-insight">'+esc(ins.insight)+'</div>':'')+
+    (ins.whatYoullSee?'<div class="pred-insight" style="margin-top:4px"><strong style="color:var(--t1)">What you\'ll see:</strong> '+esc(ins.whatYoullSee)+'</div>':'')+
+    (ins.worthWakingUp?'<div class="pred-insight-worth">'+esc(ins.worthWakingUp)+'</div>':'');
+
+  // Data sources
+  const srcHTML='<div class="pred-sources">'+Object.entries(ds).map(([k,v])=>'<span class="pred-src">'+k+': '+v+'</span>').join('')+'</div>';
+
+  return '<div class="pred-card" style="border-top:3px solid '+col+'">'+
+    '<div class="pred-header">'+
+      '<div><div class="pred-beach">'+esc(p.beach||beaches[k]||k)+'</div>'+
+        '<div class="pred-beach-sub">'+(f.forecastTime||'—')+'</div>'+
+      '</div>'+
+      '<div class="pred-score-block">'+
+        '<div class="pred-score" style="color:'+col+'">'+sc+'</div>'+
+        '<div class="pred-verdict" style="color:'+col+'">'+(p.verdict||'')+'</div>'+
+        '<span class="pred-rec" style="background:'+recBg(rec)+';color:'+recCol(rec)+'">'+rec+'</span>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="pred-section">Scoring Breakdown</div>'+
+    '<table class="pred-scores">'+scoreRows+'</table>'+
+    bonusHTML+
+
+    '<div class="pred-section">Cloud Layers</div>'+
+    clHTML+
+
+    '<div class="pred-section">Weather Conditions</div>'+
+    condHTML+
+
+    '<div class="pred-section">Sun & Golden Hour</div>'+
+    sunHTML+
+
+    '<div class="pred-section">AI Analysis</div>'+
+    (ins.greeting?'<div style="font-size:11px;color:var(--t1);font-weight:500;margin-bottom:4px">'+esc(ins.greeting)+'</div>':'')+
+    insightHTML+
+
+    '<div class="pred-section">Data Sources</div>'+
+    srcHTML+
+  '</div>';
+}
+
 async function fetchPredictions(){
   const grid=document.getElementById('predGrid');
-  grid.innerHTML='<div class="empty-state">Loading predictions...</div>';
+  grid.innerHTML='<div class="empty-state" style="grid-column:1/-1">Loading predictions...</div>';
   try{
     const res=await fetch(API+'/api/admin/predictions',{headers:{'X-Admin-Token':token}});
     if(!res.ok)throw new Error('HTTP '+res.status);
     const d=await res.json();
-    if(!d.success||!d.predictions){grid.innerHTML='<div class="empty-state">No predictions available</div>';return;}
-    const beaches={marina:'Marina Beach',elliot:"Elliot's Beach",covelong:'Covelong Beach',thiruvanmiyur:'Thiruvanmiyur Beach'};
-    const order=['marina','elliot','covelong','thiruvanmiyur'];
-    grid.innerHTML=order.map(k=>{
-      const p=d.predictions[k];
-      if(!p||!p.available)return '<div class="pred-card"><div class="pred-beach">'+(beaches[k]||k)+'</div><div class="empty-state">Unavailable</div></div>';
-      const sc=p.score;
-      const col=sc>=85?'var(--green)':sc>=70?'var(--blue)':sc>=55?'var(--amber)':sc>=40?'var(--accent)':'var(--red)';
-      const bg=sc>=85?'var(--green-bg)':sc>=70?'var(--blue-bg)':sc>=55?'var(--amber-bg)':sc>=40?'rgba(249,115,22,0.1)':'var(--red-bg)';
-      const f=p.forecast||{};
-      const b=p.breakdown||{};
-      const aod=b.aod?.value!=null?b.aod.value.toFixed(3):'N/A';
-      const insightText=p.insights?.insight||'';
-      const shortInsight=insightText.length>120?insightText.slice(0,120)+'…':insightText;
-      return '<div class="pred-card" style="border-top:3px solid '+col+'">'+
-        '<div class="pred-beach">'+(beaches[k]||k)+'</div>'+
-        '<div class="pred-score" style="color:'+col+'">'+sc+'</div>'+
-        '<div class="pred-verdict" style="color:'+col+'">'+(p.verdict||'')+'</div>'+
-        '<div class="pred-conds">'+
-          '<div>Cloud <span class="pred-val">'+(f.cloudCover??'?')+'%</span></div>'+
-          '<div>Humidity <span class="pred-val">'+(f.humidity??'?')+'%</span></div>'+
-          '<div>Visibility <span class="pred-val">'+(f.visibility??'?')+' km</span></div>'+
-          '<div>Wind <span class="pred-val">'+(f.windSpeed??'?')+' km/h</span></div>'+
-          '<div>AOD <span class="pred-val">'+aod+'</span></div>'+
-          '<div>Hi Cloud <span class="pred-val">'+(b.multiLevelCloud?.high??'?')+'%</span></div>'+
-        '</div>'+
-        (shortInsight?'<div class="pred-insight">'+esc(shortInsight)+'</div>':'')+
-      '</div>';
-    }).join('');
+    if(!d.success||!d.predictions){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1">No predictions available</div>';return;}
+    const beaches={marina:'Marina Beach',covelong:'Covelong Beach'};
+    const order=['marina','covelong'];
+    grid.innerHTML=order.map(k=>renderPredCard(k,d.predictions[k],beaches)).join('');
     const ft=new Date(d.fetchedAt);
     $('predFetchTime','Fetched '+ft.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour12:false})+' IST');
   }catch(e){
-    grid.innerHTML='<div class="empty-state" style="color:var(--red)">Error: '+esc(e.message)+'</div>';
+    grid.innerHTML='<div class="empty-state" style="color:var(--red);grid-column:1/-1">Error: '+esc(e.message)+'</div>';
   }
 }
 document.getElementById('predRefreshBtn').addEventListener('click',fetchPredictions);

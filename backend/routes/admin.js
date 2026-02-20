@@ -144,9 +144,11 @@ router.get('/api/admin/predictions', requireAuth, async (req, res) => {
     const aiService = require('../services/aiService');
 
     const ALL_BEACHES = weatherService.getBeaches();
+    // Only show Marina + Covelong (others are nearly identical to Marina)
+    const DASHBOARD_BEACHES = ALL_BEACHES.filter(b => b.key === 'marina' || b.key === 'covelong');
     const predictions = {};
 
-    // Fetch all beach weather first (single pass)
+    // Fetch dashboard beaches + all for AI context
     const allWeatherData = {};
     for (const beach of ALL_BEACHES) {
       try {
@@ -163,7 +165,10 @@ router.get('/api/admin/predictions', requireAuth, async (req, res) => {
     const beachNames = {};
     ALL_BEACHES.forEach(b => { beachNames[b.key] = b.name; });
 
+    // Only build detailed predictions for dashboard beaches
+    const dashboardKeys = new Set(DASHBOARD_BEACHES.map(b => b.key));
     for (const [beachKey, data] of Object.entries(allWeatherData)) {
+      if (!dashboardKeys.has(beachKey)) continue;
       try {
         data.allBeachNames = beachNames;
         const insights = await aiService.generatePhotographyInsights(data, allWeatherData);
@@ -177,6 +182,9 @@ router.get('/api/admin/predictions', requireAuth, async (req, res) => {
           forecast: data.forecast,
           breakdown: data.prediction.breakdown,
           atmosphericLabels: data.prediction.atmosphericLabels,
+          factors: data.prediction.factors || {},
+          sunTimes: data.sunTimes || null,
+          goldenHour: data.goldenHour || null,
           insights: {
             greeting: insights.greeting || '',
             insight: insights.insight || '',
@@ -191,9 +199,15 @@ router.get('/api/admin/predictions', requireAuth, async (req, res) => {
           available: true,
           score: data.prediction.score,
           verdict: data.prediction.verdict,
+          recommendation: data.prediction.recommendation,
           forecast: data.forecast,
           breakdown: data.prediction.breakdown,
+          atmosphericLabels: data.prediction.atmosphericLabels,
+          factors: data.prediction.factors || {},
+          sunTimes: data.sunTimes || null,
+          goldenHour: data.goldenHour || null,
           insights: { greeting: '', insight: 'AI insights unavailable' },
+          dataSources: data.dataSources || {},
           error: err.message
         };
       }
