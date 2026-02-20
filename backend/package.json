@@ -28,7 +28,8 @@
     "multer": "^2.0.2",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.7",
-    "nodemailer-sendgrid": "^1.0.3"
+    "nodemailer-sendgrid": "^1.0.3",
+    "openai": "^6.22.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

@@ -99,6 +99,7 @@ app.get('/health', async (req, res) => {
     services: {
       accuWeather: !!process.env.ACCUWEATHER_API_KEY,
       openMeteoProxy: !!process.env.OPENMETEO_PROXY_URL,
+      geminiAI: !!process.env.GEMINI_API_KEY,
       groqAI: !!process.env.GROQ_API_KEY,
       email: !!(process.env.BREVO_API_KEY || process.env.SENDGRID_API_KEY),
       database: mongoose.connection.readyState === 1
@@ -154,7 +155,12 @@ async function startServer() {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`📧 Email: ${process.env.BREVO_API_KEY ? 'Brevo ✓' : 'Not configured'}${process.env.SENDGRID_API_KEY ? ' + SendGrid fallback ✓' : ''}`);
-      console.log(`🤖 AI: ${process.env.GROQ_API_KEY ? `Groq ✓ (${process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'})` : 'Fallback mode'}`);
+      // AI provider chain status
+      const aiProviders = [];
+      if (process.env.GEMINI_API_KEY) aiProviders.push(`Gemini Flash (${process.env.GEMINI_FLASH_MODEL || 'gemini-2.5-flash'})`);
+      if (process.env.GROQ_API_KEY) aiProviders.push(`Groq (${process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'})`);
+      if (process.env.GEMINI_API_KEY) aiProviders.push(`Flash-Lite (${process.env.GEMINI_LITE_MODEL || 'gemini-2.5-flash-lite'})`);
+      console.log(`🤖 AI: ${aiProviders.length > 0 ? aiProviders.join(' → ') + ' → rule-based' : 'Rule-based fallback only'}`);
       console.log(`🌤️  Weather: ${process.env.ACCUWEATHER_API_KEY ? 'AccuWeather ✓ (cached 30min)' : 'Not configured'}`);
       console.log(`🌥️  Open-Meteo: ${process.env.OPENMETEO_PROXY_URL ? 'CF Worker proxy ✓' : 'Direct (shared IP limits)'}`);
       console.log(`⚡ Caching: Prediction 10min | Hourly 30min | Daily 2h | Open-Meteo 6h`);

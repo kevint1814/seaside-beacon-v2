@@ -15,7 +15,7 @@ const _counters = {
   accuWeatherDaily:    { calls: 0, cacheHits: 0, errors: 0, lastCall: null, lastError: null },
   openMeteoForecast:   { calls: 0, cacheHits: 0, errors: 0, lastCall: null, lastError: null },
   openMeteoAQ:         { calls: 0, cacheHits: 0, errors: 0, lastCall: null, lastError: null },
-  groqAI:              { calls: 0, cacheHits: 0, errors: 0, fallbacks: 0, lastCall: null, lastError: null },
+  aiProvider:          { calls: 0, cacheHits: 0, errors: 0, fallbacks: 0, lastCall: null, lastError: null, providers: {} },
 
   // Prediction cache
   predictionCache:     { hits: 0, misses: 0 },
@@ -66,7 +66,14 @@ function trackAPIError(service, errorMsg) {
 }
 
 function trackGroqFallback() {
-  _counters.groqAI.fallbacks++;
+  _counters.aiProvider.fallbacks++;
+}
+
+function trackAIProviderUsage(providerName) {
+  if (!_counters.aiProvider.providers[providerName]) {
+    _counters.aiProvider.providers[providerName] = 0;
+  }
+  _counters.aiProvider.providers[providerName]++;
 }
 
 function trackPredictionCache(wasHit) {
@@ -149,7 +156,7 @@ function getMetricsSnapshot() {
       accuWeatherDaily:  { ..._counters.accuWeatherDaily },
       openMeteoForecast: { ..._counters.openMeteoForecast },
       openMeteoAQ:       { ..._counters.openMeteoAQ },
-      groqAI:            { ..._counters.groqAI }
+      aiProvider:        { ..._counters.aiProvider, providers: { ..._counters.aiProvider.providers } }
     },
     cache: {
       prediction: { ..._counters.predictionCache },
@@ -195,6 +202,7 @@ module.exports = {
   trackAPICall,
   trackAPIError,
   trackGroqFallback,
+  trackAIProviderUsage,
   trackPredictionCache,
   trackEmail,
   trackRequest,

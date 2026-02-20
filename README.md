@@ -2,7 +2,7 @@
 
 **AI-powered sunrise quality prediction for Chennai beaches.**
 
-Seaside Beacon analyzes 9 atmospheric factors across 4 Chennai beaches to predict how colorful tomorrow's sunrise will be. It combines AccuWeather forecasts, Open-Meteo satellite data, and Groq AI to deliver a single 0–100 score with photography-specific insights — delivered to your inbox at 4 AM every morning.
+Seaside Beacon analyzes 9 atmospheric factors across 4 Chennai beaches to predict how colorful tomorrow's sunrise will be. It combines AccuWeather forecasts, Open-Meteo satellite data, and a 3-tier AI system (Gemini Flash → Groq → Flash-Lite) to deliver a single 0–100 score with photography-specific insights — delivered to your inbox at 4 AM every morning.
 
 **Live:** [seasidebeacon.com](https://seasidebeacon.com)
 **Status:** Production (soft-launched February 14, 2026)
@@ -17,7 +17,7 @@ Every morning at 4 AM IST, Seaside Beacon:
 1. Fetches hourly weather data from **AccuWeather** (cloud cover, humidity, visibility, wind, precipitation)
 2. Fetches multi-level cloud layers, pressure trends, and aerosol data from **Open-Meteo** (GFS + Air Quality APIs)
 3. Runs a **9-factor scoring algorithm** (v5) that weights each atmospheric condition based on peer-reviewed sunrise color research
-4. Generates **AI-powered insights** via Groq (Llama 3.3 70B) — natural language descriptions, DSLR settings, mobile tips
+4. Generates **AI-powered insights** via 3-tier failover (Gemini 2.5 Flash → Groq Llama 3.3 70B → Gemini Flash-Lite → rule-based) — natural language descriptions, DSLR settings, mobile tips
 5. Sends personalized **email forecasts** to subscribers via Brevo (with SendGrid fallback)
 6. Stores scores in **MongoDB** for historical tracking
 
@@ -81,9 +81,9 @@ When Open-Meteo is unavailable, the three satellite-dependent factors default to
                      └──┬────────┬────────┬────────┬┘
                         │        │        │        │
                ┌────────▼──┐ ┌──▼─────┐ ┌▼──────┐ ┌▼──────────┐
-               │AccuWeather │ │Open-   │ │ Groq  │ │Brevo /    │
-               │  (weather) │ │Meteo   │ │(AI)   │ │SendGrid   │
-               │            │ │(GFS+AQ)│ │       │ │(email)    │
+               │AccuWeather │ │Open-   │ │Gemini/│ │Brevo /    │
+               │  (weather) │ │Meteo   │ │Groq   │ │SendGrid   │
+               │            │ │(GFS+AQ)│ │(AI)   │ │(email)    │
                └────────────┘ └────────┘ └───────┘ └───────────┘
                                     │
                      ┌──────────────▼───────────────┐
@@ -98,7 +98,7 @@ When Open-Meteo is unavailable, the three satellite-dependent factors default to
 - **Backend:** Node.js 18+, Express 4.x — hosted on Render (free plan)
 - **Database:** MongoDB Atlas M0 (free, 512 MB) — 6 collections
 - **Weather APIs:** AccuWeather (hourly/daily, $2/mo) + Open-Meteo GFS & AQ (free, no key)
-- **AI:** Groq (Llama 3.3 70B, free tier) with rule-based fallback
+- **AI:** 3-tier failover — Gemini 2.5 Flash (250 RPD) → Groq Llama 3.3 70B (51/day) → Gemini Flash-Lite (1000 RPD) → rule-based
 - **Email:** Brevo (primary, 300/day free) + SendGrid (backup, 100/day free)
 - **Images:** Cloudinary (community photo uploads, free tier)
 - **DNS:** Cloudflare (seasidebeacon.com, ~₹1,300/yr)
@@ -125,13 +125,13 @@ When Open-Meteo is unavailable, the three satellite-dependent factors default to
 - Score breakdown showing points earned per factor
 - Color-coded verdict badges and recommendation text
 
-### AI Insights (Groq)
+### AI Insights (Multi-Provider)
 - Natural language greeting and photography insight
 - Golden hour timing with quality rating
 - DSLR settings (ISO, shutter speed, aperture, white balance) adapted to conditions
 - Mobile settings (night mode, HDR, exposure) with 6 composition tips per device
 - AOD-based post-processing recommendations
-- 3-attempt retry with exponential backoff; falls back to rule-based system
+- 3-tier failover chain: Gemini Flash → Groq → Flash-Lite → deterministic rule-based system
 
 ### Email System
 - Daily forecast at 4 AM IST via node-cron
@@ -174,7 +174,7 @@ seaside-beacon/
 │   │   └── community.js          # /api/sunrise-submission, /api/feedback
 │   ├── services/
 │   │   ├── weatherService.js     # v5 scoring algorithm (1,383 lines)
-│   │   ├── aiService.js          # Groq AI + rule-based fallback
+│   │   ├── aiService.js          # Multi-provider AI (Gemini/Groq) + rule-based fallback
 │   │   ├── emailService.js       # Brevo + SendGrid email delivery
 │   │   ├── notifyAdmin.js        # Admin digest email
 │   │   └── visitTracker.js       # Analytics middleware
@@ -246,7 +246,7 @@ Health check for monitoring services.
 
 - Node.js 18+
 - MongoDB Atlas account (free M0 cluster)
-- API keys: AccuWeather, Groq, Brevo (or SendGrid), Cloudinary
+- API keys: AccuWeather, Gemini (Google AI), Groq, Brevo (or SendGrid), Cloudinary
 
 ### Setup
 
@@ -274,8 +274,11 @@ Create `backend/.env` with:
 # Weather
 ACCUWEATHER_API_KEY=your_key
 
-# AI
-GROQ_API_KEY=your_key
+# AI (3-tier: Gemini Flash → Groq → Flash-Lite → rule-based)
+GEMINI_API_KEY=your_google_ai_key
+GROQ_API_KEY=your_groq_key
+GEMINI_FLASH_MODEL=gemini-2.5-flash
+GEMINI_LITE_MODEL=gemini-2.5-flash-lite
 
 # Email (primary)
 BREVO_API_KEY=your_key
@@ -333,6 +336,7 @@ The backend runs a daily cron job at 4:00 AM IST for email delivery. UptimeRobot
 | Vercel | Free | $0 |
 | MongoDB Atlas | Free (M0) | $0 |
 | Open-Meteo | Free | $0 |
+| Gemini AI (Flash + Lite) | Free | $0 |
 | Groq AI | Free | $0 |
 | Brevo | Free (300/day) | $0 |
 | SendGrid | Free (100/day) | $0 |
@@ -385,7 +389,7 @@ Seaside Beacon is the only sunrise prediction platform built specifically for th
 
 **Multi-source weather resilience:** AccuWeather and Open-Meteo can fail independently. `Promise.allSettled()` with graceful degradation defaults ensures scoring never breaks, even with partial data.
 
-**AI reliability:** Groq can timeout or return malformed JSON. 3-attempt retry with exponential backoff (2s, 4s delays) plus deterministic rule-based fallback guarantees 100% insight availability.
+**AI reliability:** Individual providers (Gemini, Groq) can hit rate limits or return malformed JSON. 3-tier failover chain (Gemini Flash → Groq → Flash-Lite) with deterministic rule-based final fallback guarantees 100% insight availability. Combined capacity: ~1,300 calls/day vs ~288 daily demand.
 
 ---
 
@@ -421,6 +425,7 @@ MIT
 
 - [AccuWeather](https://developer.accuweather.com) — hourly weather forecasts
 - [Open-Meteo](https://open-meteo.com) — GFS cloud layers, pressure, and AOD data (free, no key required)
+- [Google Gemini](https://ai.google.dev) — Gemini 2.5 Flash & Flash-Lite inference
 - [Groq](https://groq.com) — Llama 3.3 70B inference
 - [Brevo](https://brevo.com) — transactional email delivery
 - [SendGrid](https://sendgrid.com) — email failover

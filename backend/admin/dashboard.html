@@ -288,7 +288,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
         <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-awd"></span>AccuWeather Daily</span><span class="svc-val" id="v-awd">—</span><span class="svc-sub" id="c-awd">—</span></div>
         <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-omf"></span>Open-Meteo Forecast</span><span class="svc-val" id="v-omf">—</span><span class="svc-sub" id="c-omf">—</span></div>
         <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-oma"></span>Open-Meteo AQ</span><span class="svc-val" id="v-oma">—</span><span class="svc-sub" id="c-oma">—</span></div>
-        <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-groq"></span>Groq AI</span><span class="svc-val" id="v-groq">—</span><span class="svc-sub" id="c-groq">—</span></div>
+        <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-ai"></span>AI Provider</span><span class="svc-val" id="v-ai">—</span><span class="svc-sub" id="c-ai">—</span></div>
         <div class="svc"><span class="svc-name"><span class="dot dot-green" id="d-db"></span>MongoDB</span><span class="svc-val" id="v-db">—</span></div>
       </div>
     </div>
@@ -462,8 +462,9 @@ function render(d){
   svc('awd',se.apis?.accuWeatherDaily,se.cache?.accuWeatherDailyCacheRate);
   svc('omf',se.apis?.openMeteoForecast,se.cache?.openMeteoForecastCacheRate);
   svc('oma',se.apis?.openMeteoAQ,se.cache?.openMeteoAQCacheRate);
-  const g=se.apis?.groqAI||{};
-  dot('d-groq',g.errors>0?'amber':'green');$('v-groq',(g.calls||0)+' calls');$('c-groq',(g.fallbacks||0)+' fallbacks');
+  const g=se.apis?.aiProvider||{};
+  const provStr=Object.entries(g.providers||{}).map(([k,v])=>k+':'+v).join(' | ')||'none';
+  dot('d-ai',g.errors>0?'amber':'green');$('v-ai',(g.calls||0)+' calls');$('c-ai',provStr+' | '+(g.fallbacks||0)+' fallbacks');
   dot('d-db',db?.connected?'green':'red');$('v-db',db?.connected?'Connected':'Down');
 
   // Performance

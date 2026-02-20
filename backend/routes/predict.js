@@ -4,7 +4,7 @@
 // v3: trackPrediction() on each forecast request
 // v4: Prediction-level cache (10-min TTL)
 //     — weather + AI insights cached per beach
-//     — eliminates duplicate API calls + Groq hits
+//     — eliminates duplicate API calls + AI provider hits
 // ==========================================
 
 const express = require('express');
@@ -17,7 +17,7 @@ const metrics = require('../services/metricsCollector');
 // ── Prediction-level cache ──────────────────────────
 // Caches the FULL response (weather + AI) per beach.
 // 10-min TTL — weather data doesn't change faster than this,
-// and it saves both AccuWeather + Groq API calls.
+// and it saves both AccuWeather + AI provider API calls.
 const PREDICTION_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const _predictionCache = {};
 

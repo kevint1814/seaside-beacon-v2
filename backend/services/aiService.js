@@ -1,7 +1,6 @@
 // ==========================================
-// AI Service - Groq AI Sunrise Insights
-// Balanced, honest, general-audience-first
-// Photography tips as secondary layer
+// AI Service - Multi-Provider Sunrise Insights
+// 3-tier failover: Gemini Flash → Groq → Flash-Lite → rule-based
 //
 // ZERO hardcoded beach content — AI generates
 // everything from weather data + beach context.
@@ -10,78 +9,100 @@
 // ==========================================
 
 const Groq = require('groq-sdk');
+const OpenAI = require('openai');
 
-// Configurable via env — swap models without redeploying
+// ── Provider config ──────────────────────────────────
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
-const GROQ_MAX_TOKENS = parseInt(process.env.GROQ_MAX_TOKENS) || 1200;
-const GROQ_TEMPERATURE = parseFloat(process.env.GROQ_TEMPERATURE) || 0.7;
+const GEMINI_FLASH_MODEL = process.env.GEMINI_FLASH_MODEL || 'gemini-2.5-flash';
+const GEMINI_LITE_MODEL = process.env.GEMINI_LITE_MODEL || 'gemini-2.5-flash-lite';
+const AI_MAX_TOKENS = parseInt(process.env.AI_MAX_TOKENS || process.env.GROQ_MAX_TOKENS) || 1200;
+const AI_TEMPERATURE = parseFloat(process.env.AI_TEMPERATURE || process.env.GROQ_TEMPERATURE) || 0.7;
 
+// ── Initialize providers ─────────────────────────────
 let groqClient;
+let geminiFlashClient;
+let geminiLiteClient;
+
+// Provider 1: Gemini 2.5 Flash (primary — high quality, 250 RPD)
+try {
+  if (process.env.GEMINI_API_KEY) {
+    geminiFlashClient = new OpenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    });
+    console.log(`✅ Gemini Flash initialized (model: ${GEMINI_FLASH_MODEL})`);
+  }
+} catch (error) {
+  console.warn('⚠️  Gemini Flash initialization failed');
+}
+
+// Provider 2: Groq Llama 3.3 70B (secondary — high quality, 51 calls/day TPD)
 try {
   if (process.env.GROQ_API_KEY) {
     groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    console.log(`✅ Groq AI initialized (model: ${GROQ_MODEL})`);
-  } else {
-    console.warn('⚠️  Groq API not configured, using fallback');
+    console.log(`✅ Groq initialized (model: ${GROQ_MODEL})`);
   }
 } catch (error) {
-  console.warn('⚠️  Groq AI initialization failed, using fallback');
+  console.warn('⚠️  Groq initialization failed');
+}
+
+// Provider 3: Gemini 2.5 Flash-Lite (safety net — decent quality, 1000 RPD)
+try {
+  if (process.env.GEMINI_API_KEY) {
+    geminiLiteClient = new OpenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    });
+    console.log(`✅ Gemini Flash-Lite initialized (model: ${GEMINI_LITE_MODEL})`);
+  }
+} catch (error) {
+  console.warn('⚠️  Gemini Flash-Lite initialization failed');
+}
+
+const AI_PROVIDERS = [
+  geminiFlashClient && { name: 'gemini-flash', client: geminiFlashClient, model: GEMINI_FLASH_MODEL },
+  groqClient && { name: 'groq', client: groqClient, model: GROQ_MODEL, isGroq: true },
+  geminiLiteClient && { name: 'gemini-flash-lite', client: geminiLiteClient, model: GEMINI_LITE_MODEL }
+].filter(Boolean);
+
+if (AI_PROVIDERS.length === 0) {
+  console.warn('⚠️  No AI providers configured — using rule-based fallback only');
+} else {
+  console.log(`🤖 AI provider chain: ${AI_PROVIDERS.map(p => p.name).join(' → ')} → rule-based`);
 }
 
 /**
  * Generate sunrise insights (general audience + photography)
- * weatherData now includes: sunTimes, goldenHour, beachContext
+ * 3-tier failover: Gemini Flash → Groq → Flash-Lite → rule-based
  */
 async function generatePhotographyInsights(weatherData, allWeatherData = {}) {
-  try {
-    if (groqClient && process.env.GROQ_API_KEY) {
-      return await generateGroqInsightsWithRetry(weatherData, allWeatherData);
-    } else {
-      return generateRuleBasedInsights(weatherData, allWeatherData);
-    }
-  } catch (error) {
-    console.error('AI generation error (all retries exhausted):', error.message);
-    return generateRuleBasedInsights(weatherData, allWeatherData);
-  }
-}
-
-/**
- * Retry wrapper for Groq — exponential backoff on rate limits/timeouts
- * Attempt 1: immediate
- * Attempt 2: wait 2s
- * Attempt 3: wait 4s
- * Only then fall back to rule-based
- */
-async function generateGroqInsightsWithRetry(weatherData, allWeatherData, maxRetries = 3) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  // Try each AI provider in priority order — no retries within a provider,
+  // just fail fast and move to the next one. This is faster than retry loops.
+  for (const provider of AI_PROVIDERS) {
     try {
-      return await generateGroqInsights(weatherData, allWeatherData);
+      const result = await callAIProvider(provider, weatherData, allWeatherData);
+      return result;
     } catch (error) {
-      const isRetryable = error.status === 429 || // Rate limit
-                          error.status === 503 || // Service unavailable
-                          error.code === 'ECONNRESET' ||
-                          error.code === 'ETIMEDOUT' ||
-                          error.message?.includes('timeout');
-
-      if (isRetryable && attempt < maxRetries) {
-        const waitMs = Math.pow(2, attempt) * 1000; // 2s, 4s
-        console.warn(`⚠️ Groq attempt ${attempt}/${maxRetries} failed (${error.status || error.code || error.message}), retrying in ${waitMs/1000}s...`);
-        await new Promise(resolve => setTimeout(resolve, waitMs));
-      } else {
-        throw error; // Non-retryable error or final attempt — propagate to fallback
-      }
+      const errorCode = error.status || error.code || '';
+      console.warn(`⚠️  ${provider.name} failed (${errorCode}): ${error.message?.substring(0, 120)}`);
+      // Continue to next provider
     }
   }
+
+  // All AI providers exhausted — fall back to rule-based
+  if (AI_PROVIDERS.length > 0) {
+    console.error('❌ All AI providers failed — using rule-based fallback');
+  }
+  return generateRuleBasedInsights(weatherData, allWeatherData);
 }
 
 /**
- * AI-powered insights using Groq (Llama 3.3 70B)
- * Dual-audience: general sunrise experience + photography
- * Honest, balanced tone — sets accurate expectations
+ * Call a single AI provider (Gemini or Groq) — OpenAI-compatible format
+ * Throws on failure so the failover chain can continue
  */
-async function generateGroqInsights(weatherData, allWeatherData = {}) {
+async function callAIProvider(provider, weatherData, allWeatherData = {}) {
   try {
-    console.log('🤖 Calling Groq AI for insights...');
+    console.log(`🤖 Calling ${provider.name} (${provider.model}) for insights...`);
 
     const { beach, forecast, prediction, beachContext, goldenHour, sunTimes } = weatherData;
     const { cloudCover, humidity, visibility, windSpeed, temperature, precipProbability, weatherDescription } = forecast;
@@ -200,12 +221,7 @@ JSON response:
 Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A'}. NOT full names like "Marina Beach".`;
 
 
-    const completion = await groqClient.chat.completions.create({
-      model: GROQ_MODEL,
-      messages: [
-        {
-          role: "system",
-          content: `You are Beacon — a friendly, straight-talking sunrise guide for Chennai beaches. You talk like a local friend who checks the sky every morning and texts you whether it's worth waking up. Simple language, no jargon, no weather-nerd talk. When it's good, you're excited but specific about what people will see. When it's bad, you say so plainly without padding. You describe what the sky LOOKS like in everyday words anyone understands — 'orange and pink streaks', 'grey and flat', 'soft warm glow' — not cloud percentages or humidity numbers. Always respond with valid JSON only.
+    const systemPrompt = `You are Beacon — a friendly, straight-talking sunrise guide for Chennai beaches. You talk like a local friend who checks the sky every morning and texts you whether it's worth waking up. Simple language, no jargon, no weather-nerd talk. When it's good, you're excited but specific about what people will see. When it's bad, you say so plainly without padding. You describe what the sky LOOKS like in everyday words anyone understands — 'orange and pink streaks', 'grey and flat', 'soft warm glow' — not cloud percentages or humidity numbers. Always respond with valid JSON only.
 
 KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms):
 - High clouds (>6km altitude, cirrus) = the color canvas. They catch pre-sunrise light and glow vivid orange/red. More high clouds = more color.
@@ -214,17 +230,28 @@ KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms)
 - High AOD = hazy, polluted air. Colors look washed out, muted, milky.
 - Falling pressure (2-5 hPa drop) = clearing front approaching. Often produces the MOST dramatic skies — cloud breakup with vivid color through gaps.
 - Rapidly falling pressure (>5 hPa) = storm. Too much cloud and rain.
-- Post-rain conditions = exceptionally clear air (aerosol washout). Often the best possible mornings.`
-        },
+- Post-rain conditions = exceptionally clear air (aerosol washout). Often the best possible mornings.`;
+
+    // Build request options — OpenAI-compatible format works for both Gemini and Groq
+    const requestOptions = {
+      model: provider.model,
+      messages: [
+        { role: "system", content: systemPrompt },
         { role: "user", content: prompt }
       ],
-      temperature: GROQ_TEMPERATURE,
-      max_tokens: GROQ_MAX_TOKENS,
-      response_format: { type: "json_object" }
-    });
+      temperature: AI_TEMPERATURE,
+      max_tokens: AI_MAX_TOKENS
+    };
+
+    // Groq supports response_format for guaranteed JSON; Gemini may not via OpenAI compat
+    if (provider.isGroq) {
+      requestOptions.response_format = { type: "json_object" };
+    }
+
+    const completion = await provider.client.chat.completions.create(requestOptions);
 
     const responseText = completion.choices[0]?.message?.content;
-    if (!responseText) throw new Error('Empty response from Groq');
+    if (!responseText) throw new Error(`Empty response from ${provider.name}`);
 
     const cleanText = responseText
       .replace(/```json\n?/g, '')
@@ -232,13 +259,13 @@ KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms)
       .trim();
 
     const aiData = JSON.parse(cleanText);
-    console.log('✅ Groq AI insights generated');
+    console.log(`✅ ${provider.name} AI insights generated (model: ${provider.model})`);
 
     // If AI returned beach comparison, use it directly.
     // If not (single beach call), generate deterministic comparison.
     let beachComparison = aiData.beachComparison;
     if (!beachComparison && Object.keys(allWeatherData).length > 1) {
-      console.warn('⚠️  Groq returned no beachComparison — using rule-based fallback');
+      console.warn(`⚠️  ${provider.name} returned no beachComparison — using rule-based fallback`);
       beachComparison = generateBeachComparison(allWeatherData);
     }
 
@@ -259,7 +286,7 @@ KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms)
         }
       });
       if (patchCount > 0) {
-        console.warn(`⚠️  Patched ${patchCount}/${expectedKeys.length} beach comparisons from Groq (missing keys or reasons). AI returned keys: ${Object.keys(beachComparison.beaches || {}).join(', ')}`);
+        console.warn(`⚠️  Patched ${patchCount}/${expectedKeys.length} beach comparisons from ${provider.name} (missing keys or reasons). AI returned keys: ${Object.keys(beachComparison.beaches || {}).join(', ')}`);
       }
       // Validate todaysBest is a real key
       if (!expectedKeys.includes(beachComparison.todaysBest)) {
@@ -285,8 +312,8 @@ KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms)
     const atmosphericAnalysis = generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed, breakdown);
 
     return {
-      source: 'groq',
-      model: 'llama-3.3-70b',
+      source: provider.name,
+      model: provider.model,
       greeting: aiData.greeting,
       insight: aiData.insight,
       sunriseExperience: aiData.sunriseExperience,
@@ -298,7 +325,7 @@ KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms)
     };
 
   } catch (error) {
-    console.error('❌ Groq AI error:', error.message);
+    console.error(`❌ ${provider.name} AI error:`, error.message);
     throw error;
   }
 }
