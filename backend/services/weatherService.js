@@ -1461,8 +1461,9 @@ function getAtmosphericLabels(forecast, breakdown) {
 
   const labels = {
     // ── EXISTING LABELS (updated) ──
+    // v5.3: "Optimal" only if elevated canvas exists (not all-low-stratus)
     cloudLabel: cloudCover >= 30 && cloudCover <= 60
-      ? 'Optimal'
+      ? (highCloud != null && (highCloud + (midCloud || 0)) < 15 && lowCloud > 40 ? 'Low Stratus' : 'Optimal')
       : cloudCover < 30 ? 'Too Clear' : cloudCover <= 75 ? 'Partly Overcast' : 'Overcast',
     humidityLabel: humidity <= 55 ? 'Excellent' : humidity <= 65 ? 'Very Good' : humidity <= 75 ? 'Good' : humidity <= 82 ? 'Decent' : humidity <= 88 ? 'Normal' : humidity <= 93 ? 'High' : 'Very High',
     visibilityLabel: visibility >= 18 ? 'Exceptional' : visibility >= 12 ? 'Excellent' : visibility >= 8 ? 'Good' : visibility >= 5 ? 'Fair' : 'Poor',
@@ -1498,8 +1499,11 @@ function getAtmosphericLabels(forecast, breakdown) {
       : 'N/A',
 
     // ── CONTEXT STRINGS ──
+    // v5.3: context reflects low-stratus reality
     cloudContext: cloudCover >= 30 && cloudCover <= 60
-      ? 'Acts as canvas for orange and red sky reflections'
+      ? (highCloud != null && (highCloud + (midCloud || 0)) < 15 && lowCloud > 40
+        ? 'Low stratus — flat grey blanket, poor canvas for sunrise color'
+        : 'Acts as canvas for orange and red sky reflections')
       : cloudCover < 30
       ? 'Limited cloud canvas — colors focused near sun only'
       : cloudCover <= 75

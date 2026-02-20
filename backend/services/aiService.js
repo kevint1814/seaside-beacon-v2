@@ -368,7 +368,7 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   }
 
   // ── Sunrise experience (general audience) ──
-  const sunriseExperience = generateSunriseExperience(score, cloudCover, humidity, visibility, windSpeed, temperature, beach);
+  const sunriseExperience = generateSunriseExperience(score, cloudCover, humidity, visibility, windSpeed, temperature, beach, breakdown);
 
   // ── Golden hour — use real data or fallback ──
   const goldenHour = realGoldenHour
@@ -421,22 +421,50 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
 // No hardcoded beach names — uses beach param
 // ==========================================
 
-function generateSunriseExperience(score, cloudCover, humidity, visibility, windSpeed, temperature, beach) {
+function generateSunriseExperience(score, cloudCover, humidity, visibility, windSpeed, temperature, beach, breakdown) {
+  // v5.3: Use breakdown for atmosphere-aware descriptions
+  const highCloud = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
+  const midCloud = breakdown?.multiLevelCloud?.mid ?? breakdown?.midCloud ?? null;
+  const lowCloud = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
+  const aodValue = breakdown?.aod?.value ?? null;
+  const isLowStratus = highCloud != null && (highCloud + (midCloud || 0)) < 15 && lowCloud > 40;
+  const hasHighCanvas = highCloud != null && highCloud >= 30;
+  const isHazy = aodValue != null && aodValue >= 0.4;
+  const isVeryHumid = humidity >= 88;
+
   let whatYoullSee;
   if (score >= 85) {
-    whatYoullSee = `The sky should light up with vivid oranges and reds as sunlight catches the underside of scattered clouds. Expect a dramatic build of color starting about 15 minutes before sunrise, peaking as the sun nears the horizon. With ${visibility}km visibility, the horizon will be sharp and the colors intense.`;
+    whatYoullSee = `The sky should light up with vivid oranges and reds as sunlight catches ${hasHighCanvas ? 'high clouds acting as a color canvas' : 'scattered clouds'} across the sky. Expect a dramatic build of color starting about 15 minutes before sunrise, peaking as the sun nears the horizon.${aodValue != null && aodValue < 0.2 ? ' Clean air means the colors will be sharp and intense.' : ''}`;
   } else if (score >= 70) {
-    if (cloudCover >= 30 && cloudCover <= 60) {
-      whatYoullSee = `Good conditions for warm colors across the sky — clouds at ${cloudCover}% will catch light nicely, producing oranges and golds. With ${visibility}km visibility, expect a satisfying color display that builds gradually before sunrise.`;
+    if (hasHighCanvas && cloudCover >= 30 && cloudCover <= 60) {
+      whatYoullSee = `Good conditions — high clouds at ${highCloud}% will catch pre-sunrise light and glow orange and gold. With ${lowCloud < 30 ? 'a clear horizon, colors will be vivid and well-defined' : 'some low cloud near the horizon, the color may be partially blocked but still visible above'}. A rewarding sunrise to catch.`;
     } else {
-      whatYoullSee = `Good atmospheric conditions overall — expect pleasant warm tones across the sky with ${visibility}km of clear sightlines to the horizon. The color intensity will depend on cloud positioning, but conditions are strong for a rewarding sunrise.`;
+      whatYoullSee = `Pleasant warm tones across the sky with ${visibility}km visibility to the horizon. ${cloudCover >= 30 && cloudCover <= 60 ? 'Clouds at ' + cloudCover + '% will reflect some nice color.' : 'Conditions are solid for a satisfying sunrise.'} Expect oranges and golds that build gradually.`;
     }
   } else if (score >= 55) {
-    whatYoullSee = `You'll see some color in the sky — likely softer warm tones rather than intense reds and oranges. ${cloudCover > 60 ? 'Heavier cloud cover will filter the light, giving a diffused, gentler glow rather than sharp color bands.' : cloudCover < 30 ? 'Clear skies mean the color will mostly be pale yellows and soft blues — pleasant but not dramatic.' : 'Moderate cloud coverage means some color reflection, though humidity may soften the vibrancy.'} It will be a nice morning, just not a show-stopper.`;
+    if (isLowStratus) {
+      whatYoullSee = `The cloud amount looks decent at ${cloudCover}%, but it's mostly low-level stratus — a flat grey layer rather than the high clouds that produce vivid color. You may see soft peach or salmon tones above the cloud band, but don't expect intense reds or oranges. Any color will be subtle and diffused.`;
+    } else if (isHazy) {
+      whatYoullSee = `Haze in the air will soften the sunrise — expect washed-out warm tones rather than vivid color. ${hasHighCanvas ? 'There are high clouds to catch light, but the haze will mute the contrast.' : 'Colors will be pastel at best.'} The horizon may look milky rather than crisp.`;
+    } else {
+      whatYoullSee = `You'll see some color in the sky — likely softer warm tones rather than intense reds and oranges. ${cloudCover > 60 ? 'Heavier cloud cover will filter the light, giving a diffused, gentler glow.' : cloudCover < 30 ? 'Clear skies mean mostly pale yellows and soft blues — pleasant but not dramatic.' : 'Moderate clouds will reflect some color, though it won\'t be a show-stopper.'}`;
+    }
   } else if (score >= 40) {
-    whatYoullSee = `Realistically, the sky will be mostly grey or washed out near the horizon. ${cloudCover > 70 ? `At ${cloudCover}% cloud cover, the sun may not be visible at all when it rises — you'll notice the sky gradually brightening from dark grey to lighter grey.` : `High humidity at ${humidity}% will haze out most color, giving the sky a flat, milky appearance.`} If any color appears, it will be brief and faint.`;
+    if (isLowStratus) {
+      whatYoullSee = `Low stratus cloud will sit like a grey blanket across the horizon. The sky will brighten from dark to lighter grey without much color. You might catch a brief moment of soft peach if the sun finds a thin spot in the cloud, but mostly it'll be flat and muted.`;
+    } else if (cloudCover > 70 && isVeryHumid) {
+      whatYoullSee = `At ${cloudCover}% cloud cover with ${humidity}% humidity, the sky will be mostly grey and washed out. The sun may not be visible when it rises — you'll notice the sky gradually brightening without warm colors. If any color appears, it will be faint and brief.`;
+    } else if (isHazy && isVeryHumid) {
+      whatYoullSee = `Thick haze combined with ${humidity}% humidity will make the horizon look flat and milky. Any sunrise color will be heavily muted — expect soft grey tones with maybe a faint warm glow where the sun is. Not a morning for vivid skies.`;
+    } else {
+      whatYoullSee = `Realistically, the sky will be mostly grey or washed out near the horizon. ${cloudCover > 70 ? `Heavy cloud at ${cloudCover}% will block most direct sunlight.` : `High humidity at ${humidity}% will haze out most color, giving the sky a flat appearance.`} If any color appears, it will be brief and faint.`;
+    }
   } else {
-    whatYoullSee = `The sunrise will likely not be visible this morning. ${cloudCover > 80 ? 'Thick cloud cover will block the sun entirely — the sky will shift from dark to overcast grey without any color.' : 'A combination of poor visibility and atmospheric moisture will make the horizon indistinguishable.'} The beach will still be dim well after the official sunrise time.`;
+    if (cloudCover > 80 && lowCloud != null && lowCloud >= 50) {
+      whatYoullSee = `Thick low cloud cover at ${cloudCover}% will block the sun entirely. The sky will shift from dark to overcast grey without any color. ${isVeryHumid ? 'Extreme humidity adds a damp, grey haze to everything.' : ''} The beach will still be dim well after the official sunrise time.`;
+    } else {
+      whatYoullSee = `The sunrise will likely not be visible this morning. ${isHazy ? 'Heavy haze' : 'Poor atmospheric conditions'} combined with ${cloudCover > 70 ? 'thick cloud cover' : 'high moisture'} will make the horizon indistinguishable. The sky will just gradually get lighter without any warm tones.`;
+    }
   }
 
   // Beach vibes — generic, no hardcoded beach name checks
@@ -470,16 +498,20 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
 // ==========================================
 
 function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed, breakdown) {
-  const cloudRating = (cloudCover >= 30 && cloudCover <= 60) ? 'Optimal' : cloudCover < 30 ? 'Too Clear' : cloudCover <= 75 ? 'Partly Overcast' : 'Overcast';
+  // v5.3: account for low-stratus — "Optimal" only with elevated canvas
+  const highCloud = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
+  const midCloud = breakdown?.multiLevelCloud?.mid ?? breakdown?.midCloud ?? null;
+  const lowCloud = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
+  const isLowStratus = highCloud != null && (highCloud + (midCloud || 0)) < 15 && lowCloud > 40;
+  const cloudRating = (cloudCover >= 30 && cloudCover <= 60)
+    ? (isLowStratus ? 'Low Stratus' : 'Optimal')
+    : cloudCover < 30 ? 'Too Clear' : cloudCover <= 75 ? 'Partly Overcast' : 'Overcast';
 
   // Dynamic month reference
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const currentMonth = monthNames[new Date().getMonth()];
 
-  // Extract v5 fields from breakdown
-  const highCloud = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
-  const midCloud = breakdown?.multiLevelCloud?.mid ?? breakdown?.midCloud ?? null;
-  const lowCloud = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
+  // v5 fields already extracted above (highCloud, midCloud, lowCloud)
   const aodValue = breakdown?.aod?.value ?? null;
   const pressureTrend = breakdown?.pressureTrend?.value ?? null;
   const isPostRain = breakdown?.isPostRain ?? false;
@@ -489,7 +521,9 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
       value: cloudCover,
       rating: cloudRating,
       impact: cloudCover >= 30 && cloudCover <= 60
-        ? `At ${cloudCover}%, clouds sit in the ideal range — they act as a reflective canvas, catching orange and red light from below the horizon. This is the range that produces the most colorful sunrises.`
+        ? (isLowStratus
+          ? `At ${cloudCover}%, the cloud amount looks ideal on paper — but it's all low stratus (${lowCloud}% below 2km). Low stratus acts as a flat grey blanket, not a reflective canvas. Without elevated clouds, there's little surface to catch the pre-sunrise color from below the horizon.`
+          : `At ${cloudCover}%, clouds sit in the ideal range — they act as a reflective canvas, catching orange and red light from below the horizon. This is the range that produces the most colorful sunrises.`)
         : cloudCover < 30
         ? `With only ${cloudCover}% cloud cover, there's very little canvas for the sun's colors to reflect off. The sky will be mostly pale yellows and blues — clean but lacking the dramatic color that clouds create.`
         : cloudCover <= 75
@@ -514,12 +548,16 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
     } : null,
     humidity: {
       value: humidity,
-      rating: humidity <= 55 ? 'Excellent' : humidity <= 65 ? 'Very Good' : humidity <= 75 ? 'Good' : humidity <= 85 ? 'Moderate' : 'High',
+      rating: humidity <= 55 ? 'Excellent' : humidity <= 65 ? 'Very Good' : humidity <= 75 ? 'Good' : humidity <= 82 ? 'Decent' : humidity <= 88 ? 'Normal' : humidity <= 93 ? 'High' : 'Very High',
       impact: humidity <= 55
         ? `At ${humidity}% humidity, the air is dry — colors will appear crisp, vivid and well-saturated. Low humidity is one of the key ingredients behind the best sunrise conditions.`
         : humidity <= 70
         ? `At ${humidity}% humidity, atmospheric moisture will slightly soften and diffuse the light. Colors will be present but noticeably less saturated than on drier mornings — think warm pastels rather than vivid fire.`
-        : `At ${humidity}% humidity, significant moisture in the air will scatter and absorb light. Colors will appear visibly washed out and hazy. The horizon may look milky rather than sharp.`
+        : humidity <= 82
+        ? `At ${humidity}% humidity, moderate moisture will soften colors and add a warm haze to the horizon. Colours will be muted but still visible.`
+        : humidity <= 90
+        ? `At ${humidity}% humidity, typical coastal dawn moisture is scattering light. Colours will appear softened — warm tones visible but not vivid. The horizon may look hazy.`
+        : `At ${humidity}% humidity, significant moisture in the air will scatter and absorb light. Colors will appear visibly washed out and pale. The horizon will look milky rather than sharp.`
     },
     // v5 NEW: Air clarity / AOD
     airClarity: aodValue != null ? {

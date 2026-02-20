@@ -321,7 +321,12 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     const beachComp = photographyInsights.beachComparison || null;
 
     // Cloud label
-    const cloudLabel = atmosphericLabels?.cloudLabel || (cloudCover >= 30 && cloudCover <= 60 ? 'Optimal' : cloudCover < 30 ? 'Too Clear' : 'Overcast');
+    // v5.3: low stratus check for fallback label
+    const _hc = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
+    const _mc = breakdown?.multiLevelCloud?.mid ?? breakdown?.midCloud ?? null;
+    const _lc = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
+    const _isLowStratus = _hc != null && (_hc + (_mc || 0)) < 15 && _lc > 40;
+    const cloudLabel = atmosphericLabels?.cloudLabel || (cloudCover >= 30 && cloudCover <= 60 ? (_isLowStratus ? 'Low Stratus' : 'Optimal') : cloudCover < 30 ? 'Too Clear' : 'Overcast');
 
     const includePhotography = score >= 40;
 
@@ -503,7 +508,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
                       <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:14px 16px;">
                         <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#a09080;">👁️ Visibility</p>
                         <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:#2a2420;">${visibility}km</p>
-                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${visBadgeBg}" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:${visBadgeColor};">${atmosphericLabels?.visibilityLabel || (visibility >= 10 ? 'Excellent' : visibility >= 8 ? 'Good' : 'Fair')}</span></td></tr></table>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${visBadgeBg}" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:${visBadgeColor};">${atmosphericLabels?.visibilityLabel || (visibility >= 18 ? 'Exceptional' : visibility >= 12 ? 'Excellent' : visibility >= 8 ? 'Good' : visibility >= 5 ? 'Fair' : 'Poor')}</span></td></tr></table>
                       </td></tr>
                     </table>
                   </td>`}
@@ -532,7 +537,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
                       <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:14px 16px;">
                         <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#a09080;">👁️ Visibility</p>
                         <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:#2a2420;">${visibility}km</p>
-                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${visBadgeBg}" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:${visBadgeColor};">${atmosphericLabels?.visibilityLabel || (visibility >= 10 ? 'Excellent' : visibility >= 8 ? 'Good' : 'Fair')}</span></td></tr></table>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${visBadgeBg}" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:${visBadgeColor};">${atmosphericLabels?.visibilityLabel || (visibility >= 18 ? 'Exceptional' : visibility >= 12 ? 'Excellent' : visibility >= 8 ? 'Good' : visibility >= 5 ? 'Fair' : 'Poor')}</span></td></tr></table>
                       </td></tr>
                     </table>
                   </td>

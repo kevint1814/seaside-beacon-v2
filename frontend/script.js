@@ -1404,11 +1404,16 @@ function renderForecast() {
 
   const labels = pred.atmosphericLabels||{};
   const bd = pred.breakdown||{};
+  // v5.3: fallback labels match backend getAtmosphericLabels thresholds
+  const _hc = bd.multiLevelCloud?.high ?? bd.highCloud ?? null;
+  const _mc = bd.multiLevelCloud?.mid ?? bd.midCloud ?? null;
+  const _lc = bd.multiLevelCloud?.low ?? bd.lowCloud ?? null;
+  const _isLowStratus = _hc != null && (_hc + (_mc || 0)) < 15 && _lc > 40;
   const condItems = [
-    {lbl:'Cloud Cover',val:`${f.cloudCover}%`,    sub:labels.cloudLabel    ||(f.cloudCover>=30&&f.cloudCover<=60?'Optimal':f.cloudCover<30?'Clear':'Heavy')},
-    {lbl:'Humidity', val:`${f.humidity}%`,       sub:labels.humidityLabel ||(f.humidity<=55?'Low':'High')},
-    {lbl:'Visibility',val:`${f.visibility}km`,   sub:labels.visibilityLabel||(f.visibility>=18?'Exceptional':f.visibility>=12?'Excellent':f.visibility>=8?'Good':'Fair')},
-    {lbl:'Wind',     val:`${f.windSpeed}km/h`,   sub:labels.windLabel     ||(f.windSpeed<=15?'Calm':'Breezy')}
+    {lbl:'Cloud Cover',val:`${f.cloudCover}%`,    sub:labels.cloudLabel    ||(f.cloudCover>=30&&f.cloudCover<=60?(_isLowStratus?'Low Stratus':'Optimal'):f.cloudCover<30?'Too Clear':f.cloudCover<=75?'Partly Overcast':'Overcast')},
+    {lbl:'Humidity', val:`${f.humidity}%`,       sub:labels.humidityLabel ||(f.humidity<=55?'Excellent':f.humidity<=65?'Very Good':f.humidity<=75?'Good':f.humidity<=82?'Decent':f.humidity<=88?'Normal':f.humidity<=93?'High':'Very High')},
+    {lbl:'Visibility',val:`${f.visibility}km`,   sub:labels.visibilityLabel||(f.visibility>=18?'Exceptional':f.visibility>=12?'Excellent':f.visibility>=8?'Good':f.visibility>=5?'Fair':'Poor')},
+    {lbl:'Wind',     val:`${f.windSpeed}km/h`,   sub:labels.windLabel     ||(f.windSpeed<=10?'Calm':f.windSpeed<=20?'Light':f.windSpeed<=30?'Moderate':'Strong')}
   ];
   // v5: Add cloud layers if available
   const hc = bd.multiLevelCloud?.high ?? bd.highCloud ?? null;
@@ -1567,16 +1572,22 @@ function renderAnalysisPanel(f,pred,p,beachName) {
 function renderConditionsTab(f,pred,p) {
   const labels=pred.atmosphericLabels||{}, atm=p?.atmosphericAnalysis||{};
   const bd = pred.breakdown||{};
+  // v5.3: low stratus detection for fallback labels
+  const _hc2 = bd.multiLevelCloud?.high ?? bd.highCloud ?? null;
+  const _mc2 = bd.multiLevelCloud?.mid ?? bd.midCloud ?? null;
+  const _lc2 = bd.multiLevelCloud?.low ?? bd.lowCloud ?? null;
+  const _isLowStratus2 = _hc2 != null && (_hc2 + (_mc2 || 0)) < 15 && _lc2 > 40;
   const items=[
     {lbl:'Cloud Cover',val:`${f.cloudCover}%`,
-     rating:labels.cloudLabel||(f.cloudCover>=30&&f.cloudCover<=60?'Optimal':f.cloudCover<30?'Too Clear':'Heavy'),
-     cls:f.cloudCover>=30&&f.cloudCover<=60?'ab-good':f.cloudCover<=75?'ab-ok':'ab-bad',
+     rating:labels.cloudLabel||(f.cloudCover>=30&&f.cloudCover<=60?(_isLowStratus2?'Low Stratus':'Optimal'):f.cloudCover<30?'Too Clear':f.cloudCover<=75?'Partly Overcast':'Overcast'),
+     cls:f.cloudCover>=30&&f.cloudCover<=60&&!_isLowStratus2?'ab-good':f.cloudCover<=75?'ab-ok':'ab-bad',
      body:atm.cloudCover?.impact||(f.cloudCover>=30&&f.cloudCover<=60
-       ?`At ${f.cloudCover}%, clouds sit in the photographic sweet spot — thick enough to catch the sub-horizon light, thin enough to let colour through. Expect reds and golds.`
+       ?(_isLowStratus2?`At ${f.cloudCover}%, the cloud amount looks decent on paper — but it's mostly low stratus, a flat grey layer rather than the high clouds that produce vivid colour. Don't expect intense reds or oranges.`
+       :`At ${f.cloudCover}%, clouds sit in the photographic sweet spot — thick enough to catch the sub-horizon light, thin enough to let colour through. Expect reds and golds.`)
        :f.cloudCover<30?`At ${f.cloudCover}%, mostly clear sky. Clean but potentially flat — the dramatic fire sky needs cloud texture to ignite.`
        :`At ${f.cloudCover}%, heavy cover. Colours will likely be muted and diffused. Look for gaps where light breaks through.`)},
     {lbl:'Humidity',val:`${f.humidity}%`,
-     rating:labels.humidityLabel||(f.humidity<=55?'Excellent':f.humidity<=65?'Very Good':f.humidity<=75?'Good':f.humidity<=85?'Moderate':'High'),
+     rating:labels.humidityLabel||(f.humidity<=55?'Excellent':f.humidity<=65?'Very Good':f.humidity<=75?'Good':f.humidity<=82?'Decent':f.humidity<=88?'Normal':f.humidity<=93?'High':'Very High'),
      cls:f.humidity<=65?'ab-good':f.humidity<=80?'ab-ok':'ab-bad',
      body:atm.humidity?.impact||(f.humidity<=55
        ?`At ${f.humidity}%, the atmosphere is exceptionally dry for dawn. Light travels cleanly — colours will be saturated, contrast strong, and shadows crisp.`
@@ -1588,7 +1599,7 @@ function renderConditionsTab(f,pred,p) {
        ?`At ${f.humidity}%, high moisture is scattering light significantly. Colours will appear washed out and pastel rather than vivid. The horizon will look milky.`
        :`At ${f.humidity}%, near-saturation humidity. Fog or heavy mist is likely — sunrise colours will be severely muted if visible at all.`)},
     {lbl:'Visibility',val:`${f.visibility}km`,
-     rating:labels.visibilityLabel||(f.visibility>=18?'Exceptional':f.visibility>=12?'Excellent':f.visibility>=8?'Good':'Fair'),
+     rating:labels.visibilityLabel||(f.visibility>=18?'Exceptional':f.visibility>=12?'Excellent':f.visibility>=8?'Good':f.visibility>=5?'Fair':'Poor'),
      cls:f.visibility>=8?'ab-good':f.visibility>=5?'ab-ok':'ab-bad',
      body:atm.visibility?.impact||(f.visibility>=18
        ?`${f.visibility}km — post-rain crystal clarity. Distant elements will render sharply with strong colour separation across the sky.`
