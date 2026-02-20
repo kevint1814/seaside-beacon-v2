@@ -23,7 +23,7 @@ async function fetchAllBeachWeather() {
 
   for (const beachKey of ALL_BEACHES) {
     try {
-      const data = await weatherService.getTomorrow6AMForecast(beachKey);
+      const data = await weatherService.getTomorrow6AMForecast(beachKey, { forceAvailable: true });
       if (data.available) {
         allWeatherData[beachKey] = data;
       }

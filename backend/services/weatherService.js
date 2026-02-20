@@ -75,13 +75,13 @@ const BEACHES = {
 };
 
 /**
- * Check if predictions are available (6 PM - 6 AM IST window)
+ * Check if predictions are available (6 PM - 7 AM IST window for public users)
  */
 function isPredictionTimeAvailable() {
   const now = new Date();
   const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const currentHour = istTime.getHours();
-  return currentHour >= 18 || currentHour < 6;
+  return currentHour >= 18 || currentHour < 7;  // Extended to 7 AM (matches frontend)
 }
 
 /**
@@ -94,7 +94,7 @@ function getTimeUntilAvailable() {
   const currentHour = istTime.getUTCHours();
   const currentMinute = istTime.getUTCMinutes();
 
-  if (currentHour >= 18 || currentHour < 6) {
+  if (currentHour >= 18 || currentHour < 7) {
     return { available: true, hoursLeft: 0, minutesLeft: 0 };
   }
 
@@ -1528,21 +1528,23 @@ function getAtmosphericLabels(forecast, breakdown) {
 /**
  * Get tomorrow's 6 AM IST forecast for a beach
  */
-async function getTomorrow6AMForecast(beachKey) {
+async function getTomorrow6AMForecast(beachKey, { forceAvailable = false } = {}) {
   const beach = BEACHES[beachKey];
   if (!beach) {
     throw new Error(`Beach '${beachKey}' not found`);
   }
 
-  const timeCheck = getTimeUntilAvailable();
-  if (!timeCheck.available) {
-    return {
-      available: false,
-      timeUntilAvailable: { hours: timeCheck.hoursLeft, minutes: timeCheck.minutesLeft },
-      message: 'Predictions available after 6 PM IST',
-      beach: beach.name,
-      beachKey: beach.key
-    };
+  if (!forceAvailable) {
+    const timeCheck = getTimeUntilAvailable();
+    if (!timeCheck.available) {
+      return {
+        available: false,
+        timeUntilAvailable: { hours: timeCheck.hoursLeft, minutes: timeCheck.minutesLeft },
+        message: 'Predictions available after 6 PM IST',
+        beach: beach.name,
+        beachKey: beach.key
+      };
+    }
   }
 
   console.log(`\n📡 Fetching AccuWeather data for ${beach.name}...`);

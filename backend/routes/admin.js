@@ -150,7 +150,7 @@ router.get('/api/admin/predictions', requireAuth, async (req, res) => {
     const allWeatherData = {};
     for (const beach of ALL_BEACHES) {
       try {
-        const data = await weatherService.getTomorrow6AMForecast(beach.key);
+        const data = await weatherService.getTomorrow6AMForecast(beach.key, { forceAvailable: true });
         if (data.available) {
           allWeatherData[beach.key] = data;
         }
