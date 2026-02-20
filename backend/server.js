@@ -18,7 +18,7 @@ const subscribeRoutes = require('./routes/subscribe');
 const predictRoutes = require('./routes/predict');
 const communityRoutes = require('./routes/community');
 const adminRoutes = require('./routes/admin');
-const { initializeDailyEmailJob } = require('./jobs/dailyEmail');
+const { initializeEmailJobs } = require('./jobs/dailyEmail');
 const { initializeDailyDigest } = require('./services/notifyAdmin');
 const { trackVisitMiddleware } = require('./services/visitTracker');
 
@@ -164,7 +164,7 @@ async function startServer() {
     });
 
     // Daily forecast emails at 4:00 AM IST
-    initializeDailyEmailJob();
+    initializeEmailJobs();
 
     // Daily admin digest at 8:00 AM IST
     initializeDailyDigest();

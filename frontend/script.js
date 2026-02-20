@@ -1237,7 +1237,7 @@ function resetForecast() {
 function isAvailable() {
   const ist = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
   const h = ist.getHours();
-  return h>=18 || h<6;
+  return h>=18 || h<7;  // Extended to 7 AM — OM GFS data available anytime
 }
 function countdownTo6PM() {
   const ist = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
@@ -1854,7 +1854,7 @@ async function submitSub(email,beach,msgId,btnId) {
     });
     const d=await res.json();
     if(d.success){
-      showMsg(msgId,d.message||'✓ Subscribed — see you at 4 AM.',true);
+      showMsg(msgId,d.message||'✓ Subscribed — preview at 8:30 PM, final forecast at 4 AM.',true);
       // GPay-style card flip success
       const card = document.getElementById(btnId)?.closest('.sub-form-card');
       if (card) {
@@ -1893,7 +1893,7 @@ async function submitSub(email,beach,msgId,btnId) {
 
         const sub = document.createElement('p');
         sub.className = 'success-subtitle';
-        sub.textContent = 'First forecast arrives tomorrow at 4 AM.\nSee you at sunrise.';
+        sub.textContent = 'Evening preview tonight at 8:30 PM.\nFinal forecast tomorrow at 4:00 AM IST.';
         face.appendChild(sub);
 
         card.appendChild(face);
@@ -2028,9 +2028,9 @@ function initCommunity() {
 
   // ── Community share buttons ──
   const siteUrl = 'https://www.seasidebeacon.com';
-  const shareTextGeneral = `Found something interesting — there's a website that scores tomorrow's sunrise 0 to 100 and tells you if it's actually worth waking up for. Built for Chennai beaches. Free daily forecast at 4 AM.\n${siteUrl}`;
+  const shareTextGeneral = `Found something interesting — there's a website that scores tomorrow's sunrise 0 to 100 and tells you if it's actually worth waking up for. Built for Chennai beaches. Evening preview at 8:30 PM + final forecast at 4 AM.\n${siteUrl}`;
   const shareTextX = `This website scores tomorrow's sunrise 0–100 and tells you if it's worth the 5 AM alarm. Built for Chennai beaches. Kind of obsessed with it. ${siteUrl} 🌅`;
-  const shareTextIG = `If you're in Chennai and love sunrises, check out seasidebeacon.com — they score tomorrow's sky 0 to 100 and tell you honestly if it's worth waking up for. Free 4 AM forecast. 🌅`;
+  const shareTextIG = `If you're in Chennai and love sunrises, check out seasidebeacon.com — they score tomorrow's sky 0 to 100 and tell you honestly if it's worth waking up for. Preview at 8:30 PM, final forecast at 4 AM. 🌅`;
 
   document.getElementById('comShareWA')?.addEventListener('click', e => {
     e.preventDefault();

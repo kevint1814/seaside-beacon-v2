@@ -1,6 +1,7 @@
 // ==========================================
-// Daily Email Job - Automated 4 AM Predictions
-// Now also stores daily scores + updates stats
+// Email Jobs — Morning (4 AM) + Evening Preview (8:30 PM)
+// Morning: definitive forecast + stores daily scores + updates stats
+// Evening: simplified preview + persuasive 4 AM teaser
 // ==========================================
 
 const cron = require('node-cron');
@@ -114,7 +115,7 @@ async function storeDailyScores(allWeatherData) {
     beaches: beachScores,
     bestBeach,
     averageScore: Math.round(totalScore / beachScores.length),
-    metadata: { generatedAt: new Date(), weatherSource: 'AccuWeather' }
+    metadata: { generatedAt: new Date(), weatherSource: 'AccuWeather+Open-Meteo', scoringVersion: 'v5.2' }
   });
 
   console.log(`✅ Stored ${beachScores.length} beach scores for ${today} (avg: ${dailyScore.averageScore}, best: ${bestBeach.beachName} ${bestBeach.score}/100)`);
@@ -213,24 +214,112 @@ async function sendDailyPredictions() {
 }
 
 /**
- * Initialize cron job
+ * Send evening preview emails at 8:30 PM IST
+ *
+ * Same weather-fetch flow as morning, but:
+ * - Does NOT store daily scores (only morning does that — one score per day)
+ * - Does NOT update subscriber.lastEmailSent (that tracks morning definitive emails)
+ * - Uses sendEveningPreviewEmail() for purple theme + preview disclaimer
  */
-function initializeDailyEmailJob() {
-  const DAILY_EMAIL_TIME = process.env.DAILY_EMAIL_TIME || '04:00';
-  const [hour, minute] = DAILY_EMAIL_TIME.split(':');
+async function sendEveningPreviews() {
+  try {
+    console.log('\n🌙 Starting evening preview email job...');
 
-  const cronExpression = `${minute} ${hour} * * *`;
+    // Step 1: Fetch all beach weather ONCE
+    const allWeatherData = await fetchAllBeachWeather();
+    const availableBeaches = Object.keys(allWeatherData);
+    console.log(`🌊 Fetched weather for ${availableBeaches.length} beaches: ${availableBeaches.join(', ')}`);
 
-  cron.schedule(cronExpression, sendDailyPredictions, {
-    timezone: process.env.TIMEZONE || 'Asia/Kolkata'
-  });
+    if (availableBeaches.length === 0) {
+      console.log('⚠️  No beach weather available — skipping evening preview job');
+      return;
+    }
 
-  console.log(`📅 Scheduling daily emails at ${DAILY_EMAIL_TIME} IST`);
-  console.log(`✅ Daily email job initialized successfully`);
+    // Step 2: Build beach name lookup
+    const beachList = weatherService.getBeaches();
+    const allBeachNames = {};
+    beachList.forEach(b => { allBeachNames[b.key] = b.name; });
+
+    // Step 3: Send previews to subscribers
+    const subscribers = await Subscriber.find({ isActive: true });
+    console.log(`📧 Found ${subscribers.length} active subscribers for evening preview`);
+
+    const insightsCache = {};
+    let emailCount = 0;
+
+    for (const subscriber of subscribers) {
+      try {
+        const beachKey = subscriber.preferredBeach;
+        const weatherData = allWeatherData[beachKey];
+
+        if (!weatherData) {
+          console.log(`⏰ Skipping ${subscriber.email} — no weather data for ${beachKey}`);
+          continue;
+        }
+
+        weatherData.allBeachNames = allBeachNames;
+
+        // Generate AI insights once per beach
+        if (!insightsCache[beachKey]) {
+          insightsCache[beachKey] = await aiService.generatePhotographyInsights(
+            weatherData,
+            allWeatherData
+          );
+        }
+
+        await emailService.sendEveningPreviewEmail(
+          subscriber.email,
+          weatherData,
+          insightsCache[beachKey]
+        );
+
+        emailCount++;
+        console.log(`✅ Evening preview sent to ${subscriber.email}`);
+      } catch (error) {
+        console.error(`❌ Evening preview error for ${subscriber.email}:`, error.message);
+        continue;
+      }
+    }
+
+    // Update site stats (count evening emails too)
+    await SiteStats.recordDailyRun(0, emailCount);  // 0 forecasts (already stored), just email count
+    console.log(`📊 Evening preview: ${emailCount} emails sent`);
+    console.log('✅ Evening preview job completed\n');
+  } catch (error) {
+    console.error('❌ Evening preview job failed:', error.message);
+  }
 }
+
+/**
+ * Initialize both email cron jobs:
+ * - 4:00 AM IST: Definitive morning forecast (stores scores + sends emails)
+ * - 8:30 PM IST: Evening preview (sends simplified preview emails)
+ */
+function initializeEmailJobs() {
+  const TZ = { timezone: process.env.TIMEZONE || 'Asia/Kolkata' };
+
+  // Morning definitive forecast
+  const DAILY_EMAIL_TIME = process.env.DAILY_EMAIL_TIME || '04:00';
+  const [dailyHour, dailyMin] = DAILY_EMAIL_TIME.split(':');
+  cron.schedule(`${dailyMin} ${dailyHour} * * *`, sendDailyPredictions, TZ);
+  console.log(`📅 Scheduled morning forecast emails at ${DAILY_EMAIL_TIME} IST`);
+
+  // Evening preview
+  const EVENING_TIME = process.env.EVENING_PREVIEW_TIME || '20:30';
+  const [eveningHour, eveningMin] = EVENING_TIME.split(':');
+  cron.schedule(`${eveningMin} ${eveningHour} * * *`, sendEveningPreviews, TZ);
+  console.log(`🌙 Scheduled evening preview emails at ${EVENING_TIME} IST`);
+
+  console.log(`✅ Both email jobs initialized successfully`);
+}
+
+// Keep old name as alias for backward compatibility
+const initializeDailyEmailJob = initializeEmailJobs;
 
 module.exports = {
   initializeDailyEmailJob,
+  initializeEmailJobs,
   sendDailyPredictions,
+  sendEveningPreviews,
   storeDailyScores
 };

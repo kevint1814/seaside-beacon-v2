@@ -137,6 +137,81 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
   }
 });
 
+// ── Live predictions (24/7, no time restriction — future paid tier) ──
+router.get('/api/admin/predictions', requireAuth, async (req, res) => {
+  try {
+    const weatherService = require('../services/weatherService');
+    const aiService = require('../services/aiService');
+
+    const ALL_BEACHES = weatherService.getBeaches();
+    const predictions = {};
+
+    // Fetch all beach weather first (single pass)
+    const allWeatherData = {};
+    for (const beach of ALL_BEACHES) {
+      try {
+        const data = await weatherService.getTomorrow6AMForecast(beach.key);
+        if (data.available) {
+          allWeatherData[beach.key] = data;
+        }
+      } catch (err) {
+        console.warn(`⚠️  Admin predictions: ${beach.key} fetch failed:`, err.message);
+      }
+    }
+
+    // Generate insights per beach (with full context for comparison)
+    const beachNames = {};
+    ALL_BEACHES.forEach(b => { beachNames[b.key] = b.name; });
+
+    for (const [beachKey, data] of Object.entries(allWeatherData)) {
+      try {
+        data.allBeachNames = beachNames;
+        const insights = await aiService.generatePhotographyInsights(data, allWeatherData);
+
+        predictions[beachKey] = {
+          beach: data.beach,
+          available: true,
+          score: data.prediction.score,
+          verdict: data.prediction.verdict,
+          recommendation: data.prediction.recommendation,
+          forecast: data.forecast,
+          breakdown: data.prediction.breakdown,
+          atmosphericLabels: data.prediction.atmosphericLabels,
+          insights: {
+            greeting: insights.greeting || '',
+            insight: insights.insight || '',
+            whatYoullSee: insights.sunriseExperience?.whatYoullSee || '',
+            worthWakingUp: insights.sunriseExperience?.worthWakingUp || ''
+          },
+          dataSources: data.dataSources || {}
+        };
+      } catch (err) {
+        predictions[beachKey] = {
+          beach: data.beach,
+          available: true,
+          score: data.prediction.score,
+          verdict: data.prediction.verdict,
+          forecast: data.forecast,
+          breakdown: data.prediction.breakdown,
+          insights: { greeting: '', insight: 'AI insights unavailable' },
+          error: err.message
+        };
+      }
+    }
+
+    res.json({
+      success: true,
+      predictions,
+      beachCount: Object.keys(predictions).length,
+      fetchedAt: new Date().toISOString(),
+      timezone: 'Asia/Kolkata'
+    });
+  } catch (error) {
+    console.error('Admin predictions error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch predictions' });
+  }
+});
+
 // ── Send broadcast email ─────────────────────
 router.post('/admin/send-email', requireAuth, async (req, res) => {
   try {

@@ -117,7 +117,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
       },
-      text: `Welcome to Seaside Beacon!\n\nYou're subscribed to daily sunrise forecasts for ${beachDisplay}.\n\nEvery morning at 4:00 AM IST, we'll send you an honest sunrise forecast — what the sky will actually look like, whether it's worth waking up for, plus photography tips if you want them.\n\nYour first forecast arrives tomorrow at 4:00 AM IST.\n\nUnsubscribe: ${unsubscribeUrl}\n\nSeaside Beacon — Made in Chennai`,
+      text: `Welcome to Seaside Beacon!\n\nYou're subscribed to daily sunrise forecasts for ${beachDisplay}.\n\nEvery evening at 8:30 PM IST, you'll get an early preview — plan your morning before bed. Then at 4:00 AM IST, the definitive forecast arrives with overnight model updates, closest to sunrise.\n\nYour first email arrives at the next scheduled time (8:30 PM or 4:00 AM IST).\n\nUnsubscribe: ${unsubscribeUrl}\n\nSeaside Beacon — Made in Chennai`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -161,7 +161,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:28px 40px 0;text-align:center;">
               <h2 style="margin:0 0 16px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;color:#2a2420;letter-spacing:-0.3px;">You're all set.</h2>
-              <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.75;color:#6b6058;">Every morning at <strong style="color:#2a2420;">4:00 AM IST</strong>, we study the atmosphere and send you an honest forecast — what tomorrow's sky will actually look like at your beach, and whether it's worth the early alarm.</p>
+              <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.75;color:#6b6058;">Every evening at <strong style="color:#2a2420;">8:30 PM IST</strong>, you'll get an early preview to plan your morning. Then at <strong style="color:#2a2420;">4:00 AM IST</strong>, the definitive forecast arrives — built from overnight model updates, right before sunrise.</p>
             </td></tr>
           </table>
 
@@ -244,8 +244,8 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
             <tr><td style="padding:0 40px 40px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr><td bgcolor="#FDF5EE" style="border:1px solid #E8D5C0;padding:22px 24px;text-align:center;">
-                  <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:600;color:#2a2420;">Your first forecast arrives tomorrow</p>
-                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">4:00 AM IST · If conditions are good, set your alarm for 5:30 AM to catch the peak color window.</p>
+                  <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:600;color:#2a2420;">Your first email arrives soon</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Evening preview at 8:30 PM · Final forecast at 4:00 AM IST · If conditions are good, set your alarm for 5:30 AM.</p>
                 </td></tr>
               </table>
             </td></tr>
@@ -649,7 +649,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
         <!-- ═══ FOOTER ═══ -->
         <tr><td bgcolor="#F0E8DE" style="padding:24px 40px;text-align:center;border-top:1px solid #E0D5C8;">
 
-          <p style="margin:0 0 5px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Daily at 4:00 AM IST · <a href="${APP_URL}" style="color:#C4733A;text-decoration:none;">seasidebeacon.com</a></p>
+          <p style="margin:0 0 5px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Preview 8:30 PM · Final 4:00 AM IST · <a href="${APP_URL}" style="color:#C4733A;text-decoration:none;">seasidebeacon.com</a></p>
           <p style="margin:0 0 8px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#a09888;">You're receiving this because you subscribed for ${beach} forecasts.</p>
           <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
             <a href="${unsubscribeUrl}" style="color:#C4733A;text-decoration:none;">Unsubscribe</a>
@@ -669,6 +669,244 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('❌ Daily email error:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Send evening preview email (8:30 PM IST)
+ * Simplified version of the morning email with:
+ * - Purple/moonlight theme (vs warm orange morning)
+ * - Preview disclaimer emphasizing weather can shift overnight
+ * - Persuasive copy pointing to the definitive 4 AM forecast
+ * - Key conditions only (no full photography section)
+ */
+async function sendEveningPreviewEmail(subscriberEmail, weatherData, photographyInsights) {
+  try {
+    const unsubscribeUrl = getUnsubscribeUrl(subscriberEmail);
+    const { beach, forecast, prediction } = weatherData;
+    const beachDisplayNames = weatherData.allBeachNames || {};
+    const { score, verdict, atmosphericLabels, breakdown } = prediction;
+    const { cloudCover, humidity, visibility, windSpeed, temperature } = forecast;
+
+    // Cloud layers
+    const highCloud = breakdown?.multiLevelCloud?.high ?? null;
+    const midCloud = breakdown?.multiLevelCloud?.mid ?? null;
+    const lowCloud = breakdown?.multiLevelCloud?.low ?? null;
+    const aodValue = breakdown?.aod?.value ?? null;
+
+    // Score-dependent colors
+    const scoreColor = score >= 85 ? '#059669' : score >= 70 ? '#0284c7' : score >= 55 ? '#D97706' : score >= 40 ? '#EA580C' : '#DC2626';
+    const scoreBg = score >= 85 ? '#ECFDF5' : score >= 70 ? '#EFF6FF' : score >= 55 ? '#FFFBEB' : score >= 40 ? '#FFF7ED' : '#FEF2F2';
+    const scoreBorder = score >= 85 ? '#A7F3D0' : score >= 70 ? '#BFDBFE' : score >= 55 ? '#FDE68A' : score >= 40 ? '#FED7AA' : '#FECACA';
+    const verdictEmoji = score >= 85 ? '🔥' : score >= 70 ? '🌅' : score >= 55 ? '☀️' : score >= 40 ? '☁️' : '🌫️';
+
+    // Recommendation
+    let recLabel;
+    if (score >= 70) recLabel = 'Looking promising — set that alarm';
+    else if (score >= 50) recLabel = 'Could go either way — check the final forecast';
+    else if (score >= 30) recLabel = 'Not looking great, but weather shifts overnight';
+    else recLabel = 'Low expectations — but surprises happen';
+
+    // Extract AI insight
+    const greeting = photographyInsights?.greeting || '';
+    const insight = photographyInsights?.insight || '';
+
+    // Cloud layer label
+    const cloudLayerLabel = atmosphericLabels?.cloudLayers || (highCloud != null ? (highCloud >= 30 && lowCloud < 40 ? 'High Canvas' : lowCloud >= 75 ? 'Low Blanket' : 'Mixed') : null);
+
+    // AOD label
+    const aodLabel = atmosphericLabels?.aod || (aodValue != null ? (aodValue < 0.15 ? 'Crystal Clear' : aodValue < 0.3 ? 'Clean' : aodValue < 0.5 ? 'Hazy' : 'Poor') : null);
+
+    const mailOptions = {
+      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
+      to: subscriberEmail,
+      subject: `🌙 Tomorrow's Sunrise Preview — ${beach} (${score}/100)`,
+      headers: {
+        'List-Unsubscribe': `<${unsubscribeUrl}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+      },
+      text: `Evening Preview — ${beach}\n\nScore: ${score}/100 (${verdict})\n${recLabel}\n\nConditions: Cloud ${cloudCover}%, Humidity ${humidity}%, Visibility ${visibility}km, Wind ${windSpeed}km/h, Temp ${temperature}°C${highCloud != null ? `\nCloud Layers: High ${highCloud}% Mid ${midCloud}% Low ${lowCloud}%` : ''}${aodValue != null ? `\nAir Clarity (AOD): ${aodValue.toFixed(3)}` : ''}\n\nThis is a preliminary forecast. Weather patterns can shift overnight — cloud formation, wind, and humidity all evolve after dark. Your final, most accurate forecast arrives at 4:00 AM IST with the latest model data.\n\nCheck the full forecast: ${APP_URL}\n\nUnsubscribe: ${unsubscribeUrl}\n\nSeaside Beacon — Previews at 8:30 PM · Final forecasts at 4:00 AM IST`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <!--[if mso]><style>*{font-family:Arial,sans-serif!important;}</style><![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#f0edf5;-webkit-text-size-adjust:none;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f0edf5">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+        <!-- ═══ HEADER (EVENING THEME) ═══ -->
+        <tr><td bgcolor="#312e81" style="padding:40px 40px 28px;text-align:center;">
+          <p style="margin:0 0 20px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2.5px;color:#c4b5fd;">Seaside Beacon · Evening Preview</p>
+          <p style="margin:0 0 10px;font-size:36px;line-height:1;">🌙</p>
+          <h1 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;">Tomorrow's Sunrise</h1>
+          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;color:#a5b4fc;">${beach} · Early estimate</p>
+        </td></tr>
+
+        <!-- ═══ SCORE ═══ -->
+        <tr><td bgcolor="#ffffff" style="padding:0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:32px 40px;text-align:center;">
+
+              <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:64px;font-weight:700;color:${scoreColor};line-height:1;letter-spacing:-2px;">${score}</p>
+              <p style="margin:4px 0 16px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#8a7e72;">Sunrise Score / 100 · ${verdict}</p>
+
+              <!-- Recommendation -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                <tr><td bgcolor="${scoreBg}" style="border:1px solid ${scoreBorder};padding:7px 18px;">
+                  <span style="font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:600;color:${scoreColor};">${verdictEmoji} ${recLabel}</span>
+                </td></tr>
+              </table>
+
+            </td></tr>
+          </table>
+
+          <!-- Divider -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px;">
+              <div style="height:1px;background-color:#E8DDD0;"></div>
+            </td></tr>
+          </table>
+
+          <!-- ═══ PREVIEW DISCLAIMER ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:24px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td bgcolor="#ede9fe" style="border-left:4px solid #8b5cf6;padding:16px 20px;">
+                  <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;font-weight:600;color:#6d28d9;text-transform:uppercase;letter-spacing:0.5px;">Evening Preview</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.65;color:#5b21b6;">This is an early estimate. After midnight, the atmosphere reshuffles — winds shift, clouds form and dissolve, and the humidity profile changes as the land cools. Sometimes a mediocre evening forecast turns into a spectacular morning. Your <strong>final forecast at 4:00 AM IST</strong> captures all these overnight shifts and is significantly more accurate.</p>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+          ${(greeting || insight) ? `
+          <!-- ═══ AI INSIGHT ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:18px 20px;">
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.65;color:#6b6058;">${greeting ? `<strong style="color:#2a2420;">${greeting}</strong><br>` : ''}${insight}</p>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>` : ''}
+
+          <!-- ═══ CONDITIONS ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 24px;">
+              <p style="margin:0 0 12px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#a09080;">Current Conditions</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="48%" style="padding:0 6px 8px 0;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:12px 14px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',sans-serif;font-size:10px;text-transform:uppercase;color:#a09080;">☁️ Cloud Cover</p>
+                        <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:700;color:#2a2420;">${cloudCover}%</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="48%" style="padding:0 0 8px 6px;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:12px 14px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',sans-serif;font-size:10px;text-transform:uppercase;color:#a09080;">💧 Humidity</p>
+                        <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:700;color:#2a2420;">${humidity}%</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="48%" style="padding:0 6px 8px 0;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:12px 14px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',sans-serif;font-size:10px;text-transform:uppercase;color:#a09080;">👁️ Visibility</p>
+                        <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:700;color:#2a2420;">${visibility} km</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="48%" style="padding:0 0 8px 6px;vertical-align:top;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:12px 14px;">
+                        <p style="margin:0 0 2px;font-family:'Instrument Sans',sans-serif;font-size:10px;text-transform:uppercase;color:#a09080;">💨 Wind</p>
+                        <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:700;color:#2a2420;">${windSpeed} km/h</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              ${highCloud != null ? `
+              <!-- Cloud layers -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:4px;">
+                <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:12px 14px;">
+                  <p style="margin:0 0 6px;font-family:'Instrument Sans',sans-serif;font-size:10px;text-transform:uppercase;color:#a09080;">🌥️ Cloud Layers${cloudLayerLabel ? ` · <span style="color:#6d28d9;">${cloudLayerLabel}</span>` : ''}</p>
+                  <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:12px;color:#6b6058;">High: <strong style="color:#2a2420;">${highCloud}%</strong> · Mid: <strong style="color:#2a2420;">${midCloud}%</strong> · Low: <strong style="color:#2a2420;">${lowCloud}%</strong></p>
+                </td></tr>
+              </table>` : ''}
+
+              ${aodValue != null ? `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;">
+                <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:12px 14px;">
+                  <p style="margin:0 0 2px;font-family:'Instrument Sans',sans-serif;font-size:10px;text-transform:uppercase;color:#a09080;">🌫️ Air Clarity (AOD)${aodLabel ? ` · <span style="color:#6d28d9;">${aodLabel}</span>` : ''}</p>
+                  <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:700;color:#2a2420;">${aodValue.toFixed(3)}</p>
+                </td></tr>
+              </table>` : ''}
+            </td></tr>
+          </table>
+
+          <!-- Divider -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:4px 40px 24px;">
+              <div style="height:1px;background-color:#E8DDD0;"></div>
+            </td></tr>
+          </table>
+
+          <!-- ═══ CTA: FINAL FORECAST ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 32px;text-align:center;">
+              <p style="margin:0 0 16px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:#6b6058;">
+                The atmosphere is still evolving. <strong style="color:#2a2420;">Your definitive forecast arrives at 4:00 AM IST</strong> — built from the freshest overnight model run, right before sunrise.
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                <tr><td bgcolor="#312e81" style="padding:12px 28px;">
+                  <a href="${APP_URL}" style="font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:600;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:1px;">Check Full Forecast</a>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+        </td></tr>
+
+        <!-- ═══ FOOTER ═══ -->
+        <tr><td bgcolor="#e8e0f0" style="padding:28px 40px;text-align:center;border-top:1px solid #d4c5e8;">
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#6b6058;">Seaside Beacon · Made with ☀️ in Chennai</p>
+          <p style="margin:0 0 10px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#8a7e72;">Evening previews at 8:30 PM · Final forecasts at 4:00 AM IST</p>
+          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
+            <a href="${unsubscribeUrl}" style="color:#6d28d9;text-decoration:none;">Unsubscribe</a>
+            <span style="color:#c4b8d8;margin:0 8px;">·</span>
+            <a href="${APP_URL}" style="color:#6d28d9;text-decoration:none;">Visit Website</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+    };
+
+    const info = await sendEmail(mailOptions);
+    console.log(`✅ Evening preview email sent to ${subscriberEmail} via ${EMAIL_PROVIDER}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Evening preview email error:', error.message);
     throw error;
   }
 }
@@ -709,4 +947,4 @@ async function sendTestEmail(toEmail) {
   return { success: true, messageId: info.messageId, provider: EMAIL_PROVIDER };
 }
 
-module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendTestEmail };
+module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendEveningPreviewEmail, sendTestEmail };

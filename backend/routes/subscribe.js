@@ -70,7 +70,7 @@ router.post('/subscribe', async (req, res) => {
 
     res.json({
       success: true,
-      message: `You're subscribed! Your first forecast arrives tomorrow at 4:00 AM IST. 🌅`
+      message: `You're subscribed! Preview at 8:30 PM, final forecast at 4:00 AM IST. 🌅`
     });
   } catch (error) {
     console.error('Subscribe error:', error.message);

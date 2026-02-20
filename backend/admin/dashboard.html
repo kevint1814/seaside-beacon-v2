@@ -125,6 +125,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .err-msg{color:var(--t2);word-break:break-all}
 .empty-state{color:var(--t4);text-align:center;padding:20px 0;font-size:12px}
 
+/* Prediction cards */
+.pred-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative}
+.pred-card .pred-beach{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:8px}
+.pred-card .pred-score{font-size:36px;font-weight:700;font-family:var(--mono);line-height:1;letter-spacing:-1px}
+.pred-card .pred-verdict{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.pred-card .pred-conds{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--t3)}
+.pred-card .pred-conds .pred-val{font-family:var(--mono);color:var(--t1);font-weight:500}
+.pred-card .pred-insight{margin-top:10px;font-size:11px;color:var(--t3);line-height:1.5;border-top:1px solid var(--border);padding-top:8px}
+@media(max-width:900px){#predGrid{grid-template-columns:1fr 1fr}}
+
 /* Sub pill */
 .beach-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;background:var(--surface2);margin:3px 2px}
 .beach-pill .ct{font-family:var(--mono);font-weight:600;color:var(--t1)}
@@ -207,6 +217,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
       <div class="card-title">Emails Delivered</div>
       <div class="stat-val" id="lifetimeEmails">—</div>
       <div class="stat-label" id="lifetimeForecasts">— forecasts generated</div>
+    </div>
+  </div>
+
+  <!-- ROW 1.5: Live Predictions (24/7) -->
+  <div class="row" style="grid-template-columns:1fr">
+    <div class="card">
+      <div class="card-title">Live Predictions <span class="badge" style="background:var(--green-bg);color:var(--green);cursor:pointer" id="predRefreshBtn">↻ Refresh</span></div>
+      <div id="predGrid" style="display:grid;gap:12px;grid-template-columns:repeat(4,1fr)">
+        <div class="empty-state" id="predLoading">Click Refresh to load predictions</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:10px;color:var(--t4)">
+        <span id="predFetchTime">—</span>
+        <span id="predAutoLabel">Auto-refresh: 5 min</span>
+      </div>
     </div>
   </div>
 
@@ -357,7 +381,7 @@ function login() {
   }).catch(()=>{e.style.display='block';e.textContent='Connection failed';});
 }
 function logout(){token=null;localStorage.removeItem('sb_token');clearInterval(interval);document.getElementById('dashboard').style.display='none';document.getElementById('loginScreen').style.display='flex';}
-function show(){document.getElementById('loginScreen').style.display='none';document.getElementById('dashboard').style.display='block';poll();interval=setInterval(poll,6000);}
+function show(){document.getElementById('loginScreen').style.display='none';document.getElementById('dashboard').style.display='block';poll();interval=setInterval(poll,6000);startPredAutoRefresh();}
 
 // ── Poll ──
 function poll(){
@@ -693,6 +717,58 @@ document.getElementById('selNone').addEventListener('click', ()=>{selectedEmails
 document.getElementById('recipientSearch').addEventListener('input', e=>buildRecipientList(e.target.value));
 document.getElementById('emailSendBtn').addEventListener('click', sendBroadcast);
 initDropZone();
+
+// ── Live Predictions ──
+let predInterval;
+async function fetchPredictions(){
+  const grid=document.getElementById('predGrid');
+  grid.innerHTML='<div class="empty-state">Loading predictions...</div>';
+  try{
+    const res=await fetch(API+'/api/admin/predictions',{headers:{'X-Admin-Token':token}});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const d=await res.json();
+    if(!d.success||!d.predictions){grid.innerHTML='<div class="empty-state">No predictions available</div>';return;}
+    const beaches={marina:'Marina Beach',elliot:"Elliot's Beach",covelong:'Covelong Beach',thiruvanmiyur:'Thiruvanmiyur Beach'};
+    const order=['marina','elliot','covelong','thiruvanmiyur'];
+    grid.innerHTML=order.map(k=>{
+      const p=d.predictions[k];
+      if(!p||!p.available)return '<div class="pred-card"><div class="pred-beach">'+(beaches[k]||k)+'</div><div class="empty-state">Unavailable</div></div>';
+      const sc=p.score;
+      const col=sc>=85?'var(--green)':sc>=70?'var(--blue)':sc>=55?'var(--amber)':sc>=40?'var(--accent)':'var(--red)';
+      const bg=sc>=85?'var(--green-bg)':sc>=70?'var(--blue-bg)':sc>=55?'var(--amber-bg)':sc>=40?'rgba(249,115,22,0.1)':'var(--red-bg)';
+      const f=p.forecast||{};
+      const b=p.breakdown||{};
+      const aod=b.aod?.value!=null?b.aod.value.toFixed(3):'N/A';
+      const insightText=p.insights?.insight||'';
+      const shortInsight=insightText.length>120?insightText.slice(0,120)+'…':insightText;
+      return '<div class="pred-card" style="border-top:3px solid '+col+'">'+
+        '<div class="pred-beach">'+(beaches[k]||k)+'</div>'+
+        '<div class="pred-score" style="color:'+col+'">'+sc+'</div>'+
+        '<div class="pred-verdict" style="color:'+col+'">'+(p.verdict||'')+'</div>'+
+        '<div class="pred-conds">'+
+          '<div>Cloud <span class="pred-val">'+(f.cloudCover??'?')+'%</span></div>'+
+          '<div>Humidity <span class="pred-val">'+(f.humidity??'?')+'%</span></div>'+
+          '<div>Visibility <span class="pred-val">'+(f.visibility??'?')+' km</span></div>'+
+          '<div>Wind <span class="pred-val">'+(f.windSpeed??'?')+' km/h</span></div>'+
+          '<div>AOD <span class="pred-val">'+aod+'</span></div>'+
+          '<div>Hi Cloud <span class="pred-val">'+(b.multiLevelCloud?.high??'?')+'%</span></div>'+
+        '</div>'+
+        (shortInsight?'<div class="pred-insight">'+esc(shortInsight)+'</div>':'')+
+      '</div>';
+    }).join('');
+    const ft=new Date(d.fetchedAt);
+    $('predFetchTime','Fetched '+ft.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour12:false})+' IST');
+  }catch(e){
+    grid.innerHTML='<div class="empty-state" style="color:var(--red)">Error: '+esc(e.message)+'</div>';
+  }
+}
+document.getElementById('predRefreshBtn').addEventListener('click',fetchPredictions);
+// Auto-refresh predictions every 5 minutes once logged in
+function startPredAutoRefresh(){
+  if(predInterval)clearInterval(predInterval);
+  fetchPredictions();
+  predInterval=setInterval(fetchPredictions,5*60*1000);
+}
 
 // ── Auto-login ──
 if(token){fetch(API+'/api/admin/metrics',{headers:{'X-Admin-Token':token}}).then(r=>{if(r.ok)show();else logout();}).catch(()=>logout());}
