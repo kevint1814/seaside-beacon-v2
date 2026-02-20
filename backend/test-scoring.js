@@ -1,10 +1,10 @@
 /**
- * Comprehensive Test Suite for Sunrise Scoring Functions (v5.2)
+ * Comprehensive Test Suite for Sunrise Scoring Functions (v5.3)
  * Tests all scoring functions from weatherService.js
  * Imports directly from weatherService.js — no duplicate implementations
  * 300+ assertions covering all functions, edge cases, and graceful degradation
  *
- * v5.2: Research-driven rebalance (Corfidi/NOAA, Mie scattering, SunsetWx)
+ * v5.3: Physics corrections (low-stratus discount, pressure thresholds, synergy canvas check, humidity tightening)
  *   - AOD promoted to #1 factor (16pts, Goldilocks curve 0.05-0.15)
  *   - Cloud Layers promoted to #2 (20pts)
  *   - Cloud Cover reduced (18pts)
@@ -160,9 +160,9 @@ assertInRange(scoreHumidity(70), 8, 12, 'Humidity 70%: good');
 assertInRange(scoreHumidity(80), 7, 10, 'Humidity 80%: decent');
 // v5.1 Chennai calibration preserved: 85-90% = 5-7 (not penalty)
 assertInRange(scoreHumidity(85), 5, 8, 'Humidity 85%: Chennai baseline');
-assertInRange(scoreHumidity(88), 5, 7, 'Humidity 88%: typical Chennai dawn');
+assertInRange(scoreHumidity(88), 4, 7, 'Humidity 88%: typical Chennai dawn (v5.3 tightened)');
 assertInRange(scoreHumidity(90), 3, 6, 'Humidity 90%: high end of baseline');
-assertInRange(scoreHumidity(93), 3, 5, 'Humidity 93%: high');
+assertInRange(scoreHumidity(93), 2, 5, 'Humidity 93%: high (v5.3 tightened)');
 assertInRange(scoreHumidity(95), 1, 4, 'Humidity 95%: very high');
 assertInRange(scoreHumidity(100), 0, 2, 'Humidity 100%: fog territory');
 
@@ -652,6 +652,68 @@ const aodGap = aodClean.score - aodHazy.score;
 assert(aodGap >= 8, `AOD Goldilocks vs hazy gap ≥8 (got ${aodGap}): clean=${aodClean.score}, hazy=${aodHazy.score}`);
 
 // ====================================
+// v5.3: PHYSICS-CORRECTED SCENARIOS
+// ====================================
+testGroup('v5.3 Physics Corrections');
+
+// Scenario A: All-low-stratus — cloud cover discount should apply
+// Marina Feb 21: H:0% M:0% L:51%, cloud 51%, humidity 91%, AOD 0.43
+const allLowStratus = calculateSunriseScore(
+  makeForecast({ cloud: 51, humidity: 91, vis: 24, wind: 10, precip: 0, desc: 'Partly Cloudy' }),
+  makeExtras({
+    highCloud: 0, midCloud: 0, lowCloud: 51,
+    aod: 0.43, pressureMsl: [1012.7, 1012.4, 1012.1, 1011.7, 1011.2, 1010.5, 1011.1],
+    omCloud: 51, omHumidity: 91, omVisM: 24140
+  })
+);
+assertInRange(allLowStratus.score, 40, 58, `v5.3 All-low-stratus (Marina Feb 21): ${allLowStratus.score} — should be "decent, not dramatic"`);
+assert(allLowStratus.breakdown.cloudCover.lowStratusDiscount > 0, 'v5.3: low-stratus discount applied');
+assert(allLowStratus.breakdown.cloudCover.score < 12, `v5.3: cloud score discounted (got ${allLowStratus.breakdown.cloudCover.score})`);
+
+// Scenario B: Same cloud amount but WITH high canvas — should score higher
+const highCanvas51 = calculateSunriseScore(
+  makeForecast({ cloud: 51, humidity: 91, vis: 24, wind: 10, precip: 0 }),
+  makeExtras({
+    highCloud: 35, midCloud: 10, lowCloud: 10,
+    aod: 0.43, pressureMsl: [1012.7, 1012.4, 1012.1, 1011.7, 1011.2, 1010.5, 1011.1],
+    omCloud: 51, omHumidity: 91, omVisM: 24140
+  })
+);
+assert(highCanvas51.score > allLowStratus.score, `v5.3: Same cloud% but with high canvas scores higher (${highCanvas51.score} > ${allLowStratus.score})`);
+assertEqual(highCanvas51.breakdown.cloudCover.lowStratusDiscount, 0, 'v5.3: No discount when high canvas present');
+
+// Scenario C: Covelong Feb 21 — H:66% L:58%, heavy low under high
+const covelongFeb21 = calculateSunriseScore(
+  makeForecast({ cloud: 86, humidity: 96, vis: 24, wind: 10, precip: 0 }),
+  makeExtras({
+    highCloud: 66, midCloud: 0, lowCloud: 58,
+    aod: 0.43, pressureMsl: [1012.8, 1012.5, 1012.1, 1011.7, 1011.2, 1010.6, 1011.1],
+    omCloud: 86, omHumidity: 96, omVisM: 24140
+  })
+);
+assertInRange(covelongFeb21.score, 30, 50, `v5.3 Covelong Feb 21: ${covelongFeb21.score} (heavy overcast + humid)`);
+// Multi-level should reflect heavy low under high (v5.3: 9, was 11)
+assertInRange(covelongFeb21.breakdown.multiLevelCloud.score, 6, 10, `v5.3 Covelong multi-level: ${covelongFeb21.breakdown.multiLevelCloud.score}`);
+
+// Scenario D: Pressure -1.6 should NOT get max score
+const pressureNormal = calculateSunriseScore(
+  makeForecast({ cloud: 45, humidity: 70, vis: 15, wind: 10 }),
+  makeExtras({ highCloud: 40, midCloud: 10, lowCloud: 15, aod: 0.15, pressureMsl: [1012.7, 1011.1] })
+);
+assert(pressureNormal.breakdown.pressureTrend.score < 11, `v5.3: Δ-1.6 hPa pressure < 11 (got ${pressureNormal.breakdown.pressureTrend.score})`);
+
+// Scenario E: Synergy should NOT reward all-low-stratus even with "optimal" cloud%
+const synergyAllLow = getSynergyAdjustment(45, 85, 20, { highCloud: 0, midCloud: 0, lowCloud: 45 });
+const synergyHighCanvas = getSynergyAdjustment(45, 85, 20, { highCloud: 30, midCloud: 10, lowCloud: 10 });
+assert(synergyHighCanvas > synergyAllLow, `v5.3: Synergy rewards high canvas (${synergyHighCanvas}) > all-low (${synergyAllLow})`);
+assertEqual(synergyAllLow, 0, `v5.3: All-low-stratus gets no synergy bonus`);
+assert(synergyHighCanvas >= 2, `v5.3: High canvas gets synergy bonus (got ${synergyHighCanvas})`);
+
+// Scenario F: Marina Feb 21 should score 12-18 pts LOWER than same conditions with high canvas
+const gapLowVsHigh = highCanvas51.score - allLowStratus.score;
+assert(gapLowVsHigh >= 8, `v5.3: High canvas vs all-low gap ≥8 (got ${gapLowVsHigh})`);
+
+// ====================================
 // 13. Breakdown structure verification (v5.2)
 // ====================================
 testGroup('Breakdown structure (v5.2)');
@@ -781,7 +843,7 @@ for (let i = 0; i < 10; i++) {
 // SUMMARY
 // ====================================
 console.log('\n################################');
-console.log('# TEST SUMMARY (v5.2)');
+console.log('# TEST SUMMARY (v5.3)');
 console.log('################################');
 console.log(`Total Tests Run:    ${testsRun}`);
 console.log(`Tests Passed:       ${testsPassed}`);

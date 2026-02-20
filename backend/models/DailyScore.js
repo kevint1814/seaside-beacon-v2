@@ -22,7 +22,7 @@ const beachScoreSchema = new mongoose.Schema({
   },
   breakdown: {
     // v5 base factors (all promoted to base weights)
-    cloudCover:     { value: Number, score: Number, maxScore: Number },
+    cloudCover:     { value: Number, score: Number, maxScore: Number, lowStratusDiscount: Number },
     multiLevelCloud:{ high: Number, mid: Number, low: Number, score: Number, maxScore: Number },
     humidity:       { value: Number, score: Number, maxScore: Number },
     pressureTrend:  { value: Number, score: Number, maxScore: Number },

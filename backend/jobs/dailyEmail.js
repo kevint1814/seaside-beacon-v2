@@ -115,7 +115,7 @@ async function storeDailyScores(allWeatherData) {
     beaches: beachScores,
     bestBeach,
     averageScore: Math.round(totalScore / beachScores.length),
-    metadata: { generatedAt: new Date(), weatherSource: 'AccuWeather+Open-Meteo', scoringVersion: 'v5.2' }
+    metadata: { generatedAt: new Date(), weatherSource: 'AccuWeather+Open-Meteo', scoringVersion: 'v5.3' }
   });
 
   console.log(`✅ Stored ${beachScores.length} beach scores for ${today} (avg: ${dailyScore.averageScore}, best: ${bestBeach.beachName} ${bestBeach.score}/100)`);

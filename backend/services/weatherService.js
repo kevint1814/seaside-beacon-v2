@@ -1,6 +1,6 @@
 // ==========================================
 // Weather Service - AccuWeather + Open-Meteo Integration
-// Research-backed sunrise quality scoring (v5.2)
+// Research-backed sunrise quality scoring (v5.3)
 //
 // v3: Added Open-Meteo AOD, cloud ceiling analysis,
 //     seasonal solar angle, improved post-rain detection
@@ -769,8 +769,11 @@ function scoreMultiLevelCloud(highCloud, midCloud, lowCloud, ceilingMeters, clou
   }
 
   // ── HIGH CLOUDS WITH LOW CLOUD INTERFERENCE ──
+  // v5.3: Graduated scoring — heavier low cloud = more horizon blockage,
+  // reducing the high cloud canvas benefit even though it exists above.
   if (highCloud >= 30 && lowCloud >= 40) {
     if (lowCloud >= 75) return 6;   // High clouds exist but horizon mostly blocked
+    if (lowCloud >= 55) return 9;   // v5.3: Heavy low under high — significant blockage
     return 11;                       // Mixed — some light gets through gaps
   }
 
@@ -836,27 +839,32 @@ function scorePressureTrend(pressureMsl) {
 
   const change = pEnd - pStart;  // positive = rising, negative = falling
 
+  // ── v5.3: THRESHOLDS CORRECTED (meteorological standards) ──
+  // Normal diurnal fluctuation: ±1-2 hPa/6hr.
+  // A "clearing front" requires Δ-2 to -5 hPa/6hr (SunsetWx, NOAA).
+  // Previous scoring gave 11/11 for Δ-0.5 to -5, which rewarded normal fluctuation.
+
   // Rapidly falling (>5 hPa in 6h) → severe weather approaching
   if (change < -5) {
     console.log(`📊 Pressure rapidly falling (${change.toFixed(1)} hPa): storm risk`);
     return 2;  // Bad but not zero — storms sometimes clear fast
   }
 
-  // Moderate fall (2-5 hPa) → clearing front → dramatic skies
+  // True clearing front (2-5 hPa fall) → dramatic skies
   if (change < -2) {
     console.log(`📊 Pressure falling (${change.toFixed(1)} hPa): clearing front — dramatic skies`);
-    return 11;  // Best scenario — approaching front with clearing patterns
+    return 11;  // Best scenario — front with clearing patterns
   }
 
-  // Slight fall (1-2 hPa) → weak system, some instability → interesting skies
+  // Moderate fall (1-2 hPa) → possible weak front, some instability
   if (change < -1) {
-    console.log(`📊 Pressure slightly falling (${change.toFixed(1)} hPa): mild instability`);
-    return 9;
+    console.log(`📊 Pressure moderately falling (${change.toFixed(1)} hPa): weak system`);
+    return 8;   // v5.3: was 9 — not yet a front, but some weather interest
   }
 
-  // Very slight fall (0.5-1 hPa) → marginal instability
+  // Slight fall (0.5-1 hPa) → normal-to-marginal fluctuation
   if (change < -0.5) {
-    return 7;
+    return 6;   // v5.3: was 7 — within normal diurnal range, minimal signal
   }
 
   // Stable (-0.5 to +0.5 hPa) → high pressure, predictable
@@ -1038,8 +1046,9 @@ function scoreVisibility(visibilityKm) {
  * Research: ACP (2013) shows scattering enhancement f(RH) = 1.28-3.41 at 85% RH.
  * The relationship is exponential, not linear.
  *
- * v5.1 Chennai calibration preserved: 80-92% is baseline, not penalty territory.
- * Photos from 88% mornings show visible colour (peach, salmon, amber).
+ * v5.1 Chennai calibration preserved: 80-88% is baseline, pastels visible.
+ * v5.3: Tightened 88-93% band. Research: f(RH) > 2.0 above 80%, sea-salt
+ * aerosols at 91% are heavily swollen. 88-93% is genuinely muting, not baseline.
  */
 function scoreHumidity(humidity) {
   let score;
@@ -1054,11 +1063,13 @@ function scoreHumidity(humidity) {
     score = 9 - Math.round((humidity - 75) / 7 * 2);    // 9→7
   } else if (humidity <= 88) {
     // Chennai baseline — colours visible, horizon hazy, pastels common
-    score = 7 - Math.round((humidity - 82) / 6 * 2);    // 7→5
+    score = 6 - Math.round((humidity - 82) / 6 * 2);    // 6→4  (v5.3: was 7→5)
   } else if (humidity <= 93) {
-    score = 5 - Math.round((humidity - 88) / 5 * 2);    // 5→3
+    // v5.3: Research shows f(RH) > 2.0 above 80% — sea-salt aerosols heavily swollen
+    // 91% RH at tropical coast = significant color muting, not just "baseline"
+    score = 4 - Math.round((humidity - 88) / 5 * 2);    // 4→2  (v5.3: was 5→3)
   } else if (humidity <= 97) {
-    score = 3 - Math.round((humidity - 93) / 4 * 2);    // 3→1
+    score = 2 - Math.round((humidity - 93) / 4 * 1);    // 2→1  (v5.3: was 3→1)
   } else {
     score = Math.max(0, 1 - Math.round((humidity - 97) / 3));
   }
@@ -1126,8 +1137,14 @@ function scoreWind(windSpeedKmh) {
  * not a penalty condition. Colours survive in this range (confirmed by photos).
  * Penalties now only fire in extreme conditions (>93% = near-fog).
  */
-function getSynergyAdjustment(cloudCover, humidity, visibilityKm) {
+function getSynergyAdjustment(cloudCover, humidity, visibilityKm, cloudLayers) {
   let adjustment = 0;
+
+  // v5.3: Extract cloud layer info for elevated-canvas check
+  const hasLayerData = cloudLayers && cloudLayers.highCloud != null;
+  const elevatedCloud = hasLayerData ? (cloudLayers.highCloud + (cloudLayers.midCloud || 0)) : null;
+  const hasElevatedCanvas = elevatedCloud == null || elevatedCloud >= 15;
+  // ^ If no layer data, assume canvas exists (backward compat). Only suppress when KNOWN all-low.
 
   // ── HARD OVERRIDE: Fog/heavy mist — nothing else matters if you can't see ──
   if (visibilityKm < 3) {
@@ -1158,22 +1175,24 @@ function getSynergyAdjustment(cloudCover, humidity, visibilityKm) {
   }
 
   // ── BONUSES ──
+  // v5.3: Cloud bonuses now require elevated canvas (high+mid >= 15%).
+  // Without mid/high clouds, "optimal cloud amount" is just low stratus — no color benefit.
 
   // v5.1: Recalibrated for tropical coastal conditions.
   // Low humidity (for Chennai) + optimal clouds — the dream combo
-  if (humidity < 80 && cloudCover >= 30 && cloudCover <= 60) {
+  if (hasElevatedCanvas && humidity < 80 && cloudCover >= 30 && cloudCover <= 60) {
     adjustment += 4; // Unusually dry dawn + good cloud canvas = vivid
-  } else if (humidity < 85 && cloudCover >= 25 && cloudCover <= 65) {
+  } else if (hasElevatedCanvas && humidity < 85 && cloudCover >= 25 && cloudCover <= 65) {
     adjustment += 3; // Dry-ish dawn for Chennai + good canvas = great
-  } else if (humidity < 90 && cloudCover >= 25 && cloudCover <= 65) {
+  } else if (hasElevatedCanvas && humidity < 90 && cloudCover >= 25 && cloudCover <= 65) {
     adjustment += 1; // Normal Chennai dawn + good canvas = slight boost
   }
 
   // Good visibility + optimal cloud + reasonable humidity — strong combo
-  // v5.1: humidity threshold raised from <75 to <90 (reachable in Chennai)
-  if (visibilityKm >= 15 && cloudCover >= 25 && cloudCover <= 65 && humidity < 90) {
+  // v5.3: Also requires elevated canvas
+  if (hasElevatedCanvas && visibilityKm >= 15 && cloudCover >= 25 && cloudCover <= 65 && humidity < 90) {
     adjustment += 2;
-  } else if (visibilityKm >= 10 && cloudCover >= 20 && cloudCover <= 70 && humidity < 92) {
+  } else if (hasElevatedCanvas && visibilityKm >= 10 && cloudCover >= 20 && cloudCover <= 70 && humidity < 92) {
     adjustment += 1;
   }
 
@@ -1271,10 +1290,10 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
     console.log(`📡 v5.1 data sources — Cloud: ${cloudSource}(${cloudCover}%) [AW:${awCloudCover}%] | Humidity: ${humiditySource}(${humidity}%) [AW:${awHumidity}%] | Vis: ${visSource}(${visibilityKm.toFixed(1)}km) [AW:${awVisKm.toFixed(1)}km]`);
   }
 
-  // ── BASE FACTOR 1: Cloud Cover (max 25) ──
-  const cloudScore = scoreCloudCover(cloudCover);
+  // ── BASE FACTOR 1: Cloud Cover (max 18) ──
+  let cloudScore = scoreCloudCover(cloudCover);
 
-  // ── BASE FACTOR 2: Multi-Level Cloud Distribution (max 15) ──
+  // ── BASE FACTOR 2: Multi-Level Cloud Distribution (max 20) ──
   let highCloud = null, midCloud = null, lowCloud = null;
   let ceilingMeters = null;
 
@@ -1292,6 +1311,21 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
     : null;
 
   const multiLevelScore = scoreMultiLevelCloud(highCloud, midCloud, lowCloud, ceilingMeters, cloudCover);
+
+  // ── v5.3 FIX: LOW-STRATUS DISCOUNT on cloud cover score ──
+  // Science: Corfidi (NOAA) research on optimal cloud for sunrise implicitly assumes
+  // clouds at altitude acting as a color canvas. 50% low stratus ≠ 50% high cirrus.
+  // Low clouds block the horizon and don't catch alpenglow — they're neutral to negative.
+  // When cloud layer data shows predominantly low cloud with no elevated canvas,
+  // discount the cloud cover score because the "optimal amount" argument doesn't apply.
+  let lowStratusDiscount = 0;
+  if (highCloud != null && (highCloud + (midCloud || 0)) < 15 && lowCloud > 40) {
+    // All-low-stratus: cloud cover score is rewarding amount, but there's no canvas
+    // Discount ~50% — the cloud amount is irrelevant without altitude
+    lowStratusDiscount = Math.round(cloudScore * 0.5);
+    cloudScore -= lowStratusDiscount;
+    console.log(`  ⚠️  v5.3 Low-stratus discount: -${lowStratusDiscount} (H:${highCloud}%+M:${midCloud || 0}% < 15%, L:${lowCloud}% > 40%)`);
+  }
 
   // ── BASE FACTOR 3: Humidity (max 15) ──
   const humidScore = scoreHumidity(humidity);
@@ -1317,8 +1351,8 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   // ── BASE FACTOR 8: Wind (max 5 — v5.2 light breeze optimal) ──
   const windScore = scoreWind(windSpeed);
 
-  // ── BASE FACTOR 9: Synergy (±4) ──
-  const synergy = getSynergyAdjustment(cloudCover, humidity, visibilityKm);
+  // ── BASE FACTOR 9: Synergy (±4) — v5.3: now cloud-layer-aware ──
+  const synergy = getSynergyAdjustment(cloudCover, humidity, visibilityKm, { highCloud, midCloud, lowCloud });
 
   // ── ASSEMBLE BASE SCORE (max 100) ──
   const baseScore = cloudScore + multiLevelScore + humidScore + pressureScore + aodScore + visScore + weatherScore + windScore + synergy;
@@ -1334,7 +1368,7 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   // ── DETERMINE POST-RAIN STATUS ──
   const isPostRain = postRainBonus > 0;
 
-  console.log(`\n📊 SCORING BREAKDOWN (v5.2 — Corfidi/NOAA scientific hierarchy):`);
+  console.log(`\n📊 SCORING BREAKDOWN (v5.3 — Corfidi/NOAA scientific hierarchy):`);
   console.log(`  🌫️  AOD (${aodValue?.toFixed(3) ?? 'N/A'}): ${aodScore}/16  ← #1 factor`);
   console.log(`  🌥️  Cloud Layers (H:${highCloud ?? '?'}% M:${midCloud ?? '?'}% L:${lowCloud ?? '?'}%): ${multiLevelScore}/20  ← #2 factor`);
   console.log(`  ☁️  Cloud Cover [${cloudSource}] (${cloudCover}%): ${cloudScore}/18`);
@@ -1351,7 +1385,7 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   return {
     score: finalScore,
     breakdown: {
-      cloudCover: { value: cloudCover, score: cloudScore, maxScore: 18 },
+      cloudCover: { value: cloudCover, score: cloudScore, maxScore: 18, lowStratusDiscount },
       multiLevelCloud: {
         high: highCloud,
         mid: midCloud,

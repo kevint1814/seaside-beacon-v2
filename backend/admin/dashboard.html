@@ -779,7 +779,7 @@ function renderPredCard(k, p, beaches) {
 
   // Scoring breakdown rows
   const rows=[
-    {name:'Cloud Cover',val:(b.cloudCover?.value??'?')+'%',score:b.cloudCover?.score??0,max:b.cloudCover?.maxScore??18,label:fac.cloudCover||labels.cloudLabel||''},
+    {name:'Cloud Cover'+(b.cloudCover?.lowStratusDiscount?' <span style="color:var(--amber);font-size:10px">⚠ stratus −'+b.cloudCover.lowStratusDiscount+'</span>':''),val:(b.cloudCover?.value??'?')+'%',score:b.cloudCover?.score??0,max:b.cloudCover?.maxScore??18,label:fac.cloudCover||labels.cloudLabel||''},
     {name:'Multi-Level Cloud',val:(b.multiLevelCloud?.high??'?')+'h / '+(b.multiLevelCloud?.mid??'?')+'m / '+(b.multiLevelCloud?.low??'?')+'l',score:b.multiLevelCloud?.score??0,max:b.multiLevelCloud?.maxScore??20,label:fac.cloudLayers||labels.cloudLayerLabel||''},
     {name:'Humidity',val:(b.humidity?.value??'?')+'%',score:b.humidity?.score??0,max:b.humidity?.maxScore??15,label:fac.humidity||labels.humidityLabel||''},
     {name:'Pressure Trend',val:(b.pressureTrend?.value!=null?b.pressureTrend.value.toFixed(1)+' hPa':'?')+' ('+(b.pressureTrend?.pressureMsl!=null?Math.round(b.pressureTrend.pressureMsl):'')+' msl)',score:b.pressureTrend?.score??0,max:b.pressureTrend?.maxScore??11,label:fac.pressureTrend||labels.pressureLabel||''},
@@ -843,7 +843,6 @@ function renderPredCard(k, p, beaches) {
       '<div class="pred-score-block">'+
         '<div class="pred-score" style="color:'+col+'">'+sc+'</div>'+
         '<div class="pred-verdict" style="color:'+col+'">'+(p.verdict||'')+'</div>'+
-        '<span class="pred-rec" style="background:'+recBg(rec)+';color:'+recCol(rec)+'">'+rec+'</span>'+
       '</div>'+
     '</div>'+
 
