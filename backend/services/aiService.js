@@ -144,7 +144,7 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
     } else if (score >= 55) {
       toneInstruction = 'This is a decent morning — pleasant but not spectacular. Set realistic expectations. Describe what will be nice and what will be limited. Don\'t oversell it.';
     } else if (score >= 40) {
-      toneInstruction = 'This is a below-average morning for sunrise viewing. Be honest — the sky will likely be underwhelming. If someone goes, tell them what they will realistically see (muted colors, grey horizon, etc). Do NOT spin this as "dramatic" or "moody" or find silver linings. A beach walk might still be pleasant for other reasons, but the sunrise itself won\'t be impressive.';
+      toneInstruction = 'This is a mixed morning — not great for sunrise color, but not a total washout either. Be honest but not dismissive. There may be some soft color or brief warm tones, just nothing vivid. Mention what they might realistically see (soft peach, muted warm glow, grey patches). The beach at dawn is still peaceful — acknowledge that. Don\'t oversell the sky, but don\'t make it sound pointless either.';
     } else if (score >= 25) {
       toneInstruction = 'This is a poor morning for sunrise. Be straightforward — sunrise will likely not be visible or will be completely washed out. Do NOT romanticize this.';
     } else {
@@ -195,12 +195,12 @@ WRITING STYLE:
 
 JSON response:
 {
-  "greeting": "One friendly, honest sentence. Like texting a friend: 'This morning's looking really good at Marina — set that alarm' or 'Not worth the early wake-up today, honestly.' IMPORTANT: Say 'this morning' or 'today', NEVER 'tomorrow'.",
+  "greeting": "One friendly, honest sentence. Like texting a friend: 'This morning's looking really good at Marina — set that alarm' or 'Quiet morning at Marina — some soft color possible but nothing dramatic.' Match the tone to the score. IMPORTANT: Say 'this morning' or 'today', NEVER 'tomorrow'.",
   "insight": "Two sentences describing what the sky will look like and feel like. Plain language — someone's grandma should understand it.",
   "sunriseExperience": {
     "whatYoullSee": "2-3 sentences painting a picture anyone can visualize. What colors, where in the sky, how it changes as the sun comes up. No technical terms.",
     "beachVibes": "1-2 sentences about what being at ${beach} feels like at dawn — temperature, breeze, crowds, sounds. Use specific details from CONTEXT like the fishing boats or the memorial.",
-    "worthWakingUp": "${score >= 70 ? 'Yes — one enthusiastic sentence about why' : score >= 50 ? 'Maybe — honest about what you will and won\'t get' : 'Probably not for the sunrise — but say if the beach walk itself is still nice'}"
+    "worthWakingUp": "${score >= 70 ? 'Yes — one enthusiastic sentence about why' : score >= 40 ? 'Maybe — honest about what you will and won\'t get. Don\'t say it\'s not worth it.' : 'Probably not for the sunrise — but say if the beach walk itself is still nice'}"
   },
   "goldenHour": {
     "quality": "${score >= 85 ? 'Excellent' : score >= 70 ? 'Very Good' : score >= 55 ? 'Good' : score >= 40 ? 'Fair' : 'Poor'}",
@@ -243,10 +243,8 @@ KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms)
       max_tokens: AI_MAX_TOKENS
     };
 
-    // Groq supports response_format for guaranteed JSON; Gemini may not via OpenAI compat
-    if (provider.isGroq) {
-      requestOptions.response_format = { type: "json_object" };
-    }
+    // Both Groq and Gemini (via OpenAI-compat endpoint) support response_format
+    requestOptions.response_format = { type: "json_object" };
 
     const completion = await provider.client.chat.completions.create(requestOptions);
 
@@ -361,8 +359,8 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   } else if (score >= 55) {
     greeting = `This morning at ${beach} will be pleasant but nothing dramatic. You'll see some color near the horizon, just don't expect the sky to light up.`;
   } else if (score >= 40) {
-    const lowCloudNote = lowCloud != null && lowCloud >= 60 ? ' Low clouds are sitting heavy on the horizon.' : '';
-    greeting = `Not the best morning for sunrise at ${beach}, honestly. The sky will be mostly flat without much color.${lowCloudNote} Nice for a quiet beach walk though.`;
+    const lowCloudNote = lowCloud != null && lowCloud >= 60 ? ' Low clouds may limit the horizon color.' : '';
+    greeting = `Quiet morning ahead at ${beach} — don't expect vivid colors, but there may be some soft warm tones near the horizon.${lowCloudNote} A peaceful time for a beach walk either way.`;
   } else if (score >= 25) {
     greeting = `This morning's sunrise at ${beach} won't have much to show — the sky will be washed out and grey. Not worth the early alarm for the view.`;
   } else {
@@ -478,13 +476,13 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
     }
   } else if (score >= 40) {
     if (isLowStratus) {
-      whatYoullSee = `Low stratus cloud will sit like a grey blanket across the horizon. The sky will brighten from dark to lighter grey without much color. You might catch a brief moment of soft peach if the sun finds a thin spot in the cloud, but mostly it'll be flat and muted.`;
+      whatYoullSee = `Low clouds will cover much of the sky, so don't expect vivid color — but you may catch a moment of soft peach or warm grey as the sun brightens behind the cloud layer. The light can be gentle and atmospheric in its own way.`;
     } else if (cloudCover > 70 && isVeryHumid) {
-      whatYoullSee = `At ${cloudCover}% cloud cover with ${humidity}% humidity, the sky will be mostly grey and washed out. The sun may not be visible when it rises — you'll notice the sky gradually brightening without warm colors. If any color appears, it will be faint and brief.`;
+      whatYoullSee = `Heavy cloud at ${cloudCover}% with ${humidity}% humidity means muted tones this morning. The sky will brighten gradually rather than light up with color — but there may be brief moments of soft warmth near the horizon as conditions shift.`;
     } else if (isHazy && isVeryHumid) {
-      whatYoullSee = `Thick haze combined with ${humidity}% humidity will make the horizon look flat and milky. Any sunrise color will be heavily muted — expect soft grey tones with maybe a faint warm glow where the sun is. Not a morning for vivid skies.`;
+      whatYoullSee = `Haze and humidity will soften things — expect muted, pastel tones rather than vivid color. The horizon may look milky, but there could be a gentle warm glow where the sun rises. Subtle rather than dramatic.`;
     } else {
-      whatYoullSee = `Realistically, the sky will be mostly grey or washed out near the horizon. ${cloudCover > 70 ? `Heavy cloud at ${cloudCover}% will block most direct sunlight.` : `High humidity at ${humidity}% will haze out most color, giving the sky a flat appearance.`} If any color appears, it will be brief and faint.`;
+      whatYoullSee = `The sky will likely be muted this morning — ${cloudCover > 70 ? `heavier cloud at ${cloudCover}% will filter out most vivid color.` : `humidity at ${humidity}% will soften the tones.`} You may still catch some brief warm light near the horizon. A quiet, gentle sunrise.`;
     }
   } else {
     if (cloudCover > 80 && lowCloud != null && lowCloud >= 50) {
@@ -511,7 +509,7 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
   } else if (score >= 55) {
     worthWakingUp = 'If you\'re already a morning person or nearby, it\'ll be a pleasant outing. The sunrise will have some color but won\'t be spectacular — go for the full beach experience, not just the sky.';
   } else if (score >= 40) {
-    worthWakingUp = 'For the sunrise alone, probably not worth the early alarm. The sky will be underwhelming. That said, the beach at dawn is always peaceful — if you enjoy the quiet morning atmosphere regardless of sky conditions, go for the walk.';
+    worthWakingUp = 'The sunrise colors will be subtle this morning — don\'t expect a vivid sky. But the beach at dawn is always peaceful, and there may be some soft warm tones worth seeing. If you enjoy the quiet morning atmosphere, it\'s still a nice outing.';
   } else {
     worthWakingUp = 'No, not for the sunrise — it likely won\'t be visible. If you happen to be awake and nearby, a dawn beach walk is still calming, but don\'t set an alarm expecting sky colors.';
   }

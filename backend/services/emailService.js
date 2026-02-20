@@ -405,7 +405,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
                 </td></tr>
               </table>
 
-              ${score >= 50 ? `
+              ${score >= 40 && goldenHour ? `
               <!-- Golden hour -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px auto 0;">
                 <tr><td bgcolor="#FDF5EE" style="border:1px solid #E8D5C0;padding:10px 20px;">
@@ -710,9 +710,10 @@ async function sendEveningPreviewEmail(subscriberEmail, weatherData, photography
     // Recommendation
     let recLabel;
     if (score >= 70) recLabel = 'Looking promising — set that alarm';
-    else if (score >= 50) recLabel = 'Could go either way — check the final forecast';
-    else if (score >= 30) recLabel = 'Not looking great, but weather shifts overnight';
-    else recLabel = 'Low expectations — but surprises happen';
+    else if (score >= 55) recLabel = 'Could go either way — check the final forecast';
+    else if (score >= 40) recLabel = 'Soft tones possible — weather may shift overnight';
+    else if (score >= 25) recLabel = 'Muted sunrise likely — but surprises happen';
+    else recLabel = 'Low expectations — check the 4 AM forecast';
 
     // Extract AI insight
     const greeting = photographyInsights?.greeting || '';
