@@ -333,8 +333,9 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     // Recommendation
     let recLabel, recColor, recBg, recBorder;
     if (score >= 70) { recLabel = '✓ Worth the early alarm'; recColor = '#059669'; recBg = '#ECFDF5'; recBorder = '#A7F3D0'; }
-    else if (score >= 50) { recLabel = '~ Pleasant, not spectacular'; recColor = '#D97706'; recBg = '#FFFBEB'; recBorder = '#FDE68A'; }
-    else if (score >= 30) { recLabel = '✗ Underwhelming sunrise expected'; recColor = '#EA580C'; recBg = '#FFF7ED'; recBorder = '#FED7AA'; }
+    else if (score >= 55) { recLabel = '~ Could surprise you'; recColor = '#D97706'; recBg = '#FFFBEB'; recBorder = '#FDE68A'; }
+    else if (score >= 40) { recLabel = '~ Soft colors possible'; recColor = '#B45A06'; recBg = '#FFFBEB'; recBorder = '#FDE68A'; }
+    else if (score >= 25) { recLabel = '✗ Muted sunrise likely'; recColor = '#EA580C'; recBg = '#FFF7ED'; recBorder = '#FED7AA'; }
     else { recLabel = '— Sunrise likely not visible'; recColor = '#DC2626'; recBg = '#FEF2F2'; recBorder = '#FECACA'; }
 
     // Condition badge colors

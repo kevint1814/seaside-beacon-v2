@@ -774,8 +774,9 @@ assertEqual(getRecommendation(90), 'GO', '90 = GO');
 assertEqual(getRecommendation(70), 'GO', '70 = GO');
 assertEqual(getRecommendation(60), 'MAYBE', '60 = MAYBE');
 assertEqual(getRecommendation(50), 'MAYBE', '50 = MAYBE');
-assertEqual(getRecommendation(40), 'SKIP', '40 = SKIP');
+assertEqual(getRecommendation(40), 'MAYBE', '40 = MAYBE (FAIR tier)');
 assertEqual(getRecommendation(30), 'SKIP', '30 = SKIP');
+assertEqual(getRecommendation(25), 'SKIP', '25 = SKIP (boundary)');
 assertEqual(getRecommendation(20), 'NO', '20 = NO');
 assertEqual(getRecommendation(10), 'NO', '10 = NO');
 

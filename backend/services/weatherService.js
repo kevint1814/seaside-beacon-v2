@@ -1438,8 +1438,8 @@ function getVerdict(score) {
  */
 function getRecommendation(score) {
   if (score >= 70) return 'GO';
-  if (score >= 50) return 'MAYBE';
-  if (score >= 30) return 'SKIP';
+  if (score >= 40) return 'MAYBE';
+  if (score >= 25) return 'SKIP';
   return 'NO';
 }
 

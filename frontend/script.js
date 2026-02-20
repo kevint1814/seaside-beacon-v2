@@ -1477,15 +1477,22 @@ function applyScoreTone(score) {
     if (stops[1]) stops[1].setAttribute('stop-color', '#c4733a');
     if (stops[2]) stops[2].setAttribute('stop-color', '#c9a055');
     ring.style.filter = 'drop-shadow(0 0 10px rgba(196,115,58,0.5))';
-  } else if (score >= 30) {
-    // Underwhelming — cool muted tones
+  } else if (score >= 40) {
+    // Fair — warm but subdued, still some hope
+    master.classList.add('tone-fair');
+    if (stops[0]) stops[0].setAttribute('stop-color', '#7a4d5e');
+    if (stops[1]) stops[1].setAttribute('stop-color', '#a07a55');
+    if (stops[2]) stops[2].setAttribute('stop-color', '#b09870');
+    ring.style.filter = 'drop-shadow(0 0 8px rgba(160,122,85,0.4))';
+  } else if (score >= 25) {
+    // Poor — cool muted tones
     master.classList.add('tone-meh');
     if (stops[0]) stops[0].setAttribute('stop-color', '#6b5b73');
     if (stops[1]) stops[1].setAttribute('stop-color', '#8a7b6a');
     if (stops[2]) stops[2].setAttribute('stop-color', '#9e9585');
     ring.style.filter = 'drop-shadow(0 0 6px rgba(138,123,106,0.3))';
   } else {
-    // Poor — desaturated grey
+    // Unfavorable — desaturated grey
     master.classList.add('tone-poor');
     if (stops[0]) stops[0].setAttribute('stop-color', '#5a5a6a');
     if (stops[1]) stops[1].setAttribute('stop-color', '#6e6e7a');
@@ -1515,14 +1522,18 @@ function renderExperiencePanel(score, p, beachName) {
     recEl.classList.add('exp-rec-go');
     recIcon.textContent = '✓';
     recText.textContent = 'Worth the early alarm';
-  } else if (score >= 50) {
+  } else if (score >= 55) {
     recEl.classList.add('exp-rec-maybe');
     recIcon.textContent = '~';
-    recText.textContent = 'Pleasant, not spectacular';
-  } else if (score >= 30) {
+    recText.textContent = 'Could surprise you';
+  } else if (score >= 40) {
+    recEl.classList.add('exp-rec-maybe');
+    recIcon.textContent = '~';
+    recText.textContent = 'Soft colors possible';
+  } else if (score >= 25) {
     recEl.classList.add('exp-rec-skip');
     recIcon.textContent = '✗';
-    recText.textContent = 'Underwhelming sunrise expected';
+    recText.textContent = 'Muted sunrise likely';
   } else {
     recEl.classList.add('exp-rec-no');
     recIcon.textContent = '—';
