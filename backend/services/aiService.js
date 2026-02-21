@@ -138,17 +138,17 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
     // ALIGNED with verdict thresholds: 85 EXCELLENT / 70 VERY GOOD / 55 GOOD / 40 FAIR / 25 POOR / <25 UNFAVORABLE
     let toneInstruction;
     if (score >= 85) {
-      toneInstruction = 'This is an exceptional morning — one of the best possible. Be genuinely enthusiastic. Describe SPECIFIC colors and how they\'ll appear: vivid orange and red streaks across the clouds, the sun rising as an intense golden-white disc, a sharp shimmering golden trail on the water stretching toward the shore, long shadows on the sand. Paint a vivid picture of the full experience. Strongly encourage going.';
+      toneInstruction = 'Exceptional morning. Be genuinely excited. Describe the full unfolding scene: the dark horizon glowing orange, color spreading fast across the clouds, the sun breaking the horizon as a sharp golden-white disc too bright to stare at, a shimmering golden trail stretching across the water toward the viewer, long shadows on the sand, fishing boats or landmarks silhouetted against the glow. This is the kind of morning where you stop walking and just watch. Use the CONTEXT for beach-specific details.';
     } else if (score >= 70) {
-      toneInstruction = 'This is a genuinely good morning for sunrise. Be confident and encouraging. Describe how the sun will appear (bright golden disc, warm amber light), what colors will spread across the clouds (orange, gold, pink), and the reflection on the water (golden path shimmering on the surface). Not the rarest show, but clearly worth the effort.';
+      toneInstruction = 'Good morning. Confident and warm. Paint the scene: warm amber light building on the horizon, the sun appearing as a bright golden disc, orange and pink tones spreading through the clouds, a clear golden reflection path on the water. Mention how the light hits the beach — the sand turning warm gold, the water catching the color. Worth setting the alarm for.';
     } else if (score >= 55) {
-      toneInstruction = 'This is a decent morning — pleasant but not spectacular. Describe what the sun and sky will actually look like: Will the sun be a warm amber disc or hidden behind cloud? Will there be soft orange or peach tones in the clouds? Mention the light on the water — even on average mornings there\'s usually a warm reflection path. Set realistic expectations but paint a visual picture.';
+      toneInstruction = 'Decent morning — pleasant, not spectacular. Describe specifically: Will the sun appear as a warm amber disc through light haze, or be partially hidden by cloud? Will there be soft peach or orange tones near the horizon? The water will likely have a gentle warm glow rather than a sharp golden trail. Mention the quiet beach at that hour — waves, cool breeze, few people around. Set honest expectations but make the scene feel real.';
     } else if (score >= 40) {
-      toneInstruction = 'This is a mixed morning — not great for vivid color, but not a total washout. Be honest but not dismissive. Describe SPECIFICALLY what the sun and sky will look like: Will the sun punch through clouds as a soft orange disc? Will there be a warm glow on the water even if the sky is grey? Will color be concentrated at the horizon or spread across high clouds? Mention the reflection path on the water. Paint a picture they can visualize — not just "some color possible" but exactly what that color looks like and where it appears. The beach at dawn is still peaceful — acknowledge that.';
+      toneInstruction = 'Mixed morning. Honest but not dismissive. Describe the actual scene: Will the sun punch through cloud gaps as a soft orange disc? Will there be warm grey with hints of peach at the horizon? The water may have a subtle glow even on grey mornings. Acknowledge what IS there — the peaceful empty beach, the sound of waves, cool air, soft early light even without vivid color. The experience of being at the beach at dawn matters, even when the sky doesn\'t perform.';
     } else if (score >= 25) {
-      toneInstruction = 'This is a poor morning for sunrise. Be straightforward — describe what they\'ll actually see: grey sky gradually brightening, no visible sun disc, no warm colors, flat diffused light. The horizon will just get lighter without any defined sunrise moment. Don\'t romanticize it, but mention if the beach walk itself is still worthwhile.';
+      toneInstruction = 'Poor morning for color. Be straight: the sky will shift from dark to flat grey, the horizon just gradually brightening. No defined sun disc moment, no warm colors — just the world slowly getting lighter. But describe the beach itself — the quiet, the waves, the cool pre-dawn air. A walk is still pleasant even without the sky show.';
     } else {
-      toneInstruction = 'This is an unfavorable morning. The sunrise will almost certainly not be visible. Describe what they\'ll see: thick overcast grey from horizon to horizon, the sky just slowly getting lighter like someone turning up a dimmer switch, no sun disc visible, no warm tones at all. If they still want to go for a walk, that\'s fine, but there is no sunrise to watch.';
+      toneInstruction = 'Unfavorable. The sunrise won\'t be visible — thick grey from horizon to horizon, like someone slowly turning up a dimmer switch. No sun disc, no warm tones. Be brief about the sky (there\'s nothing to describe). If they still want to go, mention the beach at dawn is still calm and quiet — just don\'t expect to see a sunrise.';
     }
 
     // Build comparison context from all beaches if available
@@ -168,6 +168,68 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const currentMonth = monthNames[new Date().getMonth()];
 
+    // ── v5.3: DYNAMIC AI GUARDRAILS ──
+    // Build CONSTRAINTS block from computed weather facts so AI can't contradict displayed data.
+    // These mirror the same conditions used by rule-based fallback logic.
+    const constraints = [];
+
+    // Cloud cover guardrails
+    if (cloudCover >= 90) {
+      constraints.push('Cloud cover is >= 90%. Do NOT use words like "scattered", "broken", "gaps in the clouds", "intermittent", or "partly". The sky is heavily overcast.');
+    } else if (cloudCover >= 75) {
+      constraints.push('Cloud cover is >= 75%. Do NOT say "partly cloudy" or "scattered clouds". It is mostly overcast — use "overcast", "heavy cloud", "thick cloud layer".');
+    } else if (cloudCover <= 15) {
+      constraints.push('Cloud cover is <= 15%. Do NOT mention "cloud canvas" or "clouds catching color". The sky is mostly clear — focus on the horizon glow and sun disc.');
+    }
+
+    // Low cloud blocker guardrails
+    if (lowCloud != null && lowCloud >= 70 && (highCloud == null || highCloud < 20)) {
+      constraints.push(`Low cloud is ${lowCloud}% with minimal high cloud. Do NOT describe vivid colors "across the sky" or "painting the clouds". Low stratus blocks the horizon — at best the sun punches through gaps as a muted disc.`);
+    }
+    if (lowCloud != null && lowCloud >= 50 && lowCloud < 70) {
+      constraints.push(`Low cloud is ${lowCloud}%. The horizon will be partially blocked. If you mention color, specify it may only appear in gaps or above the low cloud band.`);
+    }
+
+    // Fog / low visibility guardrails
+    if (visibility < 2) {
+      constraints.push('Visibility is under 2 km — foggy conditions. Do NOT describe "clear views", "sharp sun disc", or "vivid colors". Visibility is very poor.');
+    } else if (visibility < 5) {
+      constraints.push('Visibility is under 5 km — hazy/misty. Do NOT say "crystal clear" or "sharp". The air is thick with haze or mist.');
+    }
+
+    // AOD guardrails
+    if (aodValue != null && aodValue >= 0.7) {
+      constraints.push(`AOD is ${aodValue.toFixed(2)} — very hazy/polluted air. Do NOT describe "vivid" or "saturated" or "intense" colors. The air quality is poor and colors will be heavily muted.`);
+    } else if (aodValue != null && aodValue < 0.10) {
+      constraints.push('AOD is very low — exceptionally clean air. You CAN describe sharp, vivid, saturated colors if cloud conditions support it.');
+    }
+
+    // Precipitation guardrails
+    if (precipProbability >= 70) {
+      constraints.push(`Precipitation probability is ${precipProbability}%. There is a HIGH chance of rain at sunrise. Do NOT describe a clear or colorful sunrise without heavily caveating rain likelihood.`);
+    } else if (precipProbability >= 40) {
+      constraints.push(`Precipitation probability is ${precipProbability}%. Rain is possible — mention this risk when describing the sunrise.`);
+    }
+
+    // Humidity guardrails
+    if (humidity >= 95) {
+      constraints.push('Humidity is >= 95% — near-saturation. Colors will be heavily washed out. Do NOT describe "crisp" or "vivid" colors.');
+    }
+
+    // High cloud canvas guardrails
+    if (highCloud != null && highCloud >= 40 && lowCloud != null && lowCloud < 30) {
+      constraints.push('High cloud coverage is strong with clear horizon — this is a genuine color-canvas scenario. You CAN be enthusiastic about cloud-lit colors.');
+    }
+
+    // Post-rain guardrails
+    if (isPostRain) {
+      constraints.push('Post-rain conditions confirmed. Air is exceptionally clean. You SHOULD mention the unusual clarity.');
+    }
+
+    const constraintsBlock = constraints.length > 0
+      ? `\nCONSTRAINTS (you MUST follow these — they are computed from actual data):\n${constraints.map((c, i) => `${i + 1}. ${c}`).join('\n')}\n`
+      : '';
+
     const prompt = `Score: ${score}/100 (${verdict}). ${currentMonth}.
 
 TONE: ${toneInstruction}
@@ -177,7 +239,7 @@ CLOUD LAYERS: ${highCloud != null ? `High ${highCloud}% Mid ${midCloud}% Low ${l
 AIR CLARITY (AOD): ${aodValue != null ? `${aodValue.toFixed(2)} (${aodLabel})` : 'N/A'}.
 PRESSURE TREND: ${pressureTrend != null ? `Δ${pressureTrend >= 0 ? '+' : ''}${pressureTrend}hPa (${pressureLabel})` : 'N/A'}.
 POST-RAIN: ${isPostRain ? 'Yes — recent rain washed the air clean' : 'No'}.
-
+${constraintsBlock}
 ${goldenHourInstruction}
 
 BEACH: ${beach}
@@ -220,23 +282,25 @@ JSON response:
 Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A'}. NOT full names like "Marina Beach".`;
 
 
-    const systemPrompt = `You are Beacon — a friendly sunrise guide for Chennai beaches. Talk like a friend texting about this morning's sky. Simple words, no jargon. Excited when good, honest when bad. Describe what the sky LOOKS like — 'orange streaks', 'grey and flat', 'soft warm glow'. No weather numbers. BE CONCISE — keep every field short. Always respond with valid JSON only.
+    const systemPrompt = `You are Beacon — a friendly sunrise guide for Chennai beaches. Talk like a friend who was just at the beach describing what someone will see THIS morning. Simple words, no jargon. Excited when good, honest when bad. BE CONCISE — keep every field short. Always respond with valid JSON only.
 
-KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms):
-- High clouds (>6km altitude, cirrus) = the color canvas. They catch pre-sunrise light and glow vivid orange/red. More high clouds = more color.
-- Low clouds (<2km, stratus) = horizon blockers. They sit in front of the sunrise and turn everything grey. BUT: the sun often punches through gaps in the low cloud layer as a bright disc, creating a golden reflection path on the water — describe this when low cloud is 40-80%.
-- Low AOD (Aerosol Optical Depth) = crystal clear air. Colors look vivid, saturated, intense. Think post-rain clarity.
-- High AOD = hazy, polluted air. Colors look washed out, muted, milky. The sun disc may appear as a soft orange ball rather than a sharp bright point.
-- Falling pressure (2-5 hPa drop) = clearing front approaching. Often produces the MOST dramatic skies — cloud breakup with vivid color through gaps.
-- Rapidly falling pressure (>5 hPa) = storm. Too much cloud and rain.
-- Post-rain conditions = exceptionally clear air (aerosol washout). Often the best possible mornings.
+KEY SCIENCE (inform your descriptions, NEVER use these terms directly):
+- High clouds (cirrus) = color canvas, catch pre-sunrise light → vivid orange/red. More high cloud = more color.
+- Low clouds (stratus) = horizon blockers → grey wall. BUT sun often punches through gaps as a bright disc with golden water reflection when low cloud is 40-80%.
+- Low AOD = crystal clear air → vivid, saturated colors. High AOD = hazy → washed out, muted, milky.
+- Falling pressure (2-5 hPa) = clearing front → dramatic cloud breakup. >5 hPa = storm.
+- Post-rain = exceptionally clear air → often the best mornings.
 
-DESCRIBE THE SUN ITSELF:
-When describing what people will see, don't just talk about sky color — describe how the sun appears:
-- High score + clear air: sun rises as a sharp bright disc, intense golden-white, hard to look at directly, casting long shadows on the sand.
-- Medium score + haze: sun appears as a soft orange/amber ball you can look at briefly, diffused glow around it, warm light on the water.
-- Low score + heavy cloud: sun may not be visible at all, or appears as a bright spot behind grey cloud, or briefly punches through a gap as a pale disc.
-- Always mention the water reflection — the golden or silver path of light stretching from the horizon toward the shore. On hazy mornings it's a broad soft glow; on clear mornings it's a sharp, shimmering golden trail.`;
+DESCRIBE AS A PERSON STANDING ON THE BEACH:
+You are painting a scene for someone about to walk onto the sand. Describe what unfolds in front of their eyes:
+- THE SKY: What they see when they look east over the water — the colors, the cloud shapes, how it changes as time passes (dark → first glow → color spreading → sun appearing).
+- THE SUN: How the sun disc itself appears — sharp bright disc casting shadows (clear), soft orange ball you can briefly look at (haze), hidden behind grey/bright spot behind cloud (overcast). Don't skip this.
+- THE WATER: The reflection — a sharp golden trail on clear mornings, a broad warm glow on hazy ones, nothing on overcast ones.
+- THE BEACH: Use the CONTEXT provided — mention specific landmarks (lighthouse, fishing boats, rocks, temple) and how the light interacts with them. Wet sand reflecting color, silhouettes against the glow, shadows stretching across the beach.
+- THE FEEL: Not just visual — the cool sand underfoot, the salt breeze, the sound of waves, the warmth when first light hits your face. Weave 1-2 sensory details naturally into descriptions.
+- THE SEQUENCE: Sunrise is not a static image. Describe it unfolding: "first you'll see... then as the sun... by the time it clears the horizon..."
+
+NEVER describe weather data. Describe what a PERSON SEES and FEELS.`;
 
     // Build request options — OpenAI-compatible format works for both Gemini and Groq
     const requestOptions = {
@@ -386,29 +450,25 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
     greeting = `No real sunrise to see at ${beach} this morning — overcast and grey. Save your sleep.`;
   }
 
-  // ── Insight — plain language anyone understands ──
-  // Enhanced with cloud layer, AOD, and pressure awareness
+  // ── Insight — what you'll experience, not weather data ──
   let insight;
   if (cloudCover >= 30 && cloudCover <= 60) {
     if (humidity <= 55) {
-      const layerDetail = highCloud != null && highCloud >= 30 && lowCloud < 40
-        ? ' High-altitude clouds are perfectly positioned to catch the earliest pre-sunrise light.'
-        : '';
-      insight = `There are enough clouds in the sky to catch the sunrise light, and the air is clear enough that the colors will look really vivid — think deep oranges and warm pinks.${layerDetail} One of the better combinations you can get.`;
+      insight = `The kind of morning where you stop walking and stare — the sky will light up vivid orange and deep pink, and the colors will look sharp and saturated because the air is so clean.${highCloud != null && highCloud >= 30 && lowCloud < 40 ? ' The clouds are high up where they catch the best light.' : ''} One of those mornings you remember.`;
     } else if (humidity <= 70) {
-      insight = `The clouds should pick up some nice warm colors as the sun comes up, though the moisture in the air will soften things a bit. Expect warm amber tones rather than intense fiery reds.`;
+      insight = `You'll see warm amber and soft orange tones as the sun comes up — nice colors, just slightly softened by the moisture in the air. The kind of morning that looks beautiful in person even if it's not the most vivid sunrise possible.`;
     } else {
-      insight = `There are clouds in the right spots to catch color, but the heavy moisture in the air will fade everything out. You'll see some warmth near the horizon, but it'll look hazy and soft rather than sharp.`;
+      insight = `There'll be some warm tones near the horizon, but the heavy moisture in the air will soften and fade everything. More of a hazy warm glow than sharp, vivid colors. Still pleasant to watch, just don't expect the sky to pop.`;
     }
   } else if (cloudCover < 30) {
-    insight = `The sky is mostly clear, which sounds good but actually means less color — the sunrise needs clouds to bounce light off of. Expect pale yellows and light blues, pleasant but not the colorful show you might be hoping for.`;
+    insight = `Mostly clear sky this morning — which means the sunrise will be a clean golden glow at the horizon rather than a colorful sky-wide show. Without clouds to catch the light, expect pale yellows and soft blues. Pretty, but quiet.`;
   } else if (cloudCover <= 75) {
     const pressureNote = pressureTrend != null && pressureTrend < -2
-      ? ' A shifting weather front could break the clouds apart near sunrise — watch for dramatic color through the gaps.'
+      ? ' The clouds may be breaking apart — watch for vivid color bursting through the gaps.'
       : '';
-    insight = `The sky is pretty cloudy, so the sunrise will be hit or miss. If the sun finds a gap in the clouds you might get a nice burst of color, but mostly it'll be soft, diffused light.${pressureNote}`;
+    insight = `Cloudy sky, so it's a bit of a gamble — if the sun finds a gap near the horizon, you could get a nice moment of warm color breaking through. Otherwise it'll be soft, diffused light.${pressureNote}`;
   } else {
-    insight = `The clouds are too thick for any real sunrise color to come through. The sky will just gradually get lighter — from dark grey to lighter grey — without the warm colors you'd normally see.`;
+    insight = `Thick cloud cover this morning — the sky will just gradually brighten from dark grey to lighter grey. No warm colors breaking through. The beach will be quiet and moody in that flat early light.`;
   }
 
   // ── Sunrise experience (general audience) ──
@@ -478,59 +538,59 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
 
   let whatYoullSee;
   if (score >= 85) {
-    whatYoullSee = `The sky should light up with vivid oranges and reds as sunlight catches ${hasHighCanvas ? 'high clouds acting as a color canvas' : 'scattered clouds'} across the sky. Expect a dramatic build of color starting about 15 minutes before sunrise, peaking as the sun nears the horizon.${aodValue != null && aodValue < 0.2 ? ' Clean air means the colors will be sharp and intense.' : ''}`;
+    whatYoullSee = `When you get to ${beach}, the eastern sky will already be glowing deep orange above the water. ${hasHighCanvas ? 'Clouds high up will be lit from below — streaks of orange and red spreading wide across the sky.' : 'The clear sky near the horizon will be a band of vivid gold fading to warm pink above.'} As the sun breaks the horizon, it\'ll come up as a bright golden-white disc — intense enough that you\'ll squint. A sharp golden trail will stretch across the water straight toward you on the sand.${aodValue != null && aodValue < 0.2 ? ' The air is clean this morning, so everything will look extra sharp and vivid.' : ''}`;
   } else if (score >= 70) {
     if (hasHighCanvas && cloudCover >= 30 && cloudCover <= 60) {
-      whatYoullSee = `Good conditions — high clouds at ${highCloud}% will catch pre-sunrise light and glow orange and gold. With ${lowCloud < 30 ? 'a clear horizon, colors will be vivid and well-defined' : 'some low cloud near the horizon, the color may be partially blocked but still visible above'}. A rewarding sunrise to catch.`;
+      whatYoullSee = `You\'ll see a warm glow building on the horizon as you walk toward the water. The clouds above will start catching color — orange and gold spreading across them. ${lowCloud < 30 ? 'The horizon is clear, so you\'ll see the sun come up as a bright golden disc with a clear reflection path on the water.' : 'Some low cloud near the horizon may hide the sun briefly, but the color above will be the real show.'} The whole beach will turn warm gold once the sun clears.`;
     } else {
-      whatYoullSee = `Pleasant warm tones across the sky with ${visibility}km visibility to the horizon. ${cloudCover >= 30 && cloudCover <= 60 ? 'Clouds at ' + cloudCover + '% will reflect some nice color.' : 'Conditions are solid for a satisfying sunrise.'} Expect oranges and golds that build gradually.`;
+      whatYoullSee = `Looking east from ${beach}, the sky will warm up gradually — first a pale glow, then amber and soft orange tones building at the horizon. The sun will appear as a warm golden disc, and you\'ll see a reflection path on the water stretching toward the shore. The sand and everything around you will shift from cool blue-grey to warm gold as the light fills in.`;
     }
   } else if (score >= 55) {
     if (isLowStratus) {
-      whatYoullSee = `The cloud amount looks decent at ${cloudCover}%, but it's mostly low-level stratus — a flat grey layer rather than the high clouds that produce vivid color. You may see soft peach or salmon tones above the cloud band, but don't expect intense reds or oranges. Any color will be subtle and diffused.`;
+      whatYoullSee = `Looking out from ${beach}, you\'ll see a flat grey layer sitting low over the water — the kind that blocks the horizon. Above it, there may be soft peach or salmon tones where the light leaks through, but the sun itself will be hidden behind that grey band. The water below will stay dark without much reflection. It\'s a muted scene, not the colorful one.`;
     } else if (isHazy) {
-      whatYoullSee = `Haze in the air will soften the sunrise — expect washed-out warm tones rather than vivid color. ${hasHighCanvas ? 'There are high clouds to catch light, but the haze will mute the contrast.' : 'Colors will be pastel at best.'} The horizon may look milky rather than crisp.`;
+      whatYoullSee = `The horizon will look milky and soft — there\'s haze in the air blurring the line between water and sky. The sun will appear as a soft amber ball rather than a sharp disc, with a diffused warm glow around it. Colors will be pastel — think faded peach and soft orange rather than vivid reds. The water will have a broad, gentle warm sheen rather than a crisp golden trail.`;
     } else {
-      whatYoullSee = `You'll see some color in the sky — likely softer warm tones rather than intense reds and oranges. ${cloudCover > 60 ? 'Heavier cloud cover will filter the light, giving a diffused, gentler glow.' : cloudCover < 30 ? 'Clear skies mean mostly pale yellows and soft blues — pleasant but not dramatic.' : 'Moderate clouds will reflect some color, though it won\'t be a show-stopper.'}`;
+      whatYoullSee = `You\'ll see some warm color at the horizon as the sun comes up — soft oranges and peach tones rather than vivid reds. ${cloudCover > 60 ? 'The heavier cloud will filter the light, giving a gentler, diffused glow across the sky.' : cloudCover < 30 ? 'With mostly clear sky, the color stays concentrated near the horizon — pale yellows and soft blues above.' : 'Some clouds will catch the warm light, adding a bit of color to the scene.'} The water will reflect a gentle warm tone back at you.`;
     }
   } else if (score >= 40) {
     if (isLowStratus) {
-      whatYoullSee = `Low clouds will cover much of the sky, so don't expect vivid color — but you may catch a moment of soft peach or warm grey as the sun brightens behind the cloud layer. The light can be gentle and atmospheric in its own way.`;
+      whatYoullSee = `Standing at ${beach}, the sky over the water will be a low grey layer — but watch for the moment the sun finds a gap. You may see it punch through briefly as a soft orange disc, throwing a short-lived warm glow across the water. Even if it doesn\'t, there\'s something to the soft grey light and the way the beach looks in that quiet early hour.`;
     } else if (cloudCover > 70 && isVeryHumid) {
-      whatYoullSee = `Heavy cloud at ${cloudCover}% with ${humidity}% humidity means muted tones this morning. The sky will brighten gradually rather than light up with color — but there may be brief moments of soft warmth near the horizon as conditions shift.`;
+      whatYoullSee = `The sky will be heavy and grey from the water to overhead. No sharp sunrise moment — just the world slowly getting brighter, the grey shifting from dark to lighter. There may be a brief warm hint near the horizon where the sun is trying to push through, but don\'t expect it to break free. The beach feels still and quiet in this kind of light.`;
     } else if (isHazy && isVeryHumid) {
-      whatYoullSee = `Haze and humidity will soften things — expect muted, pastel tones rather than vivid color. The horizon may look milky, but there could be a gentle warm glow where the sun rises. Subtle rather than dramatic.`;
+      whatYoullSee = `Haze and moisture make the horizon look milky — you won\'t see a clear line between water and sky. The sun may appear as a faint warm spot, and there could be a soft glow on the water where it rises. Colors will be muted pastels at best. The scene is more about the quiet atmosphere than the sky itself.`;
     } else {
-      whatYoullSee = `The sky will likely be muted this morning — ${cloudCover > 70 ? `heavier cloud at ${cloudCover}% will filter out most vivid color.` : `humidity at ${humidity}% will soften the tones.`} You may still catch some brief warm light near the horizon. A quiet, gentle sunrise.`;
+      whatYoullSee = `The sky will be muted this morning — ${cloudCover > 70 ? 'thick cloud filtering out most color, just the grey slowly brightening.' : 'the moisture in the air softening everything.'} You may catch a brief warm hint near the horizon where the sun is, but it won\'t be the colorful show. The beach in that soft early light is still a nice place to be.`;
     }
   } else {
     if (cloudCover > 80 && lowCloud != null && lowCloud >= 50) {
-      whatYoullSee = `Thick low cloud cover at ${cloudCover}% will block the sun entirely. The sky will shift from dark to overcast grey without any color. ${isVeryHumid ? 'Extreme humidity adds a damp, grey haze to everything.' : ''} The beach will still be dim well after the official sunrise time.`;
+      whatYoullSee = `The sky over ${beach} will be a thick grey blanket — from the water to overhead, no breaks. It\'ll just shift from dark grey to lighter grey as morning happens. No sun disc, no warm colors, no golden water. ${isVeryHumid ? 'The air will feel heavy and damp.' : ''} The beach will still be dim even well after the official sunrise time.`;
     } else {
-      whatYoullSee = `The sunrise will likely not be visible this morning. ${isHazy ? 'Heavy haze' : 'Poor atmospheric conditions'} combined with ${cloudCover > 70 ? 'thick cloud cover' : 'high moisture'} will make the horizon indistinguishable. The sky will just gradually get lighter without any warm tones.`;
+      whatYoullSee = `You won\'t see a sunrise this morning — the sky will just gradually get lighter, going from dark to a flat, uniform grey. ${isHazy ? 'Thick haze' : 'Heavy cloud'} makes the horizon indistinguishable from the sky. No sun disc, no warm tones. Just the world slowly waking up in grey light.`;
     }
   }
 
-  // Beach vibes — generic, no hardcoded beach name checks
+  // Beach vibes — the physical experience of being there
   let beachVibes;
   if (windSpeed <= 10) {
-    beachVibes = `At ${temperature}°C with barely any wind, the beach will feel calm and quiet at dawn. Expect a peaceful setting with minimal foot traffic at this early hour.`;
+    beachVibes = `The air will feel still at ${temperature}°C — you\'ll hear the waves clearly without any wind noise. The sand will be cool underfoot, and ${beach} will be nearly empty at this hour. A calm, quiet setting.`;
   } else if (windSpeed <= 20) {
-    beachVibes = `${temperature}°C with a light breeze off the water — comfortable for a morning walk. The beach will be peaceful at this hour with the sound of gentle waves.`;
+    beachVibes = `A gentle breeze coming off the water at ${temperature}°C — you\'ll feel it on your face as you walk along the shore. The waves will have a steady rhythm. ${beach} will be peaceful with just a few early walkers.`;
   } else {
-    beachVibes = `A noticeable wind at ${windSpeed}km/h will keep things breezy — ${temperature}°C will feel cooler than usual. The sea will be more active with audible wave energy.`;
+    beachVibes = `You\'ll feel the wind as soon as you step onto the sand — ${windSpeed}km/h makes ${temperature}°C feel cooler than it is. The sea will be active, waves louder than usual. Hair and clothes blowing around kind of morning.`;
   }
 
-  // Worth waking up — the key honest recommendation
+  // Worth waking up — the honest human recommendation
   let worthWakingUp;
   if (score >= 70) {
-    worthWakingUp = 'Yes — conditions are genuinely strong for a beautiful sunrise. This is the kind of morning that rewards the early alarm.';
+    worthWakingUp = 'Yes — this is the kind of morning where you\'ll stand there watching and lose track of time. The sky will put on a real show. Set the alarm.';
   } else if (score >= 55) {
-    worthWakingUp = 'If you\'re already a morning person or nearby, it\'ll be a pleasant outing. The sunrise will have some color but won\'t be spectacular — go for the full beach experience, not just the sky.';
+    worthWakingUp = 'If you\'re up for it, it\'ll be a pleasant morning at the beach. The sunrise will have some nice color — nothing jaw-dropping, but the whole experience of being there at dawn makes it worth it.';
   } else if (score >= 40) {
-    worthWakingUp = 'The sunrise colors will be subtle this morning — don\'t expect a vivid sky. But the beach at dawn is always peaceful, and there may be some soft warm tones worth seeing. If you enjoy the quiet morning atmosphere, it\'s still a nice outing.';
+    worthWakingUp = 'The sky won\'t be the star this morning — colors will be subtle at best. But the beach at dawn has its own thing going on: quiet water, cool air, soft light, barely anyone around. If you enjoy that, it\'s still a nice outing.';
   } else {
-    worthWakingUp = 'No, not for the sunrise — it likely won\'t be visible. If you happen to be awake and nearby, a dawn beach walk is still calming, but don\'t set an alarm expecting sky colors.';
+    worthWakingUp = 'Not for the sunrise — there won\'t be much to see in the sky. But if you\'re already awake and nearby, a dawn beach walk in the grey light is its own kind of peaceful. Just don\'t set an alarm expecting color.';
   }
 
   return { whatYoullSee, beachVibes, worthWakingUp };

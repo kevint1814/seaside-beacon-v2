@@ -186,9 +186,11 @@ router.get('/api/admin/predictions', requireAuth, async (req, res) => {
           sunTimes: data.sunTimes || null,
           goldenHour: data.goldenHour || null,
           insights: {
+            source: insights.source || 'rules',
             greeting: insights.greeting || '',
             insight: insights.insight || '',
             whatYoullSee: insights.sunriseExperience?.whatYoullSee || '',
+            beachVibes: insights.sunriseExperience?.beachVibes || '',
             worthWakingUp: insights.sunriseExperience?.worthWakingUp || ''
           },
           dataSources: data.dataSources || {}

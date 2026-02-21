@@ -202,8 +202,69 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .att-remove{background:none;border:none;color:var(--t4);cursor:pointer;font-size:14px;padding:0 4px;line-height:1}
 .att-remove:hover{color:var(--red)}
 
+/* AI source tag */
+.pred-ai-src{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:500;text-transform:none;letter-spacing:0;vertical-align:middle;margin-left:6px}
+.src-ai{background:var(--violet-bg);color:var(--violet)}
+.src-rules{background:var(--surface3);color:var(--t3)}
+
 /* Refresh bar */
 .refresh-line{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:100;transition:width .3s;opacity:0;pointer-events:none}
+
+/* ── Mobile responsive ── */
+@media(max-width:768px){
+  .header{flex-direction:column;gap:12px;align-items:flex-start}
+  .header-right{flex-wrap:wrap;gap:8px}
+  .stat-val{font-size:20px}
+  .card{padding:14px 16px}
+  .card-title{font-size:10px}
+
+  /* Prediction grid → single column */
+  #predGrid{grid-template-columns:1fr !important}
+
+  /* Prediction card internals */
+  .pred-score{font-size:32px}
+  .pred-beach{font-size:13px}
+  .pred-scores td:first-child{width:35%}
+  .pred-scores td:nth-child(2){width:30%}
+  .pred-scores td:nth-child(3){width:35%}
+
+  /* Conditions grid → single column on small phones */
+  .pred-conds{grid-template-columns:1fr;gap:4px}
+
+  /* Sun times → wrap */
+  .sun-row{flex-wrap:wrap;gap:6px 12px}
+
+  /* Cloud layers → tighter */
+  .cloud-layers{gap:4px}
+  .cloud-layer .cl-pct{font-size:14px}
+
+  /* AI insight text wrap */
+  .pred-insight{font-size:11px;word-break:break-word}
+
+  /* Subscriber table scroll */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+  /* Email section */
+  .email-btn{padding:5px 10px;font-size:10px}
+
+  /* Data sources wrap */
+  .pred-sources{gap:3px}
+  .pred-src{font-size:8px;padding:2px 5px}
+}
+
+@media(max-width:480px){
+  #dashboard{padding:12px 10px}
+  .header-left h1{font-size:14px}
+  .stat-val{font-size:18px}
+  .pred-header{flex-direction:column;gap:8px}
+  .pred-score-block{text-align:left;display:flex;align-items:baseline;gap:8px}
+  .pred-score{font-size:28px}
+  .pred-verdict{font-size:10px;margin-top:0}
+  .pred-scores{font-size:10px}
+  .pred-section{font-size:9px;margin:10px 0 6px}
+  .sun-row{font-size:10px}
+  .pred-cond-item{font-size:10px}
+}
 </style>
 </head>
 <body>
@@ -828,9 +889,11 @@ function renderPredCard(k, p, beaches) {
     '<div class="pred-cond-item"><span class="lbl">Description</span><span class="val">'+esc(f.weatherDescription||'—')+'</span></div>'+
   '</div>';
 
-  // AI insights (full)
+  // AI insights (full — includes beachVibes + source tag)
+  const srcTag=ins.source?'<span class="pred-ai-src '+(ins.source==='rules'?'src-rules':'src-ai')+'">'+esc(ins.source)+'</span>':'';
   const insightHTML=(ins.insight?'<div class="pred-insight">'+esc(ins.insight)+'</div>':'')+
     (ins.whatYoullSee?'<div class="pred-insight" style="margin-top:4px"><strong style="color:var(--t1)">What you\'ll see:</strong> '+esc(ins.whatYoullSee)+'</div>':'')+
+    (ins.beachVibes?'<div class="pred-insight" style="margin-top:4px"><strong style="color:var(--t1)">Beach vibes:</strong> '+esc(ins.beachVibes)+'</div>':'')+
     (ins.worthWakingUp?'<div class="pred-insight-worth">'+esc(ins.worthWakingUp)+'</div>':'');
 
   // Data sources
@@ -860,7 +923,7 @@ function renderPredCard(k, p, beaches) {
     '<div class="pred-section">Sun & Golden Hour</div>'+
     sunHTML+
 
-    '<div class="pred-section">AI Analysis</div>'+
+    '<div class="pred-section">AI Analysis '+srcTag+'</div>'+
     (ins.greeting?'<div style="font-size:11px;color:var(--t1);font-weight:500;margin-bottom:4px">'+esc(ins.greeting)+'</div>':'')+
     insightHTML+
 

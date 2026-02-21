@@ -832,50 +832,55 @@ function getMultiLevelCloudAdjustment(highCloud, midCloud, lowCloud) {
 function scorePressureTrend(pressureMsl) {
   if (!pressureMsl || pressureMsl.length < 2) return 5;  // Neutral default
 
-  const pStart = pressureMsl[0];
-  const pEnd = pressureMsl[pressureMsl.length - 1];
+  // ── v5.3+: LINEAR REGRESSION slope (replaces simple first-minus-last) ──
+  // OLS regression over all 7 hourly points (midnight → 6 AM) is more robust
+  // against a single noisy reading than endpoint delta. Slope is per-hour;
+  // multiply by the point span to get 6-hour equivalent Δ so all existing
+  // thresholds remain unchanged.
+  const validPoints = [];
+  for (let i = 0; i < pressureMsl.length; i++) {
+    if (pressureMsl[i] != null) validPoints.push({ x: i, y: pressureMsl[i] });
+  }
+  if (validPoints.length < 2) return 5;  // Neutral default
 
-  if (pStart == null || pEnd == null) return 5;  // Neutral default
+  // OLS: slope = Σ(xi - x̄)(yi - ȳ) / Σ(xi - x̄)²
+  const n = validPoints.length;
+  const xMean = validPoints.reduce((s, p) => s + p.x, 0) / n;
+  const yMean = validPoints.reduce((s, p) => s + p.y, 0) / n;
+  let num = 0, den = 0;
+  for (const p of validPoints) {
+    num += (p.x - xMean) * (p.y - yMean);
+    den += (p.x - xMean) * (p.x - xMean);
+  }
+  const slopePerHour = den !== 0 ? num / den : 0;
 
-  const change = pEnd - pStart;  // positive = rising, negative = falling
+  // Convert slope to 6-hour Δ equivalent (same scale as old first-minus-last)
+  const totalSpan = validPoints[validPoints.length - 1].x - validPoints[0].x;
+  const change = slopePerHour * (totalSpan > 0 ? totalSpan : 6);
 
-  // ── v5.3: THRESHOLDS CORRECTED (meteorological standards) ──
+  console.log(`📊 Pressure: regression slope=${slopePerHour.toFixed(3)} hPa/hr → 6h Δ${change >= 0 ? '+' : ''}${change.toFixed(1)} hPa (${n} points)`);
+
+  // ── THRESHOLDS (unchanged from v5.3) ──
   // Normal diurnal fluctuation: ±1-2 hPa/6hr.
   // A "clearing front" requires Δ-2 to -5 hPa/6hr (SunsetWx, NOAA).
-  // Previous scoring gave 11/11 for Δ-0.5 to -5, which rewarded normal fluctuation.
 
   // Rapidly falling (>5 hPa in 6h) → severe weather approaching
-  if (change < -5) {
-    console.log(`📊 Pressure rapidly falling (${change.toFixed(1)} hPa): storm risk`);
-    return 2;  // Bad but not zero — storms sometimes clear fast
-  }
+  if (change < -5) return 2;
 
   // True clearing front (2-5 hPa fall) → dramatic skies
-  if (change < -2) {
-    console.log(`📊 Pressure falling (${change.toFixed(1)} hPa): clearing front — dramatic skies`);
-    return 11;  // Best scenario — front with clearing patterns
-  }
+  if (change < -2) return 11;
 
   // Moderate fall (1-2 hPa) → possible weak front, some instability
-  if (change < -1) {
-    console.log(`📊 Pressure moderately falling (${change.toFixed(1)} hPa): weak system`);
-    return 8;   // v5.3: was 9 — not yet a front, but some weather interest
-  }
+  if (change < -1) return 8;
 
   // Slight fall (0.5-1 hPa) → normal-to-marginal fluctuation
-  if (change < -0.5) {
-    return 6;   // v5.3: was 7 — within normal diurnal range, minimal signal
-  }
+  if (change < -0.5) return 6;
 
   // Stable (-0.5 to +0.5 hPa) → high pressure, predictable
-  if (change <= 0.5) {
-    return 5;
-  }
+  if (change <= 0.5) return 5;
 
   // Rising (>0.5 hPa) → high pressure building, very stable, less dramatic
-  if (change <= 2) {
-    return 4;
-  }
+  if (change <= 2) return 4;
 
   // Rapidly rising (>2 hPa) → strong high pressure, clear but boring
   return 3;
@@ -1331,10 +1336,26 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   const humidScore = scoreHumidity(humidity);
 
   // ── BASE FACTOR 4: Pressure Trend (max 11) ──
+  // v5.3+: pressureTrend now uses the same linear-regression Δ that the scorer uses,
+  // so the displayed value matches the scored value (no first-minus-last mismatch).
   let pressureTrend = null;
   const pressureMsl = openMeteoForecast?.pressureMsl || null;
   if (pressureMsl?.length >= 2) {
-    pressureTrend = Math.round((pressureMsl[pressureMsl.length - 1] - pressureMsl[0]) * 10) / 10;
+    // Compute regression Δ for display (same logic as scorePressureTrend)
+    const pts = [];
+    for (let i = 0; i < pressureMsl.length; i++) {
+      if (pressureMsl[i] != null) pts.push({ x: i, y: pressureMsl[i] });
+    }
+    if (pts.length >= 2) {
+      const n = pts.length;
+      const xM = pts.reduce((s, p) => s + p.x, 0) / n;
+      const yM = pts.reduce((s, p) => s + p.y, 0) / n;
+      let num = 0, den = 0;
+      for (const p of pts) { num += (p.x - xM) * (p.y - yM); den += (p.x - xM) * (p.x - xM); }
+      const slope = den !== 0 ? num / den : 0;
+      const span = pts[pts.length - 1].x - pts[0].x;
+      pressureTrend = Math.round(slope * (span > 0 ? span : 6) * 10) / 10;
+    }
   }
   const pressureScore = scorePressureTrend(pressureMsl);
 
