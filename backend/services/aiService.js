@@ -138,17 +138,17 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
     // ALIGNED with verdict thresholds: 85 EXCELLENT / 70 VERY GOOD / 55 GOOD / 40 FAIR / 25 POOR / <25 UNFAVORABLE
     let toneInstruction;
     if (score >= 85) {
-      toneInstruction = 'This is an exceptional morning — one of the best possible. Be genuinely enthusiastic. Describe the vivid, specific colors and dramatic sky people can expect. Strongly encourage going.';
+      toneInstruction = 'This is an exceptional morning — one of the best possible. Be genuinely enthusiastic. Describe SPECIFIC colors and how they\'ll appear: vivid orange and red streaks across the clouds, the sun rising as an intense golden-white disc, a sharp shimmering golden trail on the water stretching toward the shore, long shadows on the sand. Paint a vivid picture of the full experience. Strongly encourage going.';
     } else if (score >= 70) {
-      toneInstruction = 'This is a genuinely good morning for sunrise. Be confident and encouraging — expect vivid colors and a satisfying experience. Not the rarest show, but clearly worth the effort for anyone interested.';
+      toneInstruction = 'This is a genuinely good morning for sunrise. Be confident and encouraging. Describe how the sun will appear (bright golden disc, warm amber light), what colors will spread across the clouds (orange, gold, pink), and the reflection on the water (golden path shimmering on the surface). Not the rarest show, but clearly worth the effort.';
     } else if (score >= 55) {
-      toneInstruction = 'This is a decent morning — pleasant but not spectacular. Set realistic expectations. Describe what will be nice and what will be limited. Don\'t oversell it.';
+      toneInstruction = 'This is a decent morning — pleasant but not spectacular. Describe what the sun and sky will actually look like: Will the sun be a warm amber disc or hidden behind cloud? Will there be soft orange or peach tones in the clouds? Mention the light on the water — even on average mornings there\'s usually a warm reflection path. Set realistic expectations but paint a visual picture.';
     } else if (score >= 40) {
-      toneInstruction = 'This is a mixed morning — not great for sunrise color, but not a total washout either. Be honest but not dismissive. There may be some soft color or brief warm tones, just nothing vivid. Mention what they might realistically see (soft peach, muted warm glow, grey patches). The beach at dawn is still peaceful — acknowledge that. Don\'t oversell the sky, but don\'t make it sound pointless either.';
+      toneInstruction = 'This is a mixed morning — not great for vivid color, but not a total washout. Be honest but not dismissive. Describe SPECIFICALLY what the sun and sky will look like: Will the sun punch through clouds as a soft orange disc? Will there be a warm glow on the water even if the sky is grey? Will color be concentrated at the horizon or spread across high clouds? Mention the reflection path on the water. Paint a picture they can visualize — not just "some color possible" but exactly what that color looks like and where it appears. The beach at dawn is still peaceful — acknowledge that.';
     } else if (score >= 25) {
-      toneInstruction = 'This is a poor morning for sunrise. Be straightforward — sunrise will likely not be visible or will be completely washed out. Do NOT romanticize this.';
+      toneInstruction = 'This is a poor morning for sunrise. Be straightforward — describe what they\'ll actually see: grey sky gradually brightening, no visible sun disc, no warm colors, flat diffused light. The horizon will just get lighter without any defined sunrise moment. Don\'t romanticize it, but mention if the beach walk itself is still worthwhile.';
     } else {
-      toneInstruction = 'This is an unfavorable morning. The sunrise will almost certainly not be visible. Be direct — overcast grey sky, no color, flat light. If someone still wants to go for a walk, that\'s fine, but there is no sunrise spectacle.';
+      toneInstruction = 'This is an unfavorable morning. The sunrise will almost certainly not be visible. Describe what they\'ll see: thick overcast grey from horizon to horizon, the sky just slowly getting lighter like someone turning up a dimmer switch, no sun disc visible, no warm tones at all. If they still want to go for a walk, that\'s fine, but there is no sunrise to watch.';
     }
 
     // Build comparison context from all beaches if available
@@ -224,12 +224,19 @@ Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A
 
 KEY SCIENCE (use to inform your descriptions, but NEVER use the technical terms):
 - High clouds (>6km altitude, cirrus) = the color canvas. They catch pre-sunrise light and glow vivid orange/red. More high clouds = more color.
-- Low clouds (<2km, stratus) = horizon blockers. They sit in front of the sunrise and turn everything grey.
+- Low clouds (<2km, stratus) = horizon blockers. They sit in front of the sunrise and turn everything grey. BUT: the sun often punches through gaps in the low cloud layer as a bright disc, creating a golden reflection path on the water — describe this when low cloud is 40-80%.
 - Low AOD (Aerosol Optical Depth) = crystal clear air. Colors look vivid, saturated, intense. Think post-rain clarity.
-- High AOD = hazy, polluted air. Colors look washed out, muted, milky.
+- High AOD = hazy, polluted air. Colors look washed out, muted, milky. The sun disc may appear as a soft orange ball rather than a sharp bright point.
 - Falling pressure (2-5 hPa drop) = clearing front approaching. Often produces the MOST dramatic skies — cloud breakup with vivid color through gaps.
 - Rapidly falling pressure (>5 hPa) = storm. Too much cloud and rain.
-- Post-rain conditions = exceptionally clear air (aerosol washout). Often the best possible mornings.`;
+- Post-rain conditions = exceptionally clear air (aerosol washout). Often the best possible mornings.
+
+DESCRIBE THE SUN ITSELF:
+When describing what people will see, don't just talk about sky color — describe how the sun appears:
+- High score + clear air: sun rises as a sharp bright disc, intense golden-white, hard to look at directly, casting long shadows on the sand.
+- Medium score + haze: sun appears as a soft orange/amber ball you can look at briefly, diffused glow around it, warm light on the water.
+- Low score + heavy cloud: sun may not be visible at all, or appears as a bright spot behind grey cloud, or briefly punches through a gap as a pale disc.
+- Always mention the water reflection — the golden or silver path of light stretching from the horizon toward the shore. On hazy mornings it's a broad soft glow; on clear mornings it's a sharp, shimmering golden trail.`;
 
     // Build request options — OpenAI-compatible format works for both Gemini and Groq
     const requestOptions = {

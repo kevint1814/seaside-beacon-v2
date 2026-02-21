@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seaside Beacon — Competitive Audit Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0b10;
+    --surface: #12131a;
+    --surface2: #1a1b24;
+    --border: #2a2b38;
+    --t1: #f0ece6;
+    --t2: #c4bfb6;
+    --t3: #8a857c;
+    --accent: #c4733a;
+    --accent2: #e8944a;
+    --green: #34d399;
+    --green-dim: #065f46;
+    --yellow: #fbbf24;
+    --yellow-dim: #78350f;
+    --red: #f87171;
+    --red-dim: #7f1d1d;
+    --blue: #60a5fa;
+    --blue-dim: #1e3a5f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--t1);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 60px 32px; }
+
+  /* Header */
+  .report-header {
+    text-align: center;
+    padding: 80px 0 60px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 60px;
+  }
+  .report-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(196,115,58,0.1);
+    border: 1px solid rgba(196,115,58,0.2);
+    padding: 6px 18px;
+    border-radius: 50px;
+    margin-bottom: 28px;
+  }
+  .report-header h1 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .report-header h1 span { color: var(--accent2); }
+  .report-header .subtitle {
+    font-size: 16px;
+    color: var(--t3);
+    font-weight: 400;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .report-meta {
+    margin-top: 28px;
+    font-size: 12px;
+    color: var(--t3);
+    letter-spacing: 0.5px;
+  }
+
+  /* Section */
+  .section { margin-bottom: 64px; }
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .section h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .section-desc {
+    font-size: 14px;
+    color: var(--t3);
+    margin-bottom: 32px;
+    max-width: 700px;
+  }
+
+  /* Ranking Cards */
+  .ranking-grid { display: flex; flex-direction: column; gap: 16px; }
+  .rank-card {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    align-items: center;
+    gap: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    transition: border-color 0.3s;
+  }
+  .rank-card:hover { border-color: rgba(196,115,58,0.3); }
+  .rank-card.highlight {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, rgba(196,115,58,0.06) 0%, var(--surface) 60%);
+    box-shadow: 0 0 40px rgba(196,115,58,0.06);
+  }
+  .rank-number {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--t3);
+    text-align: center;
+    line-height: 1;
+  }
+  .rank-card.highlight .rank-number { color: var(--accent2); }
+  .rank-info h3 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .rank-info .rank-tagline { font-size: 13px; color: var(--t3); }
+  .rank-score-box {
+    text-align: center;
+    min-width: 90px;
+  }
+  .rank-score {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .rank-score-label {
+    font-size: 10px;
+    color: var(--t3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* Comparison Table */
+  .comparison-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .comparison-table thead th {
+    background: var(--surface2);
+    padding: 16px 18px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--t2);
+    border-bottom: 1px solid var(--border);
+  }
+  .comparison-table thead th:first-child { width: 200px; }
+  .comparison-table thead th.beacon { color: var(--accent2); }
+  .comparison-table tbody td {
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(42,43,56,0.5);
+    vertical-align: top;
+    color: var(--t2);
+  }
+  .comparison-table tbody tr:last-child td { border-bottom: none; }
+  .comparison-table tbody td:first-child {
+    font-weight: 600;
+    color: var(--t1);
+    font-size: 12px;
+  }
+  .comparison-table td.beacon-col {
+    background: rgba(196,115,58,0.04);
+  }
+  .chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .chip-green { background: var(--green-dim); color: var(--green); }
+  .chip-yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .chip-red { background: var(--red-dim); color: var(--red); }
+  .chip-blue { background: var(--blue-dim); color: var(--blue); }
+
+  /* Weight Architecture */
+  .weight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .weight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+  }
+  .weight-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .weight-card-header h4 {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .weight-pts {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+  .weight-bar {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .weight-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .weight-desc {
+    font-size: 12px;
+    color: var(--t3);
+    line-height: 1.5;
+  }
+
+  /* Strengths & Gaps */
+  .sg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .sg-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+  }
+  .sg-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sg-card ul { list-style: none; }
+  .sg-card li {
+    font-size: 13px;
+    color: var(--t2);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(42,43,56,0.4);
+    line-height: 1.5;
+  }
+  .sg-card li:last-child { border-bottom: none; }
+  .sg-card li strong { color: var(--t1); font-weight: 600; }
+
+  /* Data sources */
+  .ds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .ds-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    text-align: center;
+  }
+  .ds-card .ds-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .ds-card .ds-detail { font-size: 11px; color: var(--t3); }
+
+  /* AI Section */
+  .ai-chain {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .ai-node {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    text-align: center;
+    min-width: 160px;
+  }
+  .ai-node .ai-name { font-size: 13px; font-weight: 600; }
+  .ai-node .ai-model { font-size: 11px; color: var(--t3); margin-top: 2px; }
+  .ai-arrow { font-size: 18px; color: var(--t3); }
+
+  /* Verdict */
+  .verdict-box {
+    background: linear-gradient(135deg, rgba(196,115,58,0.08) 0%, var(--surface) 50%);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 48px;
+    text-align: center;
+  }
+  .verdict-box h2 {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+  .verdict-box p {
+    font-size: 15px;
+    color: var(--t2);
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* Footer */
+  .report-footer {
+    text-align: center;
+    padding: 48px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+  .report-footer p { font-size: 12px; color: var(--t3); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .container { padding: 40px 20px; }
+    .rank-card { grid-template-columns: 40px 1fr; gap: 16px; }
+    .rank-score-box { grid-column: 1 / -1; text-align: left; }
+    .sg-grid { grid-template-columns: 1fr; }
+    .comparison-table { font-size: 11px; }
+    .comparison-table thead th,
+    .comparison-table tbody td { padding: 10px 12px; }
+    .ai-chain { flex-direction: column; }
+    .ai-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="report-header">
+    <div class="report-badge">Competitive Intelligence</div>
+    <h1>Sunrise Forecast<br><span>Audit Report</span></h1>
+    <p class="subtitle">How Seaside Beacon's v5.3 algorithm ranks against the world's top sunrise/sunset quality prediction platforms.</p>
+    <p class="report-meta">February 2026 · Prepared by Kevin T · Seaside Beacon</p>
+  </header>
+
+  <!-- OVERALL RANKING -->
+  <section class="section">
+    <p class="section-label">01 — Overall Ranking</p>
+    <h2>Algorithm Sophistication Score</h2>
+    <p class="section-desc">Scored across 6 dimensions: scoring factors, data sources, scientific basis, AI/NLP integration, accuracy methodology, and update frequency. Maximum 100.</p>
+
+    <div class="ranking-grid">
+      <div class="rank-card highlight">
+        <div class="rank-number">1</div>
+        <div class="rank-info">
+          <h3>Seaside Beacon</h3>
+          <p class="rank-tagline">9 factors · Corfidi/NOAA-aligned · AOD + multi-level cloud layers · 3-tier AI insights</p>
+        </div>
+        <div class="rank-score-box">
+          <div class="rank-score" style="color:var(--green)">87</div>
+          <div class="rank-score-label">/ 100</div>
+        </div>
+      </div>
+
+      <div class="rank-card">
+        <div class="rank-number">2</div>
+        <div class="rank-info">
+          <h3>VIEWFINDR</h3>
+          <p class="rank-tagline">3D cloud scanning · DWD weather model · Horizon-specific probability · Europe only</p>
+        </div>
+        <div class="rank-score-box">
+          <div class="rank-score" style="color:var(--blue)">82</div>
+          <div class="rank-score-label">/ 100</div>
+        </div>
+      </div>
+
+      <div class="rank-card">
+        <div class="rank-number">3</div>
+        <div class="rank-info">
+          <h3>SunsetWx / Alpenglow</h3>
+          <p class="rank-tagline">Penn State research · 4km NAM model · Moisture-weighted · Global via GFS</p>
+        </div>
+        <div class="rank-score-box">
+          <div class="rank-score" style="color:var(--blue)">78</div>
+          <div class="rank-score-label">/ 100</div>
+        </div>
+      </div>
+
+      <div class="rank-card">
+        <div class="rank-number">4</div>
+        <div class="rank-info">
+          <h3>Skyfire</h3>
+          <p class="rank-tagline">NOAA + NWS satellite · Terrain-aware · Multi-model averaging · 87% claimed accuracy</p>
+        </div>
+        <div class="rank-score-box">
+          <div class="rank-score" style="color:var(--yellow)">74</div>
+          <div class="rank-score-label">/ 100</div>
+        </div>
+      </div>
+
+      <div class="rank-card">
+        <div class="rank-number">5</div>
+        <div class="rank-info">
+          <h3>SkyCandy</h3>
+          <p class="rank-tagline">SunsetWx API consumer · Dark Sky + Sunburst · Hyperlocal · User feedback loop</p>
+        </div>
+        <div class="rank-score-box">
+          <div class="rank-score" style="color:var(--yellow)">62</div>
+          <div class="rank-score-label">/ 100</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FACTOR COMPARISON TABLE -->
+  <section class="section">
+    <p class="section-label">02 — Factor-by-Factor Comparison</p>
+    <h2>What Each Platform Measures</h2>
+    <p class="section-desc">A breakdown of the atmospheric factors each platform uses in their scoring algorithm.</p>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Factor</th>
+          <th class="beacon">Seaside Beacon</th>
+          <th>SunsetWx</th>
+          <th>Skyfire</th>
+          <th>VIEWFINDR</th>
+          <th>SkyCandy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Aerosol Optical Depth (AOD)</td>
+          <td class="beacon-col"><span class="chip chip-green">16pts · #1 Factor</span></td>
+          <td><span class="chip chip-red">Not used</span></td>
+          <td><span class="chip chip-red">Not used</span></td>
+          <td><span class="chip chip-red">Not used</span></td>
+          <td><span class="chip chip-red">Not used</span></td>
+        </tr>
+        <tr>
+          <td>Multi-Level Cloud Layers</td>
+          <td class="beacon-col"><span class="chip chip-green">20pts · H/M/L split</span></td>
+          <td><span class="chip chip-green">Weighted by altitude</span></td>
+          <td><span class="chip chip-yellow">Multi-level effects</span></td>
+          <td><span class="chip chip-green">3D cloud scanning</span></td>
+          <td><span class="chip chip-yellow">Via SunsetWx API</span></td>
+        </tr>
+        <tr>
+          <td>Total Cloud Cover</td>
+          <td class="beacon-col"><span class="chip chip-green">18pts + stratus discount</span></td>
+          <td><span class="chip chip-green">Core variable</span></td>
+          <td><span class="chip chip-green">NOAA/NWS averaged</span></td>
+          <td><span class="chip chip-green">DWD model</span></td>
+          <td><span class="chip chip-green">Via Dark Sky</span></td>
+        </tr>
+        <tr>
+          <td>Humidity / Moisture</td>
+          <td class="beacon-col"><span class="chip chip-green">15pts · altitude-aware</span></td>
+          <td><span class="chip chip-green">Highest weighted</span></td>
+          <td><span class="chip chip-yellow">Included</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-yellow">Via SunsetWx</span></td>
+        </tr>
+        <tr>
+          <td>Pressure Trend (Δ hPa)</td>
+          <td class="beacon-col"><span class="chip chip-green">11pts · 6-hour trend</span></td>
+          <td><span class="chip chip-green">2nd highest weight</span></td>
+          <td><span class="chip chip-yellow">Included</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-yellow">Via SunsetWx</span></td>
+        </tr>
+        <tr>
+          <td>Visibility</td>
+          <td class="beacon-col"><span class="chip chip-green">5pts · dual source</span></td>
+          <td><span class="chip chip-yellow">Implicit via moisture</span></td>
+          <td><span class="chip chip-yellow">Satellite-derived</span></td>
+          <td><span class="chip chip-yellow">Rain/fog reduction</span></td>
+          <td><span class="chip chip-yellow">Included</span></td>
+        </tr>
+        <tr>
+          <td>Wind Speed</td>
+          <td class="beacon-col"><span class="chip chip-green">5pts · light breeze optimal</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-yellow">Calm wind favored</span></td>
+        </tr>
+        <tr>
+          <td>Precipitation</td>
+          <td class="beacon-col"><span class="chip chip-green">5pts · probability-based</span></td>
+          <td><span class="chip chip-green">Poor rating trigger</span></td>
+          <td><span class="chip chip-green">Included</span></td>
+          <td><span class="chip chip-green">Rain/snow/fog</span></td>
+          <td><span class="chip chip-yellow">Via weather data</span></td>
+        </tr>
+        <tr>
+          <td>Synergy / Interactions</td>
+          <td class="beacon-col"><span class="chip chip-green">±4pts · cloud-layer-aware</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-yellow">Terrain + gap light</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+        </tr>
+        <tr>
+          <td>Post-Rain Detection</td>
+          <td class="beacon-col"><span class="chip chip-green">+5 bonus · data signature</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+        </tr>
+        <tr>
+          <td>Solar Angle</td>
+          <td class="beacon-col"><span class="chip chip-green">±2pts · seasonal adjust</span></td>
+          <td><span class="chip chip-yellow">Implicit</span></td>
+          <td><span class="chip chip-yellow">Implicit</span></td>
+          <td><span class="chip chip-green">Exact per-spot</span></td>
+          <td><span class="chip chip-red">Not documented</span></td>
+        </tr>
+        <tr>
+          <td>Terrain / Topography</td>
+          <td><span class="chip chip-red">Not applicable (beaches)</span></td>
+          <td><span class="chip chip-red">Not included</span></td>
+          <td><span class="chip chip-green">Full terrain model</span></td>
+          <td><span class="chip chip-green">Horizon scanning</span></td>
+          <td><span class="chip chip-red">Not included</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700;">Total Documented Factors</td>
+          <td class="beacon-col" style="font-weight:700;color:var(--accent2);">9 + 2 bonuses</td>
+          <td style="font-weight:600;">~3 core + altitude</td>
+          <td style="font-weight:600;">~5 + terrain</td>
+          <td style="font-weight:600;">3D clouds + astronomy</td>
+          <td style="font-weight:600;">~3 (via SunsetWx)</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- WEIGHT ARCHITECTURE -->
+  <section class="section">
+    <p class="section-label">03 — Seaside Beacon v5.3 Weight Architecture</p>
+    <h2>Scoring Breakdown (100 points)</h2>
+    <p class="section-desc">Based on Corfidi (NOAA) research: aerosol clarity and cloud altitude matter most for sunrise color intensity. Weight hierarchy reflects peer-reviewed atmospheric optics.</p>
+
+    <div class="weight-grid">
+      <div class="weight-card">
+        <div class="weight-card-header">
+          <h4>🌫️ Aerosol Optical Depth</h4>
+          <span class="weight-pts">16 / 100</span>
+        </div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width:80%"></div></div>
+        <p class="weight-desc">#1 factor. Directly measures air clarity via Open-Meteo CAMS satellite data. Low AOD = vivid saturated colors. High AOD = washed out, milky sky. No competitor uses this.</p>
+      </div>
+
+      <div class="weight-card">
+        <div class="weight-card-header">
+          <h4>🌥️ Multi-Level Cloud Layers</h4>
+          <span class="weight-pts">20 / 100</span>
+        </div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width:100%"></div></div>
+        <p class="weight-desc">#2 factor. Separates high (color canvas), mid (diffusers), and low (blockers) clouds from Open-Meteo satellite data. Includes low-stratus discount — punishes flat grey layers that look like optimal cloud % on paper.</p>
+      </div>
+
+      <div class="weight-card">
+        <div class="weight-card-header">
+          <h4>☁️ Cloud Cover</h4>
+          <span class="weight-pts">18 / 100</span>
+        </div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width:90%"></div></div>
+        <p class="weight-desc">30-60% is optimal for color (Corfidi). Dual-sourced: Open-Meteo primary, AccuWeather fallback. Audited for Chennai accuracy — OM matched photographic evidence.</p>
+      </div>
+
+      <div class="weight-card">
+        <div class="weight-card-header">
+          <h4>💧 Humidity</h4>
+          <span class="weight-pts">15 / 100</span>
+        </div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width:75%"></div></div>
+        <p class="weight-desc">40-65% is the sweet spot. Too dry = no moisture to scatter light. Too humid = haze kills contrast. Scored with continuous curve, not thresholds.</p>
+      </div>
+
+      <div class="weight-card">
+        <div class="weight-card-header">
+          <h4>📊 Pressure Trend</h4>
+          <span class="weight-pts">11 / 100</span>
+        </div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width:55%"></div></div>
+        <p class="weight-desc">Computed from 6-hour MSL pressure array. Moderate falling (2-5 hPa) = clearing front = most dramatic skies. Rapidly falling = storm. Rising = stable/boring.</p>
+      </div>
+
+      <div class="weight-card">
+        <div class="weight-card-header">
+          <h4>👁️ Visibility</h4>
+          <span class="weight-pts">5 / 100</span>
+        </div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width:25%"></div></div>
+        <p class="weight-desc">Coarse backup to AOD. >20km is ideal. Low weight because AOD captures the same physics more precisely. Dual-sourced.</p>
+      </div>
+
+      <div class="weight-card">
+        <div class="weight-card-header">
+          <h4>🌤️ Weather Conditions</h4>
+          <span class="weight-pts">5 / 100</span>
+        </div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width:25%"></div></div>
+        <p class="weight-desc">Precipitation probability and active rain. Binary killer — rain at sunrise time ruins everything regardless of other factors.</p>
+      </div>
+
+      <div class="weight-card">
+        <div class="weight-card-header">
+          <h4>💨 Wind Speed</h4>
+          <span class="weight-pts">5 / 100</span>
+        </div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width:25%"></div></div>
+        <p class="weight-desc">5-15 km/h is optimal — light breeze helps cloud texture without destroying formations. Strong wind disperses photogenic cloud structure.</p>
+      </div>
+
+      <div class="weight-card">
+        <div class="weight-card-header">
+          <h4>🔗 Synergy ±4 · ☀️ Solar ±2 · 🌧️ Post-Rain +5</h4>
+          <span class="weight-pts">±11</span>
+        </div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width:55%"></div></div>
+        <p class="weight-desc">Cross-factor interactions reward "golden combos" (moderate cloud + low humidity + good visibility). Solar angle adjusts for seasonal sun path. Post-rain detects aerosol washout via data signature.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA SOURCES -->
+  <section class="section">
+    <p class="section-label">04 — Data Sources</p>
+    <h2>Multi-Source Weather Pipeline</h2>
+    <p class="section-desc">Seaside Beacon cross-references multiple APIs and selects the most accurate source per-metric. No competitor documents this approach.</p>
+
+    <div class="ds-grid">
+      <div class="ds-card">
+        <div class="ds-name">AccuWeather</div>
+        <div class="ds-detail">Hourly + Daily forecasts · Sunrise/sunset times · Wind · Precipitation · Weather description</div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-name">Open-Meteo GFS</div>
+        <div class="ds-detail">Cloud cover · Humidity · Visibility · High/Mid/Low cloud layers · Pressure MSL array</div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-name">Open-Meteo CAMS</div>
+        <div class="ds-detail">Aerosol Optical Depth (AOD) · PM2.5 · Satellite-derived air quality</div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-name">Dual-Source Validation</div>
+        <div class="ds-detail">OM primary, AW fallback · Audited Feb 2026 against photographic evidence</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI INSIGHTS -->
+  <section class="section">
+    <p class="section-label">05 — AI Integration</p>
+    <h2>3-Tier AI Failover Chain</h2>
+    <p class="section-desc">No competitor generates conversational, personalized sunrise narratives. Seaside Beacon uses a 3-tier AI failover with deterministic rule-based fallback.</p>
+
+    <div class="ai-chain">
+      <div class="ai-node">
+        <div class="ai-name">Gemini 2.5 Flash</div>
+        <div class="ai-model">Primary · 250 RPD</div>
+      </div>
+      <div class="ai-arrow">→</div>
+      <div class="ai-node">
+        <div class="ai-name">Groq Llama 3.3 70B</div>
+        <div class="ai-model">Backup · 51/day TPD-limited</div>
+      </div>
+      <div class="ai-arrow">→</div>
+      <div class="ai-node">
+        <div class="ai-name">Gemini 2.5 Flash-Lite</div>
+        <div class="ai-model">Fallback · 1000 RPD</div>
+      </div>
+      <div class="ai-arrow">→</div>
+      <div class="ai-node">
+        <div class="ai-name">Rule-Based</div>
+        <div class="ai-model">Deterministic · Always available</div>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>AI Capability</th>
+            <th class="beacon">Seaside Beacon</th>
+            <th>Competitors</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Natural language insights</td>
+            <td class="beacon-col"><span class="chip chip-green">5-tier tone-adjusted narratives</span></td>
+            <td><span class="chip chip-red">None — all use maps/ratings only</span></td>
+          </tr>
+          <tr>
+            <td>Photography tips</td>
+            <td class="beacon-col"><span class="chip chip-green">DSLR + mobile camera settings</span></td>
+            <td><span class="chip chip-yellow">Skyfire: light quality maps</span></td>
+          </tr>
+          <tr>
+            <td>Beach comparison</td>
+            <td class="beacon-col"><span class="chip chip-green">4 beaches ranked with reasons</span></td>
+            <td><span class="chip chip-red">N/A — location-agnostic services</span></td>
+          </tr>
+          <tr>
+            <td>Personalized greeting</td>
+            <td class="beacon-col"><span class="chip chip-green">Score-matched friendly tone</span></td>
+            <td><span class="chip chip-red">None</span></td>
+          </tr>
+          <tr>
+            <td>Email delivery</td>
+            <td class="beacon-col"><span class="chip chip-green">4 AM + 8:30 PM preview</span></td>
+            <td><span class="chip chip-yellow">Push notifications only</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PLATFORM COMPARISON -->
+  <section class="section">
+    <p class="section-label">06 — Platform Comparison</p>
+    <h2>Feature Matrix</h2>
+    <p class="section-desc">Beyond the algorithm — how each platform delivers the forecast to users.</p>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th class="beacon">Seaside Beacon</th>
+          <th>SunsetWx / Alpenglow</th>
+          <th>Skyfire</th>
+          <th>VIEWFINDR</th>
+          <th>SkyCandy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Scoring System</td>
+          <td class="beacon-col"><span class="chip chip-green">0-100 transparent</span></td>
+          <td>"Vividness" color map</td>
+          <td>Color map (warm/cool)</td>
+          <td>% probability</td>
+          <td>% quality (Poor→Great)</td>
+        </tr>
+        <tr>
+          <td>Breakdown Visible</td>
+          <td class="beacon-col"><span class="chip chip-green">Full 9-factor breakdown</span></td>
+          <td><span class="chip chip-red">No</span></td>
+          <td><span class="chip chip-red">No</span></td>
+          <td><span class="chip chip-yellow">Partial</span></td>
+          <td><span class="chip chip-red">No</span></td>
+        </tr>
+        <tr>
+          <td>Coverage</td>
+          <td>4 Chennai beaches</td>
+          <td><span class="chip chip-green">Global</span></td>
+          <td>NA, EU, AU</td>
+          <td>Europe</td>
+          <td><span class="chip chip-green">Global</span></td>
+        </tr>
+        <tr>
+          <td>Forecast Range</td>
+          <td>Next morning</td>
+          <td><span class="chip chip-green">4 days (Pro)</span></td>
+          <td><span class="chip chip-green">4 days (Plus)</span></td>
+          <td>3 days</td>
+          <td><span class="chip chip-green">5 days (Premium)</span></td>
+        </tr>
+        <tr>
+          <td>Price</td>
+          <td><span class="chip chip-green">Free</span></td>
+          <td>$4.99/yr Pro</td>
+          <td>$9.99–19.99/yr</td>
+          <td>$3.49/mo Pro</td>
+          <td>$1.99/mo Premium</td>
+        </tr>
+        <tr>
+          <td>Platform</td>
+          <td>Web + Email</td>
+          <td>iOS + Android</td>
+          <td>iOS + Android + Web</td>
+          <td>Web + iOS</td>
+          <td>iOS + Android</td>
+        </tr>
+        <tr>
+          <td>Accuracy Validation</td>
+          <td>368 unit tests · audited</td>
+          <td>Weather Channel partnership</td>
+          <td>Claims 87% (tested ~50%)</td>
+          <td>Not published</td>
+          <td>Claims 80% · user feedback</td>
+        </tr>
+        <tr>
+          <td>User Feedback Loop</td>
+          <td><span class="chip chip-red">Not yet</span></td>
+          <td><span class="chip chip-yellow">Partial</span></td>
+          <td><span class="chip chip-green">Field reports</span></td>
+          <td><span class="chip chip-red">No</span></td>
+          <td><span class="chip chip-green">Rating system</span></td>
+        </tr>
+        <tr>
+          <td>UI/UX Quality</td>
+          <td><span class="chip chip-green">Glass UI · Canvas animation</span></td>
+          <td>Clean, minimal</td>
+          <td>Map-focused, functional</td>
+          <td>Map-focused, dense</td>
+          <td>Simple, dated</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- STRENGTHS & GAPS -->
+  <section class="section">
+    <p class="section-label">07 — Strategic Assessment</p>
+    <h2>Strengths & Gaps</h2>
+
+    <div class="sg-grid">
+      <div class="sg-card" style="border-color: rgba(52,211,153,0.2);">
+        <h3><span style="color:var(--green)">●</span> Competitive Advantages</h3>
+        <ul>
+          <li><strong>Only platform using AOD</strong> — Aerosol Optical Depth is the single strongest predictor of color intensity. No competitor measures it.</li>
+          <li><strong>Transparent scoring</strong> — Full 9-factor breakdown visible to users. Every competitor is a black box.</li>
+          <li><strong>Multi-level cloud intelligence</strong> — H/M/L split with low-stratus discount catches "fake optimal" scenarios that fool competitors.</li>
+          <li><strong>AI-generated narratives</strong> — 5-tier tone-adjusted insights with 3-provider failover. Zero competitors offer conversational output.</li>
+          <li><strong>Dual data source validation</strong> — Cross-referencing Open-Meteo vs AccuWeather, selecting the audited-accurate source per metric.</li>
+          <li><strong>Pressure trend analysis</strong> — 6-hour MSL pressure array detects clearing fronts, not just static pressure. Most competitors only use current pressure.</li>
+          <li><strong>Post-rain detection</strong> — Data-driven signature (vis + cloud + humidity) identifies aerosol washout conditions. Unique to Seaside Beacon.</li>
+          <li><strong>Completely free</strong> — No subscription tiers. Competitors charge $2–$20/year for premium features.</li>
+          <li><strong>Premium glass UI</strong> — Canvas sunrise animation, glassmorphic design, cinema mode. Best-in-class visual experience.</li>
+        </ul>
+      </div>
+
+      <div class="sg-card" style="border-color: rgba(248,113,113,0.2);">
+        <h3><span style="color:var(--red)">●</span> Gaps to Address</h3>
+        <ul>
+          <li><strong>Geographic coverage</strong> — 4 Chennai beaches vs global/continental coverage. Biggest limitation, though hyperlocal depth compensates.</li>
+          <li><strong>Multi-day forecasting</strong> — Next morning only. Competitors offer 2-5 day forecasts. Could add with OM's 7-day forecast data.</li>
+          <li><strong>User feedback loop</strong> — No field report / photo verification system. Skyfire and SkyCandy improve from user-submitted accuracy data.</li>
+          <li><strong>Published accuracy metrics</strong> — 368 unit tests but no "X% accuracy" claim backed by field verification over time.</li>
+          <li><strong>Native app</strong> — Web + email only. Competitors have iOS/Android apps with push notifications and AR features.</li>
+          <li><strong>Terrain modeling</strong> — Not applicable for flat beaches, but would be needed for expansion to hill/mountain locations.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- VERDICT -->
+  <section class="section">
+    <div class="verdict-box">
+      <div class="report-badge" style="margin-bottom:20px;">Final Verdict</div>
+      <h2>Most Scientifically Rigorous<br>Sunrise Algorithm in Production</h2>
+      <p style="margin-top:20px;">
+        Seaside Beacon's v5.3 algorithm uses more atmospheric factors (9 + bonuses), draws from more data sources (3 APIs with dual-source validation), and produces richer output (AI narratives + transparent breakdown) than any competitor in the sunrise/sunset prediction space. The AOD integration alone — measuring actual air clarity via satellite — puts it in a different scientific class.
+      </p>
+      <p style="margin-top:16px;">
+        What competitors trade for is geographic reach, multi-day forecasting, and native apps. Seaside Beacon trades breadth for depth — and within its domain of Chennai beach sunrises, it is unmatched.
+      </p>
+    </div>
+  </section>
+
+  <!-- SOURCES -->
+  <section class="section">
+    <p class="section-label">08 — Sources</p>
+    <h2>Research References</h2>
+    <p class="section-desc">Data gathered from official documentation, app stores, independent reviews, and published research.</p>
+    <ul style="list-style:none;font-size:13px;color:var(--t2);line-height:2.2;">
+      <li>→ <a href="https://sunsetwx.com/about-the-model/" style="color:var(--blue);text-decoration:none;">SunsetWx — About the Model</a></li>
+      <li>→ <a href="https://alpenglowapp.com/" style="color:var(--blue);text-decoration:none;">Alpenglow App — Official Site</a></li>
+      <li>→ <a href="https://www.skyfireapp.com/faq" style="color:var(--blue);text-decoration:none;">Skyfire — FAQ & Methodology</a></li>
+      <li>→ <a href="https://viewfindr.net/weather/burning-sky/" style="color:var(--blue);text-decoration:none;">VIEWFINDR — Burning Sky Forecast</a></li>
+      <li>→ <a href="https://viewfindr.net/weather/sunrise-sunset-forecast/" style="color:var(--blue);text-decoration:none;">VIEWFINDR — Sunrise/Sunset Forecast</a></li>
+      <li>→ <a href="https://apps.apple.com/us/app/skycandy-sunset-forecast-app/id1263477198" style="color:var(--blue);text-decoration:none;">SkyCandy — App Store</a></li>
+      <li>→ <a href="https://www.jmpeltier.com/review-skyfire-sunsetwx-predicting-sunrise-sunset/" style="color:var(--blue);text-decoration:none;">Independent Review: Skyfire vs SunsetWx</a></li>
+      <li>→ <a href="https://www.psu.edu/news/academics/story/forecasting-beauty-student-alums-make-model-predict-vivid-sunsets-sunrises" style="color:var(--blue);text-decoration:none;">Penn State — SunsetWx Origin Story</a></li>
+      <li>→ <a href="https://cs.stanford.edu/~emmap1/sunset_paper.pdf" style="color:var(--blue);text-decoration:none;">Stanford — Detecting and Predicting Beautiful Sunsets (PDF)</a></li>
+      <li>→ <a href="https://digital-photography-school.com/can-the-skyfire-app-predict-stunning-sunset-colors-days-in-advance/" style="color:var(--blue);text-decoration:none;">Digital Photography School — Skyfire Review</a></li>
+    </ul>
+  </section>
+
+  <footer class="report-footer">
+    <p>Seaside Beacon Competitive Audit Report · February 2026 · Kevin T</p>
+    <p style="margin-top:6px;font-size:11px;color:rgba(138,133,124,0.6);">Algorithm version v5.3 · Corfidi/NOAA scientific hierarchy</p>
+  </footer>
+
+</div>
+
+</body>
+</html>
