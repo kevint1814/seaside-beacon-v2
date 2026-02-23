@@ -1,0 +1,585 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		03A73E14CBC484AED1616909 /* InsightsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EFE4E90CB47B7A0F7B3B866 /* InsightsSection.swift */; };
+		0E447A5B70C35B1FC213907D /* Forecast.swift in Sources */ = {isa = PBXBuildFile; fileRef = F063FFBF9DEDC193F9E1408C /* Forecast.swift */; };
+		0EFE2B0B888A4F620C66ED3B /* MaterialStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F1B0B67C40E75C3C7D91FBB /* MaterialStyle.swift */; };
+		13A7D98DBBB26BDEEB9C56F7 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04EBE33DD8E168A2B49403A /* ExploreView.swift */; };
+		1C4604814629946A7C7A78C4 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8106E9AB59E76363EDF54043 /* MainTabView.swift */; };
+		29871327A6A3FFDCF33C7854 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002CD63042011C8EB63814CB /* SettingsView.swift */; };
+		3560CB31E233B86E1CB43CAD /* LaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BB5871857D795313AE360A7 /* LaunchView.swift */; };
+		36155FF9D3722F0840C32AC1 /* Spacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8F2E4F2E0235B4DA455823 /* Spacing.swift */; };
+		3723DECB65D68DE3ABE601ED /* BeaconLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C3F8DCA2051238507DEA2E4 /* BeaconLogo.swift */; };
+		3BB40D94AEE0C3ED51C3B617 /* SunriseUniforms.swift in Sources */ = {isa = PBXBuildFile; fileRef = A530811515A8AE2399655759 /* SunriseUniforms.swift */; };
+		4EFCF65AE0678BC55DBE190B /* SeasideBeaconApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C586ED28A3B5C06E4770DAF /* SeasideBeaconApp.swift */; };
+		540A621B1615C47A74FB795F /* AppIconGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E74032ECF3A7F7958DC0A98 /* AppIconGenerator.swift */; };
+		5A3235792C037A15D1C88F8F /* PhotographySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B368817BF33EC9BEE434A92B /* PhotographySection.swift */; };
+		5A6404215214505D1B866742 /* ConditionsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B571F1296E33AAA1A895574 /* ConditionsSection.swift */; };
+		5AFD4D1CA77FBBE70E3B5972 /* SunriseMetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA2C99B59303E43FCB8FD65 /* SunriseMetalView.swift */; };
+		5D116B02F5EC9527EE9C6B79 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 613FA46DFF365CADC4F6EE4C /* SettingsViewModel.swift */; };
+		66789E651C47CC2D01C39B96 /* BeachPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 274AE0C3C1352BAC98700F3E /* BeachPicker.swift */; };
+		74DDEC448AF6D7651CF3B2A1 /* SunriseRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DE94FB50DC48C1409F9AF88 /* SunriseRenderer.swift */; };
+		75B3B15656CA79273297ACF0 /* ScoreBreakdownSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC5FC0E0F2CFCA7791C34DD1 /* ScoreBreakdownSection.swift */; };
+		7F969D9BFE5D697925CECE15 /* SunriseMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B44941995ECC2AC0E6A7C707 /* SunriseMotionManager.swift */; };
+		81BDCECD6423E0A2F307E3ED /* Beach.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCD2D565418B75A2B96F3EA /* Beach.swift */; };
+		8836A2508C6B34340ADCEF4E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6496E145EF5D8947AEC8BF56 /* Assets.xcassets */; };
+		8A79B3502482FC734705AD3D /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F89CC585E05AD0C2281C534 /* OnboardingView.swift */; };
+		920DFE6C3EE9F0A681466593 /* SunriseShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 7D061500E03DAD66227886B6 /* SunriseShaders.metal */; };
+		980FDE4561A8BD941DBBA1A5 /* ClearBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4BCB7574C3CD447DD452DA8 /* ClearBackground.swift */; };
+		A513C1919A1F44E4BBE757B9 /* ForecastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1F2756783C9056B9A21962 /* ForecastViewModel.swift */; };
+		A6DE9A15BC0CB1BC5C93EB08 /* SubscribeSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82A214B969721A93EE21DDF1 /* SubscribeSection.swift */; };
+		AA45C5FD83EBA99216A9A732 /* ScoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB90D0317AD64F4F0D2B27DB /* ScoreView.swift */; };
+		B5127F8FDAA65FD3F658E63B /* SunriseCountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9265E8DD47873F7BECB69A0D /* SunriseCountdownView.swift */; };
+		BCDDCEB21D921EB16F075532 /* CommunityViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D980EEA4F8033B1A2CE8582D /* CommunityViewModel.swift */; };
+		C41C011D3CDF54FDF9EBEE04 /* LockedForecastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8DBCE13F11E1C23751729B /* LockedForecastView.swift */; };
+		D7C6AAF4BBF54FA65E9A37E2 /* BeachComparisonSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599A711F729603B5E23D2791 /* BeachComparisonSection.swift */; };
+		E4D077546B634D443518AF0C /* CommunityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435B3A037DDF1EEA68A55065 /* CommunityView.swift */; };
+		E74E21852B6134E7928EE14A /* ForecastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B567FB4BA01839948C29B331 /* ForecastView.swift */; };
+		E8579CA3F4CB069FB0C15AFD /* ImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82AF872F38EC5EF1FC7A098 /* ImageViewer.swift */; };
+		EC1393458364BD66661DE3C6 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0509EA8E4A407A25C91BC32 /* APIService.swift */; };
+		F8BC65275BB4B50DCDECCE85 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6ED8A8B13E52024468F4AFC /* Typography.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		002CD63042011C8EB63814CB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1EFE4E90CB47B7A0F7B3B866 /* InsightsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsSection.swift; sourceTree = "<group>"; };
+		274AE0C3C1352BAC98700F3E /* BeachPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeachPicker.swift; sourceTree = "<group>"; };
+		2B1F2756783C9056B9A21962 /* ForecastViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastViewModel.swift; sourceTree = "<group>"; };
+		2E8F2E4F2E0235B4DA455823 /* Spacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Spacing.swift; sourceTree = "<group>"; };
+		435B3A037DDF1EEA68A55065 /* CommunityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityView.swift; sourceTree = "<group>"; };
+		592A3450321850D6950B62E0 /* SeasideBeacon.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SeasideBeacon.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		599A711F729603B5E23D2791 /* BeachComparisonSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeachComparisonSection.swift; sourceTree = "<group>"; };
+		5B571F1296E33AAA1A895574 /* ConditionsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConditionsSection.swift; sourceTree = "<group>"; };
+		5F1B0B67C40E75C3C7D91FBB /* MaterialStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialStyle.swift; sourceTree = "<group>"; };
+		5F89CC585E05AD0C2281C534 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		613FA46DFF365CADC4F6EE4C /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		6496E145EF5D8947AEC8BF56 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6C3F8DCA2051238507DEA2E4 /* BeaconLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeaconLogo.swift; sourceTree = "<group>"; };
+		6E74032ECF3A7F7958DC0A98 /* AppIconGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconGenerator.swift; sourceTree = "<group>"; };
+		7BB5871857D795313AE360A7 /* LaunchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchView.swift; sourceTree = "<group>"; };
+		7C586ED28A3B5C06E4770DAF /* SeasideBeaconApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeasideBeaconApp.swift; sourceTree = "<group>"; };
+		7D061500E03DAD66227886B6 /* SunriseShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SunriseShaders.metal; sourceTree = "<group>"; };
+		8106E9AB59E76363EDF54043 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		82A214B969721A93EE21DDF1 /* SubscribeSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscribeSection.swift; sourceTree = "<group>"; };
+		8D8DBCE13F11E1C23751729B /* LockedForecastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockedForecastView.swift; sourceTree = "<group>"; };
+		8DCD2D565418B75A2B96F3EA /* Beach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Beach.swift; sourceTree = "<group>"; };
+		9265E8DD47873F7BECB69A0D /* SunriseCountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunriseCountdownView.swift; sourceTree = "<group>"; };
+		9DE94FB50DC48C1409F9AF88 /* SunriseRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunriseRenderer.swift; sourceTree = "<group>"; };
+		9FA2C99B59303E43FCB8FD65 /* SunriseMetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunriseMetalView.swift; sourceTree = "<group>"; };
+		A530811515A8AE2399655759 /* SunriseUniforms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunriseUniforms.swift; sourceTree = "<group>"; };
+		B0509EA8E4A407A25C91BC32 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		B368817BF33EC9BEE434A92B /* PhotographySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotographySection.swift; sourceTree = "<group>"; };
+		B44941995ECC2AC0E6A7C707 /* SunriseMotionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunriseMotionManager.swift; sourceTree = "<group>"; };
+		B4BCB7574C3CD447DD452DA8 /* ClearBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClearBackground.swift; sourceTree = "<group>"; };
+		B567FB4BA01839948C29B331 /* ForecastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastView.swift; sourceTree = "<group>"; };
+		BB90D0317AD64F4F0D2B27DB /* ScoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreView.swift; sourceTree = "<group>"; };
+		C04EBE33DD8E168A2B49403A /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		C82AF872F38EC5EF1FC7A098 /* ImageViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewer.swift; sourceTree = "<group>"; };
+		CC5FC0E0F2CFCA7791C34DD1 /* ScoreBreakdownSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreBreakdownSection.swift; sourceTree = "<group>"; };
+		CD3EAE9178E548115C493BBA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D980EEA4F8033B1A2CE8582D /* CommunityViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityViewModel.swift; sourceTree = "<group>"; };
+		E6ED8A8B13E52024468F4AFC /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		F063FFBF9DEDC193F9E1408C /* Forecast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Forecast.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		13F6BD3BFC031916C53ED80F /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				002CD63042011C8EB63814CB /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		2A327ACAB6B6749464C8C063 /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				8106E9AB59E76363EDF54043 /* MainTabView.swift */,
+			);
+			path = Navigation;
+			sourceTree = "<group>";
+		};
+		485B7FF0C198D6F448106F1A /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				5F1B0B67C40E75C3C7D91FBB /* MaterialStyle.swift */,
+				2E8F2E4F2E0235B4DA455823 /* Spacing.swift */,
+				E6ED8A8B13E52024468F4AFC /* Typography.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		4A916D85890C9E7AA14B6378 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				5F89CC585E05AD0C2281C534 /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		4E27351CC4F5107D377D903B /* Renderer */ = {
+			isa = PBXGroup;
+			children = (
+				9FA2C99B59303E43FCB8FD65 /* SunriseMetalView.swift */,
+				B44941995ECC2AC0E6A7C707 /* SunriseMotionManager.swift */,
+				9DE94FB50DC48C1409F9AF88 /* SunriseRenderer.swift */,
+				7D061500E03DAD66227886B6 /* SunriseShaders.metal */,
+				A530811515A8AE2399655759 /* SunriseUniforms.swift */,
+			);
+			path = Renderer;
+			sourceTree = "<group>";
+		};
+		53319524CB0D52C54026004E /* Community */ = {
+			isa = PBXGroup;
+			children = (
+				435B3A037DDF1EEA68A55065 /* CommunityView.swift */,
+			);
+			path = Community;
+			sourceTree = "<group>";
+		};
+		57267BF1AB7654C1A0C80DA2 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B0509EA8E4A407A25C91BC32 /* APIService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		5AAB5224601784E096BFF13B /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				6496E145EF5D8947AEC8BF56 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		624DC6ABAA8ABE75606A4E9A /* Explore */ = {
+			isa = PBXGroup;
+			children = (
+				C04EBE33DD8E168A2B49403A /* ExploreView.swift */,
+			);
+			path = Explore;
+			sourceTree = "<group>";
+		};
+		6DF3454EA8DFE3D4ABEA29BC /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				8DCD2D565418B75A2B96F3EA /* Beach.swift */,
+				F063FFBF9DEDC193F9E1408C /* Forecast.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		86A96DA1ACCD4E4972C1FEDB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				592A3450321850D6950B62E0 /* SeasideBeacon.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		96C3F9D27167F15047229A03 /* SeasideBeacon */ = {
+			isa = PBXGroup;
+			children = (
+				CD3EAE9178E548115C493BBA /* Info.plist */,
+				CF666E30D2B5762CE8D7FA1B /* App */,
+				485B7FF0C198D6F448106F1A /* Design */,
+				6DF3454EA8DFE3D4ABEA29BC /* Models */,
+				4E27351CC4F5107D377D903B /* Renderer */,
+				5AAB5224601784E096BFF13B /* Resources */,
+				57267BF1AB7654C1A0C80DA2 /* Services */,
+				BD4B9156366387D6335D3C6E /* ViewModels */,
+				D752A69A39DD590ED5F24030 /* Views */,
+			);
+			path = SeasideBeacon;
+			sourceTree = "<group>";
+		};
+		A2A8B78B8A1B539B05DF9DDB /* Forecast */ = {
+			isa = PBXGroup;
+			children = (
+				599A711F729603B5E23D2791 /* BeachComparisonSection.swift */,
+				274AE0C3C1352BAC98700F3E /* BeachPicker.swift */,
+				5B571F1296E33AAA1A895574 /* ConditionsSection.swift */,
+				B567FB4BA01839948C29B331 /* ForecastView.swift */,
+				1EFE4E90CB47B7A0F7B3B866 /* InsightsSection.swift */,
+				8D8DBCE13F11E1C23751729B /* LockedForecastView.swift */,
+				B368817BF33EC9BEE434A92B /* PhotographySection.swift */,
+				CC5FC0E0F2CFCA7791C34DD1 /* ScoreBreakdownSection.swift */,
+				BB90D0317AD64F4F0D2B27DB /* ScoreView.swift */,
+				82A214B969721A93EE21DDF1 /* SubscribeSection.swift */,
+				9265E8DD47873F7BECB69A0D /* SunriseCountdownView.swift */,
+			);
+			path = Forecast;
+			sourceTree = "<group>";
+		};
+		BD4B9156366387D6335D3C6E /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				D980EEA4F8033B1A2CE8582D /* CommunityViewModel.swift */,
+				2B1F2756783C9056B9A21962 /* ForecastViewModel.swift */,
+				613FA46DFF365CADC4F6EE4C /* SettingsViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		CCE261DBA4FBDEF74CA0A377 = {
+			isa = PBXGroup;
+			children = (
+				96C3F9D27167F15047229A03 /* SeasideBeacon */,
+				86A96DA1ACCD4E4972C1FEDB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CF666E30D2B5762CE8D7FA1B /* App */ = {
+			isa = PBXGroup;
+			children = (
+				6E74032ECF3A7F7958DC0A98 /* AppIconGenerator.swift */,
+				7C586ED28A3B5C06E4770DAF /* SeasideBeaconApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		D752A69A39DD590ED5F24030 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				6C3F8DCA2051238507DEA2E4 /* BeaconLogo.swift */,
+				B4BCB7574C3CD447DD452DA8 /* ClearBackground.swift */,
+				C82AF872F38EC5EF1FC7A098 /* ImageViewer.swift */,
+				7BB5871857D795313AE360A7 /* LaunchView.swift */,
+				53319524CB0D52C54026004E /* Community */,
+				624DC6ABAA8ABE75606A4E9A /* Explore */,
+				A2A8B78B8A1B539B05DF9DDB /* Forecast */,
+				2A327ACAB6B6749464C8C063 /* Navigation */,
+				4A916D85890C9E7AA14B6378 /* Onboarding */,
+				13F6BD3BFC031916C53ED80F /* Settings */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		550A9640EABCD1A33AF8AC0C /* SeasideBeacon */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 45C0E1CCFFDD5CDEE982570A /* Build configuration list for PBXNativeTarget "SeasideBeacon" */;
+			buildPhases = (
+				8A0EE90430A9DF44D11072E8 /* Sources */,
+				CDA9E45F3FC833AE36AABBB0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SeasideBeacon;
+			packageProductDependencies = (
+			);
+			productName = SeasideBeacon;
+			productReference = 592A3450321850D6950B62E0 /* SeasideBeacon.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6C5C41857A400E8385F43520 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					550A9640EABCD1A33AF8AC0C = {
+						DevelopmentTeam = 3V4LU5TW66;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = E901AF77BE649920141C6604 /* Build configuration list for PBXProject "SeasideBeacon" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = CCE261DBA4FBDEF74CA0A377;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				550A9640EABCD1A33AF8AC0C /* SeasideBeacon */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CDA9E45F3FC833AE36AABBB0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8836A2508C6B34340ADCEF4E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8A0EE90430A9DF44D11072E8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EC1393458364BD66661DE3C6 /* APIService.swift in Sources */,
+				540A621B1615C47A74FB795F /* AppIconGenerator.swift in Sources */,
+				81BDCECD6423E0A2F307E3ED /* Beach.swift in Sources */,
+				D7C6AAF4BBF54FA65E9A37E2 /* BeachComparisonSection.swift in Sources */,
+				66789E651C47CC2D01C39B96 /* BeachPicker.swift in Sources */,
+				3723DECB65D68DE3ABE601ED /* BeaconLogo.swift in Sources */,
+				980FDE4561A8BD941DBBA1A5 /* ClearBackground.swift in Sources */,
+				E4D077546B634D443518AF0C /* CommunityView.swift in Sources */,
+				BCDDCEB21D921EB16F075532 /* CommunityViewModel.swift in Sources */,
+				5A6404215214505D1B866742 /* ConditionsSection.swift in Sources */,
+				13A7D98DBBB26BDEEB9C56F7 /* ExploreView.swift in Sources */,
+				0E447A5B70C35B1FC213907D /* Forecast.swift in Sources */,
+				E74E21852B6134E7928EE14A /* ForecastView.swift in Sources */,
+				A513C1919A1F44E4BBE757B9 /* ForecastViewModel.swift in Sources */,
+				E8579CA3F4CB069FB0C15AFD /* ImageViewer.swift in Sources */,
+				03A73E14CBC484AED1616909 /* InsightsSection.swift in Sources */,
+				3560CB31E233B86E1CB43CAD /* LaunchView.swift in Sources */,
+				C41C011D3CDF54FDF9EBEE04 /* LockedForecastView.swift in Sources */,
+				1C4604814629946A7C7A78C4 /* MainTabView.swift in Sources */,
+				0EFE2B0B888A4F620C66ED3B /* MaterialStyle.swift in Sources */,
+				8A79B3502482FC734705AD3D /* OnboardingView.swift in Sources */,
+				5A3235792C037A15D1C88F8F /* PhotographySection.swift in Sources */,
+				75B3B15656CA79273297ACF0 /* ScoreBreakdownSection.swift in Sources */,
+				AA45C5FD83EBA99216A9A732 /* ScoreView.swift in Sources */,
+				4EFCF65AE0678BC55DBE190B /* SeasideBeaconApp.swift in Sources */,
+				29871327A6A3FFDCF33C7854 /* SettingsView.swift in Sources */,
+				5D116B02F5EC9527EE9C6B79 /* SettingsViewModel.swift in Sources */,
+				36155FF9D3722F0840C32AC1 /* Spacing.swift in Sources */,
+				A6DE9A15BC0CB1BC5C93EB08 /* SubscribeSection.swift in Sources */,
+				B5127F8FDAA65FD3F658E63B /* SunriseCountdownView.swift in Sources */,
+				5AFD4D1CA77FBBE70E3B5972 /* SunriseMetalView.swift in Sources */,
+				7F969D9BFE5D697925CECE15 /* SunriseMotionManager.swift in Sources */,
+				74DDEC448AF6D7651CF3B2A1 /* SunriseRenderer.swift in Sources */,
+				920DFE6C3EE9F0A681466593 /* SunriseShaders.metal in Sources */,
+				3BB40D94AEE0C3ED51C3B617 /* SunriseUniforms.swift in Sources */,
+				F8BC65275BB4B50DCDECCE85 /* Typography.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1632043018427F0C116F6276 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3V4LU5TW66;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SeasideBeacon/Info.plist;
+				INFOPLIST_KEY_CADisableMinimumFrameDurationOnPhone = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kevint.seasidebeacon;
+				PRODUCT_NAME = "Seaside Beacon";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		60DB58A8A0F874CD1A911808 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		AE7CCDDDB7B8CF91A1D4DF08 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		E19AFCD1C489323B9F3419AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3V4LU5TW66;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SeasideBeacon/Info.plist;
+				INFOPLIST_KEY_CADisableMinimumFrameDurationOnPhone = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kevint.seasidebeacon;
+				PRODUCT_NAME = "Seaside Beacon";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		45C0E1CCFFDD5CDEE982570A /* Build configuration list for PBXNativeTarget "SeasideBeacon" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1632043018427F0C116F6276 /* Debug */,
+				E19AFCD1C489323B9F3419AB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E901AF77BE649920141C6604 /* Build configuration list for PBXProject "SeasideBeacon" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				60DB58A8A0F874CD1A911808 /* Debug */,
+				AE7CCDDDB7B8CF91A1D4DF08 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 6C5C41857A400E8385F43520 /* Project object */;
+}
