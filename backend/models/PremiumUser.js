@@ -70,6 +70,11 @@ const premiumUserSchema = new mongoose.Schema({
   },
   alertTime: {
     type: String,
+    default: '04:00',  // Morning alert default (HH:MM IST)
+    match: [/^\d{2}:\d{2}$/, 'Use HH:MM format']
+  },
+  eveningPreviewTime: {
+    type: String,
     default: '20:30',  // Evening preview default (HH:MM IST)
     match: [/^\d{2}:\d{2}$/, 'Use HH:MM format']
   },
@@ -84,10 +89,23 @@ const premiumUserSchema = new mongoose.Schema({
     default: null
   },
 
-  // ─── Timestamps ───
+  // ─── Subscription Management ───
   subscribedAt: {
     type: Date,
-    default: Date.now
+    default: null
+  },
+  cancelledAt: {
+    type: Date,
+    default: null
+  },
+  lastPaymentFailed: {
+    type: Date,
+    default: null
+  },
+  pendingPlanChange: {
+    type: String,
+    enum: ['monthly', 'annual', null],
+    default: null
   }
 }, {
   timestamps: true  // createdAt, updatedAt

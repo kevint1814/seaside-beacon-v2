@@ -11,7 +11,7 @@ const router = express.Router();
 
 const PremiumUser = require('../models/PremiumUser');
 const { requirePremium } = require('./auth');
-const { sendPremiumWelcomeEmail } = require('../services/emailService');
+const { sendPremiumWelcomeEmail, sendPaymentReceiptEmail, sendCancellationEmail } = require('../services/emailService');
 
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
@@ -243,6 +243,144 @@ router.post('/payment/cancel', requirePremium, async (req, res) => {
 });
 
 
+// ═══════════════════════════════════════
+// POST /api/payment/switch-plan
+// Header: x-auth-token
+// Body: { newPlan: 'monthly' | 'annual' }
+// Switch between monthly and annual plans
+// ═══════════════════════════════════════
+router.post('/payment/switch-plan', requirePremium, async (req, res) => {
+  try {
+    const { newPlan } = req.body;
+    const user = req.premiumUser;
+
+    if (!newPlan || !PLANS[newPlan]) {
+      return res.status(400).json({ success: false, message: 'Invalid plan' });
+    }
+    if (user.plan === newPlan) {
+      return res.status(400).json({ success: false, message: 'Already on this plan' });
+    }
+    if (user.status !== 'active') {
+      return res.status(400).json({ success: false, message: 'No active subscription' });
+    }
+
+    // Use Razorpay subscription update API
+    // annual→monthly: change at cycle end. monthly→annual: change now
+    await razorpayAPI('PATCH', `/subscriptions/${user.razorpaySubscriptionId}`, {
+      plan_id: PLANS[newPlan].id,
+      schedule_change_at: user.plan === 'annual' ? 'cycle_end' : 'now'
+    });
+
+    const changeAt = user.plan === 'annual' ? 'end of current annual period' : 'next billing cycle';
+    user.plan = newPlan;
+    user.pendingPlanChange = user.plan === 'annual' ? newPlan : null;
+    await user.save();
+
+    res.json({ success: true, message: `Plan will switch to ${PLANS[newPlan].display} at ${changeAt}.` });
+  } catch (err) {
+    console.error('Switch plan error:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to switch plan' });
+  }
+});
+
+
+// ═══════════════════════════════════════
+// POST /api/payment/cancel-with-refund
+// Header: x-auth-token
+// Cancels within 7 days + processes refund
+// ═══════════════════════════════════════
+router.post('/payment/cancel-with-refund', requirePremium, async (req, res) => {
+  try {
+    const user = req.premiumUser;
+
+    if (user.status !== 'active' || !user.razorpaySubscriptionId) {
+      return res.status(400).json({ success: false, message: 'No active subscription' });
+    }
+
+    // Check 7-day window
+    const subStart = user.subscribedAt || user.createdAt;
+    const daysSince = (Date.now() - new Date(subStart).getTime()) / (1000 * 60 * 60 * 24);
+
+    if (daysSince > 7) {
+      return res.status(400).json({
+        success: false,
+        message: 'Free cancellation window has expired. Cancellation with refund is only available within the first 7 days.'
+      });
+    }
+
+    // Cancel immediately on Razorpay
+    await razorpayAPI('POST', `/subscriptions/${user.razorpaySubscriptionId}/cancel`, {
+      cancel_at_cycle_end: 0  // Immediate cancellation
+    });
+
+    // Process refund if there was a payment
+    // Get the latest payment for this subscription
+    try {
+      const payments = await razorpayAPI('GET', `/subscriptions/${user.razorpaySubscriptionId}/payments`);
+      if (payments.items && payments.items.length > 0) {
+        const lastPayment = payments.items[0]; // Most recent
+        if (lastPayment.status === 'captured') {
+          await razorpayAPI('POST', `/payments/${lastPayment.id}/refund`, {
+            speed: 'normal',
+            notes: { reason: 'Cancellation within 7-day window', email: user.email }
+          });
+          console.log(`💰 Refund initiated for ${user.email}: payment ${lastPayment.id}`);
+        }
+      }
+    } catch (refundErr) {
+      console.error(`Refund error for ${user.email}:`, refundErr.message);
+      // Still cancel even if refund fails — can be processed manually
+    }
+
+    user.status = 'cancelled';
+    user.cancelledAt = new Date();
+    await user.save();
+
+    console.log(`📭 Premium cancelled with refund: ${user.email} (${daysSince.toFixed(1)} days)`);
+
+    // Send cancellation email with refund notice (non-blocking)
+    sendCancellationEmail(user.email, true)
+      .catch(err => console.error(`❌ Cancellation email failed: ${err.message}`));
+
+    res.json({
+      success: true,
+      message: 'Subscription cancelled. Your refund will be processed within 5-7 business days.'
+    });
+  } catch (err) {
+    console.error('Cancel with refund error:', err.message);
+    res.status(500).json({ success: false, message: 'Cancellation failed. Please try again.' });
+  }
+});
+
+
+// ═══════════════════════════════════════
+// GET /api/payment/subscription-info
+// Header: x-auth-token
+// Returns subscription status + cancellation window
+// ═══════════════════════════════════════
+router.get('/payment/subscription-info', requirePremium, async (req, res) => {
+  const user = req.premiumUser;
+  const subStart = user.subscribedAt || user.createdAt;
+  const daysSince = (Date.now() - new Date(subStart).getTime()) / (1000 * 60 * 60 * 24);
+  const daysLeft = Math.max(0, Math.ceil(7 - daysSince));
+  const canCancel = daysSince <= 7;
+
+  res.json({
+    success: true,
+    subscription: {
+      plan: user.plan,
+      planDisplay: PLANS[user.plan]?.display || user.plan,
+      status: user.status,
+      subscribedAt: subStart,
+      currentPeriodEnd: user.currentPeriodEnd,
+      canCancel,
+      daysLeftForCancellation: daysLeft,
+      canSwitchPlan: user.status === 'active'
+    }
+  });
+});
+
+
 // ─── Webhook handlers ───
 
 async function handleActivated(payload) {
@@ -258,6 +396,7 @@ async function handleActivated(payload) {
   user.status = 'active';
   user.razorpayCustomerId = sub.customer_id || user.razorpayCustomerId;
   user.currentPeriodEnd = sub.current_end ? new Date(sub.current_end * 1000) : null;
+  if (!user.subscribedAt) user.subscribedAt = new Date();
   await user.save();
 
   console.log(`✅ Premium activated: ${user.email} (${user.plan})`);
@@ -282,6 +421,17 @@ async function handleCharged(payload) {
   await user.save();
 
   console.log(`💳 Premium renewed: ${user.email} (${user.plan})`);
+
+  // Send payment receipt (non-blocking)
+  const payment = payload.payment?.entity;
+  if (payment) {
+    sendPaymentReceiptEmail(user.email, {
+      amount: payment.amount || PLANS[user.plan]?.amount || 0,
+      plan: user.plan,
+      nextBillingDate: user.currentPeriodEnd,
+      paymentId: payment.id || 'N/A'
+    }).catch(err => console.error(`❌ Receipt email failed: ${err.message}`));
+  }
 }
 
 
@@ -296,6 +446,10 @@ async function handleCancelled(payload) {
   await user.save();
 
   console.log(`📭 Premium cancelled: ${user.email}`);
+
+  // Send cancellation email (non-blocking)
+  sendCancellationEmail(user.email, false)
+    .catch(err => console.error(`❌ Cancellation email failed: ${err.message}`));
 }
 
 
@@ -331,9 +485,20 @@ async function handlePaymentFailed(payload) {
   const payment = payload.payment?.entity;
   if (!payment) return;
 
-  // Razorpay auto-retries, so just log for now
   const email = payment.notes?.email || payment.email;
   console.warn(`⚠️  Payment failed for ${email || 'unknown'}: ${payment.error_description || 'unknown error'}`);
+
+  // Find user and set grace period (keep access for 3 days while Razorpay retries)
+  if (email) {
+    const user = await PremiumUser.findOne({ email: email.toLowerCase() });
+    if (user && user.status === 'active') {
+      // Don't immediately revoke — Razorpay auto-retries for 3 days
+      // Just log it. If subscription.cancelled webhook fires, it will handle downgrade.
+      user.lastPaymentFailed = new Date();
+      await user.save();
+      console.log(`⚠️  Payment grace period started for ${email}`);
+    }
+  }
 }
 
 

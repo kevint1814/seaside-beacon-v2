@@ -287,7 +287,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
  * General audience first, photography secondary
  * LIGHT MODE: warm tones, email-safe CSS, works on ALL clients
  */
-async function sendDailyPredictionEmail(subscriberEmail, weatherData, photographyInsights) {
+async function sendDailyPredictionEmail(subscriberEmail, weatherData, photographyInsights, isPremium = false) {
   try {
     const unsubscribeUrl = getUnsubscribeUrl(subscriberEmail);
 
@@ -384,6 +384,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
         <tr><td bgcolor="${headerBg}" style="padding:44px 40px 24px;text-align:center;">
 
           <p style="margin:0 0 24px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2.5px;color:#f5e8d8;">Seaside Beacon · ${beach}</p>
+          ${isPremium ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px auto 0;"><tr><td bgcolor="#A05A2A" style="border:1px solid #D4924A;padding:3px 12px;"><span style="font-family:\'Instrument Sans\',-apple-system,sans-serif;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#FFE0C0;">★ Premium</span></td></tr></table>' : ''}
           <p style="margin:0 0 10px;font-size:40px;line-height:1;">${verdictEmoji}</p>
           <h1 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">${verdict}</h1>
           <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;color:#f5e0cc;">This Morning's Sunrise Forecast</p>
@@ -687,7 +688,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
  * - Persuasive copy pointing to the definitive 4 AM forecast
  * - Key conditions only (no full photography section)
  */
-async function sendEveningPreviewEmail(subscriberEmail, weatherData, photographyInsights) {
+async function sendEveningPreviewEmail(subscriberEmail, weatherData, photographyInsights, isPremium = false) {
   try {
     const unsubscribeUrl = getUnsubscribeUrl(subscriberEmail);
     const { beach, forecast, prediction } = weatherData;
@@ -752,6 +753,7 @@ async function sendEveningPreviewEmail(subscriberEmail, weatherData, photography
         <!-- ═══ HEADER (EVENING THEME) ═══ -->
         <tr><td bgcolor="#312e81" style="padding:40px 40px 28px;text-align:center;">
           <p style="margin:0 0 20px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2.5px;color:#c4b5fd;">Seaside Beacon · Evening Preview</p>
+          ${isPremium ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 10px;"><tr><td bgcolor="#A05A2A" style="border:1px solid #D4924A;padding:3px 12px;"><span style="font-family:\'Instrument Sans\',-apple-system,sans-serif;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#FFE0C0;">★ Premium</span></td></tr></table>' : ''}
           <p style="margin:0 0 10px;font-size:36px;line-height:1;">🌙</p>
           <h1 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;">Tomorrow's Sunrise</h1>
           <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;color:#a5b4fc;">${beach} · Early estimate</p>
@@ -1196,4 +1198,200 @@ async function sendPremiumWelcomeEmail(userEmail, plan) {
   }
 }
 
-module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendEveningPreviewEmail, sendSpecialAlertEmail, sendPremiumWelcomeEmail, sendTestEmail };
+
+/**
+ * Send payment receipt email — warm light theme
+ * Called when subscription is charged (webhook)
+ */
+async function sendPaymentReceiptEmail(userEmail, paymentDetails) {
+  try {
+    const { amount, plan, nextBillingDate, paymentId } = paymentDetails;
+    const amountDisplay = '₹' + (amount / 100).toFixed(0); // Convert paise to rupees
+    const planDisplay = plan === 'annual' ? 'Annual (₹399/year)' : 'Monthly (₹49/month)';
+    const nextDate = nextBillingDate ? new Date(nextBillingDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+    const receiptDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const mailOptions = {
+      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
+      to: userEmail,
+      subject: `Payment Receipt — Seaside Beacon Premium (${amountDisplay})`,
+      headers: {
+        'List-Unsubscribe': `<${getUnsubscribeUrl(userEmail)}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+      },
+      text: `Payment Receipt\n\nAmount: ${amountDisplay}\nPlan: ${planDisplay}\nDate: ${receiptDate}\nNext billing: ${nextDate}\nPayment ID: ${paymentId}\n\nThank you for supporting Seaside Beacon.\n${APP_URL}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f0ea;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5f0ea">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+        <!-- Header -->
+        <tr><td bgcolor="#C4733A" style="padding:36px 40px;text-align:center;">
+          <p style="margin:0 0 4px;font-size:24px;">☀️</p>
+          <p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,sans-serif;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:3px;color:#f5e8d8;">Seaside Beacon</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px auto 0;">
+            <tr><td bgcolor="#A05A2A" style="border:1px solid #D4924A;padding:3px 12px;">
+              <span style="font-family:'Instrument Sans',sans-serif;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#FFE0C0;">★ Premium</span>
+            </td></tr>
+          </table>
+          <h1 style="margin:16px 0 0;font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:600;color:#ffffff;">Payment Receipt</h1>
+        </td></tr>
+
+        <!-- Body -->
+        <tr><td bgcolor="#ffffff" style="padding:36px 40px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #E8DDD0;">
+                <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:12px;color:#8a7e72;">Amount</p>
+                <p style="margin:4px 0 0;font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:600;color:#2a2420;">${amountDisplay}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #E8DDD0;">
+                <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:12px;color:#8a7e72;">Plan</p>
+                <p style="margin:4px 0 0;font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:600;color:#2a2420;">${planDisplay}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #E8DDD0;">
+                <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:12px;color:#8a7e72;">Date</p>
+                <p style="margin:4px 0 0;font-family:'Instrument Sans',sans-serif;font-size:15px;color:#2a2420;">${receiptDate}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #E8DDD0;">
+                <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:12px;color:#8a7e72;">Next billing date</p>
+                <p style="margin:4px 0 0;font-family:'Instrument Sans',sans-serif;font-size:15px;color:#2a2420;">${nextDate}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;">
+                <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:12px;color:#8a7e72;">Payment ID</p>
+                <p style="margin:4px 0 0;font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#8a7e72;">${paymentId}</p>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td bgcolor="#F0E8DE" style="padding:24px 40px;text-align:center;border-top:1px solid #E0D5C8;">
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',sans-serif;font-size:12px;color:#8a7e72;">Thank you for supporting Seaside Beacon</p>
+          <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:11px;">
+            <a href="${APP_URL}" style="color:#C4733A;text-decoration:none;">Visit Website</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+    };
+
+    const info = await sendEmail(mailOptions);
+    console.log(`✅ Payment receipt sent to ${userEmail}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Payment receipt email error:', error.message);
+    throw error;
+  }
+}
+
+
+/**
+ * Send cancellation confirmation email
+ * Called when subscription is cancelled
+ */
+async function sendCancellationEmail(userEmail, refundInitiated) {
+  try {
+    const refundNote = refundInitiated
+      ? 'Your refund will be processed within 5–7 business days to your original payment method.'
+      : 'Your subscription will remain active until the end of your current billing period.';
+
+    const mailOptions = {
+      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
+      to: userEmail,
+      subject: 'Your Seaside Beacon Premium subscription has been cancelled',
+      headers: {
+        'List-Unsubscribe': `<${getUnsubscribeUrl(userEmail)}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+      },
+      text: `Your Seaside Beacon Premium subscription has been cancelled.\n\n${refundNote}\n\nWhat you'll lose access to:\n- 7 days of forecasts in advance\n- DSLR camera settings\n- Mobile photography tips\n- Priority 70+ alerts\n\nYou can resubscribe anytime at ${APP_URL}\n\nWe hope to see you back. — Seaside Beacon`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f0ea;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5f0ea">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+        <tr><td bgcolor="#7A5A4A" style="padding:40px;text-align:center;">
+          <p style="margin:0 0 8px;font-size:24px;">👋</p>
+          <h1 style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:600;color:#ffffff;">Subscription Cancelled</h1>
+        </td></tr>
+
+        <tr><td bgcolor="#ffffff" style="padding:36px 40px;">
+          <p style="margin:0 0 20px;font-family:'Instrument Sans',sans-serif;font-size:14px;line-height:1.7;color:#6b6058;">${refundNote}</p>
+
+          <p style="margin:0 0 14px;font-family:'Instrument Sans',sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#a09080;">What you'll lose access to</p>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
+            <tr><td bgcolor="#FEF2F2" style="border:1px solid #FECACA;padding:10px 16px;">
+              <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:13px;color:#dc2626;">📅 7 days of forecasts in advance</p>
+            </td></tr>
+          </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
+            <tr><td bgcolor="#FEF2F2" style="border:1px solid #FECACA;padding:10px 16px;">
+              <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:13px;color:#dc2626;">📷 DSLR camera settings</p>
+            </td></tr>
+          </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
+            <tr><td bgcolor="#FEF2F2" style="border:1px solid #FECACA;padding:10px 16px;">
+              <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:13px;color:#dc2626;">📱 Mobile photography tips</p>
+            </td></tr>
+          </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+            <tr><td bgcolor="#FEF2F2" style="border:1px solid #FECACA;padding:10px 16px;">
+              <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:13px;color:#dc2626;">🔔 Priority 70+ sunrise alerts</p>
+            </td></tr>
+          </table>
+
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+            <tr><td bgcolor="#C4733A" style="padding:14px 36px;border-radius:50px;">
+              <a href="${APP_URL}" style="font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Resubscribe Anytime</a>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td bgcolor="#F0E8DE" style="padding:24px 40px;text-align:center;border-top:1px solid #E0D5C8;">
+          <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:12px;color:#8a7e72;">We hope to see you back. — Seaside Beacon</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+    };
+
+    const info = await sendEmail(mailOptions);
+    console.log(`✅ Cancellation email sent to ${userEmail}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Cancellation email error:', error.message);
+    throw error;
+  }
+}
+
+module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendEveningPreviewEmail, sendSpecialAlertEmail, sendPremiumWelcomeEmail, sendPaymentReceiptEmail, sendCancellationEmail, sendTestEmail };

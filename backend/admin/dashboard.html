@@ -395,7 +395,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
     <div class="card">
       <div class="card-title">Premium Users <span class="badge" style="background:rgba(196,115,58,0.15);color:var(--accent)" id="premiumCountBadge">—</span></div>
       <div style="margin-bottom:12px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
           <div>
             <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Active</div>
             <div class="stat-val" style="font-size:24px" id="premiumActive">—</div>
@@ -404,11 +404,25 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
             <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">MRR</div>
             <div class="stat-val" style="font-size:24px;color:var(--accent)" id="premiumMRR">—</div>
           </div>
+          <div>
+            <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Telegram Linked</div>
+            <div class="stat-val" style="font-size:24px" id="telegramCount">—</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Cancellations</div>
+            <div class="stat-val" style="font-size:24px;color:var(--amber)" id="cancellationCount">—</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Avg Tenure</div>
+            <div class="stat-val" style="font-size:24px" id="avgTenure">—<span style="font-size:11px;color:var(--t4);font-weight:400">d</span></div>
+          </div>
         </div>
       </div>
       <div class="scroll-y">
         <table class="tbl" id="premiumTable">
-          <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>Beach</th><th>Telegram</th><th>Last Login</th></tr></thead>
+          <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>Beach</th><th>Alert Time</th><th>Evening Time</th><th>Cancel Window</th><th>Telegram</th><th>Last Login</th></tr></thead>
           <tbody id="premiumBody"></tbody>
         </table>
       </div>
@@ -609,7 +623,10 @@ function render(d){
   $('premiumCountBadge', (p?.total||0)+' total');
   $('premiumActive', activePremium.length);
   const mrr = (p?.revenue?.monthly||0) + (p?.revenue?.annual||0);
-  $('premiumMRR', '$' + fmt(mrr));
+  $('premiumMRR', '₹' + fmt(mrr));
+  $('cancellationCount', p?.cancellations||0);
+  $('avgTenure', p?.avgTenure||0);
+  $('telegramCount', p?.telegramLinked||0);
   premiumTable(p||{});
 
   // Performance
@@ -674,14 +691,27 @@ function chart(days){
 function premiumTable(p){
   const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
   const body=document.getElementById('premiumBody');
-  if(!p.list||!p.list.length){body.innerHTML='<tr><td colspan="6" class="empty-state">No premium users</td></tr>';return;}
+  if(!p.list||!p.list.length){body.innerHTML='<tr><td colspan="9" class="empty-state">No premium users</td></tr>';return;}
   body.innerHTML=p.list.map((user,i)=>{
     const joined=new Date(user.subscribedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
     const lastLogin=user.lastLogin?timeAgo(new Date(user.lastLogin)):'Never';
     const bName=beaches[user.preferredBeach]||user.preferredBeach;
     const statusClass=user.status==='active'?'status-active':user.status==='cancelled'?'status-cancelled':user.status==='expired'?'status-expired':'status-pending';
     const telegram=user.telegramChatId?'Yes':'No';
-    return '<tr><td class="mono" style="color:var(--t1);font-size:11px">'+esc(user.email)+'</td><td><span class="sb" style="background:var(--amber-bg);color:var(--amber)">'+esc(user.plan||'—')+'</span></td><td><span class="status-badge '+statusClass+'">'+esc(user.status||'—')+'</span></td><td>'+bName+'</td><td>'+telegram+'</td><td style="color:var(--t3)">'+lastLogin+'</td></tr>';
+
+    // Alert Time
+    const alertTime=user.alertTime||'—';
+
+    // Evening Time
+    const eveningTime=user.eveningPreviewTime||'—';
+
+    // Cancel Window calculation
+    const subDate = user.subscribedAt || user.createdAt;
+    const daysSince = subDate ? Math.floor((Date.now() - new Date(subDate).getTime()) / (1000*60*60*24)) : 999;
+    const daysLeft = Math.max(0, Math.ceil(7 - daysSince));
+    const cancelStatus = daysLeft > 0 ? daysLeft + 'd left' : 'Expired';
+
+    return '<tr><td class="mono" style="color:var(--t1);font-size:11px">'+esc(user.email)+'</td><td><span class="sb" style="background:var(--amber-bg);color:var(--amber)">'+esc(user.plan||'—')+'</span></td><td><span class="status-badge '+statusClass+'">'+esc(user.status||'—')+'</span></td><td>'+bName+'</td><td style="color:var(--t3);font-size:11px">'+alertTime+'</td><td style="color:var(--t3);font-size:11px">'+eveningTime+'</td><td style="color:var(--t3);font-size:11px">'+cancelStatus+'</td><td>'+telegram+'</td><td style="color:var(--t3)">'+lastLogin+'</td></tr>';
   }).join('');
 }
 

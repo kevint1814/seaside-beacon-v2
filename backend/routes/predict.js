@@ -13,6 +13,7 @@ const weatherService = require('../services/weatherService');
 const aiService = require('../services/aiService');
 const { trackPrediction } = require('../services/visitTracker');
 const metrics = require('../services/metricsCollector');
+const { requirePremium } = require('./auth');
 
 // ── Prediction-level cache ──────────────────────────
 // Caches the FULL response (weather + AI) per beach.
@@ -89,6 +90,9 @@ router.get('/beaches', async (req, res) => {
  * Fetches weather for ALL 4 beaches in parallel so the
  * comparison tab reflects real conditions at every beach,
  * not just a guess derived from the selected beach's data.
+ *
+ * Optional premium check: if auth token provided, include
+ * premium photography data (DSLR, mobile). Otherwise, strip it.
  */
 router.get('/predict/:beach', async (req, res) => {
   try {
@@ -100,13 +104,38 @@ router.get('/predict/:beach', async (req, res) => {
     metrics.trackRequest('predict');
     const _startTime = Date.now();
 
+    // ── Optional premium check (don't require auth, just check if present) ──
+    let isPremiumUser = false;
+    const authToken = req.headers['x-auth-token'] || req.query.authToken;
+    if (authToken) {
+      try {
+        const PremiumUser = require('../models/PremiumUser');
+        const premUser = await PremiumUser.findOne({
+          authToken,
+          authTokenExpiry: { $gt: new Date() },
+          status: 'active'
+        });
+        if (premUser) isPremiumUser = true;
+      } catch (e) {
+        // Ignore auth errors on public endpoint
+      }
+    }
+
     // ── Check prediction-level cache first ──
     const cached = getCachedPrediction(beach);
     if (cached) {
       console.log(`⚡ Serving cached prediction for ${beach}`);
       metrics.trackPredictionCache(true);
       metrics.trackResponseTime(Date.now() - _startTime);
-      return res.json(cached);
+
+      // Strip premium data if not premium user
+      const response = JSON.parse(JSON.stringify(cached)); // Deep clone
+      if (!isPremiumUser && response.data?.photography) {
+        delete response.data.photography.dslr;
+        delete response.data.photography.mobile;
+      }
+
+      return res.json(response);
     }
     metrics.trackPredictionCache(false);
 
@@ -156,6 +185,12 @@ router.get('/predict/:beach', async (req, res) => {
     metrics.trackResponseTime(Date.now() - _startTime);
     console.log(`💾 Cached prediction for ${beach} (TTL: ${PREDICTION_CACHE_TTL / 60000}min)`);
 
+    // Strip premium data if not premium user
+    if (!isPremiumUser && response.data?.photography) {
+      delete response.data.photography.dslr;
+      delete response.data.photography.mobile;
+    }
+
     res.json(response);
   } catch (error) {
     console.error('Prediction error:', error.message);
@@ -166,11 +201,10 @@ router.get('/predict/:beach', async (req, res) => {
 
 /**
  * GET /api/forecast/7day/:beach
- * Premium — returns 7-day scored forecast.
- * Auth checked on frontend; endpoint is open but
- * only linked from premium UI.
+ * Premium-only — requires valid auth token
+ * Returns 7-day scored forecast.
  */
-router.get('/forecast/7day/:beach', async (req, res) => {
+router.get('/forecast/7day/:beach', requirePremium, async (req, res) => {
   try {
     const { beach } = req.params;
     console.log(`\n📅 7-day forecast request for: ${beach}`);

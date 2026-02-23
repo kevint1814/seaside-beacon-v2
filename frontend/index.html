@@ -370,6 +370,43 @@
   </div>
 </div>
 
+<!-- Telegram Link Modal -->
+<div class="modal-overlay hidden" id="telegramModal" aria-hidden="true">
+  <div class="tg-modal">
+    <button class="tg-modal-close" onclick="closeTelegramModal()">✕</button>
+    <div class="tg-modal-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c4733a" stroke-width="1.4"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+    </div>
+    <h2 class="tg-modal-title">Get Alerts on Telegram</h2>
+    <p class="tg-modal-sub">Link your Telegram account to receive instant sunrise alerts when conditions score 70+. Never miss a spectacular morning.</p>
+    <div class="tg-modal-steps">
+      <div class="tg-step">
+        <span class="tg-step-num">1</span>
+        <div class="tg-step-text">
+          <p class="tg-step-title">Open our bot</p>
+          <p class="tg-step-desc">Search <strong>@seasidebeacon_bot</strong> on Telegram or tap the button below</p>
+        </div>
+      </div>
+      <div class="tg-step">
+        <span class="tg-step-num">2</span>
+        <div class="tg-step-text">
+          <p class="tg-step-title">Send the link code</p>
+          <p class="tg-step-desc">Your code: <code class="tg-code" id="tgLinkCode">loading...</code></p>
+        </div>
+      </div>
+      <div class="tg-step">
+        <span class="tg-step-num">3</span>
+        <div class="tg-step-text">
+          <p class="tg-step-title">Done!</p>
+          <p class="tg-step-desc">You'll receive alerts for 70+ score mornings directly on Telegram</p>
+        </div>
+      </div>
+    </div>
+    <a href="https://t.me/seasidebeacon_bot" target="_blank" class="tg-modal-btn">Open Telegram Bot</a>
+    <button type="button" class="tg-modal-later" onclick="closeTelegramModal()">I'll do this later</button>
+  </div>
+</div>
+
 <!-- ── PREMIUM LOGIN MODAL ────────────────────────── -->
 <div class="modal-overlay" id="premiumModal" aria-hidden="true">
   <div class="modal-panel premium-modal-panel">
@@ -446,6 +483,22 @@
           <span class="pm-detail-value" id="pmAccountRenews">—</span>
         </div>
       </div>
+
+      <!-- Subscription Management -->
+      <div class="pm-sub-manage" id="pmSubManage">
+        <div class="pm-cancel-window" id="pmCancelWindow">
+          <!-- Shows "X days left for free cancellation" -->
+        </div>
+        <div class="pm-plan-switch">
+          <p class="pm-manage-label">Change Plan</p>
+          <div class="pm-plan-options" id="pmPlanOptions">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <button type="button" class="pm-cancel-btn" id="pmCancelBtn" onclick="cancelSubscription()" style="display:none;">Cancel Subscription</button>
+        <p class="pm-manage-msg hidden" id="pmManageMsg"></p>
+      </div>
+
       <div class="pm-account-actions">
         <button type="button" class="pm-action-btn" id="pmManageTelegram">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -861,6 +914,20 @@
           <p class="exp-verdict-body" id="expWorthItText"></p>
         </div>
       </div>
+
+      <!-- ── 7-Day Forecast Calendar (Premium) ────── -->
+      <section class="seven-day-section hidden" id="sevenDaySection">
+        <div class="seven-day-header">
+          <h3 class="seven-day-title">7-Day Forecast</h3>
+          <p class="seven-day-sub">Plan your week ahead</p>
+        </div>
+        <div class="seven-day-grid" id="sevenDayGrid">
+          <!-- Populated by JS -->
+        </div>
+        <div class="seven-day-detail hidden" id="sevenDayDetail">
+          <!-- Expanded day detail -->
+        </div>
+      </section>
 
       <!-- ── DEEP ANALYSIS PANEL ─────────────────── -->
       <div class="analysis-panel hidden" id="deepPanel">
@@ -1381,13 +1448,55 @@
                 <span class="strip-premium-annual">or ₹399/yr — save 32%</span>
               </div>
               <button type="button" class="strip-premium-btn" id="stripGoPremium">
-                Go Premium
+                Login Premium
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
             </div>
           </div>
         </div>
 
+      </div>
+    </div>
+  </section>
+
+  <!-- Premium Email Settings (replaces sub strip for premium users) -->
+  <section class="sub-section hidden" id="premiumSettingsSection">
+    <div class="sub-content">
+      <h2 class="sub-headline" style="text-align:center;">Email & Alert Settings</h2>
+      <p class="sub-tagline" style="text-align:center;">Customize when you receive your sunrise forecasts</p>
+    </div>
+    <div class="sub-form-col" style="max-width:480px;margin:24px auto 0;">
+      <div class="sub-form-card">
+        <div class="pref-group">
+          <label class="form-label" for="prefMorningTime">Morning forecast time <span class="form-required">*</span></label>
+          <select id="prefMorningTime" class="form-select">
+            <option value="03:30">3:30 AM</option>
+            <option value="04:00" selected>4:00 AM (default)</option>
+            <option value="04:30">4:30 AM</option>
+            <option value="05:00">5:00 AM</option>
+          </select>
+        </div>
+        <div class="pref-group" style="margin-top:14px;">
+          <label class="form-label" for="prefEveningTime">Evening preview time <span class="form-required">*</span></label>
+          <select id="prefEveningTime" class="form-select">
+            <option value="19:30">7:30 PM</option>
+            <option value="20:00">8:00 PM</option>
+            <option value="20:30" selected>8:30 PM (default)</option>
+            <option value="21:00">9:00 PM</option>
+            <option value="21:30">9:30 PM</option>
+          </select>
+        </div>
+        <div class="pref-group" style="margin-top:14px;">
+          <label class="form-label" for="prefBeach">Preferred beach <span class="form-required">*</span></label>
+          <select id="prefBeach" class="form-select">
+            <option value="marina">Marina Beach</option>
+            <option value="elliot">Elliot's Beach (Besant Nagar)</option>
+            <option value="covelong">Covelong Beach</option>
+            <option value="thiruvanmiyur">Thiruvanmiyur Beach</option>
+          </select>
+        </div>
+        <button type="button" id="savePrefBtn" class="form-submit" onclick="saveEmailPreferences()">Save Preferences</button>
+        <p class="pref-msg hidden" id="prefMsg"></p>
       </div>
     </div>
   </section>

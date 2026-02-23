@@ -229,11 +229,54 @@ router.get('/auth/me', requirePremium, async (req, res) => {
       isActive: user.status === 'active',
       preferredBeach: user.preferredBeach,
       alertTime: user.alertTime,
+      eveningPreviewTime: user.eveningPreviewTime,
       telegramLinked: !!user.telegramChatId,
       currentPeriodEnd: user.currentPeriodEnd,
       subscribedAt: user.subscribedAt
     }
   });
+});
+
+
+// ═══════════════════════════════════════
+// POST /api/auth/preferences
+// Header: x-auth-token
+// Body: { alertTime, eveningPreviewTime, preferredBeach }
+// ═══════════════════════════════════════
+router.post('/auth/preferences', requirePremium, async (req, res) => {
+  try {
+    const user = req.premiumUser;
+    const { alertTime, eveningPreviewTime, preferredBeach } = req.body;
+
+    if (alertTime) {
+      // Validate HH:MM format
+      if (!/^\d{2}:\d{2}$/.test(alertTime)) {
+        return res.status(400).json({ success: false, message: 'Invalid time format. Use HH:MM.' });
+      }
+      user.alertTime = alertTime;
+    }
+
+    if (eveningPreviewTime) {
+      if (!/^\d{2}:\d{2}$/.test(eveningPreviewTime)) {
+        return res.status(400).json({ success: false, message: 'Invalid time format. Use HH:MM.' });
+      }
+      user.eveningPreviewTime = eveningPreviewTime;
+    }
+
+    if (preferredBeach) {
+      const validBeaches = ['marina', 'elliot', 'covelong', 'thiruvanmiyur'];
+      if (!validBeaches.includes(preferredBeach)) {
+        return res.status(400).json({ success: false, message: 'Invalid beach' });
+      }
+      user.preferredBeach = preferredBeach;
+    }
+
+    await user.save();
+    res.json({ success: true, message: 'Preferences saved!' });
+  } catch (err) {
+    console.error('Preferences error:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to save preferences' });
+  }
 });
 
 

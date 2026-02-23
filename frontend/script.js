@@ -1450,6 +1450,9 @@ function renderForecast() {
 
   // Auto-prompt subscribe modal after forecast loads
   maybePromptSubscribe();
+
+  // Load 7-day calendar for premium users
+  fetch7DayForecast(w.beach);
 }
 
 /**
@@ -2433,6 +2436,10 @@ async function fetchPremiumUser() {
     if (d.success) {
       premiumState.user = d.user;
       updatePremiumUI();
+      // Check if we should show Telegram prompt
+      if (d.user.isActive && !d.user.telegramLinked) {
+        checkTelegramPrompt();
+      }
       return d.user;
     }
   } catch (e) {
@@ -2654,12 +2661,128 @@ function populateAccountPanel() {
       ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Telegram Connected'
       : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Link Telegram';
   }
+
+  // Load subscription management info
+  loadSubscriptionInfo();
 }
 
 // Keep backward compat for paywall buttons
 function openPremiumLogin(onSuccessCallback) {
   window._premiumAuthCallback = onSuccessCallback || null;
   openPremiumModal('login');
+}
+
+// ═══ Telegram Link Modal ═══
+function openTelegramModal() {
+  const modal = document.getElementById('telegramModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+
+  // Generate link code from auth token
+  const token = localStorage.getItem('sb_auth_token');
+  const codeEl = document.getElementById('tgLinkCode');
+  if (token && codeEl) {
+    // Use first 8 chars of auth token as link code
+    codeEl.textContent = token.substring(0, 8).toUpperCase();
+  }
+}
+
+function closeTelegramModal() {
+  const modal = document.getElementById('telegramModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+  // Remember dismissal for this session
+  sessionStorage.setItem('sb_tg_dismissed', '1');
+}
+
+function checkTelegramPrompt() {
+  // Only show for premium users who haven't linked Telegram
+  if (!document.body.classList.contains('is-premium')) return;
+  if (sessionStorage.getItem('sb_tg_dismissed')) return;
+
+  const token = localStorage.getItem('sb_auth_token');
+  if (!token) return;
+
+  fetch(`${CONFIG.API_URL}/auth/me`, { headers: { 'x-auth-token': token } })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && data.user && !data.user.telegramLinked) {
+        // Delay the prompt so it doesn't interrupt immediately
+        setTimeout(() => openTelegramModal(), 3000);
+      }
+    })
+    .catch(() => {});
+}
+
+// ═══ Email Preferences ═══
+async function saveEmailPreferences() {
+  const token = localStorage.getItem('sb_auth_token');
+  if (!token) return;
+
+  const btn = document.getElementById('savePrefBtn');
+  const msg = document.getElementById('prefMsg');
+
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/auth/preferences`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+      body: JSON.stringify({
+        alertTime: document.getElementById('prefMorningTime').value,
+        eveningPreviewTime: document.getElementById('prefEveningTime').value,
+        preferredBeach: document.getElementById('prefBeach').value
+      })
+    });
+    const data = await res.json();
+
+    msg.classList.remove('hidden');
+    msg.textContent = data.message;
+    msg.style.color = data.success ? '#059669' : '#dc2626';
+  } catch (err) {
+    msg.classList.remove('hidden');
+    msg.textContent = 'Failed to save. Try again.';
+    msg.style.color = '#dc2626';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Preferences';
+    setTimeout(() => msg.classList.add('hidden'), 3000);
+  }
+}
+
+// Toggle subscription vs premium settings sections
+function togglePremiumSections() {
+  const subSection = document.querySelector('.sub-section:not(#premiumSettingsSection)');
+  const premSection = document.getElementById('premiumSettingsSection');
+
+  if (document.body.classList.contains('is-premium')) {
+    if (subSection) subSection.classList.add('hidden');
+    if (premSection) premSection.classList.remove('hidden');
+
+    // Load current preferences
+    const token = localStorage.getItem('sb_auth_token');
+    if (token) {
+      fetch(`${CONFIG.API_URL}/auth/me`, { headers: { 'x-auth-token': token } })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.user) {
+            const morning = document.getElementById('prefMorningTime');
+            const evening = document.getElementById('prefEveningTime');
+            const beach = document.getElementById('prefBeach');
+            if (morning && data.user.alertTime) morning.value = data.user.alertTime;
+            if (evening && data.user.eveningPreviewTime) evening.value = data.user.eveningPreviewTime;
+            if (beach && data.user.preferredBeach) beach.value = data.user.preferredBeach;
+          }
+        })
+        .catch(() => {});
+    }
+  } else {
+    if (subSection) subSection.classList.remove('hidden');
+    if (premSection) premSection.classList.add('hidden');
+  }
 }
 
 // ─── Premium UI Updates ───
@@ -2670,6 +2793,9 @@ function updatePremiumUI() {
 
   // Toggle body class for CSS-level premium gating
   document.body.classList.toggle('is-premium', !!isPremium);
+
+  // Toggle subscription vs premium settings sections
+  togglePremiumSections();
 
   // Update any "Go Premium" buttons on paywall
   document.querySelectorAll('[data-premium-action]').forEach(btn => {
@@ -2722,6 +2848,131 @@ async function cancelPremium() {
     }
   } catch {
     alert('Network error. Please try again.');
+  }
+}
+
+// ─── Subscription Management (Plan Switch, Refund Cancel) ───
+
+async function loadSubscriptionInfo() {
+  const token = localStorage.getItem('sb_auth_token');
+  if (!token) return;
+
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/payment/subscription-info`, {
+      headers: { 'x-auth-token': token }
+    });
+    const data = await res.json();
+    if (!data.success) return;
+
+    const info = data.subscription;
+    const cancelWindow = document.getElementById('pmCancelWindow');
+    const cancelBtn = document.getElementById('pmCancelBtn');
+    const planOptions = document.getElementById('pmPlanOptions');
+
+    // Cancel window countdown
+    if (info.canCancel && info.daysLeftForCancellation > 0) {
+      cancelWindow.innerHTML = `
+        <div class="pm-cancel-countdown">
+          <span class="pm-cancel-days">${info.daysLeftForCancellation}</span>
+          <span class="pm-cancel-text">day${info.daysLeftForCancellation !== 1 ? 's' : ''} left for free cancellation</span>
+        </div>
+      `;
+      cancelBtn.style.display = 'block';
+    } else {
+      cancelWindow.innerHTML = '';
+      cancelBtn.style.display = 'none';
+    }
+
+    // Plan switching
+    const otherPlan = info.plan === 'monthly' ? 'annual' : 'monthly';
+    const otherDisplay = otherPlan === 'annual' ? '₹399/year (save 32%)' : '₹49/month';
+    const switchNote = info.plan === 'annual'
+      ? 'Will switch at the end of your current annual period'
+      : 'Will take effect from your next billing cycle';
+
+    if (info.canSwitchPlan) {
+      planOptions.innerHTML = `
+        <div class="pm-switch-option">
+          <div class="pm-switch-info">
+            <span class="pm-switch-plan">${otherDisplay}</span>
+            <span class="pm-switch-note">${switchNote}</span>
+          </div>
+          <button type="button" class="pm-switch-btn" onclick="switchPlan('${otherPlan}')">Switch</button>
+        </div>
+      `;
+    }
+
+    // Period end
+    if (info.currentPeriodEnd) {
+      const endDate = new Date(info.currentPeriodEnd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const periodEl = document.getElementById('pmAccountRenews');
+      if (periodEl) periodEl.textContent = endDate;
+    }
+
+  } catch (err) {
+    console.error('Subscription info error:', err);
+  }
+}
+
+async function switchPlan(newPlan) {
+  const token = localStorage.getItem('sb_auth_token');
+  if (!token) return;
+
+  const msgEl = document.getElementById('pmManageMsg');
+
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/payment/switch-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+      body: JSON.stringify({ newPlan })
+    });
+    const data = await res.json();
+
+    msgEl.classList.remove('hidden');
+    msgEl.textContent = data.message;
+    msgEl.style.color = data.success ? '#059669' : '#dc2626';
+
+    if (data.success) {
+      setTimeout(() => loadSubscriptionInfo(), 1500);
+    }
+  } catch (err) {
+    msgEl.classList.remove('hidden');
+    msgEl.textContent = 'Something went wrong. Please try again.';
+    msgEl.style.color = '#dc2626';
+  }
+}
+
+async function cancelSubscription() {
+  if (!confirm('Are you sure? This will cancel your premium subscription and process a refund.')) return;
+
+  const token = localStorage.getItem('sb_auth_token');
+  if (!token) return;
+
+  const msgEl = document.getElementById('pmManageMsg');
+
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/payment/cancel-with-refund`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': token }
+    });
+    const data = await res.json();
+
+    msgEl.classList.remove('hidden');
+    msgEl.textContent = data.message;
+    msgEl.style.color = data.success ? '#059669' : '#dc2626';
+
+    if (data.success) {
+      setTimeout(() => {
+        localStorage.removeItem('sb_premium');
+        localStorage.removeItem('sb_auth_token');
+        document.body.classList.remove('is-premium');
+        location.reload();
+      }, 2000);
+    }
+  } catch (err) {
+    msgEl.classList.remove('hidden');
+    msgEl.textContent = 'Cancellation failed. Please try again.';
+    msgEl.style.color = '#dc2626';
   }
 }
 
@@ -2838,4 +3089,169 @@ function initPremium() {
   document.getElementById('stripGoPremium')?.addEventListener('click', () => {
     openPremiumModal('pricing');
   });
+}
+
+// ═══ 7-Day Forecast Calendar ═══
+
+async function fetch7DayForecast(beach) {
+  const section = document.getElementById('sevenDaySection');
+  if (!section) return;
+
+  if (!document.body.classList.contains('is-premium')) {
+    section.classList.add('hidden');
+    return;
+  }
+
+  section.classList.remove('hidden');
+  const grid = document.getElementById('sevenDayGrid');
+  grid.innerHTML = '<p style="text-align:center;color:var(--t3);font-size:13px;grid-column:1/-1;">Loading 7-day forecast...</p>';
+
+  try {
+    const token = localStorage.getItem('sb_auth_token');
+    const res = await fetch(`/api/forecast/7day/${beach}`, {
+      headers: token ? { 'x-auth-token': token } : {}
+    });
+    const data = await res.json();
+
+    if (data.success && data.data) {
+      render7DayGrid(data.data);
+    } else {
+      grid.innerHTML = '<p style="text-align:center;color:var(--t3);font-size:13px;grid-column:1/-1;">Forecast unavailable</p>';
+    }
+  } catch (err) {
+    console.error('7-day fetch error:', err);
+    grid.innerHTML = '<p style="text-align:center;color:var(--t3);font-size:13px;grid-column:1/-1;">Could not load forecast</p>';
+  }
+}
+
+function getScoreTone(score) {
+  if (score >= 85) return 'tone-great';
+  if (score >= 70) return 'tone-good';
+  if (score >= 55) return 'tone-fair';
+  if (score >= 40) return 'tone-meh';
+  return 'tone-poor';
+}
+
+function getScoreColor(score) {
+  if (score >= 85) return '#059669';
+  if (score >= 70) return '#0284c7';
+  if (score >= 55) return '#d97706';
+  if (score >= 40) return '#ea580c';
+  return '#dc2626';
+}
+
+function render7DayGrid(days) {
+  const grid = document.getElementById('sevenDayGrid');
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  grid.innerHTML = days.map((day, i) => {
+    const date = new Date(day.date);
+    const dayName = i === 0 ? 'Today' : date.toLocaleDateString('en-IN', { weekday: 'short' });
+    const dateNum = date.getDate();
+    const score = day.score || 0;
+    const verdict = day.verdict || '—';
+    const tone = getScoreTone(score);
+    const isToday = i === 0;
+
+    return `
+      <div class="sd-day ${isToday ? 'today' : ''}" data-day-index="${i}" onclick="show7DayDetail(${i})">
+        <div class="sd-day-name">${dayName}</div>
+        <div class="sd-day-date">${dateNum}</div>
+        <div class="sd-day-score ${tone}">${score}</div>
+        <div class="sd-day-verdict">${verdict}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Store days data for detail view
+  window._7dayData = days;
+}
+
+function show7DayDetail(index) {
+  const days = window._7dayData;
+  if (!days || !days[index]) return;
+
+  const day = days[index];
+  const detail = document.getElementById('sevenDayDetail');
+  const date = new Date(day.date);
+  const dateStr = date.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  const score = day.score || 0;
+  const color = getScoreColor(score);
+  const verdict = day.verdict || '—';
+  const f = day.forecast || {};
+
+  // Highlight active day in grid
+  document.querySelectorAll('.sd-day').forEach(el => el.classList.remove('active'));
+  const activeDay = document.querySelector(`.sd-day[data-day-index="${index}"]`);
+  if (activeDay) activeDay.classList.add('active');
+
+  // Cloud badge
+  const cc = f.cloudCover ?? 0;
+  const cloudLabel = cc >= 30 && cc <= 60 ? 'Optimal' : cc < 30 ? 'Too Clear' : 'Overcast';
+  const cloudColor = cc >= 30 && cc <= 75 ? '#059669' : cc < 30 ? '#d97706' : '#dc2626';
+  const cloudBg = cc >= 30 && cc <= 75 ? 'rgba(5,150,105,0.15)' : cc < 30 ? 'rgba(217,119,6,0.15)' : 'rgba(220,38,38,0.15)';
+
+  // Humidity badge
+  const hm = f.humidity ?? 0;
+  const humLabel = hm <= 55 ? 'Very Good' : hm <= 70 ? 'Moderate' : 'High';
+  const humColor = hm <= 55 ? '#059669' : hm <= 70 ? '#d97706' : '#dc2626';
+  const humBg = hm <= 55 ? 'rgba(5,150,105,0.15)' : hm <= 70 ? 'rgba(217,119,6,0.15)' : 'rgba(220,38,38,0.15)';
+
+  // Visibility badge
+  const vis = f.visibility ?? 0;
+  const visLabel = vis >= 12 ? 'Excellent' : vis >= 8 ? 'Good' : vis >= 5 ? 'Fair' : 'Poor';
+  const visColor = vis >= 8 ? '#059669' : vis >= 5 ? '#d97706' : '#dc2626';
+  const visBg = vis >= 8 ? 'rgba(5,150,105,0.15)' : vis >= 5 ? 'rgba(217,119,6,0.15)' : 'rgba(220,38,38,0.15)';
+
+  // Wind info
+  const wind = f.windSpeed ?? 0;
+
+  // Sunrise time
+  const sunrise = day.sunrise ? new Date(day.sunrise).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }) : '';
+
+  detail.innerHTML = `
+    <div class="sd-detail-header">
+      <div class="sd-detail-title">${dateStr}</div>
+      <button class="sd-detail-close" onclick="close7DayDetail()">✕</button>
+    </div>
+    <div class="sd-detail-score-row">
+      <div class="sd-detail-score-big" style="color:${color}">${score}</div>
+      <div>
+        <div class="sd-detail-verdict">${verdict}</div>
+        ${sunrise ? `<div class="sd-detail-sunrise-time">☀ Sunrise at ${sunrise}</div>` : ''}
+      </div>
+    </div>
+    <div class="sd-detail-conditions">
+      <div class="sd-cond-card">
+        <div class="sd-cond-label">☁️ Cloud Cover</div>
+        <div class="sd-cond-value">${cc}%</div>
+        <span class="sd-cond-badge" style="color:${cloudColor};background:${cloudBg}">${cloudLabel}</span>
+      </div>
+      <div class="sd-cond-card">
+        <div class="sd-cond-label">💧 Humidity</div>
+        <div class="sd-cond-value">${hm}%</div>
+        <span class="sd-cond-badge" style="color:${humColor};background:${humBg}">${humLabel}</span>
+      </div>
+      <div class="sd-cond-card">
+        <div class="sd-cond-label">👁️ Visibility</div>
+        <div class="sd-cond-value">${vis} km</div>
+        <span class="sd-cond-badge" style="color:${visColor};background:${visBg}">${visLabel}</span>
+      </div>
+      <div class="sd-cond-card">
+        <div class="sd-cond-label">💨 Wind</div>
+        <div class="sd-cond-value">${wind} km/h</div>
+        <span class="sd-cond-badge" style="color:var(--t2);background:rgba(255,255,255,0.06)">${wind < 15 ? 'Calm' : wind < 25 ? 'Moderate' : 'Strong'}</span>
+      </div>
+    </div>
+  `;
+
+  detail.classList.remove('hidden');
+  detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function close7DayDetail() {
+  const detail = document.getElementById('sevenDayDetail');
+  if (detail) detail.classList.add('hidden');
+  document.querySelectorAll('.sd-day').forEach(el => el.classList.remove('active'));
 }

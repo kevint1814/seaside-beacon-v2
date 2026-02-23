@@ -111,17 +111,33 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
     // ── Premium Users ──
     const premiumUsers = await PremiumUser.find({})
       .sort({ subscribedAt: -1 })
-      .select('email plan status currentPeriodEnd preferredBeach telegramChatId lastLogin subscribedAt')
+      .select('email plan status currentPeriodEnd preferredBeach telegramChatId lastLogin subscribedAt alertTime eveningPreviewTime cancelledAt lastPaymentFailed')
       .lean();
 
     const activePremium = premiumUsers.filter(u => u.status === 'active');
+    const cancelledCount = await PremiumUser.countDocuments({ status: 'cancelled' });
+    const telegramLinked = await PremiumUser.countDocuments({ telegramChatId: { $exists: true, $ne: null } });
+
+    // Calculate average tenure for active users (in days)
+    let avgTenure = 0;
+    if (activePremium.length > 0) {
+      const tenures = activePremium.map(u => {
+        const subDate = new Date(u.subscribedAt).getTime();
+        return (Date.now() - subDate) / (1000 * 60 * 60 * 24);
+      });
+      avgTenure = Math.round(tenures.reduce((a, b) => a + b, 0) / tenures.length);
+    }
+
     const premiumStats = {
       total: activePremium.length,
       list: premiumUsers,
       revenue: {
         monthly: activePremium.filter(u => u.plan === 'monthly').length * 49,
         annual: activePremium.filter(u => u.plan === 'annual').length * 399
-      }
+      },
+      cancellations: cancelledCount,
+      avgTenure: avgTenure,
+      telegramLinked: telegramLinked
     };
 
     // ── Recent Feedback ──
