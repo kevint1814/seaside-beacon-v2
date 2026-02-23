@@ -18,22 +18,33 @@ const state = {
 // BOOT
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  initIntro();
-  initSunriseCanvas();
-  initScrollProgress();
-  initNav();
-  initBeachSelector();
-  initForecast();
-  initTabs();
-  initDeepPanel();
-  initModals();
-  initSubscribeForms();
-  initCommunity();
-  initShare();
-  initScrollReveal();
-  initMetrics();
-  initCinemaMode();
-  initPremium();
+  const inits = [
+    initIntro, initSunriseCanvas, initScrollProgress, initNav,
+    initBeachSelector, initForecast, initTabs, initDeepPanel,
+    initModals, initSubscribeForms, initCommunity, initShare,
+    initScrollReveal, initMetrics, initCinemaMode, initPremium
+  ];
+  inits.forEach(fn => {
+    try { fn(); } catch (e) { console.error('Init error in ' + fn.name + ':', e); }
+  });
+});
+
+// ─── Bulletproof modal navigation via event delegation ───
+// This runs independently of initPremium — always works.
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('[id]');
+  if (!btn) return;
+  var id = btn.id;
+  // Modal state navigation
+  if (id === 'pmGoToRegister') { showPmState('pmRegister'); }
+  else if (id === 'pmGoToLogin' || id === 'pmPricingGoToLogin' || id === 'pmForgotBackToLogin') { showPmState('pmLogin'); }
+  else if (id === 'pmGoToForgot') { showPmState('pmForgotPassword'); }
+  else if (id === 'pmGoToPricing') { showPmState('pmPricing'); }
+  // Google sign-in
+  else if (id === 'pmGoogleSignIn' || id === 'pmGoogleSignUp') {
+    if (typeof triggerGoogleSignIn === 'function') triggerGoogleSignIn();
+    else if (typeof showToast === 'function') showToast('Google Sign-In is loading...');
+  }
 });
 
 // ═════════════════════════════════════════════════════
@@ -3244,55 +3255,15 @@ function initPremium() {
   // ═══════════════════════════════════════════
   // 3. GOOGLE SIGN-IN (async, can fail safely)
   // ═══════════════════════════════════════════
-  let googleReady = false;
-
-  function triggerGoogleSignIn() {
-    if (!window.GOOGLE_CLIENT_ID) {
-      showToast('Google Sign-In is not configured yet. Use email and password.');
-      return;
-    }
-    if (googleReady && typeof google !== 'undefined' && google.accounts) {
-      google.accounts.id.prompt(function(notification) {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          showToast('Google popup was blocked. Allow popups or use email/password.');
-        }
-      });
-    } else {
-      showToast('Google Sign-In is loading. Try again in a moment.');
-    }
-  }
-  document.getElementById('pmGoogleSignIn')?.addEventListener('click', triggerGoogleSignIn);
-  document.getElementById('pmGoogleSignUp')?.addEventListener('click', triggerGoogleSignIn);
-
-  function initGoogleSignIn() {
-    try {
-      if (typeof google === 'undefined' || !google.accounts) {
-        if (!window._gsiRetries) window._gsiRetries = 0;
-        if (window._gsiRetries++ < 10) setTimeout(initGoogleSignIn, 500);
-        return;
-      }
-      var clientId = window.GOOGLE_CLIENT_ID;
-      if (!clientId) return;
-      google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleGoogleCredentialResponse,
-        auto_select: false
-      });
-      googleReady = true;
-      console.log('✅ Google Sign-In initialized');
-    } catch (err) {
-      console.warn('Google Sign-In init error:', err);
-    }
-  }
-
-  // Fetch Google client ID from backend
+  // triggerGoogleSignIn is defined at module level (below initPremium)
+  // so event delegation can call it too.
   try {
     fetch(CONFIG.API_URL + '/auth/google-client-id')
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d.clientId) {
           window.GOOGLE_CLIENT_ID = d.clientId;
-          initGoogleSignIn();
+          _initGSI();
         }
       })
       .catch(function(err) { console.warn('Google client ID fetch failed:', err); });
@@ -3305,6 +3276,46 @@ function initPremium() {
   // ═══════════════════════════════════════════
   checkAuthRedirect();
   fetchPlans();
+}
+
+// ═══ Google Sign-In (module-level so event delegation can access) ═══
+
+window._googleReady = false;
+
+function triggerGoogleSignIn() {
+  if (!window.GOOGLE_CLIENT_ID) {
+    showToast('Google Sign-In is not configured yet. Use email and password.');
+    return;
+  }
+  if (window._googleReady && typeof google !== 'undefined' && google.accounts) {
+    google.accounts.id.prompt(function(notification) {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        showToast('Google popup was blocked. Allow popups or use email/password.');
+      }
+    });
+  } else {
+    showToast('Google Sign-In is loading. Try again in a moment.');
+  }
+}
+
+function _initGSI() {
+  try {
+    if (typeof google === 'undefined' || !google.accounts) {
+      if (!window._gsiRetries) window._gsiRetries = 0;
+      if (window._gsiRetries++ < 10) setTimeout(_initGSI, 500);
+      return;
+    }
+    if (!window.GOOGLE_CLIENT_ID) return;
+    google.accounts.id.initialize({
+      client_id: window.GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredentialResponse,
+      auto_select: false
+    });
+    window._googleReady = true;
+    console.log('✅ Google Sign-In initialized');
+  } catch (err) {
+    console.warn('Google Sign-In init error:', err);
+  }
 }
 
 // ═══ 7-Day Forecast Calendar ═══
