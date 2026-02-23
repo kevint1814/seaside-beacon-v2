@@ -93,7 +93,7 @@ app.get('/', (req, res) => {
       predict: 'GET /api/predict/:beach',
       subscribe: 'POST /api/subscribe',
       unsubscribe: 'POST /api/unsubscribe',
-      auth: 'POST /api/auth/magic-link',
+      auth: 'POST /api/auth/login | POST /api/auth/register | POST /api/auth/google',
       premium: 'POST /api/payment/create-subscription'
     }
   });
@@ -130,7 +130,7 @@ app.use('/api', subscribeRoutes);
 app.use('/api', predictRoutes);
 app.use('/api', communityRoutes);
 app.use('/api', deviceRoutes);   // POST /api/register-device + POST /api/device-settings
-app.use('/api', authRoutes);     // POST /api/auth/magic-link + GET /api/auth/verify + GET /api/auth/me
+app.use('/api', authRoutes);     // POST /api/auth/login + register + google + GET /api/auth/me
 app.use('/api', paymentRoutes);  // POST /api/payment/create-subscription + webhook + cancel
 app.use('/api', telegramRoutes); // POST /api/telegram/webhook
 app.use('/api', adminRoutes);    // POST /api/admin/login + GET /api/admin/metrics
@@ -189,7 +189,7 @@ async function startServer() {
       console.log(`🖥️  Admin: ${process.env.ADMIN_PASS ? '/admin (password set)' : '/admin (default pass — change ADMIN_PASS!)'}`);
       console.log(`💳 Razorpay: ${process.env.RAZORPAY_KEY_ID ? 'Configured ✓' : 'Not configured'}`);
       console.log(`📱 Telegram: ${process.env.TELEGRAM_BOT_TOKEN ? 'Bot configured ✓' : 'Not configured (set TELEGRAM_BOT_TOKEN)'}`);
-      console.log(`🔐 Auth: Magic link (15min TTL → 30d session)`);
+      console.log(`🔐 Auth: Email/Password + Google OAuth (30d session)`);
       console.log('═══════════════════════════════════════');
     });
 

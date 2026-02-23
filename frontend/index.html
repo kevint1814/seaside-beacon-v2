@@ -426,24 +426,35 @@
         </div>
       </div>
       <h2 class="pm-title">Sign in to your account</h2>
-      <p class="pm-sub">Enter your email — we'll send a magic link. No password needed.</p>
+      <p class="pm-sub">Enter your email and password to sign in.</p>
       <form id="premiumLoginForm" autocomplete="off">
         <div class="form-row">
-          <label class="form-label">Email</label>
+          <label class="form-label" for="premiumEmailInput">Email</label>
           <input type="email" id="premiumEmailInput" class="form-input" placeholder="you@example.com" required>
         </div>
+        <div class="form-row">
+          <label class="form-label" for="premiumPasswordInput">Password</label>
+          <input type="password" id="premiumPasswordInput" class="form-input" placeholder="Your password" required minlength="6">
+        </div>
         <button type="submit" class="btn-subscribe pm-btn" id="premiumLoginBtn">
-          <span id="premiumLoginText">Send Magic Link</span>
+          <span id="premiumLoginText">Sign In</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
         <div class="form-message" id="premiumLoginMessage"></div>
       </form>
-      <p class="pm-footer-note">New here? <button type="button" class="pm-link" id="pmGoToPricing">See what Premium includes</button></p>
+      <div class="pm-divider"><span>or</span></div>
+      <div id="pmGoogleBtnContainer" class="pm-google-btn-wrap">
+        <button type="button" class="pm-google-btn" id="pmGoogleSignIn">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 010-9.18l-7.98-6.19a24.08 24.08 0 000 21.56l7.98-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+      </div>
+      <p class="pm-footer-note">New here? <button type="button" class="pm-link" id="pmGoToRegister">Create an account</button> · <button type="button" class="pm-link" id="pmGoToPricing">See what Premium includes</button></p>
     </div>
 
-    <!-- State: Check your inbox -->
-    <div class="pm-state hidden" id="pmCheckInbox">
-      <div class="pm-brand-header" style="margin-bottom:10px;padding-bottom:12px;">
+    <!-- State: Register form -->
+    <div class="pm-state hidden" id="pmRegister">
+      <div class="pm-brand-header">
         <div class="pm-brand-logo">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         </div>
@@ -452,12 +463,35 @@
           <span class="pm-brand-tier">Premium</span>
         </div>
       </div>
-      <div class="pm-icon pm-icon-sent" style="margin-bottom:8px;">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--copper)" stroke-width="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/></svg>
+      <h2 class="pm-title">Create your account</h2>
+      <p class="pm-sub">Sign up to access premium features.</p>
+      <form id="premiumRegisterForm" autocomplete="off">
+        <div class="form-row">
+          <label class="form-label" for="regNameInput">Name <span style="color:var(--t3);font-weight:400;">(optional)</span></label>
+          <input type="text" id="regNameInput" class="form-input" placeholder="Your name">
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="regEmailInput">Email</label>
+          <input type="email" id="regEmailInput" class="form-input" placeholder="you@example.com" required>
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="regPasswordInput">Password</label>
+          <input type="password" id="regPasswordInput" class="form-input" placeholder="At least 6 characters" required minlength="6">
+        </div>
+        <button type="submit" class="btn-subscribe pm-btn" id="premiumRegisterBtn">
+          <span id="premiumRegisterText">Create Account</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <div class="form-message" id="premiumRegisterMessage"></div>
+      </form>
+      <div class="pm-divider"><span>or</span></div>
+      <div class="pm-google-btn-wrap">
+        <button type="button" class="pm-google-btn" id="pmGoogleSignUp">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 010-9.18l-7.98-6.19a24.08 24.08 0 000 21.56l7.98-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
       </div>
-      <h2 class="pm-title">Check your inbox</h2>
-      <p class="pm-sub">We sent a sign-in link to <strong id="pmSentEmail">—</strong>. Click it to sign in — it expires in 15 minutes.</p>
-      <p class="pm-sub pm-sub-subtle">Didn't get it? Check your spam folder, or <button type="button" class="pm-link" id="pmResend">resend the link</button>.</p>
+      <p class="pm-footer-note">Already have an account? <button type="button" class="pm-link" id="pmGoToLogin">Sign in</button></p>
     </div>
 
     <!-- State: Account info (when logged in) -->
@@ -586,6 +620,15 @@
   <div class="intro-mark">
     <div class="intro-sun"></div>
     <span class="intro-name">Seaside Beacon</span>
+  </div>
+</div>
+
+<!-- ── Premium Welcome Splash (shown on premium user sign-in) ── -->
+<div class="intro-veil premium-splash" id="premiumSplash" style="display:none;">
+  <div class="intro-mark">
+    <div class="intro-sun"></div>
+    <span class="intro-name">Seaside Beacon</span>
+    <span class="premium-splash-badge">★ Premium</span>
   </div>
 </div>
 
@@ -1575,6 +1618,7 @@
 </div><!-- /page -->
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="script.js" defer></script>
 </body>
 </html>

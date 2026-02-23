@@ -41,12 +41,16 @@ const premiumUserSchema = new mongoose.Schema({
   },
 
   // ─── Authentication ───
-  magicLinkToken: {
+  password: {
     type: String,
-    default: null
+    default: null  // null for Google-only users
   },
-  magicLinkExpiry: {
-    type: Date,
+  googleId: {
+    type: String,
+    default: null  // null for email/password users
+  },
+  name: {
+    type: String,
     default: null
   },
   authToken: {
@@ -114,7 +118,7 @@ const premiumUserSchema = new mongoose.Schema({
 // ─── Indexes (email index already created by unique:true) ───
 premiumUserSchema.index({ status: 1 });
 premiumUserSchema.index({ razorpaySubscriptionId: 1 });
-premiumUserSchema.index({ magicLinkToken: 1 });
+premiumUserSchema.index({ googleId: 1 });
 premiumUserSchema.index({ authToken: 1 });
 premiumUserSchema.index({ telegramChatId: 1 });
 
@@ -128,8 +132,12 @@ premiumUserSchema.methods.hasValidAuth = function () {
   return this.authToken && this.authTokenExpiry && this.authTokenExpiry > new Date();
 };
 
-premiumUserSchema.methods.hasValidMagicLink = function () {
-  return this.magicLinkToken && this.magicLinkExpiry && this.magicLinkExpiry > new Date();
+premiumUserSchema.methods.hasPassword = function () {
+  return !!this.password;
+};
+
+premiumUserSchema.methods.isGoogleUser = function () {
+  return !!this.googleId;
 };
 
 // ─── Statics ───

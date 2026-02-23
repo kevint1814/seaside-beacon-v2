@@ -2401,22 +2401,9 @@ function clearPremiumAuth() {
   localStorage.removeItem('sb_auth_token');
 }
 
-// Check URL for auth token (from magic link redirect)
+// Check for existing auth session on page load
 function checkAuthRedirect() {
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('authToken');
-  if (token) {
-    savePremiumAuth(token);
-    // Clean URL without reload
-    const clean = window.location.pathname + window.location.hash;
-    window.history.replaceState({}, '', clean);
-    // Fetch user info + show welcome toast
-    fetchPremiumUser().then(user => {
-      if (user) {
-        showToast(user.isActive ? 'Welcome back! Premium is active.' : 'Signed in successfully.');
-      }
-    });
-  } else if (premiumState.authToken) {
+  if (premiumState.authToken) {
     // Existing session — validate it
     fetchPremiumUser();
   }
@@ -2448,13 +2435,71 @@ async function fetchPremiumUser() {
   return null;
 }
 
-async function requestMagicLink(email) {
-  const res = await fetch(`${CONFIG.API_URL}/auth/magic-link`, {
+async function loginWithPassword(email, password) {
+  const res = await fetch(`${CONFIG.API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
+    body: JSON.stringify({ email, password })
   });
   return res.json();
+}
+
+async function registerAccount(email, password, name) {
+  const res = await fetch(`${CONFIG.API_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, name: name || undefined })
+  });
+  return res.json();
+}
+
+async function loginWithGoogle(credential) {
+  const res = await fetch(`${CONFIG.API_URL}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential })
+  });
+  return res.json();
+}
+
+// Google Sign-In callback (called by GSI library)
+function handleGoogleCredentialResponse(response) {
+  if (!response.credential) return;
+  loginWithGoogle(response.credential).then(d => {
+    if (d.success && d.authToken) {
+      savePremiumAuth(d.authToken);
+      premiumState.user = d.user;
+      updatePremiumUI();
+      closePremiumModal();
+      showPremiumSplash(d.user);
+      if (window._premiumAuthCallback) {
+        window._premiumAuthCallback();
+        window._premiumAuthCallback = null;
+      }
+    } else {
+      showMsg('premiumLoginMessage', d.message || 'Google sign-in failed.', false);
+    }
+  }).catch(() => {
+    showMsg('premiumLoginMessage', 'Network error. Please try again.', false);
+  });
+}
+
+// Premium splash screen on sign-in
+function showPremiumSplash(user) {
+  if (!user || !user.isActive) return;
+  const splash = document.getElementById('premiumSplash');
+  if (!splash) return;
+  splash.style.display = '';
+  // Trigger animation
+  requestAnimationFrame(() => splash.classList.add('active'));
+  // Fade out after 2s
+  setTimeout(() => {
+    splash.classList.add('fade-out');
+    setTimeout(() => {
+      splash.style.display = 'none';
+      splash.classList.remove('active', 'fade-out');
+    }, 900);
+  }, 2000);
 }
 
 async function logoutPremium() {
@@ -2608,10 +2653,11 @@ function closePremiumModal() {
   if (!modal) return;
   modal.classList.remove('active');
   modal.setAttribute('aria-hidden', 'true');
-  // Reset login form
-  const form = document.getElementById('premiumLoginForm');
-  if (form) form.reset();
+  // Reset forms
+  document.getElementById('premiumLoginForm')?.reset();
+  document.getElementById('premiumRegisterForm')?.reset();
   showMsg('premiumLoginMessage', '', true);
+  showMsg('premiumRegisterMessage', '', true);
 }
 
 function showPmState(stateId) {
@@ -3007,54 +3053,133 @@ function initPremium() {
   premiumModal?.addEventListener('click', e => { if (e.target === premiumModal) closePremiumModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && premiumModal?.classList.contains('active')) closePremiumModal(); });
 
-  // ─── Premium login form ───
+  // ─── Login form ───
   document.getElementById('premiumLoginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('premiumEmailInput')?.value.trim();
-    if (!email) {
-      showMsg('premiumLoginMessage', 'Please enter your email.', false);
+    const password = document.getElementById('premiumPasswordInput')?.value;
+    if (!email || !password) {
+      showMsg('premiumLoginMessage', 'Please enter email and password.', false);
       return;
     }
 
     const btn = document.getElementById('premiumLoginBtn');
     const btnText = document.getElementById('premiumLoginText');
     if (btn) btn.disabled = true;
-    if (btnText) btnText.textContent = 'Sending...';
+    if (btnText) btnText.textContent = 'Signing in...';
 
     try {
-      const d = await requestMagicLink(email);
-      if (d.success) {
-        // Show "check inbox" state
-        document.getElementById('pmSentEmail').textContent = email;
-        showPmState('pmCheckInbox');
-        // Store email for resend
-        window._pmLastEmail = email;
+      const d = await loginWithPassword(email, password);
+      if (d.success && d.authToken) {
+        savePremiumAuth(d.authToken);
+        premiumState.user = d.user;
+        updatePremiumUI();
+        closePremiumModal();
+        showPremiumSplash(d.user);
+        showToast(d.user.isActive ? 'Welcome back! Premium is active.' : 'Signed in successfully.');
+        if (window._premiumAuthCallback) {
+          window._premiumAuthCallback();
+          window._premiumAuthCallback = null;
+        }
       } else {
-        showMsg('premiumLoginMessage', d.message || 'Something went wrong.', false);
+        showMsg('premiumLoginMessage', d.message || 'Sign-in failed.', false);
+        // If Google-only account, hint them
+        if (d.googleOnly) {
+          showMsg('premiumLoginMessage', 'This account uses Google Sign-In. Use the Google button below.', false);
+        }
       }
     } catch {
       showMsg('premiumLoginMessage', 'Network error. Please try again.', false);
     } finally {
       if (btn) btn.disabled = false;
-      if (btnText) btnText.textContent = 'Send Magic Link';
+      if (btnText) btnText.textContent = 'Sign In';
     }
   });
 
-  // Resend magic link
-  document.getElementById('pmResend')?.addEventListener('click', async () => {
-    const email = window._pmLastEmail;
-    if (!email) return;
+  // ─── Register form ───
+  document.getElementById('premiumRegisterForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('regNameInput')?.value.trim();
+    const email = document.getElementById('regEmailInput')?.value.trim();
+    const password = document.getElementById('regPasswordInput')?.value;
+    if (!email || !password) {
+      showMsg('premiumRegisterMessage', 'Please enter email and password.', false);
+      return;
+    }
+    if (password.length < 6) {
+      showMsg('premiumRegisterMessage', 'Password must be at least 6 characters.', false);
+      return;
+    }
+
+    const btn = document.getElementById('premiumRegisterBtn');
+    const btnText = document.getElementById('premiumRegisterText');
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.textContent = 'Creating...';
+
     try {
-      const d = await requestMagicLink(email);
-      if (d.success) {
-        showPmState('pmCheckInbox');
+      const d = await registerAccount(email, password, name);
+      if (d.success && d.authToken) {
+        savePremiumAuth(d.authToken);
+        premiumState.user = d.user;
+        updatePremiumUI();
+        closePremiumModal();
+        showToast('Account created! Welcome to Seaside Beacon.');
+        if (window._premiumAuthCallback) {
+          window._premiumAuthCallback();
+          window._premiumAuthCallback = null;
+        }
+      } else {
+        showMsg('premiumRegisterMessage', d.message || 'Registration failed.', false);
       }
-    } catch { /* silent */ }
+    } catch {
+      showMsg('premiumRegisterMessage', 'Network error. Please try again.', false);
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = 'Create Account';
+    }
   });
 
-  // Navigate between login / pricing states
+  // ─── Google Sign-In buttons ───
+  function triggerGoogleSignIn() {
+    if (typeof google !== 'undefined' && google.accounts) {
+      google.accounts.id.prompt();
+    } else {
+      showMsg('premiumLoginMessage', 'Google Sign-In is loading. Try again in a moment.', false);
+    }
+  }
+  document.getElementById('pmGoogleSignIn')?.addEventListener('click', triggerGoogleSignIn);
+  document.getElementById('pmGoogleSignUp')?.addEventListener('click', triggerGoogleSignIn);
+
+  // Initialize Google Identity Services
+  function initGoogleSignIn() {
+    if (typeof google === 'undefined' || !google.accounts) {
+      // GSI not loaded yet — retry
+      setTimeout(initGoogleSignIn, 500);
+      return;
+    }
+    const clientId = window.GOOGLE_CLIENT_ID;
+    if (!clientId) return; // Google sign-in not configured
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleGoogleCredentialResponse,
+      auto_select: false
+    });
+  }
+  // Fetch Google client ID from backend plans endpoint (it's public info)
+  fetch(`${CONFIG.API_URL}/auth/google-client-id`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.clientId) {
+        window.GOOGLE_CLIENT_ID = d.clientId;
+        initGoogleSignIn();
+      }
+    })
+    .catch(() => {}); // silent — Google sign-in won't work without client ID
+
+  // Navigate between login / register / pricing states
   document.getElementById('pmGoToPricing')?.addEventListener('click', () => showPmState('pmPricing'));
   document.getElementById('pmGoToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
+  document.getElementById('pmGoToRegister')?.addEventListener('click', () => showPmState('pmRegister'));
 
   // Plan cards → start checkout
   document.getElementById('pmPlanMonthly')?.addEventListener('click', () => {
