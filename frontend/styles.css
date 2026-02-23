@@ -1439,42 +1439,22 @@ body.is-premium .nav-premium-badge { display:inline-block; }
   font-size:12px; font-family:inherit; text-decoration:underline; text-underline-offset:2px;
 }
 
-/* Divider */
-.pm-divider {
-  display:flex; align-items:center; gap:14px; margin:20px 0 16px;
+/* Google Sign-In — transparent pill directly under submit */
+.pm-google-pill {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; margin-top:10px; padding:11px 20px;
+  background:transparent; border:1px solid rgba(255,255,255,0.10);
+  border-radius:50px; cursor:pointer;
+  color:var(--t2,rgba(232,224,212,0.6)); font-family:inherit;
+  font-size:12.5px; font-weight:500; letter-spacing:0.2px;
+  transition:all 0.25s ease;
 }
-.pm-divider::before, .pm-divider::after {
-  content:''; flex:1; height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);
-}
-.pm-divider span {
-  font-size:10px; color:var(--t3,rgba(232,224,212,0.35)); letter-spacing:1.5px;
-  text-transform:uppercase; font-weight:500;
-}
-
-/* Google Sign-In button */
-.pm-google-btn-wrap {
-  display:flex; justify-content:center; margin-bottom:4px;
-}
-.pm-google-btn {
-  display:inline-flex; align-items:center; gap:10px;
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.10);
-  border-radius:50px; padding:12px 28px;
-  color:var(--t2,rgba(232,224,212,0.7)); font-family:inherit; font-size:13px; font-weight:500;
-  cursor:pointer; transition:all 0.25s ease; width:100%;
-  justify-content:center; letter-spacing:0.2px;
-}
-.pm-google-btn:hover {
-  background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.18);
+.pm-google-pill:hover {
+  background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.18);
   color:var(--t1,#e8e0d4);
 }
-.pm-google-btn:active {
-  transform:scale(0.98);
-}
-.pm-google-btn svg {
-  flex-shrink:0; width:16px; height:16px;
-}
+.pm-google-pill:active { transform:scale(0.98); }
+.pm-google-pill svg { flex-shrink:0; }
 
 /* Premium Splash Screen */
 .premium-splash .premium-splash-badge {

@@ -3050,24 +3050,15 @@ async function cancelSubscription() {
 // ─── Init premium on page load ───
 
 function initPremium() {
-  checkAuthRedirect();
-  fetchPlans();
-
-  // Wire up any "Go Premium" buttons with data attributes (paywall)
-  document.querySelectorAll('[data-premium-action="checkout"]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const plan = btn.dataset.premiumPlan || 'monthly';
-      startPremiumCheckout(plan);
-    });
-  });
-
-  // ─── Premium modal open/close ───
+  // ═══════════════════════════════════════════
+  // 1. NAVIGATION — wire ALL click handlers FIRST
+  //    (these must not depend on async calls)
+  // ═══════════════════════════════════════════
   const premiumModal = document.getElementById('premiumModal');
 
   // Nav premium buttons → open premium modal
   document.getElementById('navPremiumBtn')?.addEventListener('click', () => openPremiumModal());
   document.getElementById('drawerPremiumBtn')?.addEventListener('click', () => {
-    // Close drawer first
     document.getElementById('navDrawer')?.classList.add('hidden');
     document.getElementById('navHamburger')?.classList.remove('open');
     openPremiumModal();
@@ -3078,15 +3069,45 @@ function initPremium() {
   premiumModal?.addEventListener('click', e => { if (e.target === premiumModal) closePremiumModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && premiumModal?.classList.contains('active')) closePremiumModal(); });
 
-  // ─── Login form ───
+  // Navigate between modal states
+  document.getElementById('pmGoToPricing')?.addEventListener('click', () => showPmState('pmPricing'));
+  document.getElementById('pmGoToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
+  document.getElementById('pmPricingGoToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
+  document.getElementById('pmGoToRegister')?.addEventListener('click', () => showPmState('pmRegister'));
+  document.getElementById('pmGoToForgot')?.addEventListener('click', () => showPmState('pmForgotPassword'));
+  document.getElementById('pmForgotBackToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
+
+  // Plan cards → start checkout
+  document.getElementById('pmPlanMonthly')?.addEventListener('click', () => { closePremiumModal(); startPremiumCheckout('monthly'); });
+  document.getElementById('pmPlanAnnual')?.addEventListener('click', () => { closePremiumModal(); startPremiumCheckout('annual'); });
+
+  // Account actions
+  document.getElementById('pmLogout')?.addEventListener('click', () => { closePremiumModal(); logoutPremium(); });
+  document.getElementById('pmCancelSub')?.addEventListener('click', () => { closePremiumModal(); cancelPremium(); });
+  document.getElementById('pmManageTelegram')?.addEventListener('click', () => {
+    const tgBotName = 'SeasideBeaconBot';
+    alert(`To link Telegram:\n\n1. Open Telegram and search for @${tgBotName}\n2. Send: /start ${premiumState.user?.email || 'your@email.com'}\n3. You'll get a confirmation message.\n\nAfter linking, you'll receive forecast alerts directly on Telegram.`);
+  });
+
+  // Upsell CTAs
+  document.getElementById('upsellGoPremium')?.addEventListener('click', () => { closeModalFn(); openPremiumModal('pricing'); });
+  document.getElementById('stripGoPremium')?.addEventListener('click', () => openPremiumModal('pricing'));
+
+  // Paywall buttons
+  document.querySelectorAll('[data-premium-action="checkout"]').forEach(btn => {
+    btn.addEventListener('click', () => startPremiumCheckout(btn.dataset.premiumPlan || 'monthly'));
+  });
+
+  // ═══════════════════════════════════════════
+  // 2. FORMS — login, register, forgot, reset
+  // ═══════════════════════════════════════════
+
+  // Login form
   document.getElementById('premiumLoginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('premiumEmailInput')?.value.trim();
     const password = document.getElementById('premiumPasswordInput')?.value;
-    if (!email || !password) {
-      showMsg('premiumLoginMessage', 'Please enter email and password.', false);
-      return;
-    }
+    if (!email || !password) { showMsg('premiumLoginMessage', 'Please enter email and password.', false); return; }
 
     const btn = document.getElementById('premiumLoginBtn');
     const btnText = document.getElementById('premiumLoginText');
@@ -3102,18 +3123,13 @@ function initPremium() {
         closePremiumModal();
         showPremiumSplash(d.user);
         showToast(d.user.isActive ? 'Welcome back! Premium is active.' : 'Signed in successfully.');
-        if (window._premiumAuthCallback) {
-          window._premiumAuthCallback();
-          window._premiumAuthCallback = null;
-        }
+        if (window._premiumAuthCallback) { window._premiumAuthCallback(); window._premiumAuthCallback = null; }
       } else {
         showMsg('premiumLoginMessage', d.message || 'Sign-in failed.', false);
-        // If Google-only account, hint them
-        if (d.googleOnly) {
-          showMsg('premiumLoginMessage', 'This account uses Google Sign-In. Use the Google button below.', false);
-        }
+        if (d.googleOnly) showMsg('premiumLoginMessage', 'This account uses Google Sign-In. Use the Google button below.', false);
       }
-    } catch {
+    } catch (err) {
+      console.error('Login error:', err);
       showMsg('premiumLoginMessage', 'Network error. Please try again.', false);
     } finally {
       if (btn) btn.disabled = false;
@@ -3121,20 +3137,14 @@ function initPremium() {
     }
   });
 
-  // ─── Register form ───
+  // Register form
   document.getElementById('premiumRegisterForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('regNameInput')?.value.trim();
     const email = document.getElementById('regEmailInput')?.value.trim();
     const password = document.getElementById('regPasswordInput')?.value;
-    if (!email || !password) {
-      showMsg('premiumRegisterMessage', 'Please enter email and password.', false);
-      return;
-    }
-    if (password.length < 6) {
-      showMsg('premiumRegisterMessage', 'Password must be at least 6 characters.', false);
-      return;
-    }
+    if (!email || !password) { showMsg('premiumRegisterMessage', 'Please enter email and password.', false); return; }
+    if (password.length < 6) { showMsg('premiumRegisterMessage', 'Password must be at least 6 characters.', false); return; }
 
     const btn = document.getElementById('premiumRegisterBtn');
     const btnText = document.getElementById('premiumRegisterText');
@@ -3149,14 +3159,12 @@ function initPremium() {
         updatePremiumUI();
         closePremiumModal();
         showToast('Account created! Welcome to Seaside Beacon.');
-        if (window._premiumAuthCallback) {
-          window._premiumAuthCallback();
-          window._premiumAuthCallback = null;
-        }
+        if (window._premiumAuthCallback) { window._premiumAuthCallback(); window._premiumAuthCallback = null; }
       } else {
         showMsg('premiumRegisterMessage', d.message || 'Registration failed.', false);
       }
-    } catch {
+    } catch (err) {
+      console.error('Register error:', err);
       showMsg('premiumRegisterMessage', 'Network error. Please try again.', false);
     } finally {
       if (btn) btn.disabled = false;
@@ -3164,64 +3172,11 @@ function initPremium() {
     }
   });
 
-  // ─── Google Sign-In buttons ───
-  let googleReady = false;
-
-  function triggerGoogleSignIn() {
-    if (!window.GOOGLE_CLIENT_ID) {
-      showToast('Google Sign-In is not configured yet. Use email and password.');
-      return;
-    }
-    if (googleReady && typeof google !== 'undefined' && google.accounts) {
-      google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          showToast('Google popup was blocked. Please allow popups or use email/password.');
-        }
-      });
-    } else {
-      showToast('Google Sign-In is loading. Try again in a moment.');
-    }
-  }
-  document.getElementById('pmGoogleSignIn')?.addEventListener('click', triggerGoogleSignIn);
-  document.getElementById('pmGoogleSignUp')?.addEventListener('click', triggerGoogleSignIn);
-
-  // Initialize Google Identity Services
-  function initGoogleSignIn() {
-    if (typeof google === 'undefined' || !google.accounts) {
-      if (!window._gsiRetries) window._gsiRetries = 0;
-      if (window._gsiRetries++ < 10) {
-        setTimeout(initGoogleSignIn, 500);
-      }
-      return;
-    }
-    const clientId = window.GOOGLE_CLIENT_ID;
-    if (!clientId) return;
-    google.accounts.id.initialize({
-      client_id: clientId,
-      callback: handleGoogleCredentialResponse,
-      auto_select: false
-    });
-    googleReady = true;
-  }
-  // Fetch Google client ID from backend
-  fetch(`${CONFIG.API_URL}/auth/google-client-id`)
-    .then(r => r.json())
-    .then(d => {
-      if (d.clientId) {
-        window.GOOGLE_CLIENT_ID = d.clientId;
-        initGoogleSignIn();
-      }
-    })
-    .catch(() => {});
-
-  // ─── Forgot password form ───
+  // Forgot password form
   document.getElementById('premiumForgotForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('forgotEmailInput')?.value.trim();
-    if (!email) {
-      showMsg('premiumForgotMessage', 'Please enter your email.', false);
-      return;
-    }
+    if (!email) { showMsg('premiumForgotMessage', 'Please enter your email.', false); return; }
 
     const btn = document.getElementById('premiumForgotBtn');
     const btnText = document.getElementById('premiumForgotText');
@@ -3236,7 +3191,8 @@ function initPremium() {
       });
       const d = await res.json();
       showMsg('premiumForgotMessage', d.message || 'Check your inbox for a reset link.', true);
-    } catch {
+    } catch (err) {
+      console.error('Forgot password error:', err);
       showMsg('premiumForgotMessage', 'Network error. Please try again.', false);
     } finally {
       if (btn) btn.disabled = false;
@@ -3244,23 +3200,14 @@ function initPremium() {
     }
   });
 
-  // ─── Reset password form (from email link) ───
+  // Reset password form (from email link)
   document.getElementById('premiumResetForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const newPass = document.getElementById('resetNewPassword')?.value;
     const confirmPass = document.getElementById('resetConfirmPassword')?.value;
-    if (!newPass || !confirmPass) {
-      showMsg('premiumResetMessage', 'Please fill in both fields.', false);
-      return;
-    }
-    if (newPass !== confirmPass) {
-      showMsg('premiumResetMessage', 'Passwords don\'t match.', false);
-      return;
-    }
-    if (newPass.length < 6) {
-      showMsg('premiumResetMessage', 'Password must be at least 6 characters.', false);
-      return;
-    }
+    if (!newPass || !confirmPass) { showMsg('premiumResetMessage', 'Please fill in both fields.', false); return; }
+    if (newPass !== confirmPass) { showMsg('premiumResetMessage', 'Passwords don\'t match.', false); return; }
+    if (newPass.length < 6) { showMsg('premiumResetMessage', 'Password must be at least 6 characters.', false); return; }
 
     const params = new URLSearchParams(window.location.search);
     const token = params.get('resetToken');
@@ -3280,13 +3227,13 @@ function initPremium() {
       const d = await res.json();
       if (d.success) {
         showMsg('premiumResetMessage', 'Password updated! Redirecting to sign in...', true);
-        // Clean URL and show login
         window.history.replaceState({}, '', window.location.pathname);
         setTimeout(() => showPmState('pmLogin'), 2000);
       } else {
         showMsg('premiumResetMessage', d.message || 'Reset failed.', false);
       }
-    } catch {
+    } catch (err) {
+      console.error('Reset password error:', err);
       showMsg('premiumResetMessage', 'Network error. Please try again.', false);
     } finally {
       if (btn) btn.disabled = false;
@@ -3294,47 +3241,70 @@ function initPremium() {
     }
   });
 
-  // Navigate between login / register / forgot / pricing states
-  document.getElementById('pmGoToPricing')?.addEventListener('click', () => showPmState('pmPricing'));
-  document.getElementById('pmGoToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
-  document.getElementById('pmPricingGoToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
-  document.getElementById('pmGoToRegister')?.addEventListener('click', () => showPmState('pmRegister'));
-  document.getElementById('pmGoToForgot')?.addEventListener('click', () => showPmState('pmForgotPassword'));
-  document.getElementById('pmForgotBackToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
+  // ═══════════════════════════════════════════
+  // 3. GOOGLE SIGN-IN (async, can fail safely)
+  // ═══════════════════════════════════════════
+  let googleReady = false;
 
-  // Plan cards → start checkout
-  document.getElementById('pmPlanMonthly')?.addEventListener('click', () => {
-    closePremiumModal();
-    startPremiumCheckout('monthly');
-  });
-  document.getElementById('pmPlanAnnual')?.addEventListener('click', () => {
-    closePremiumModal();
-    startPremiumCheckout('annual');
-  });
+  function triggerGoogleSignIn() {
+    if (!window.GOOGLE_CLIENT_ID) {
+      showToast('Google Sign-In is not configured yet. Use email and password.');
+      return;
+    }
+    if (googleReady && typeof google !== 'undefined' && google.accounts) {
+      google.accounts.id.prompt(function(notification) {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          showToast('Google popup was blocked. Allow popups or use email/password.');
+        }
+      });
+    } else {
+      showToast('Google Sign-In is loading. Try again in a moment.');
+    }
+  }
+  document.getElementById('pmGoogleSignIn')?.addEventListener('click', triggerGoogleSignIn);
+  document.getElementById('pmGoogleSignUp')?.addEventListener('click', triggerGoogleSignIn);
 
-  // Account actions
-  document.getElementById('pmLogout')?.addEventListener('click', () => {
-    closePremiumModal();
-    logoutPremium();
-  });
-  document.getElementById('pmCancelSub')?.addEventListener('click', () => {
-    closePremiumModal();
-    cancelPremium();
-  });
-  document.getElementById('pmManageTelegram')?.addEventListener('click', () => {
-    // Show instructions for Telegram linking
-    const tgBotName = 'SeasideBeaconBot'; // User needs to set this up
-    alert(`To link Telegram:\n\n1. Open Telegram and search for @${tgBotName}\n2. Send: /start ${premiumState.user?.email || 'your@email.com'}\n3. You'll get a confirmation message.\n\nAfter linking, you'll receive forecast alerts directly on Telegram.`);
-  });
+  function initGoogleSignIn() {
+    try {
+      if (typeof google === 'undefined' || !google.accounts) {
+        if (!window._gsiRetries) window._gsiRetries = 0;
+        if (window._gsiRetries++ < 10) setTimeout(initGoogleSignIn, 500);
+        return;
+      }
+      var clientId = window.GOOGLE_CLIENT_ID;
+      if (!clientId) return;
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false
+      });
+      googleReady = true;
+      console.log('✅ Google Sign-In initialized');
+    } catch (err) {
+      console.warn('Google Sign-In init error:', err);
+    }
+  }
 
-  // ─── Upsell CTAs ───
-  document.getElementById('upsellGoPremium')?.addEventListener('click', () => {
-    closeModalFn();  // close subscribe modal
-    openPremiumModal('pricing');  // open premium modal on pricing state
-  });
-  document.getElementById('stripGoPremium')?.addEventListener('click', () => {
-    openPremiumModal('pricing');
-  });
+  // Fetch Google client ID from backend
+  try {
+    fetch(CONFIG.API_URL + '/auth/google-client-id')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.clientId) {
+          window.GOOGLE_CLIENT_ID = d.clientId;
+          initGoogleSignIn();
+        }
+      })
+      .catch(function(err) { console.warn('Google client ID fetch failed:', err); });
+  } catch (err) {
+    console.warn('Google setup error:', err);
+  }
+
+  // ═══════════════════════════════════════════
+  // 4. INIT — auth check + plans
+  // ═══════════════════════════════════════════
+  checkAuthRedirect();
+  fetchPlans();
 }
 
 // ═══ 7-Day Forecast Calendar ═══
