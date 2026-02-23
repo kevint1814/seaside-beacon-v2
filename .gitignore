@@ -1,3 +1,27 @@
+# Environment
 backend/.env
-backend/.env
-backend/.env
+
+# Dependencies
+backend/node_modules/
+node_modules/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Claude session files
+.claude/
+
+# Xcode
+SeasideBeacon/*.xcodeproj/xcuserdata/
+SeasideBeacon/*.xcodeproj/project.xcworkspace/xcuserdata/
+SeasideBeacon/build/
+*.xcuserstate
+
+# Flutter (if still present)
+mobile_app/.dart_tool/
+mobile_app/build/
+mobile_app/.flutter-plugins
+mobile_app/.flutter-plugins-dependencies
+mobile_app/ios/Pods/
+mobile_app/ios/.symlinks/
