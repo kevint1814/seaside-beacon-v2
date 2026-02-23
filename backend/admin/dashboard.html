@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Seaside Beacon — Command Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#09090b;--surface:#111113;--surface2:#18181b;--surface3:#1f1f23;
+  --bg:#09090b;--surface:#111210;--surface2:#17181a;--surface3:#1e1f21;
   --border:#27272a;--border-light:#3f3f46;
   --t1:#fafafa;--t2:#a1a1aa;--t3:#71717a;--t4:#52525b;
   --green:#22c55e;--green-bg:rgba(34,197,94,0.1);
@@ -18,24 +18,27 @@
   --blue:#3b82f6;--blue-bg:rgba(59,130,246,0.1);
   --violet:#8b5cf6;--violet-bg:rgba(139,92,246,0.1);
   --cyan:#06b6d4;
-  --accent:#f97316;
+  --accent:#c4733a;--accent-light:#d4924a;
   --sans:'Inter',system-ui,sans-serif;
+  --display:'Cormorant Garamond',Georgia,serif;
   --mono:'JetBrains Mono','SF Mono',monospace;
-  --radius:8px;--radius-lg:12px;
+  --radius:8px;--radius-lg:14px;
 }
 html{font-size:13px}
 body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
 
 /* ── Login ── */
 #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px 40px;width:360px;text-align:center}
+.login-card{background:linear-gradient(145deg, var(--surface) 0%, rgba(17,18,16,0.95) 100%);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-lg);padding:48px 40px;width:360px;text-align:center}
+.login-brand{font-family:var(--display);font-size:24px;font-weight:600;margin-bottom:4px;color:var(--t1)}
+.login-brand-sep{width:40px;height:2px;background:linear-gradient(90deg, var(--accent) 0%, transparent 100%);margin:12px auto 24px}
 .login-card h1{font-size:15px;font-weight:600;letter-spacing:-.2px;margin-bottom:2px}
 .login-card .sub{font-size:12px;color:var(--t3);margin-bottom:32px}
 .login-card input{display:block;width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:var(--sans);outline:none;margin-bottom:10px;transition:.15s}
-.login-card input:focus{border-color:var(--t3)}
+.login-card input:focus{border-color:var(--accent)}
 .login-card input::placeholder{color:var(--t4)}
-.login-card button{width:100%;padding:9px;background:var(--t1);border:none;border-radius:6px;color:var(--bg);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;font-family:var(--sans)}
-.login-card button:hover{opacity:.9}
+.login-card button{width:100%;padding:9px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;font-family:var(--sans)}
+.login-card button:hover{background:var(--accent-light)}
 .login-error{color:var(--red);font-size:11px;margin-top:10px;display:none}
 
 /* ── Dashboard ── */
@@ -45,14 +48,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 /* Header */
 .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-left h1{font-size:16px;font-weight:600;letter-spacing:-.3px}
+.header-brand{font-family:var(--display);font-size:20px;font-weight:600;color:var(--t1);margin-right:8px}
+.header-left h1{font-size:14px;font-weight:500;letter-spacing:-.2px;color:var(--t2)}
 .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 .header-right{display:flex;align-items:center;gap:14px;font-size:11px;color:var(--t3)}
 .header-right .tag{padding:3px 8px;border-radius:4px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.6px}
-.tag-live{background:var(--green-bg);color:var(--green)}
+.tag-live{background:rgba(34,197,94,0.15);color:var(--green)}
+.tag-premium{background:rgba(196,115,58,0.15);color:var(--accent)}
 .sign-out{background:none;border:1px solid var(--border);border-radius:5px;padding:5px 12px;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--sans);transition:.15s}
-.sign-out:hover{color:var(--t1);border-color:var(--t3)}
+.sign-out:hover{color:var(--t1);border-color:var(--accent)}
 
 /* Grid */
 .row{display:grid;gap:14px;margin-bottom:14px}
@@ -61,16 +66,26 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .cols-2{grid-template-columns:1fr 1fr}
 .cols-5-7{grid-template-columns:5fr 7fr}
 .cols-7-5{grid-template-columns:7fr 5fr}
-@media(max-width:900px){.cols-4,.cols-3,.cols-5-7,.cols-7-5{grid-template-columns:1fr}}
-@media(max-width:600px){.cols-2{grid-template-columns:1fr}}
+.cols-6-6{grid-template-columns:1fr 1fr}
+@media(max-width:900px){.cols-4,.cols-3,.cols-5-7,.cols-7-5,.cols-6-6{grid-template-columns:1fr}}
+@media(max-width:600px){.cols-2,.cols-6-6{grid-template-columns:1fr}}
 
 /* Card */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px}
+.card{background:linear-gradient(145deg, var(--surface) 0%, rgba(17,18,16,0.95) 100%);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-lg);padding:18px 20px}
+.card.with-accent{border-left:3px solid var(--accent)}
 .card-title{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
 .card-title .badge{font-size:10px;padding:2px 6px;border-radius:3px;text-transform:none;letter-spacing:0;font-weight:500}
 
+/* Stat cards with accent borders */
+.stat-card{display:flex;flex-direction:column;position:relative;padding-left:16px}
+.stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px}
+.stat-card.blue::before{background:var(--blue)}
+.stat-card.green::before{background:var(--green)}
+.stat-card.violet::before{background:var(--violet)}
+.stat-card.copper::before{background:var(--accent)}
+
 /* Stat */
-.stat-val{font-size:26px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1}
+.stat-val{font-size:28px;font-weight:700;font-family:var(--display);letter-spacing:-1px;line-height:1;color:var(--t1)}
 .stat-label{font-size:11px;color:var(--t4);margin-top:3px}
 .stat-row{display:flex;align-items:baseline;gap:8px}
 .stat-change{font-size:11px;font-weight:600}
@@ -84,7 +99,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .tbl th{text-align:left;padding:7px 10px;color:var(--t4);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
 .tbl td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--t2)}
 .tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:var(--surface2)}
+.tbl tr:hover td{background:rgba(255,255,255,0.03)}
 .mono{font-family:var(--mono)}
 
 /* Score badge */
@@ -93,6 +108,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .sb-maybe{background:var(--amber-bg);color:var(--amber)}
 .sb-skip{background:var(--blue-bg);color:var(--blue)}
 .sb-no{background:var(--red-bg);color:var(--red)}
+
+/* Status badge */
+.status-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase}
+.status-active{background:rgba(34,197,94,0.15);color:var(--green)}
+.status-cancelled{background:var(--amber-bg);color:var(--amber)}
+.status-expired{background:var(--red-bg);color:var(--red)}
+.status-pending{background:var(--blue-bg);color:var(--blue)}
 
 /* Service row */
 .svc{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
@@ -103,7 +125,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 
 /* Chart */
 .chart{height:120px;display:flex;align-items:flex-end;gap:2px;padding-top:8px}
-.bar{flex:1;border-radius:2px 2px 0 0;min-height:1px;transition:.3s;position:relative;cursor:crosshair}
+.bar{flex:1;border-radius:2px 2px 0 0;min-height:1px;transition:.3s;position:relative;cursor:crosshair;background:linear-gradient(180deg, var(--accent-light) 0%, var(--accent) 100%)}
 .bar:hover{opacity:.75}
 .bar .tip{display:none;position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border);color:var(--t1);font-size:10px;padding:4px 8px;border-radius:4px;white-space:nowrap;font-family:var(--mono);z-index:5;pointer-events:none}
 .bar:hover .tip{display:block}
@@ -126,12 +148,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .empty-state{color:var(--t4);text-align:center;padding:20px 0;font-size:12px}
 
 /* Prediction cards — detailed 2-column layout */
-.pred-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;position:relative}
+.pred-card{background:var(--surface2);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-lg);padding:20px;position:relative}
 .pred-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
 .pred-beach{font-size:14px;font-weight:600;color:var(--t1)}
 .pred-beach-sub{font-size:10px;color:var(--t4);margin-top:2px}
 .pred-score-block{text-align:right}
-.pred-score{font-size:42px;font-weight:700;font-family:var(--mono);line-height:1;letter-spacing:-2px}
+.pred-score{font-size:42px;font-weight:700;font-family:var(--display);line-height:1;letter-spacing:-2px}
 .pred-verdict{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
 .pred-rec{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.5px;margin-top:4px}
 
@@ -161,7 +183,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .cloud-layer .cl-name{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
 
 /* Sun times */
-.sun-row{display:flex;gap:12px;font-size:11px;color:var(--t3)}
+.sun-row{display:flex;gap:12px;font-size:11px;color:var(--t3);flex-wrap:wrap}
 .sun-row span{display:flex;align-items:center;gap:4px}
 .sun-row .sun-val{font-family:var(--mono);color:var(--t1);font-weight:500}
 
@@ -176,25 +198,25 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 @media(max-width:900px){#predGrid{grid-template-columns:1fr}}
 
 /* Sub pill */
-.beach-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;background:var(--surface2);margin:3px 2px}
+.beach-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;background:var(--surface2);margin:3px 2px;border:1px solid rgba(255,255,255,0.06)}
 .beach-pill .ct{font-family:var(--mono);font-weight:600;color:var(--t1)}
 
 /* Email broadcast */
 .email-btn{padding:6px 14px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--t2);font-size:11px;font-family:var(--sans);cursor:pointer;transition:.15s}
-.email-btn:hover{border-color:var(--t3);color:var(--t1)}
-.email-btn-active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
+.email-btn:hover{border-color:var(--accent);color:var(--t1)}
+.email-btn-active{background:rgba(196,115,58,0.15);border-color:var(--accent);color:var(--accent)}
 .email-send-btn{padding:9px 24px;border:none;border-radius:6px;background:var(--accent);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:.15s}
-.email-send-btn:hover{opacity:.9}
+.email-send-btn:hover{background:var(--accent-light)}
 .email-send-btn:disabled{opacity:.4;cursor:not-allowed}
 .email-send-btn.sending{background:var(--t3)}
 .rcpt-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px}
 .rcpt-row label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--t2);flex:1}
-.rcpt-row input[type=checkbox]{accent-color:var(--blue);cursor:pointer}
+.rcpt-row input[type=checkbox]{accent-color:var(--accent);cursor:pointer}
 .rcpt-beach{font-size:10px;color:var(--t3)}
 
 /* Drop zone */
 .drop-zone{border:1px dashed var(--border);border-radius:6px;padding:16px;text-align:center;transition:.15s;cursor:pointer}
-.drop-zone:hover,.drop-zone.drag-over{border-color:var(--blue);background:var(--blue-bg)}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(196,115,58,0.08)}
 .att-item{display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--surface2);border-radius:5px;font-size:11px;margin:3px 0}
 .att-item .att-name{flex:1;color:var(--t2);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .att-item .att-size{color:var(--t4);font-family:var(--mono);font-size:10px}
@@ -210,11 +232,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 /* Refresh bar */
 .refresh-line{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:100;transition:width .3s;opacity:0;pointer-events:none}
 
+/* Feedback item */
+.feedback-item{padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.feedback-item:last-child{border-bottom:none}
+.feedback-content{flex:1}
+.feedback-user{font-size:11px;font-weight:600;color:var(--t1)}
+.feedback-meta{font-size:10px;color:var(--t4);margin-top:2px}
+.feedback-beach{font-size:10px;color:var(--t3)}
+.feedback-comment{font-size:11px;color:var(--t2);margin-top:4px;line-height:1.5}
+.feedback-rating{font-size:10px;font-weight:600;text-transform:uppercase;margin-left:8px}
+
 /* ── Mobile responsive ── */
 @media(max-width:768px){
   .header{flex-direction:column;gap:12px;align-items:flex-start}
   .header-right{flex-wrap:wrap;gap:8px}
-  .stat-val{font-size:20px}
+  .stat-val{font-size:24px}
   .card{padding:14px 16px}
   .card-title{font-size:10px}
 
@@ -246,16 +278,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 
   /* Email section */
   .email-btn{padding:5px 10px;font-size:10px}
-
-  /* Data sources wrap */
-  .pred-sources{gap:3px}
-  .pred-src{font-size:8px;padding:2px 5px}
 }
 
 @media(max-width:480px){
   #dashboard{padding:12px 10px}
-  .header-left h1{font-size:14px}
-  .stat-val{font-size:18px}
+  .header-left h1{font-size:13px}
+  .header-brand{font-size:16px}
+  .stat-val{font-size:20px}
   .pred-header{flex-direction:column;gap:8px}
   .pred-score-block{text-align:left;display:flex;align-items:baseline;gap:8px}
   .pred-score{font-size:28px}
@@ -274,8 +303,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 <!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
-    <h1>Seaside Beacon</h1>
-    <p class="sub">Command Center</p>
+    <div class="login-brand">Seaside Beacon</div>
+    <div class="login-brand-sep"></div>
+    <h1>Command Center</h1>
     <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
     <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
     <button id="loginBtn">Sign In</button>
@@ -287,9 +317,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 <div id="dashboard">
 
   <div class="header">
-    <div class="header-left"><div class="live-dot"></div><h1>Command Center</h1></div>
+    <div class="header-left">
+      <div class="live-dot"></div>
+      <div class="header-brand">Seaside Beacon</div>
+      <h1>Command Center</h1>
+    </div>
     <div class="header-right">
       <span class="tag tag-live">Live</span>
+      <span id="premiumBadge" style="display:none" class="tag tag-premium">Premium</span>
       <span id="lastUpdate">—</span>
       <span id="uptime">—</span>
       <button class="sign-out" id="logoutBtn">Sign Out</button>
@@ -298,23 +333,23 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 
   <!-- ROW 1: Headline numbers (LIFETIME) -->
   <div class="row cols-4">
-    <div class="card">
+    <div class="card stat-card blue">
       <div class="card-title">Total Visitors <span class="badge" style="background:var(--blue-bg);color:var(--blue)" id="todayVisitsBadge">—</span></div>
       <div class="stat-val" id="lifetimeVisits">—</div>
       <div class="stat-label" id="lifetimeUnique">— unique</div>
     </div>
-    <div class="card">
+    <div class="card stat-card green">
       <div class="card-title">Total Predictions <span class="badge" style="background:var(--green-bg);color:var(--green)" id="todayPredBadge">—</span></div>
       <div class="stat-val" id="lifetimePredictions">—</div>
       <div class="stat-label" id="lifetimeDays">— days tracked</div>
     </div>
-    <div class="card">
+    <div class="card stat-card violet">
       <div class="card-title">Active Subscribers <span class="badge" style="background:var(--violet-bg);color:var(--violet)" id="subCapBadge">—</span></div>
       <div class="stat-val" id="totalSubs">—</div>
       <div class="prog"><div class="prog-fill" id="subBar" style="width:0%;background:var(--violet)"></div></div>
       <div class="stat-label" style="margin-top:4px" id="subCapLabel">— / 300 Brevo limit</div>
     </div>
-    <div class="card">
+    <div class="card stat-card copper">
       <div class="card-title">Emails Delivered</div>
       <div class="stat-val" id="lifetimeEmails">—</div>
       <div class="stat-label" id="lifetimeForecasts">— forecasts generated</div>
@@ -355,8 +390,29 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
     </div>
   </div>
 
-  <!-- ROW 3: Subscribers + Performance -->
-  <div class="row cols-7-5">
+  <!-- ROW 3: Premium Users + Subscribers -->
+  <div class="row cols-6-6">
+    <div class="card">
+      <div class="card-title">Premium Users <span class="badge" style="background:rgba(196,115,58,0.15);color:var(--accent)" id="premiumCountBadge">—</span></div>
+      <div style="margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Active</div>
+            <div class="stat-val" style="font-size:24px" id="premiumActive">—</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">MRR</div>
+            <div class="stat-val" style="font-size:24px;color:var(--accent)" id="premiumMRR">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-y">
+        <table class="tbl" id="premiumTable">
+          <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>Beach</th><th>Telegram</th><th>Last Login</th></tr></thead>
+          <tbody id="premiumBody"></tbody>
+        </table>
+      </div>
+    </div>
     <div class="card">
       <div class="card-title">Subscribers <span class="badge" style="background:var(--surface2);color:var(--t2)" id="subCountBadge">—</span></div>
       <div style="margin-bottom:12px" id="beachPills"></div>
@@ -367,6 +423,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
         </table>
       </div>
     </div>
+  </div>
+
+  <!-- ROW 3.5: Community Feedback -->
+  <div class="row" style="grid-template-columns:1fr">
+    <div class="card">
+      <div class="card-title">Community Feedback <span class="badge" style="background:var(--surface2);color:var(--t2)" id="feedbackCountBadge">—</span></div>
+      <div class="scroll-y" id="feedbackList">
+        <div class="empty-state">No feedback yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 4: Performance -->
+  <div class="row" style="grid-template-columns:1fr">
     <div class="card">
       <div class="card-title">Performance <span class="badge" style="background:var(--surface2);color:var(--t2)">This Session</span></div>
       <div class="row cols-2" style="gap:10px;margin-bottom:12px">
@@ -384,7 +454,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
     </div>
   </div>
 
-  <!-- ROW 3.5: Email Broadcast -->
+  <!-- ROW 4.5: Email Broadcast -->
   <div class="row" style="grid-template-columns:1fr">
     <div class="card" id="emailCard">
       <div class="card-title">Broadcast Email <span class="badge" style="background:var(--surface2);color:var(--t2)" id="emailStatus"></span></div>
@@ -431,7 +501,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
         <label style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Attachments <span style="color:var(--t4);text-transform:none;letter-spacing:0">(images, PDFs — max 20MB total)</span></label>
         <div id="dropZone" class="drop-zone">
           <input type="file" id="fileInput" multiple accept="image/*,.pdf,.jpg,.jpeg,.png,.webp" style="display:none">
-          <span style="color:var(--t3);font-size:12px">Drop files here or <span style="color:var(--blue);cursor:pointer;text-decoration:underline" id="fileBrowse">browse</span></span>
+          <span style="color:var(--t3);font-size:12px">Drop files here or <span style="color:var(--accent);cursor:pointer;text-decoration:underline" id="fileBrowse">browse</span></span>
         </div>
         <div id="attachmentList" style="margin-top:6px"></div>
       </div>
@@ -444,7 +514,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
     </div>
   </div>
 
-  <!-- ROW 4: Scores + Errors -->
+  <!-- ROW 5: Scores + Errors -->
   <div class="row cols-7-5">
     <div class="card">
       <div class="card-title">Forecast History</div>
@@ -495,7 +565,7 @@ function poll(){
 
 // ── Render ──
 function render(d){
-  const t=d.traffic, s=d.subscribers, ss=d.siteStats, se=d.session, db=d.database;
+  const t=d.traffic, s=d.subscribers, p=d.premium, fb=d.feedback, ss=d.siteStats, se=d.session, db=d.database;
   const now=new Date();
   $('lastUpdate','Updated '+now.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour12:false})+' IST');
   $('uptime', se?.server?.uptimeFormatted||'—');
@@ -528,6 +598,20 @@ function render(d){
   dot('d-ai',g.errors>0?'amber':'green');$('v-ai',(g.calls||0)+' calls');$('c-ai',provStr+' | '+(g.fallbacks||0)+' fallbacks');
   dot('d-db',db?.connected?'green':'red');$('v-db',db?.connected?'Connected':'Down');
 
+  // Premium Users
+  const activePremium = (p?.list||[]).filter(u => u.status === 'active');
+  const premiumBadge = document.getElementById('premiumBadge');
+  if (activePremium.length > 0) {
+    premiumBadge.style.display = 'inline-block';
+  } else {
+    premiumBadge.style.display = 'none';
+  }
+  $('premiumCountBadge', (p?.total||0)+' total');
+  $('premiumActive', activePremium.length);
+  const mrr = (p?.revenue?.monthly||0) + (p?.revenue?.annual||0);
+  $('premiumMRR', '$' + fmt(mrr));
+  premiumTable(p||{});
+
   // Performance
   $('avgMs',(se.performance?.avgResponseTime||0));$('p95Ms',(se.performance?.p95ResponseTime||0));
   $('memRss',(se.server?.memory?.rss||0));$('heapVal',(se.server?.memory?.heapUsed||0));
@@ -550,6 +634,9 @@ function render(d){
     allSubEmails = s.list.map(sub => ({ email: sub.email, preferredBeach: sub.preferredBeach }));
     if (emailMode === 'all') updateRecipientCount();
   }
+
+  // Feedback
+  feedbackList(fb||[]);
 
   // Scores
   scoreTable(d.scores||[]);
@@ -574,7 +661,7 @@ function chart(days){
     const h=Math.max(1,((d.visits||0)/max)*110);
     const dt=new Date(d.date+'T00:00:00+05:30');
     const lbl=dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
-    return '<div class="bar" style="height:'+h+'px;background:var(--blue)"><div class="tip">'+lbl+': '+fmt(d.visits||0)+' visits, '+(d.predictions||0)+' pred</div></div>';
+    return '<div class="bar" style="height:'+h+'px"><div class="tip">'+lbl+': '+fmt(d.visits||0)+' visits, '+(d.predictions||0)+' pred</div></div>';
   }).join('');
   // show first, mid, last labels
   if(days.length>=3){
@@ -582,6 +669,20 @@ function chart(days){
     const l=new Date(days[days.length-1].date+'T00:00:00+05:30').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
     xEl.innerHTML='<span>'+f+'</span><span>'+l+'</span>';
   }
+}
+
+function premiumTable(p){
+  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const body=document.getElementById('premiumBody');
+  if(!p.list||!p.list.length){body.innerHTML='<tr><td colspan="6" class="empty-state">No premium users</td></tr>';return;}
+  body.innerHTML=p.list.map((user,i)=>{
+    const joined=new Date(user.subscribedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
+    const lastLogin=user.lastLogin?timeAgo(new Date(user.lastLogin)):'Never';
+    const bName=beaches[user.preferredBeach]||user.preferredBeach;
+    const statusClass=user.status==='active'?'status-active':user.status==='cancelled'?'status-cancelled':user.status==='expired'?'status-expired':'status-pending';
+    const telegram=user.telegramChatId?'Yes':'No';
+    return '<tr><td class="mono" style="color:var(--t1);font-size:11px">'+esc(user.email)+'</td><td><span class="sb" style="background:var(--amber-bg);color:var(--amber)">'+esc(user.plan||'—')+'</span></td><td><span class="status-badge '+statusClass+'">'+esc(user.status||'—')+'</span></td><td>'+bName+'</td><td>'+telegram+'</td><td style="color:var(--t3)">'+lastLogin+'</td></tr>';
+  }).join('');
 }
 
 function subTable(s){
@@ -597,11 +698,29 @@ function subTable(s){
   const body=document.getElementById('subBody');
   if(!s.list||!s.list.length){body.innerHTML='<tr><td colspan="5" class="empty-state">No subscribers</td></tr>';return;}
   body.innerHTML=s.list.map((sub,i)=>{
-    const joined=new Date(sub.subscribedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    const joined=new Date(sub.subscribedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
     const lastMail=sub.lastEmailSent?timeAgo(new Date(sub.lastEmailSent)):'Never';
     const bName=beaches[sub.preferredBeach]||sub.preferredBeach;
     const bColor=colors[sub.preferredBeach]||'var(--t3)';
-    return '<tr><td class="mono" style="color:var(--t4)">'+(i+1)+'</td><td class="mono" style="color:var(--t1)">'+esc(sub.email)+'</td><td><span style="color:'+bColor+'">'+bName+'</span></td><td style="color:var(--t3)">'+joined+'</td><td style="color:var(--t3)">'+lastMail+'</td></tr>';
+    return '<tr><td class="mono" style="color:var(--t4)">'+(i+1)+'</td><td class="mono" style="color:var(--t1);font-size:11px">'+esc(sub.email)+'</td><td><span style="color:'+bColor+'">'+bName+'</span></td><td style="color:var(--t3)">'+joined+'</td><td style="color:var(--t3)">'+lastMail+'</td></tr>';
+  }).join('');
+}
+
+function feedbackList(feedbacks){
+  const el=document.getElementById('feedbackList');
+  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const ratingColors={
+    'spot-on':'background:var(--green-bg);color:var(--green)',
+    'close':'background:var(--amber-bg);color:var(--amber)',
+    'missed':'background:var(--red-bg);color:var(--red)'
+  };
+  $('feedbackCountBadge', feedbacks.length);
+  if(!feedbacks.length){el.innerHTML='<div class="empty-state">No feedback yet</div>';return;}
+  el.innerHTML=feedbacks.map(f=>{
+    const date=new Date(f.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
+    const beach=beaches[f.preferredBeach]||f.preferredBeach;
+    const ratingStyle=ratingColors[f.rating]||'';
+    return '<div class="feedback-item"><div class="feedback-content"><div class="feedback-user">'+esc(f.userName||'Anonymous')+'</div><div class="feedback-meta"><span class="feedback-beach">'+beach+'</span> • <span>'+date+'</span></div><div class="feedback-comment">'+esc(f.comment||'')+'</div></div><span class="feedback-rating" style="'+ratingStyle+'">'+esc(f.rating||'—')+'</span></div>';
   }).join('');
 }
 
@@ -823,11 +942,24 @@ initDropZone();
 // ── Live Predictions ──
 let predInterval;
 function scoreColor(sc){return sc>=85?'var(--green)':sc>=70?'var(--blue)':sc>=55?'var(--amber)':sc>=40?'var(--accent)':'var(--red)';}
-function scoreBg(sc){return sc>=85?'var(--green-bg)':sc>=70?'var(--blue-bg)':sc>=55?'var(--amber-bg)':sc>=40?'rgba(249,115,22,0.1)':'var(--red-bg)';}
+function scoreBg(sc){return sc>=85?'var(--green-bg)':sc>=70?'var(--blue-bg)':sc>=55?'var(--amber-bg)':sc>=40?'rgba(196,115,58,0.1)':'var(--red-bg)';}
 function recBg(r){return r==='GO'?'var(--green-bg)':r==='MAYBE'?'var(--amber-bg)':r==='SKIP'?'var(--blue-bg)':'var(--red-bg)';}
 function recCol(r){return r==='GO'?'var(--green)':r==='MAYBE'?'var(--amber)':r==='SKIP'?'var(--blue)':'var(--red)';}
 function pctBar(score,max,color){const pct=max>0?Math.round(score/max*100):0;return '<div class="pred-bar-track"><div class="pred-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div>';}
-function fmtTime(iso){if(!iso)return '—';try{return new Date(iso).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:true});}catch(e){return '—';}}
+
+function fmtTime(iso){
+  if(!iso)return '—';
+  // Check if it's already a formatted string (like "5:45 AM")
+  if(typeof iso==='string' && /^\d{1,2}:\d{2}\s*(AM|PM)$/i.test(iso.trim())) {
+    return iso;
+  }
+  try{
+    return new Date(iso).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:true});
+  }catch(e){
+    return iso || '—';
+  }
+}
+
 function tagColor(label){const good=['Optimal','Excellent','Very Good','Crystal Clear','Very Clean','Clean','Exceptional','Calm','High Canvas','Stable','Light'];const ok=['Good','Decent','Fair','Hazy','Mid Canvas','Moderate','Slight Fall','Rising','Mixed Layers','Normal'];if(good.includes(label))return 'background:var(--green-bg);color:var(--green)';if(ok.includes(label))return 'background:var(--amber-bg);color:var(--amber)';return 'background:var(--red-bg);color:var(--red)';}
 
 function renderPredCard(k, p, beaches) {

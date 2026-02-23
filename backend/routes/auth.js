@@ -12,7 +12,7 @@ const router = express.Router();
 
 const PremiumUser = require('../models/PremiumUser');
 
-const isLocal = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+const isLocal = process.env.NODE_ENV === 'development';
 const APP_URL = isLocal ? `http://localhost:${process.env.PORT || 3000}` : (process.env.APP_URL || 'https://www.seasidebeacon.com');
 const API_URL = isLocal ? `http://localhost:${process.env.PORT || 3000}` : (process.env.API_URL || 'https://api.seasidebeacon.com');
 

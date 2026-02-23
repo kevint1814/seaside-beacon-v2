@@ -16,6 +16,8 @@ const Subscriber = require('../models/Subscriber');
 const DailyScore = require('../models/DailyScore');
 const DailyVisit = require('../models/DailyVisit');
 const SiteStats = require('../models/SiteStats');
+const PremiumUser = require('../models/PremiumUser');
+const Feedback = require('../models/Feedback');
 const mongoose = require('mongoose');
 
 // ── Auth config ──────────────────────────────
@@ -106,6 +108,28 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
     // ── Lifetime site stats ──
     const siteStats = await SiteStats.getPublicStats();
 
+    // ── Premium Users ──
+    const premiumUsers = await PremiumUser.find({})
+      .sort({ subscribedAt: -1 })
+      .select('email plan status currentPeriodEnd preferredBeach telegramChatId lastLogin subscribedAt')
+      .lean();
+
+    const activePremium = premiumUsers.filter(u => u.status === 'active');
+    const premiumStats = {
+      total: activePremium.length,
+      list: premiumUsers,
+      revenue: {
+        monthly: activePremium.filter(u => u.plan === 'monthly').length * 49,
+        annual: activePremium.filter(u => u.plan === 'annual').length * 399
+      }
+    };
+
+    // ── Recent Feedback ──
+    const recentFeedback = await Feedback.find({})
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
     // ── Database ──
     const dbStats = {
       connected: mongoose.connection.readyState === 1,
@@ -127,6 +151,8 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
         byBeach: subsByBeach,
         limit: 300
       },
+      premium: premiumStats,
+      feedback: recentFeedback,
       scores: recentScores,
       siteStats,
       database: dbStats
