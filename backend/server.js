@@ -18,9 +18,11 @@ const subscribeRoutes = require('./routes/subscribe');
 const predictRoutes = require('./routes/predict');
 const communityRoutes = require('./routes/community');
 const adminRoutes = require('./routes/admin');
+const deviceRoutes = require('./routes/device');
 const { initializeEmailJobs } = require('./jobs/dailyEmail');
 const { initializeDailyDigest } = require('./services/notifyAdmin');
 const { trackVisitMiddleware } = require('./services/visitTracker');
+const { initFirebase } = require('./services/firebaseAdmin');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -115,8 +117,9 @@ app.get('/health', async (req, res) => {
 app.use('/api', subscribeRoutes);
 app.use('/api', predictRoutes);
 app.use('/api', communityRoutes);
-app.use('/api', adminRoutes);  // POST /api/admin/login + GET /api/admin/metrics
-app.use('/', adminRoutes);     // GET /admin (serves dashboard HTML)
+app.use('/api', deviceRoutes);   // POST /api/register-device + POST /api/device-settings
+app.use('/api', adminRoutes);    // POST /api/admin/login + GET /api/admin/metrics
+app.use('/', adminRoutes);       // GET /admin (serves dashboard HTML)
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Endpoint not found' });
@@ -148,6 +151,9 @@ async function startServer() {
   try {
     await connectDatabase();
 
+    // Initialize Firebase Admin SDK for push notifications
+    initFirebase();
+
     app.listen(PORT, () => {
       console.log('═══════════════════════════════════════');
       console.log('🌅 SEASIDE BEACON SERVER v4.0');
@@ -174,6 +180,10 @@ async function startServer() {
 
     // Daily admin digest at 8:00 AM IST
     initializeDailyDigest();
+
+    // Push notifications at 4:00 AM + 8:30 PM IST
+    const { initializePushJobs } = require('./jobs/pushNotifications');
+    initializePushJobs();
 
   } catch (error) {
     console.error('❌ Startup error:', error.message);
