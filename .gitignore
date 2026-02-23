@@ -1,5 +1,7 @@
-# Environment
+# Environment & Secrets
 backend/.env
+**/GoogleService-Info.plist
+**/google-services.json
 
 # Dependencies
 backend/node_modules/
