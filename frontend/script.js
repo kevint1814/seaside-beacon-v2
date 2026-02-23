@@ -2401,8 +2401,19 @@ function clearPremiumAuth() {
   localStorage.removeItem('sb_auth_token');
 }
 
-// Check for existing auth session on page load
+// Check for existing auth session or reset token on page load
 function checkAuthRedirect() {
+  const params = new URLSearchParams(window.location.search);
+
+  // Check for password reset link
+  if (params.get('resetToken') && params.get('email')) {
+    // Open premium modal on reset password state
+    setTimeout(() => {
+      openPremiumModal('reset');
+    }, 500);
+    return;
+  }
+
   if (premiumState.authToken) {
     // Existing session — validate it
     fetchPremiumUser();
@@ -2630,7 +2641,9 @@ function openPremiumModal(startState) {
   if (!modal) return;
 
   // Decide which state to show
-  if (premiumState.user && premiumState.user.isActive) {
+  if (startState === 'reset') {
+    showPmState('pmResetPassword');
+  } else if (premiumState.user && premiumState.user.isActive) {
     showPmState('pmAccount');
     populateAccountPanel();
   } else if (startState === 'pricing') {
@@ -2656,8 +2669,12 @@ function closePremiumModal() {
   // Reset forms
   document.getElementById('premiumLoginForm')?.reset();
   document.getElementById('premiumRegisterForm')?.reset();
+  document.getElementById('premiumForgotForm')?.reset();
+  document.getElementById('premiumResetForm')?.reset();
   showMsg('premiumLoginMessage', '', true);
   showMsg('premiumRegisterMessage', '', true);
+  showMsg('premiumForgotMessage', '', true);
+  showMsg('premiumResetMessage', '', true);
 }
 
 function showPmState(stateId) {
@@ -2852,14 +2869,22 @@ function updatePremiumUI() {
     }
   });
 
+  // Update forecast section note for premium users
+  const forecastNote = document.getElementById('forecastSectionNote');
+  if (forecastNote) {
+    forecastNote.textContent = isPremium
+      ? 'Generate 7-day advance sunrise forecasts'
+      : 'Predictions available from 6 PM IST';
+  }
+
   // Update nav premium button text
   const navText = document.getElementById('navPremiumText');
   const drawerText = document.getElementById('drawerPremiumText');
   const navBtn = document.getElementById('navPremiumBtn');
 
   if (isPremium) {
-    if (navText) navText.textContent = user.email?.split('@')[0] || 'Account';
-    if (drawerText) drawerText.textContent = 'My Account';
+    if (navText) navText.textContent = 'My Profile';
+    if (drawerText) drawerText.textContent = 'My Profile';
     if (navBtn) navBtn.classList.add('premium-active');
   } else if (user && !user.isActive) {
     // Logged in but not premium (cancelled/expired)
@@ -3140,11 +3165,21 @@ function initPremium() {
   });
 
   // ─── Google Sign-In buttons ───
+  let googleReady = false;
+
   function triggerGoogleSignIn() {
-    if (typeof google !== 'undefined' && google.accounts) {
-      google.accounts.id.prompt();
+    if (!window.GOOGLE_CLIENT_ID) {
+      showToast('Google Sign-In is not configured yet. Use email and password.');
+      return;
+    }
+    if (googleReady && typeof google !== 'undefined' && google.accounts) {
+      google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          showToast('Google popup was blocked. Please allow popups or use email/password.');
+        }
+      });
     } else {
-      showMsg('premiumLoginMessage', 'Google Sign-In is loading. Try again in a moment.', false);
+      showToast('Google Sign-In is loading. Try again in a moment.');
     }
   }
   document.getElementById('pmGoogleSignIn')?.addEventListener('click', triggerGoogleSignIn);
@@ -3153,19 +3188,22 @@ function initPremium() {
   // Initialize Google Identity Services
   function initGoogleSignIn() {
     if (typeof google === 'undefined' || !google.accounts) {
-      // GSI not loaded yet — retry
-      setTimeout(initGoogleSignIn, 500);
+      if (!window._gsiRetries) window._gsiRetries = 0;
+      if (window._gsiRetries++ < 10) {
+        setTimeout(initGoogleSignIn, 500);
+      }
       return;
     }
     const clientId = window.GOOGLE_CLIENT_ID;
-    if (!clientId) return; // Google sign-in not configured
+    if (!clientId) return;
     google.accounts.id.initialize({
       client_id: clientId,
       callback: handleGoogleCredentialResponse,
       auto_select: false
     });
+    googleReady = true;
   }
-  // Fetch Google client ID from backend plans endpoint (it's public info)
+  // Fetch Google client ID from backend
   fetch(`${CONFIG.API_URL}/auth/google-client-id`)
     .then(r => r.json())
     .then(d => {
@@ -3174,12 +3212,95 @@ function initPremium() {
         initGoogleSignIn();
       }
     })
-    .catch(() => {}); // silent — Google sign-in won't work without client ID
+    .catch(() => {});
 
-  // Navigate between login / register / pricing states
+  // ─── Forgot password form ───
+  document.getElementById('premiumForgotForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('forgotEmailInput')?.value.trim();
+    if (!email) {
+      showMsg('premiumForgotMessage', 'Please enter your email.', false);
+      return;
+    }
+
+    const btn = document.getElementById('premiumForgotBtn');
+    const btnText = document.getElementById('premiumForgotText');
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.textContent = 'Sending...';
+
+    try {
+      const res = await fetch(`${CONFIG.API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const d = await res.json();
+      showMsg('premiumForgotMessage', d.message || 'Check your inbox for a reset link.', true);
+    } catch {
+      showMsg('premiumForgotMessage', 'Network error. Please try again.', false);
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = 'Send Reset Link';
+    }
+  });
+
+  // ─── Reset password form (from email link) ───
+  document.getElementById('premiumResetForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPass = document.getElementById('resetNewPassword')?.value;
+    const confirmPass = document.getElementById('resetConfirmPassword')?.value;
+    if (!newPass || !confirmPass) {
+      showMsg('premiumResetMessage', 'Please fill in both fields.', false);
+      return;
+    }
+    if (newPass !== confirmPass) {
+      showMsg('premiumResetMessage', 'Passwords don\'t match.', false);
+      return;
+    }
+    if (newPass.length < 6) {
+      showMsg('premiumResetMessage', 'Password must be at least 6 characters.', false);
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('resetToken');
+    const email = params.get('email');
+
+    const btn = document.getElementById('premiumResetBtn');
+    const btnText = document.getElementById('premiumResetText');
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.textContent = 'Updating...';
+
+    try {
+      const res = await fetch(`${CONFIG.API_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, token, newPassword: newPass })
+      });
+      const d = await res.json();
+      if (d.success) {
+        showMsg('premiumResetMessage', 'Password updated! Redirecting to sign in...', true);
+        // Clean URL and show login
+        window.history.replaceState({}, '', window.location.pathname);
+        setTimeout(() => showPmState('pmLogin'), 2000);
+      } else {
+        showMsg('premiumResetMessage', d.message || 'Reset failed.', false);
+      }
+    } catch {
+      showMsg('premiumResetMessage', 'Network error. Please try again.', false);
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = 'Update Password';
+    }
+  });
+
+  // Navigate between login / register / forgot / pricing states
   document.getElementById('pmGoToPricing')?.addEventListener('click', () => showPmState('pmPricing'));
   document.getElementById('pmGoToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
+  document.getElementById('pmPricingGoToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
   document.getElementById('pmGoToRegister')?.addEventListener('click', () => showPmState('pmRegister'));
+  document.getElementById('pmGoToForgot')?.addEventListener('click', () => showPmState('pmForgotPassword'));
+  document.getElementById('pmForgotBackToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
 
   // Plan cards → start checkout
   document.getElementById('pmPlanMonthly')?.addEventListener('click', () => {
@@ -3233,7 +3354,7 @@ async function fetch7DayForecast(beach) {
 
   try {
     const token = localStorage.getItem('sb_auth_token');
-    const res = await fetch(`/api/forecast/7day/${beach}`, {
+    const res = await fetch(`${CONFIG.API_URL}/forecast/7day/${beach}`, {
       headers: token ? { 'x-auth-token': token } : {}
     });
     const data = await res.json();

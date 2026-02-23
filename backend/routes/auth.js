@@ -273,6 +273,92 @@ router.post('/auth/google', async (req, res) => {
 
 
 // ═══════════════════════════════════════
+// POST /api/auth/forgot-password
+// Body: { email }
+// Sends a password reset link via email
+// ═══════════════════════════════════════
+router.post('/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const normalised = email.toLowerCase().trim();
+    const user = await PremiumUser.findOne({ email: normalised });
+
+    // Always return success to prevent email enumeration
+    if (!user || (!user.password && user.googleId)) {
+      return res.json({ success: true, message: 'If an account exists with that email, we\'ve sent a reset link.' });
+    }
+
+    // Generate reset token (30 min TTL)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = new Date(Date.now() + 30 * 60 * 1000);
+    await user.save();
+
+    // Send reset email
+    const { sendPasswordResetEmail } = require('../services/emailService');
+    const resetUrl = `${APP_URL}?resetToken=${resetToken}&email=${encodeURIComponent(normalised)}`;
+    await sendPasswordResetEmail(normalised, resetUrl);
+
+    console.log(`📧 Password reset email sent to: ${normalised}`);
+
+    res.json({ success: true, message: 'If an account exists with that email, we\'ve sent a reset link.' });
+
+  } catch (err) {
+    console.error('Forgot password error:', err.message);
+    res.status(500).json({ success: false, message: 'Something went wrong' });
+  }
+});
+
+
+// ═══════════════════════════════════════
+// POST /api/auth/reset-password
+// Body: { email, token, newPassword }
+// Resets password using the reset token
+// ═══════════════════════════════════════
+router.post('/auth/reset-password', async (req, res) => {
+  try {
+    const { email, token, newPassword } = req.body;
+
+    if (!email || !token || !newPassword) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    const normalised = email.toLowerCase().trim();
+    const user = await PremiumUser.findOne({
+      email: normalised,
+      resetToken: token,
+      resetTokenExpiry: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired reset link. Please request a new one.' });
+    }
+
+    // Update password
+    user.password = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
+
+    console.log(`✅ Password reset for: ${normalised}`);
+
+    res.json({ success: true, message: 'Password updated! You can now sign in.' });
+
+  } catch (err) {
+    console.error('Reset password error:', err.message);
+    res.status(500).json({ success: false, message: 'Something went wrong' });
+  }
+});
+
+
+// ═══════════════════════════════════════
 // GET /api/auth/google-client-id
 // Returns Google client ID for frontend GSI
 // ═══════════════════════════════════════

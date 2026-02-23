@@ -449,7 +449,65 @@
           Continue with Google
         </button>
       </div>
+      <p class="pm-footer-note"><button type="button" class="pm-link" id="pmGoToForgot">Forgot password?</button></p>
       <p class="pm-footer-note">New here? <button type="button" class="pm-link" id="pmGoToRegister">Create an account</button> · <button type="button" class="pm-link" id="pmGoToPricing">See what Premium includes</button></p>
+    </div>
+
+    <!-- State: Forgot Password -->
+    <div class="pm-state hidden" id="pmForgotPassword">
+      <div class="pm-brand-header">
+        <div class="pm-brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </div>
+        <div class="pm-brand-text">
+          <span class="pm-brand-name">Seaside Beacon</span>
+          <span class="pm-brand-tier">Premium</span>
+        </div>
+      </div>
+      <h2 class="pm-title">Reset your password</h2>
+      <p class="pm-sub">Enter your email and we'll send you a reset link.</p>
+      <form id="premiumForgotForm" autocomplete="off">
+        <div class="form-row">
+          <label class="form-label" for="forgotEmailInput">Email</label>
+          <input type="email" id="forgotEmailInput" class="form-input" placeholder="you@example.com" required>
+        </div>
+        <button type="submit" class="btn-subscribe pm-btn" id="premiumForgotBtn">
+          <span id="premiumForgotText">Send Reset Link</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <div class="form-message" id="premiumForgotMessage"></div>
+      </form>
+      <p class="pm-footer-note">Remember your password? <button type="button" class="pm-link" id="pmForgotBackToLogin">Sign in</button></p>
+    </div>
+
+    <!-- State: Reset Password (accessed from email link) -->
+    <div class="pm-state hidden" id="pmResetPassword">
+      <div class="pm-brand-header">
+        <div class="pm-brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </div>
+        <div class="pm-brand-text">
+          <span class="pm-brand-name">Seaside Beacon</span>
+          <span class="pm-brand-tier">Premium</span>
+        </div>
+      </div>
+      <h2 class="pm-title">Choose a new password</h2>
+      <p class="pm-sub">Enter your new password below.</p>
+      <form id="premiumResetForm" autocomplete="off">
+        <div class="form-row">
+          <label class="form-label" for="resetNewPassword">New Password</label>
+          <input type="password" id="resetNewPassword" class="form-input" placeholder="At least 6 characters" required minlength="6">
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="resetConfirmPassword">Confirm Password</label>
+          <input type="password" id="resetConfirmPassword" class="form-input" placeholder="Re-enter password" required minlength="6">
+        </div>
+        <button type="submit" class="btn-subscribe pm-btn" id="premiumResetBtn">
+          <span id="premiumResetText">Update Password</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <div class="form-message" id="premiumResetMessage"></div>
+      </form>
     </div>
 
     <!-- State: Register form -->
@@ -603,7 +661,7 @@
       </div>
 
       <p class="pm-pricing-trust">Cancel anytime · Zero spam</p>
-      <p class="pm-footer-note">Already a member? <button type="button" class="pm-link" id="pmGoToLogin">Sign in</button></p>
+      <p class="pm-footer-note">Already a member? <button type="button" class="pm-link" id="pmPricingGoToLogin">Sign in</button></p>
     </div>
 
   </div>
@@ -744,7 +802,7 @@
       <header class="section-header">
         <p class="section-eyebrow">Tomorrow Morning</p>
         <h2 class="section-heading">Sunrise Forecast</h2>
-        <p class="section-note">Predictions available from 6 PM IST</p>
+        <p class="section-note" id="forecastSectionNote">Predictions available from 6 PM IST</p>
       </header>
 
       <!-- Beach selector -->

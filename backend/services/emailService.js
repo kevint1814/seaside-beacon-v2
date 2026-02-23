@@ -1394,4 +1394,62 @@ async function sendCancellationEmail(userEmail, refundInitiated) {
   }
 }
 
-module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendEveningPreviewEmail, sendSpecialAlertEmail, sendPremiumWelcomeEmail, sendPaymentReceiptEmail, sendCancellationEmail, sendTestEmail };
+/**
+ * Password Reset Email
+ * Warm light theme, matching brand aesthetics
+ */
+async function sendPasswordResetEmail(userEmail, resetUrl) {
+  try {
+    const mailOptions = {
+      from: { name: 'Seaside Beacon', address: process.env.EMAIL_FROM || 'noreply@seasidebeacon.com' },
+      to: userEmail,
+      subject: 'Reset your Seaside Beacon password',
+      text: `Reset your password: ${resetUrl}\n\nThis link expires in 30 minutes. If you didn't request this, ignore this email.`,
+      headers: { 'List-Unsubscribe': `<${API_URL}/api/unsubscribe?email=${encodeURIComponent(userEmail)}>` },
+      html: `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F5EFE6;font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F5EFE6">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFBF5" style="border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(160,120,60,0.08);">
+
+        <tr><td bgcolor="#FFFBF5" style="padding:36px 40px 24px;text-align:center;">
+          <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:300;color:#3D2E1F;letter-spacing:3px;text-transform:uppercase;">Seaside Beacon</p>
+        </td></tr>
+
+        <tr><td bgcolor="#FFFBF5" style="padding:0 40px 28px;text-align:center;">
+          <h1 style="margin:0 0 12px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:400;color:#3D2E1F;">Reset Your Password</h1>
+          <p style="margin:0 0 24px;font-family:'Instrument Sans',sans-serif;font-size:14.5px;color:#6B5D4F;line-height:1.7;">
+            We received a request to reset your password. Click the button below to choose a new one. This link expires in 30 minutes.
+          </p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+            <tr><td bgcolor="#C4733A" style="padding:14px 36px;border-radius:50px;">
+              <a href="${resetUrl}" style="font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Reset Password</a>
+            </td></tr>
+          </table>
+          <p style="margin:20px 0 0;font-family:'Instrument Sans',sans-serif;font-size:12.5px;color:#8a7e72;line-height:1.6;">
+            If you didn't request this, you can safely ignore this email. Your password won't change.
+          </p>
+        </td></tr>
+
+        <tr><td bgcolor="#F0E8DE" style="padding:20px 40px;text-align:center;border-top:1px solid #E0D5C8;">
+          <p style="margin:0;font-family:'Instrument Sans',sans-serif;font-size:12px;color:#8a7e72;">Seaside Beacon — Chennai's sunrise forecast</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+    };
+
+    const info = await sendEmail(mailOptions);
+    console.log(`✅ Password reset email sent to ${userEmail}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Password reset email error:', error.message);
+    throw error;
+  }
+}
+
+module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendEveningPreviewEmail, sendSpecialAlertEmail, sendPremiumWelcomeEmail, sendPaymentReceiptEmail, sendCancellationEmail, sendPasswordResetEmail, sendTestEmail };

@@ -53,6 +53,14 @@ const premiumUserSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  resetToken: {
+    type: String,
+    default: null
+  },
+  resetTokenExpiry: {
+    type: Date,
+    default: null
+  },
   authToken: {
     type: String,
     default: null
