@@ -718,7 +718,7 @@ function feedbackList(feedbacks){
   if(!feedbacks.length){el.innerHTML='<div class="empty-state">No feedback yet</div>';return;}
   el.innerHTML=feedbacks.map(f=>{
     const date=new Date(f.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
-    const beach=beaches[f.preferredBeach]||f.preferredBeach;
+    const beach=beaches[f.beach]||f.beach;
     const ratingStyle=ratingColors[f.rating]||'';
     return '<div class="feedback-item"><div class="feedback-content"><div class="feedback-user">'+esc(f.userName||'Anonymous')+'</div><div class="feedback-meta"><span class="feedback-beach">'+beach+'</span> • <span>'+date+'</span></div><div class="feedback-comment">'+esc(f.comment||'')+'</div></div><span class="feedback-rating" style="'+ratingStyle+'">'+esc(f.rating||'—')+'</span></div>';
   }).join('');

@@ -1011,4 +1011,189 @@ async function sendSpecialAlertEmail(toEmail, bestBeach, allHotBeaches) {
   return sendEmail(mailOptions);
 }
 
-module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendEveningPreviewEmail, sendSpecialAlertEmail, sendTestEmail };
+/**
+ * Send premium welcome email — warm light theme matching subscription welcome
+ * Sent when subscription.activated webhook fires
+ */
+async function sendPremiumWelcomeEmail(userEmail, plan) {
+  try {
+    const planDisplay = plan === 'annual' ? '₹399/year' : '₹49/month';
+
+    const mailOptions = {
+      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
+      to: userEmail,
+      subject: '🌅 Welcome to Seaside Beacon Premium',
+      headers: {
+        'List-Unsubscribe': `<${getUnsubscribeUrl(userEmail)}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+      },
+      text: `Welcome to Seaside Beacon Premium!\n\nYou're now on the ${planDisplay} plan. Here's what you've unlocked:\n\n• 7 days of forecasts in advance — plan your week, not just tomorrow\n• DSLR camera settings — ISO, aperture, shutter speed tuned to the day's light\n• Mobile photography tips — get stunning shots with just your phone\n• Priority alerts — 70+ score mornings delivered before anyone else\n\nThank you for supporting India's first native sunrise quality forecaster. Starting with Chennai's beaches, expanding to coastlines across India. Your support helps us get there.\n\nSeaside Beacon — Made in Chennai\n${APP_URL}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <!--[if mso]><style>*{font-family:Arial,sans-serif!important;}</style><![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#f5f0ea;-webkit-text-size-adjust:none;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5f0ea">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+        <!-- ═══ HEADER ═══ -->
+        <tr><td bgcolor="#C4733A" style="padding:52px 40px 42px;text-align:center;">
+
+          <p style="margin:0 0 4px;font-size:28px;line-height:1;">☀️</p>
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:3px;color:#f5e8d8;">Welcome to</p>
+          <h1 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:36px;font-weight:600;color:#ffffff;letter-spacing:-0.5px;">Seaside Beacon</h1>
+
+          <!-- Premium badge -->
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px auto 0;">
+            <tr><td bgcolor="#A05A2A" style="border:1px solid #D4924A;padding:5px 18px;">
+              <span style="font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#FFE0C0;">★ Premium</span>
+            </td></tr>
+          </table>
+
+        </td></tr>
+
+        <!-- ═══ BODY ═══ -->
+        <tr><td bgcolor="#ffffff" style="padding:0;">
+
+          <!-- Plan badge -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:36px 40px 0;text-align:center;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                <tr><td bgcolor="#FDF5EE" style="border:1px solid #E8D5C0;padding:8px 22px;">
+                  <span style="font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;font-weight:500;color:#c4733a;letter-spacing:0.3px;">🎫 ${planDisplay} plan</span>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+          <!-- Main message -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:28px 40px 0;text-align:center;">
+              <h2 style="margin:0 0 16px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;color:#2a2420;letter-spacing:-0.3px;">You're all set.</h2>
+              <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.75;color:#6b6058;">Thank you for supporting Seaside Beacon. Your premium features are active immediately — here's everything you've unlocked.</p>
+            </td></tr>
+          </table>
+
+          <!-- Divider -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:32px 40px;">
+              <div style="height:1px;background-color:#E8DDD0;"></div>
+            </td></tr>
+          </table>
+
+          <!-- What you've unlocked -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px;">
+              <p style="margin:0 0 20px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#a09080;">What you've unlocked</p>
+
+              <!-- Feature 1 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td style="width:36px;vertical-align:top;padding-top:2px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#FDF5EE" style="width:32px;height:32px;border:1px solid #E8D5C0;text-align:center;line-height:32px;font-size:15px;">📅</td></tr></table>
+                  </td>
+                  <td style="padding-left:14px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:#2a2420;">7 Days of Forecasts in Advance</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Plan your entire week. See which mornings are worth the alarm days before anyone else.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 2 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td style="width:36px;vertical-align:top;padding-top:2px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#FDF5EE" style="width:32px;height:32px;border:1px solid #E8D5C0;text-align:center;line-height:32px;font-size:15px;">📷</td></tr></table>
+                  </td>
+                  <td style="padding-left:14px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:#2a2420;">DSLR Camera Settings</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">ISO, aperture, shutter speed, and white balance — tuned to the exact light conditions of the day.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 3 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td style="width:36px;vertical-align:top;padding-top:2px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#FDF5EE" style="width:32px;height:32px;border:1px solid #E8D5C0;text-align:center;line-height:32px;font-size:15px;">📱</td></tr></table>
+                  </td>
+                  <td style="padding-left:14px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:#2a2420;">Mobile Photography Tips</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Get stunning sunrise shots with just your phone. Composition, exposure, and editing tips for the day's conditions.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 4 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px;">
+                <tr>
+                  <td style="width:36px;vertical-align:top;padding-top:2px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#FDF5EE" style="width:32px;height:32px;border:1px solid #E8D5C0;text-align:center;line-height:32px;font-size:15px;">🔔</td></tr></table>
+                  </td>
+                  <td style="padding-left:14px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:#2a2420;">Priority Sunrise Alerts</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">When a morning scores 70+, you'll be the first to know. Never miss a spectacular sunrise again.</p>
+                  </td>
+                </tr>
+              </table>
+
+            </td></tr>
+          </table>
+
+          <!-- Divider -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:28px 40px;">
+              <div style="height:1px;background-color:#E8DDD0;"></div>
+            </td></tr>
+          </table>
+
+          <!-- Mission callout -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td bgcolor="#FDF5EE" style="border:1px solid #E8D5C0;padding:22px 24px;text-align:center;">
+                  <p style="margin:0 0 10px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:600;color:#2a2420;">Your support makes a difference</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Starting with Chennai's beaches, expanding to the coastlines across India. Your support helps us get there.</p>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+        </td></tr>
+
+        <!-- ═══ FOOTER ═══ -->
+        <tr><td bgcolor="#F0E8DE" style="padding:28px 40px;text-align:center;border-top:1px solid #E0D5C8;">
+
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Made with ☀️ in Chennai</p>
+          <p style="margin:0 0 10px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#a09888;">You're on the Premium ${planDisplay} plan.</p>
+          <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
+            <a href="${APP_URL}" style="color:#C4733A;text-decoration:none;">Visit Website</a>
+          </p>
+
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+    };
+
+    const info = await sendEmail(mailOptions);
+    console.log(`✅ Premium welcome email sent to ${userEmail} via ${EMAIL_PROVIDER}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Premium welcome email error:', error.message);
+    throw error;
+  }
+}
+
+module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendEveningPreviewEmail, sendSpecialAlertEmail, sendPremiumWelcomeEmail, sendTestEmail };
