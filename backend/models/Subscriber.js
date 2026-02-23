@@ -35,8 +35,7 @@ const subscriberSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for faster queries
-subscriberSchema.index({ email: 1 });
+// Index for faster queries (email index already created by unique:true)
 subscriberSchema.index({ isActive: 1 });
 
 module.exports = mongoose.model('Subscriber', subscriberSchema);

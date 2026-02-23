@@ -954,4 +954,61 @@ async function sendTestEmail(toEmail) {
   return { success: true, messageId: info.messageId, provider: EMAIL_PROVIDER };
 }
 
-module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendEveningPreviewEmail, sendTestEmail };
+/**
+ * Send special 70+ score alert email (premium only)
+ * Distinct design — gold/amber urgency, short and punchy
+ */
+async function sendSpecialAlertEmail(toEmail, bestBeach, allHotBeaches) {
+  const unsubscribeUrl = `${API_URL}/unsubscribe?email=${encodeURIComponent(toEmail)}`;
+
+  const otherBeaches = allHotBeaches.filter(b => b.beachKey !== bestBeach.beachKey);
+  const othersLine = otherBeaches.length > 0
+    ? `<p style="margin:0 0 8px;font-size:13px;color:#6a6a6a;">Also scoring 70+: ${otherBeaches.map(b => `${b.beachName} (${b.score})`).join(', ')}</p>`
+    : '';
+
+  const mailOptions = {
+    from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
+    to: toEmail,
+    subject: `🔥 ${bestBeach.score}/100 — ${bestBeach.beachName} tomorrow`,
+    headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>` },
+    text: `Tomorrow's sunrise at ${bestBeach.beachName} is scoring ${bestBeach.score}/100 — ${bestBeach.verdict}. This is a special alert for mornings worth the alarm. Full forecast at 4 AM.`,
+    html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#faf8f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 16px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;border:1px solid #e8e0d4;overflow:hidden;">
+      <!-- Amber header band -->
+      <tr><td style="background:linear-gradient(135deg,#c4733a,#d4924a);padding:20px 24px;text-align:center;">
+        <p style="margin:0 0 4px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.8);font-weight:600;">SPECIAL ALERT</p>
+        <p style="margin:0;font-size:42px;font-weight:700;color:#fff;">${bestBeach.score}</p>
+        <p style="margin:4px 0 0;font-size:14px;color:rgba(255,255,255,0.9);font-weight:500;">${bestBeach.verdict}</p>
+      </td></tr>
+
+      <!-- Body -->
+      <tr><td style="padding:24px;">
+        <p style="margin:0 0 6px;font-size:18px;font-weight:600;color:#1a1a1a;">${bestBeach.beachName}</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#4a4a4a;line-height:1.6;">
+          Tomorrow morning is looking exceptional. This is the kind of sunrise worth setting the alarm for.
+        </p>
+        ${othersLine}
+        <p style="margin:16px 0 0;font-size:12px;color:#999;line-height:1.5;">
+          Full forecast with conditions breakdown arrives at 4:00 AM IST.
+        </p>
+      </td></tr>
+
+      <!-- Footer -->
+      <tr><td style="padding:16px 24px;border-top:1px solid #f0ece6;text-align:center;">
+        <p style="margin:0;font-size:11px;color:#999;">
+          Premium alert from <a href="${APP_URL}" style="color:#c4733a;text-decoration:none;">Seaside Beacon</a>
+          &nbsp;·&nbsp;
+          <a href="${unsubscribeUrl}" style="color:#999;text-decoration:underline;">Unsubscribe</a>
+        </p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`
+  };
+
+  return sendEmail(mailOptions);
+}
+
+module.exports = { sendWelcomeEmail, sendDailyPredictionEmail, sendEveningPreviewEmail, sendSpecialAlertEmail, sendTestEmail };

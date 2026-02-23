@@ -47,8 +47,8 @@ router.post('/sunrise-submission', (req, res, next) => {
 
     const { beach, date, name } = req.body;
 
-    if (!beach || !date) {
-      return res.status(400).json({ success: false, message: 'Beach and date are required.' });
+    if (!beach || !date || !name) {
+      return res.status(400).json({ success: false, message: 'Beach, date, and name are required.' });
     }
 
     // Upload to Cloudinary via buffer
@@ -97,20 +97,22 @@ router.post('/sunrise-submission', (req, res, next) => {
 // ─────────────────────────────────────────────
 router.post('/feedback', async (req, res) => {
   try {
-    const { rating, comment, beach } = req.body;
+    const { rating, comment, beach, name, date } = req.body;
 
-    if (!rating || !beach) {
-      return res.status(400).json({ success: false, message: 'Rating and beach are required.' });
+    if (!rating || !beach || !name || !date || !comment) {
+      return res.status(400).json({ success: false, message: 'All fields are required: name, date, rating, comment, and beach.' });
     }
 
     const feedback = await Feedback.create({
       rating,
-      comment: comment || '',
-      beach
+      comment,
+      beach,
+      userName: name,
+      visitDate: date
     });
 
-    console.log(`💬 New feedback: ${feedback.rating} for ${feedback.beachName}${comment ? ' — "' + comment.substring(0, 50) + '"' : ''}`);
-    notifyNewFeedback(rating, comment, beach);
+    console.log(`💬 New feedback: ${feedback.rating} for ${feedback.beachName}${name ? ` by ${name}` : ''}${date ? ` (${date})` : ''}${comment ? ' — "' + comment.substring(0, 50) + '"' : ''}`);
+    notifyNewFeedback(rating, comment, beach, name, date);
 
     res.json({
       success: true,

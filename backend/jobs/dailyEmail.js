@@ -1,16 +1,19 @@
 // ==========================================
-// Email Jobs — Morning (4 AM) + Evening Preview (8:30 PM)
-// Morning: definitive forecast + stores daily scores + updates stats
-// Evening: simplified preview + persuasive 4 AM teaser
+// Email Jobs v2 — Premium-aware alert system
+// 4:00 AM  — Morning forecast (everyone; premium gets photography)
+// 7:00 PM  — Special 70+ alert (premium only)
+// 8:30 PM  — Evening preview (premium only)
 // ==========================================
 
 const cron = require('node-cron');
 const Subscriber = require('../models/Subscriber');
+const PremiumUser = require('../models/PremiumUser');
 const DailyScore = require('../models/DailyScore');
 const SiteStats = require('../models/SiteStats');
 const weatherService = require('../services/weatherService');
 const aiService = require('../services/aiService');
 const emailService = require('../services/emailService');
+const telegramService = require('../services/telegramService');
 
 const ALL_BEACHES = weatherService.getBeaches().map(b => b.key);
 
@@ -159,7 +162,9 @@ async function sendDailyPredictions() {
 
     // Step 4: Send emails to subscribers
     const subscribers = await Subscriber.find({ isActive: true });
-    console.log(`📧 Found ${subscribers.length} active subscribers`);
+    const premiumUsers = await PremiumUser.getActiveUsers();
+    const premiumEmails = new Set(premiumUsers.map(u => u.email));
+    console.log(`📧 Found ${subscribers.length} active subscribers (${premiumEmails.size} premium)`);
 
     // Group subscribers by beach to generate AI insights once per beach
     const insightsCache = {};
@@ -178,32 +183,42 @@ async function sendDailyPredictions() {
         // Attach beach name lookup for email template
         weatherData.allBeachNames = allBeachNames;
 
-        // Generate AI insights once per beach, cache for other subscribers on same beach
+        const isPremium = premiumEmails.has(subscriber.email);
+
+        // Generate AI insights once per beach (needed for premium emails)
         if (!insightsCache[beachKey]) {
           insightsCache[beachKey] = await aiService.generatePhotographyInsights(
             weatherData,
-            allWeatherData  // ← FIX: pass all beaches so AI generates beach comparison
+            allWeatherData
           );
         }
 
+        // Premium users get enhanced email with photography insights
+        // Free users get basic forecast only (no photography)
         await emailService.sendDailyPredictionEmail(
           subscriber.email,
           weatherData,
-          insightsCache[beachKey]
+          isPremium ? insightsCache[beachKey] : null,  // Photography gated
+          { isPremium }
         );
 
         subscriber.lastEmailSent = new Date();
         await subscriber.save();
 
         emailCount++;
-        console.log(`✅ Email sent to ${subscriber.email}`);
+        console.log(`✅ Email sent to ${subscriber.email}${isPremium ? ' (premium)' : ''}`);
       } catch (error) {
         console.error(`❌ Error for ${subscriber.email}:`, error.message);
         continue;
       }
     }
 
-    // Step 5: Update site stats
+    // Step 5: Send Telegram alerts to premium users (non-blocking)
+    telegramService.sendDailyTelegramAlerts(allWeatherData).catch(err => {
+      console.error('❌ Telegram daily alerts failed:', err.message);
+    });
+
+    // Step 6: Update site stats
     await SiteStats.recordDailyRun(beachCount, emailCount);
     console.log(`📈 Stats updated: +${beachCount} forecasts, +${emailCount} emails`);
 
@@ -240,20 +255,25 @@ async function sendEveningPreviews() {
     const allBeachNames = {};
     beachList.forEach(b => { allBeachNames[b.key] = b.name; });
 
-    // Step 3: Send previews to subscribers
-    const subscribers = await Subscriber.find({ isActive: true });
-    console.log(`📧 Found ${subscribers.length} active subscribers for evening preview`);
+    // Step 3: Send previews to PREMIUM subscribers only
+    const premiumUsers = await PremiumUser.getActiveUsers();
+    console.log(`📧 Found ${premiumUsers.length} active premium users for evening preview`);
+
+    if (premiumUsers.length === 0) {
+      console.log('⏰ No premium users — skipping evening preview');
+      return;
+    }
 
     const insightsCache = {};
     let emailCount = 0;
 
-    for (const subscriber of subscribers) {
+    for (const premiumUser of premiumUsers) {
       try {
-        const beachKey = subscriber.preferredBeach;
+        const beachKey = premiumUser.preferredBeach || 'marina';
         const weatherData = allWeatherData[beachKey];
 
         if (!weatherData) {
-          console.log(`⏰ Skipping ${subscriber.email} — no weather data for ${beachKey}`);
+          console.log(`⏰ Skipping ${premiumUser.email} — no weather data for ${beachKey}`);
           continue;
         }
 
@@ -268,22 +288,27 @@ async function sendEveningPreviews() {
         }
 
         await emailService.sendEveningPreviewEmail(
-          subscriber.email,
+          premiumUser.email,
           weatherData,
           insightsCache[beachKey]
         );
 
         emailCount++;
-        console.log(`✅ Evening preview sent to ${subscriber.email}`);
+        console.log(`✅ Evening preview sent to ${premiumUser.email} (premium)`);
       } catch (error) {
-        console.error(`❌ Evening preview error for ${subscriber.email}:`, error.message);
+        console.error(`❌ Evening preview error for ${premiumUser.email}:`, error.message);
         continue;
       }
     }
 
-    // Update site stats (count evening emails too)
-    await SiteStats.recordDailyRun(0, emailCount);  // 0 forecasts (already stored), just email count
-    console.log(`📊 Evening preview: ${emailCount} emails sent`);
+    // Send evening Telegram alerts (non-blocking)
+    telegramService.sendDailyTelegramAlerts(allWeatherData).catch(err => {
+      console.error('❌ Telegram evening alerts failed:', err.message);
+    });
+
+    // Update site stats
+    await SiteStats.recordDailyRun(0, emailCount);
+    console.log(`📊 Evening preview: ${emailCount} emails sent (premium only)`);
     console.log('✅ Evening preview job completed\n');
   } catch (error) {
     console.error('❌ Evening preview job failed:', error.message);
@@ -291,9 +316,77 @@ async function sendEveningPreviews() {
 }
 
 /**
- * Initialize both email cron jobs:
- * - 4:00 AM IST: Definitive morning forecast (stores scores + sends emails)
- * - 8:30 PM IST: Evening preview (sends simplified preview emails)
+ * Send special 70+ score alert at 7 PM IST (premium only)
+ * Only triggers if ANY beach scores 70+ tomorrow
+ */
+async function sendSpecialAlert() {
+  try {
+    console.log('\n🔔 Checking for 70+ special alert...');
+
+    const allWeatherData = await fetchAllBeachWeather();
+    const availableBeaches = Object.keys(allWeatherData);
+
+    if (availableBeaches.length === 0) {
+      console.log('⚠️  No weather data — skipping special alert');
+      return;
+    }
+
+    // Find beaches scoring 70+
+    const hotBeaches = [];
+    for (const [beachKey, data] of Object.entries(allWeatherData)) {
+      if (data.prediction?.score >= 70) {
+        hotBeaches.push({
+          beachKey,
+          beachName: data.beach,
+          score: data.prediction.score,
+          verdict: data.prediction.verdict
+        });
+      }
+    }
+
+    if (hotBeaches.length === 0) {
+      console.log('📊 No beaches scoring 70+ — no special alert needed');
+      return;
+    }
+
+    console.log(`🔥 ${hotBeaches.length} beach(es) scoring 70+: ${hotBeaches.map(b => `${b.beachName} (${b.score})`).join(', ')}`);
+
+    // Send to premium users only
+    const premiumUsers = await PremiumUser.getActiveUsers();
+    if (premiumUsers.length === 0) {
+      console.log('⏰ No premium users — skipping special alert');
+      return;
+    }
+
+    let emailCount = 0;
+    const bestBeach = hotBeaches.sort((a, b) => b.score - a.score)[0];
+
+    for (const user of premiumUsers) {
+      try {
+        await emailService.sendSpecialAlertEmail(user.email, bestBeach, hotBeaches);
+        emailCount++;
+        console.log(`✅ Special alert sent to ${user.email}`);
+      } catch (err) {
+        console.error(`❌ Special alert error for ${user.email}:`, err.message);
+      }
+    }
+
+    console.log(`🔔 Special 70+ alert: ${emailCount} emails sent`);
+
+    // Also send via Telegram
+    telegramService.sendSpecialTelegramAlert(bestBeach, hotBeaches).catch(err => {
+      console.error('❌ Telegram special alert failed:', err.message);
+    });
+  } catch (error) {
+    console.error('❌ Special alert job failed:', error.message);
+  }
+}
+
+/**
+ * Initialize all email cron jobs:
+ * - 4:00 AM IST: Morning forecast (everyone; premium gets photography)
+ * - 7:00 PM IST: Special 70+ alert (premium only)
+ * - 8:30 PM IST: Evening preview (premium only)
  */
 function initializeEmailJobs() {
   const TZ = { timezone: process.env.TIMEZONE || 'Asia/Kolkata' };
@@ -304,13 +397,17 @@ function initializeEmailJobs() {
   cron.schedule(`${dailyMin} ${dailyHour} * * *`, sendDailyPredictions, TZ);
   console.log(`📅 Scheduled morning forecast emails at ${DAILY_EMAIL_TIME} IST`);
 
-  // Evening preview
+  // Special 70+ alert at 7 PM (premium only)
+  cron.schedule('0 19 * * *', sendSpecialAlert, TZ);
+  console.log(`🔔 Scheduled special 70+ alert at 19:00 IST (premium only)`);
+
+  // Evening preview at 8:30 PM (premium only)
   const EVENING_TIME = process.env.EVENING_PREVIEW_TIME || '20:30';
   const [eveningHour, eveningMin] = EVENING_TIME.split(':');
   cron.schedule(`${eveningMin} ${eveningHour} * * *`, sendEveningPreviews, TZ);
-  console.log(`🌙 Scheduled evening preview emails at ${EVENING_TIME} IST`);
+  console.log(`🌙 Scheduled evening preview emails at ${EVENING_TIME} IST (premium only)`);
 
-  console.log(`✅ Both email jobs initialized successfully`);
+  console.log(`✅ All email jobs initialized successfully`);
 }
 
 // Keep old name as alias for backward compatibility
@@ -321,5 +418,6 @@ module.exports = {
   initializeEmailJobs,
   sendDailyPredictions,
   sendEveningPreviews,
+  sendSpecialAlert,
   storeDailyScores
 };

@@ -246,7 +246,7 @@ async function sendDailyDigest() {
 // ══════════════════════════════════════════
 // Feedback alert (instant — rare)
 // ══════════════════════════════════════════
-function notifyNewFeedback(rating, comment, beach) {
+function notifyNewFeedback(rating, comment, beach, userName, visitDate) {
   const beachDisplay = BEACH_NAMES[beach] || beach;
   const ratingMap = { 'spot-on': '🎯 Spot-on', 'close': '👌 Close', 'missed': '😕 Missed' };
   const ratingDisplay = ratingMap[rating] || rating;
@@ -257,6 +257,8 @@ function notifyNewFeedback(rating, comment, beach) {
     <p style="font-size:28px;margin:0 0 6px 0;">💬</p>
     <h2 style="color:#1a1a1a;margin:0 0 14px 0;font-size:18px;">New Feedback!</h2>
     <div style="background:#f9f9f9;border-radius:8px;padding:14px;margin:0 0 16px 0;">
+      ${userName ? `<p style="margin:0 0 5px 0;font-size:13px;"><strong>From:</strong> ${userName}</p>` : ''}
+      ${visitDate ? `<p style="margin:0 0 5px 0;font-size:13px;"><strong>Visit date:</strong> ${visitDate}</p>` : ''}
       <p style="margin:0 0 5px 0;font-size:13px;"><strong>Rating:</strong> ${ratingDisplay}</p>
       <p style="margin:0 0 5px 0;font-size:13px;"><strong>Beach:</strong> ${beachDisplay}</p>
       ${comment ? `<p style="margin:0;font-size:13px;"><strong>Comment:</strong> "${comment}"</p>` : '<p style="margin:0;font-size:13px;color:#999;">No comment.</p>'}
@@ -265,8 +267,8 @@ function notifyNewFeedback(rating, comment, beach) {
   </div>
 </body></html>`;
 
-  sendAdminEmail(`💬 ${ratingDisplay} — ${beachDisplay}`, html,
-    `Feedback: ${rating} for ${beachDisplay}${comment ? ' — "' + comment + '"' : ''}`);
+  sendAdminEmail(`💬 ${ratingDisplay} — ${beachDisplay}${userName ? ` by ${userName}` : ''}`, html,
+    `Feedback: ${rating} for ${beachDisplay}${userName ? ` by ${userName}` : ''}${comment ? ' — "' + comment + '"' : ''}`);
 }
 
 // ══════════════════════════════════════════

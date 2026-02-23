@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   initMetrics();
   initCinemaMode();
+  initPremium();
 });
 
 // ═════════════════════════════════════════════════════
@@ -1260,9 +1261,16 @@ async function handlePredict() {
   state.loading = true;
   setLoadingState(true);
 
-  // Run API fetch and pipeline animation in parallel
-  // Results only render after BOTH are done (minimum 5s visual)
-  const pipelinePromise = runPipeline();
+  const startTime = Date.now();
+  const MIN_DURATION = 5000; // minimum 5s visual
+
+  // Start pipeline — advances steps 0-2, then waits for data
+  advancePipeline(0, 'Connecting to forecast engine…');
+  state._pipeTimeouts = [
+    setTimeout(() => advancePipeline(1, 'Reading atmospheric data…'), 800),
+    setTimeout(() => advancePipeline(2, 'Analysing cloud, humidity & visibility…'), 1800),
+  ];
+
   let data, error;
 
   try {
@@ -1271,8 +1279,20 @@ async function handlePredict() {
     error = err;
   }
 
-  // Wait for pipeline to finish its full animation
-  await pipelinePromise;
+  // Data arrived — advance to step 3
+  advancePipeline(3, 'Generating sunrise insights…');
+
+  // Ensure minimum duration has elapsed
+  const elapsed = Date.now() - startTime;
+  const remaining = Math.max(MIN_DURATION - elapsed, 600);
+
+  // Wait a beat then advance to final step
+  await new Promise(r => {
+    state._pipeTimeouts.push(
+      setTimeout(() => { advancePipeline(4, 'Preparing your forecast…'); }, remaining - 500),
+      setTimeout(r, remaining)
+    );
+  });
 
   if (error) {
     showToast(error.message||'Unable to fetch — please try again');
@@ -1337,28 +1357,7 @@ function setLoadingState(on) {
   }
 }
 
-/**
- * Runs the 5-step pipeline animation over exactly 5 seconds.
- * Returns a promise that resolves when "Done" has displayed.
- */
-function runPipeline() {
-  return new Promise(resolve => {
-    const steps = [
-      { at: 0,    step: 0, status: 'Connecting to forecast engine…' },
-      { at: 1000, step: 1, status: 'Reading atmospheric data…' },
-      { at: 2200, step: 2, status: 'Analysing cloud, humidity & visibility…' },
-      { at: 3500, step: 3, status: 'Generating sunrise insights…' },
-      { at: 4600, step: 4, status: 'Preparing your forecast…' },
-    ];
-
-    state._pipeTimeouts = steps.map(s =>
-      setTimeout(() => advancePipeline(s.step, s.status), s.at)
-    );
-
-    // Resolve after full animation completes (5s total)
-    state._pipeTimeouts.push(setTimeout(resolve, 5200));
-  });
-}
+/* Pipeline is now driven dynamically by handlePredict() — no fixed-timer function needed */
 
 function advancePipeline(stepIndex, statusText) {
   // Mark all previous steps as done
@@ -1577,8 +1576,14 @@ function renderAnalysisPanel(f,pred,p,beachName) {
   document.getElementById('deepSubtitle').textContent = `For ${beachName} · ${morningLabel}`;
   show('deepPanel');
   renderConditionsTab(f,pred,p);
-  renderDSLRTab(p);
-  renderMobileTab(p);
+  // Only render premium photography tabs if user is premium — otherwise show locked placeholder
+  if (document.body.classList.contains('is-premium')) {
+    renderDSLRTab(p);
+    renderMobileTab(p);
+  } else {
+    renderLockedTab('dslr', 'DSLR camera settings, pro tips, and composition guidance — personalised to this morning\'s conditions.');
+    renderLockedTab('mobile', 'Mobile camera settings, editing presets, and shooting tips — tuned to today\'s light.');
+  }
   renderCompositionTab(p);
 }
 
@@ -1771,14 +1776,64 @@ function renderCompositionTab(p) {
 // TABS
 // ─────────────────────────────────────────────
 function initTabs() {
+  const PREMIUM_TABS = ['dslr', 'mobile'];
+
   document.querySelectorAll('.ap-tab').forEach(tab=>{
     tab.addEventListener('click', ()=>{
+      const tabId = tab.dataset.tab;
+
+      // Gate premium tabs for non-premium users
+      if (PREMIUM_TABS.includes(tabId) && !document.body.classList.contains('is-premium')) {
+        showPhotographyPaywall(tabId);
+        return;
+      }
+
       document.querySelectorAll('.ap-tab').forEach(t=>t.classList.remove('active'));
       document.querySelectorAll('.ap-pane').forEach(p=>p.classList.remove('active'));
       tab.classList.add('active');
-      document.getElementById(`tab-${tab.dataset.tab}`)?.classList.add('active');
+      document.getElementById(`tab-${tabId}`)?.classList.add('active');
     });
   });
+
+  // Add lock icons to premium tabs
+  PREMIUM_TABS.forEach(tabId => {
+    const tab = document.querySelector(`.ap-tab[data-tab="${tabId}"]`);
+    if (tab && !tab.querySelector('.tab-lock')) {
+      const lock = document.createElement('span');
+      lock.className = 'tab-lock';
+      lock.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+      tab.appendChild(lock);
+    }
+  });
+}
+
+// Replaces tab content entirely with a locked placeholder — no actual data in DOM
+function renderLockedTab(tabId, description) {
+  const pane = document.getElementById(`tab-${tabId}`);
+  if (!pane) return;
+  pane.innerHTML = `
+    <div class="photo-locked-placeholder">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <p class="locked-title">Premium feature</p>
+      <p class="locked-desc">${description}</p>
+      <button class="paywall-btn" onclick="openPremiumModal('pricing')">
+        Unlock for ₹49/mo
+      </button>
+    </div>`;
+}
+
+function showPhotographyPaywall(tabId) {
+  const pane = document.getElementById(`tab-${tabId}`);
+  if (!pane) return;
+
+  // Switch to the pane
+  document.querySelectorAll('.ap-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ap-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.ap-tab[data-tab="${tabId}"]`)?.classList.add('active');
+  pane.classList.add('active');
 }
 
 // ─────────────────────────────────────────────
@@ -1959,6 +2014,10 @@ function showMsg(id,msg,ok) {
 // COMMUNITY — PHOTO UPLOAD + FEEDBACK
 // ─────────────────────────────────────────────
 function initCommunity() {
+  // Default feedback date to today
+  const fbDateInput = document.getElementById('feedbackDate');
+  if (fbDateInput) fbDateInput.value = new Date().toISOString().split('T')[0];
+
   // Photo upload preview
   const fileInput = document.getElementById('photoFile');
   const uploadArea = document.getElementById('photoUploadArea');
@@ -1994,6 +2053,8 @@ function initCommunity() {
     e.preventDefault();
     const file = document.getElementById('photoFile').files[0];
     if (!file) { showMsg('photoMessage', 'Please select a photo.', false); return; }
+    if (!document.getElementById('photoDate').value) { showMsg('photoMessage', 'Please select the date.', false); return; }
+    if (!document.getElementById('photoName').value.trim()) { showMsg('photoMessage', 'Please enter your name.', false); return; }
 
     const btn = document.getElementById('photoSubmitBtn');
     const orig = btn.innerHTML;
@@ -2034,8 +2095,15 @@ function initCommunity() {
   // Feedback form submit
   document.getElementById('feedbackForm')?.addEventListener('submit', async e => {
     e.preventDefault();
+    const feedbackName = document.getElementById('feedbackName')?.value.trim();
+    const feedbackDateVal = document.getElementById('feedbackDate')?.value;
     const rating = document.querySelector('input[name="rating"]:checked');
+    const comment = document.getElementById('feedbackComment')?.value.trim();
+
+    if (!feedbackName) { showMsg('feedbackMessage', 'Please enter your name.', false); return; }
+    if (!feedbackDateVal) { showMsg('feedbackMessage', 'Please select the date you went.', false); return; }
     if (!rating) { showMsg('feedbackMessage', 'Please select a rating.', false); return; }
+    if (!comment) { showMsg('feedbackMessage', 'Please describe what the sky looked like.', false); return; }
 
     const btn = document.getElementById('feedbackSubmitBtn');
     const orig = btn.innerHTML;
@@ -2048,7 +2116,9 @@ function initCommunity() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rating: rating.value,
-          comment: document.getElementById('feedbackComment').value.trim(),
+          name: feedbackName,
+          date: feedbackDateVal,
+          comment,
           beach: document.getElementById('feedbackBeach').value
         })
       });
@@ -2301,5 +2371,471 @@ function initCinemaMode() {
       document.body.classList.remove('cinema-mode');
       label.textContent = 'Cinema';
     }
+  });
+}
+
+
+// ═════════════════════════════════════════════════════
+// PREMIUM — Auth + Razorpay Checkout
+// ═════════════════════════════════════════════════════
+
+const premiumState = {
+  authToken: localStorage.getItem('sb_auth_token') || null,
+  user: null,      // { email, plan, status, isActive, ... }
+  plans: null      // { monthly: {...}, annual: {...}, key: '...' }
+};
+
+// ─── Auth helpers ───
+
+function savePremiumAuth(token) {
+  premiumState.authToken = token;
+  localStorage.setItem('sb_auth_token', token);
+}
+
+function clearPremiumAuth() {
+  premiumState.authToken = null;
+  premiumState.user = null;
+  localStorage.removeItem('sb_auth_token');
+}
+
+// Check URL for auth token (from magic link redirect)
+function checkAuthRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('authToken');
+  if (token) {
+    savePremiumAuth(token);
+    // Clean URL without reload
+    const clean = window.location.pathname + window.location.hash;
+    window.history.replaceState({}, '', clean);
+    // Fetch user info + show welcome toast
+    fetchPremiumUser().then(user => {
+      if (user) {
+        showToast(user.isActive ? 'Welcome back! Premium is active.' : 'Signed in successfully.');
+      }
+    });
+  } else if (premiumState.authToken) {
+    // Existing session — validate it
+    fetchPremiumUser();
+  }
+}
+
+async function fetchPremiumUser() {
+  if (!premiumState.authToken) return null;
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/auth/me`, {
+      headers: { 'x-auth-token': premiumState.authToken }
+    });
+    if (!res.ok) {
+      if (res.status === 401) clearPremiumAuth();
+      return null;
+    }
+    const d = await res.json();
+    if (d.success) {
+      premiumState.user = d.user;
+      updatePremiumUI();
+      return d.user;
+    }
+  } catch (e) {
+    console.warn('Premium auth check failed:', e.message);
+  }
+  return null;
+}
+
+async function requestMagicLink(email) {
+  const res = await fetch(`${CONFIG.API_URL}/auth/magic-link`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  return res.json();
+}
+
+async function logoutPremium() {
+  if (!premiumState.authToken) return;
+  try {
+    await fetch(`${CONFIG.API_URL}/auth/logout`, {
+      method: 'POST',
+      headers: { 'x-auth-token': premiumState.authToken }
+    });
+  } catch (e) { /* silent */ }
+  clearPremiumAuth();
+  updatePremiumUI();
+}
+
+// ─── Plan fetching ───
+
+async function fetchPlans() {
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/payment/plans`);
+    const d = await res.json();
+    if (d.success) {
+      premiumState.plans = { ...d.plans, key: d.key };
+    }
+  } catch (e) {
+    console.warn('Failed to fetch plans:', e.message);
+  }
+}
+
+// ─── Razorpay Checkout ───
+
+async function startPremiumCheckout(planType) {
+  // planType: 'monthly' or 'annual'
+  if (!premiumState.authToken) {
+    // Not logged in — prompt login first
+    openPremiumLogin(() => startPremiumCheckout(planType));
+    return;
+  }
+
+  if (!premiumState.plans) await fetchPlans();
+  if (!premiumState.plans) {
+    alert('Unable to load plans. Please try again.');
+    return;
+  }
+
+  try {
+    // Create subscription on backend
+    const res = await fetch(`${CONFIG.API_URL}/payment/create-subscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': premiumState.authToken
+      },
+      body: JSON.stringify({ plan: planType })
+    });
+
+    const d = await res.json();
+    if (!d.success) {
+      if (d.message?.includes('already have')) {
+        alert('You already have an active subscription!');
+      } else {
+        alert(d.message || 'Something went wrong.');
+      }
+      return;
+    }
+
+    // Open Razorpay Checkout
+    const options = {
+      key: d.key,
+      subscription_id: d.subscriptionId,
+      name: 'Seaside Beacon',
+      description: d.plan,
+      image: 'https://www.seasidebeacon.com/favicon.svg',
+      handler: function (response) {
+        // Payment successful
+        onPaymentSuccess(response, planType);
+      },
+      prefill: {
+        email: premiumState.user?.email || ''
+      },
+      theme: {
+        color: '#c4733a'
+      },
+      modal: {
+        ondismiss: function () {
+          console.log('Razorpay checkout closed');
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.on('payment.failed', function (response) {
+      console.error('Payment failed:', response.error);
+      alert('Payment failed. Please try again.');
+    });
+    rzp.open();
+
+  } catch (e) {
+    console.error('Checkout error:', e);
+    alert('Something went wrong. Please try again.');
+  }
+}
+
+function onPaymentSuccess(response, planType) {
+  // Razorpay has confirmed payment — webhook will activate subscription
+  // Show success UI immediately (optimistic)
+  localStorage.setItem('sb_premium', '1');
+  document.body.classList.add('is-premium');
+
+  // Refresh user state after a short delay (webhook needs a moment)
+  setTimeout(async () => {
+    await fetchPremiumUser();
+    // If premium modal happens to be open, refresh the account panel
+    const pmModal = document.getElementById('premiumModal');
+    if (pmModal?.classList.contains('active')) {
+      showPmState('pmAccount');
+      populateAccountPanel();
+    }
+  }, 2000);
+
+  // Show a nice toast instead of alert
+  showToast('Welcome to Seaside Beacon Premium!');
+}
+
+// ─── Premium Modal ───
+
+function openPremiumModal(startState) {
+  const modal = document.getElementById('premiumModal');
+  if (!modal) return;
+
+  // Decide which state to show
+  if (premiumState.user && premiumState.user.isActive) {
+    showPmState('pmAccount');
+    populateAccountPanel();
+  } else if (startState === 'pricing') {
+    showPmState('pmPricing');
+  } else {
+    showPmState('pmLogin');
+  }
+
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+
+  // Focus email input if showing login
+  if (!premiumState.user) {
+    setTimeout(() => document.getElementById('premiumEmailInput')?.focus(), 100);
+  }
+}
+
+function closePremiumModal() {
+  const modal = document.getElementById('premiumModal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.setAttribute('aria-hidden', 'true');
+  // Reset login form
+  const form = document.getElementById('premiumLoginForm');
+  if (form) form.reset();
+  showMsg('premiumLoginMessage', '', true);
+}
+
+function showPmState(stateId) {
+  document.querySelectorAll('.pm-state').forEach(el => el.classList.add('hidden'));
+  const target = document.getElementById(stateId);
+  if (target) target.classList.remove('hidden');
+}
+
+function populateAccountPanel() {
+  const user = premiumState.user;
+  if (!user) return;
+
+  const initial = (user.email || '?')[0].toUpperCase();
+  const avatar = document.getElementById('pmAvatar');
+  if (avatar) avatar.textContent = initial;
+
+  const emailEl = document.getElementById('pmAccountEmail');
+  if (emailEl) emailEl.textContent = user.email;
+
+  const planEl = document.getElementById('pmAccountPlan');
+  if (planEl) planEl.textContent = user.plan === 'annual' ? 'Annual Premium' : 'Monthly Premium';
+
+  const statusEl = document.getElementById('pmAccountStatus');
+  if (statusEl) {
+    statusEl.textContent = user.isActive ? 'Active' : (user.status || 'Inactive');
+    statusEl.style.background = user.isActive ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
+    statusEl.style.color = user.isActive ? '#22c55e' : '#ef4444';
+  }
+
+  const beachNames = { marina:'Marina Beach', elliot:"Elliot's Beach", covelong:'Covelong Beach', thiruvanmiyur:'Thiruvanmiyur Beach' };
+  const beachEl = document.getElementById('pmAccountBeach');
+  if (beachEl) beachEl.textContent = beachNames[user.preferredBeach] || user.preferredBeach || 'Marina Beach';
+
+  const renewEl = document.getElementById('pmAccountRenews');
+  if (renewEl) {
+    if (user.currentPeriodEnd) {
+      renewEl.textContent = new Date(user.currentPeriodEnd).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+    } else {
+      renewEl.textContent = '—';
+    }
+  }
+
+  // Telegram button text
+  const tgBtn = document.getElementById('pmManageTelegram');
+  if (tgBtn) {
+    tgBtn.innerHTML = user.telegramChatId
+      ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Telegram Connected'
+      : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Link Telegram';
+  }
+}
+
+// Keep backward compat for paywall buttons
+function openPremiumLogin(onSuccessCallback) {
+  window._premiumAuthCallback = onSuccessCallback || null;
+  openPremiumModal('login');
+}
+
+// ─── Premium UI Updates ───
+
+function updatePremiumUI() {
+  const user = premiumState.user;
+  const isPremium = user && user.isActive;
+
+  // Toggle body class for CSS-level premium gating
+  document.body.classList.toggle('is-premium', !!isPremium);
+
+  // Update any "Go Premium" buttons on paywall
+  document.querySelectorAll('[data-premium-action]').forEach(btn => {
+    if (isPremium) {
+      btn.textContent = 'Premium Active';
+      btn.disabled = true;
+      btn.classList.add('premium-active');
+    }
+  });
+
+  // Update nav premium button text
+  const navText = document.getElementById('navPremiumText');
+  const drawerText = document.getElementById('drawerPremiumText');
+  const navBtn = document.getElementById('navPremiumBtn');
+
+  if (isPremium) {
+    if (navText) navText.textContent = user.email?.split('@')[0] || 'Account';
+    if (drawerText) drawerText.textContent = 'My Account';
+    if (navBtn) navBtn.classList.add('premium-active');
+  } else if (user && !user.isActive) {
+    // Logged in but not premium (cancelled/expired)
+    if (navText) navText.textContent = 'Go Premium';
+    if (drawerText) drawerText.textContent = 'Go Premium';
+    if (navBtn) navBtn.classList.remove('premium-active');
+  } else {
+    // Not logged in
+    if (navText) navText.textContent = 'Premium';
+    if (drawerText) drawerText.textContent = 'Premium';
+    if (navBtn) navBtn.classList.remove('premium-active');
+  }
+}
+
+// ─── Cancel subscription ───
+
+async function cancelPremium() {
+  if (!premiumState.authToken) return;
+  if (!confirm('Cancel your premium subscription? You\'ll keep access until the current billing period ends.')) return;
+
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/payment/cancel`, {
+      method: 'POST',
+      headers: { 'x-auth-token': premiumState.authToken }
+    });
+    const d = await res.json();
+    if (d.success) {
+      alert(d.message);
+      await fetchPremiumUser();
+    } else {
+      alert(d.message || 'Failed to cancel.');
+    }
+  } catch {
+    alert('Network error. Please try again.');
+  }
+}
+
+// ─── Init premium on page load ───
+
+function initPremium() {
+  checkAuthRedirect();
+  fetchPlans();
+
+  // Wire up any "Go Premium" buttons with data attributes (paywall)
+  document.querySelectorAll('[data-premium-action="checkout"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const plan = btn.dataset.premiumPlan || 'monthly';
+      startPremiumCheckout(plan);
+    });
+  });
+
+  // ─── Premium modal open/close ───
+  const premiumModal = document.getElementById('premiumModal');
+
+  // Nav premium buttons → open premium modal
+  document.getElementById('navPremiumBtn')?.addEventListener('click', () => openPremiumModal());
+  document.getElementById('drawerPremiumBtn')?.addEventListener('click', () => {
+    // Close drawer first
+    document.getElementById('navDrawer')?.classList.add('hidden');
+    document.getElementById('navHamburger')?.classList.remove('open');
+    openPremiumModal();
+  });
+
+  // Close premium modal
+  document.getElementById('closePremiumModal')?.addEventListener('click', closePremiumModal);
+  premiumModal?.addEventListener('click', e => { if (e.target === premiumModal) closePremiumModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && premiumModal?.classList.contains('active')) closePremiumModal(); });
+
+  // ─── Premium login form ───
+  document.getElementById('premiumLoginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('premiumEmailInput')?.value.trim();
+    if (!email) {
+      showMsg('premiumLoginMessage', 'Please enter your email.', false);
+      return;
+    }
+
+    const btn = document.getElementById('premiumLoginBtn');
+    const btnText = document.getElementById('premiumLoginText');
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.textContent = 'Sending...';
+
+    try {
+      const d = await requestMagicLink(email);
+      if (d.success) {
+        // Show "check inbox" state
+        document.getElementById('pmSentEmail').textContent = email;
+        showPmState('pmCheckInbox');
+        // Store email for resend
+        window._pmLastEmail = email;
+      } else {
+        showMsg('premiumLoginMessage', d.message || 'Something went wrong.', false);
+      }
+    } catch {
+      showMsg('premiumLoginMessage', 'Network error. Please try again.', false);
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = 'Send Magic Link';
+    }
+  });
+
+  // Resend magic link
+  document.getElementById('pmResend')?.addEventListener('click', async () => {
+    const email = window._pmLastEmail;
+    if (!email) return;
+    try {
+      const d = await requestMagicLink(email);
+      if (d.success) {
+        showPmState('pmCheckInbox');
+      }
+    } catch { /* silent */ }
+  });
+
+  // Navigate between login / pricing states
+  document.getElementById('pmGoToPricing')?.addEventListener('click', () => showPmState('pmPricing'));
+  document.getElementById('pmGoToLogin')?.addEventListener('click', () => showPmState('pmLogin'));
+
+  // Plan cards → start checkout
+  document.getElementById('pmPlanMonthly')?.addEventListener('click', () => {
+    closePremiumModal();
+    startPremiumCheckout('monthly');
+  });
+  document.getElementById('pmPlanAnnual')?.addEventListener('click', () => {
+    closePremiumModal();
+    startPremiumCheckout('annual');
+  });
+
+  // Account actions
+  document.getElementById('pmLogout')?.addEventListener('click', () => {
+    closePremiumModal();
+    logoutPremium();
+  });
+  document.getElementById('pmCancelSub')?.addEventListener('click', () => {
+    closePremiumModal();
+    cancelPremium();
+  });
+  document.getElementById('pmManageTelegram')?.addEventListener('click', () => {
+    // Show instructions for Telegram linking
+    const tgBotName = 'SeasideBeaconBot'; // User needs to set this up
+    alert(`To link Telegram:\n\n1. Open Telegram and search for @${tgBotName}\n2. Send: /start ${premiumState.user?.email || 'your@email.com'}\n3. You'll get a confirmation message.\n\nAfter linking, you'll receive forecast alerts directly on Telegram.`);
+  });
+
+  // ─── Upsell CTAs ───
+  document.getElementById('upsellGoPremium')?.addEventListener('click', () => {
+    closeModalFn();  // close subscribe modal
+    openPremiumModal('pricing');  // open premium modal on pricing state
+  });
+  document.getElementById('stripGoPremium')?.addEventListener('click', () => {
+    openPremiumModal('pricing');
   });
 }

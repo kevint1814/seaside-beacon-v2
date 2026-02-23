@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seaside Beacon — Premium Pitch Drafts</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --sky-zenith:    #04050f;
+    --sky-mid:       #0a0d1f;
+    --sky-violet:    #12112a;
+    --dawn-copper:   #c4733a;
+    --dawn-rose:     #8a3d5a;
+    --dawn-amber:    #d4924a;
+    --dawn-gold:     #c9a055;
+    --accent:        #c4733a;
+    --accent-bright: #d4924a;
+    --accent-glow:   rgba(196,115,58,0.22);
+    --glass-fill:      rgba(20,16,10,0.05);
+    --glass-fill-2:    rgba(20,16,10,0.07);
+    --glass-border:    rgba(255,255,255,0.08);
+    --glass-border-hi: rgba(255,255,255,0.16);
+    --specular:        rgba(255,255,255,0.18);
+    --t1: rgba(240,238,250,0.95);
+    --t2: rgba(210,205,235,0.62);
+    --t3: rgba(190,185,220,0.38);
+    --ff-display: 'Cormorant Garamond', Georgia, serif;
+    --ff-body:    'Instrument Sans', system-ui, sans-serif;
+    --r-md: 16px;
+    --r-lg: 22px;
+    --r-xl: 30px;
+    --blur-md:  blur(3px) saturate(1.25) brightness(1.22) contrast(1.08);
+    --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  body {
+    background: var(--sky-zenith);
+    color: var(--t1);
+    font-family: var(--ff-body);
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+
+  .draft-label {
+    font-family: var(--ff-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    padding: 6px 14px;
+    border: 1px solid rgba(196,115,58,0.3);
+    border-radius: 20px;
+    display: inline-block;
+  }
+
+  .draft-section {
+    max-width: 480px;
+    margin: 0 auto 80px;
+  }
+
+  /* ═══════════════════════════════════════
+     GLASS CARD BASE
+     ═══════════════════════════════════════ */
+  .glass {
+    background: var(--glass-fill-2);
+    backdrop-filter: var(--blur-md);
+    -webkit-backdrop-filter: var(--blur-md);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-xl);
+    position: relative;
+    overflow: hidden;
+  }
+  .glass::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 5%, var(--specular) 30%, rgba(140,180,255,0.07) 50%, rgba(200,140,255,0.055) 70%, transparent 95%);
+  }
+
+  /* ═══════════════════════════════════════
+     DRAFT A — "The Storyteller"
+     Narrative-first, emotional, editorial
+     ═══════════════════════════════════════ */
+  .draft-a {
+    padding: 36px 28px;
+  }
+  .draft-a .eyebrow {
+    font-family: var(--ff-body);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--dawn-amber);
+    margin-bottom: 16px;
+  }
+  .draft-a .headline {
+    font-family: var(--ff-display);
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--t1);
+    margin-bottom: 20px;
+  }
+  .draft-a .story {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--t2);
+    margin-bottom: 28px;
+  }
+  .draft-a .features {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .draft-a .feature-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(196,115,58,0.06);
+    border: 1px solid rgba(196,115,58,0.12);
+    border-radius: 12px;
+  }
+  .draft-a .feature-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 32px;
+    text-align: center;
+  }
+  .draft-a .feature-text {
+    font-size: 13px;
+    color: var(--t1);
+    font-weight: 500;
+  }
+  .draft-a .feature-sub {
+    font-size: 11px;
+    color: var(--t3);
+    margin-top: 2px;
+    font-weight: 400;
+  }
+  .draft-a .price-block {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .draft-a .price-main {
+    font-family: var(--ff-display);
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--t1);
+  }
+  .draft-a .price-main span {
+    font-size: 18px;
+    color: var(--t2);
+    font-weight: 400;
+  }
+  .draft-a .price-sub {
+    font-size: 12px;
+    color: var(--t3);
+    margin-top: 4px;
+  }
+  .draft-a .price-annual {
+    font-size: 13px;
+    color: var(--dawn-amber);
+    margin-top: 6px;
+  }
+  .cta-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 50px;
+    font-family: var(--ff-body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s var(--ease-spring);
+  }
+  .cta-primary {
+    background: linear-gradient(135deg, var(--dawn-copper), var(--dawn-amber));
+    color: #fff;
+  }
+  .cta-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(196,115,58,0.3);
+  }
+  .draft-a .closer {
+    font-size: 12px;
+    color: var(--t3);
+    text-align: center;
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+
+  /* ═══════════════════════════════════════
+     DRAFT B — "The Minimalist"
+     Clean, centered, Apple-like restraint
+     ═══════════════════════════════════════ */
+  .draft-b {
+    padding: 44px 28px;
+    text-align: center;
+  }
+  .draft-b .icon-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--dawn-copper), var(--dawn-amber));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 22px;
+  }
+  .draft-b .headline {
+    font-family: var(--ff-display);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--t1);
+    margin-bottom: 12px;
+  }
+  .draft-b .subtitle {
+    font-size: 14px;
+    color: var(--t2);
+    line-height: 1.6;
+    margin-bottom: 32px;
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .draft-b .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-border-hi), transparent);
+    margin: 0 40px 28px;
+  }
+  .draft-b .perks {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+    text-align: left;
+    padding: 0 8px;
+  }
+  .draft-b .perk {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .draft-b .perk-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--dawn-amber);
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+  .draft-b .perk-label {
+    font-size: 14px;
+    color: var(--t1);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .draft-b .price-row {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .draft-b .price-num {
+    font-family: var(--ff-display);
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--t1);
+  }
+  .draft-b .price-period {
+    font-size: 14px;
+    color: var(--t3);
+  }
+  .draft-b .price-chai {
+    font-size: 12px;
+    color: var(--dawn-amber);
+    margin-bottom: 6px;
+  }
+  .draft-b .price-annual-note {
+    font-size: 12px;
+    color: var(--t3);
+    margin-bottom: 24px;
+  }
+  .draft-b .closer {
+    font-size: 12px;
+    color: var(--t3);
+    margin-top: 16px;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* ═══════════════════════════════════════
+     DRAFT C — "The Split"
+     Story on left, features + price on right
+     (stacks on mobile)
+     ═══════════════════════════════════════ */
+  .draft-c {
+    padding: 0;
+    max-width: 480px;
+  }
+  .draft-c .top-section {
+    padding: 32px 28px 24px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .draft-c .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(196,115,58,0.12);
+    border: 1px solid rgba(196,115,58,0.20);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--dawn-amber);
+    margin-bottom: 16px;
+  }
+  .draft-c .badge-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--dawn-amber);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .draft-c .story {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--t2);
+  }
+  .draft-c .story strong {
+    color: var(--t1);
+    font-weight: 600;
+  }
+  .draft-c .bottom-section {
+    padding: 24px 28px 32px;
+  }
+  .draft-c .what-you-get {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: 16px;
+  }
+  .draft-c .feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .draft-c .feat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--t1);
+  }
+  .draft-c .feat-check {
+    color: var(--dawn-amber);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .draft-c .price-area {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    background: rgba(196,115,58,0.06);
+    border: 1px solid rgba(196,115,58,0.15);
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
+  .draft-c .price-left .amount {
+    font-family: var(--ff-display);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--t1);
+  }
+  .draft-c .price-left .amount span {
+    font-size: 14px;
+    color: var(--t3);
+    font-weight: 400;
+  }
+  .draft-c .price-left .chai-line {
+    font-size: 11px;
+    color: var(--dawn-amber);
+    margin-top: 2px;
+  }
+  .draft-c .price-right {
+    text-align: right;
+  }
+  .draft-c .price-right .annual {
+    font-size: 13px;
+    color: var(--t1);
+    font-weight: 600;
+  }
+  .draft-c .price-right .save {
+    font-size: 11px;
+    color: var(--dawn-amber);
+    margin-top: 2px;
+  }
+  .draft-c .mission {
+    font-size: 12px;
+    color: var(--t3);
+    text-align: center;
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     DRAFT A — "The Storyteller"
+     ═══════════════════════════════════ -->
+<div class="draft-section">
+  <div class="draft-label">Draft A — The Storyteller</div>
+  <div class="glass draft-a">
+    <div class="eyebrow">Premium</div>
+    <div class="headline">Your beaches get a better forecast. This project gets to keep going.</div>
+    <div class="story">
+      Seaside Beacon is India's first native sunrise quality forecaster, a one-person project built, maintained, and funded by a student with a passion for the coastline and its life. The weather APIs, AI models, and servers behind every forecast cost real money. Your support helps us keep going.
+    </div>
+    <div class="features">
+      <div class="feature-row">
+        <div class="feature-icon">📅</div>
+        <div>
+          <div class="feature-text">7-day forecast</div>
+          <div class="feature-sub">Know which morning this week is worth the alarm</div>
+        </div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-icon">📸</div>
+        <div>
+          <div class="feature-text">Photography insights</div>
+          <div class="feature-sub">DSLR & mobile settings, composition tips, golden hour timing</div>
+        </div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-icon">✈️</div>
+        <div>
+          <div class="feature-text">Telegram + special email alerts</div>
+          <div class="feature-sub">Daily forecasts + instant ping on 70+ mornings</div>
+        </div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-icon">🌅</div>
+        <div>
+          <div class="feature-text">Evening preview email</div>
+          <div class="feature-sub">Plan your morning the night before — default 8:30 PM, you choose the time</div>
+        </div>
+      </div>
+    </div>
+    <div class="price-block">
+      <div class="price-main">₹49<span>/month</span></div>
+      <div class="price-sub">Less than ₹2 a day — less than a chai a week</div>
+      <div class="price-annual">or ₹399/year (save 32%)</div>
+    </div>
+    <button class="cta-btn cta-primary">Go Premium</button>
+    <div class="closer">Starting with Chennai's beaches, expanding to coastlines across India.<br>Your support helps us get there.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     DRAFT B — "The Minimalist"
+     ═══════════════════════════════════ -->
+<div class="draft-section">
+  <div class="draft-label">Draft B — The Minimalist</div>
+  <div class="glass draft-b">
+    <div class="icon-badge">☀️</div>
+    <div class="headline">Keep this project alive</div>
+    <div class="subtitle">
+      Built by one student with a passion for the coastline and its life. Every forecast runs on real APIs, real AI, and real servers. Premium keeps it all going.
+    </div>
+    <div class="divider"></div>
+    <div class="perks">
+      <div class="perk">
+        <div class="perk-dot"></div>
+        <div class="perk-label">7-day sunrise forecast — plan your whole week</div>
+      </div>
+      <div class="perk">
+        <div class="perk-dot"></div>
+        <div class="perk-label">Photography insights in every email</div>
+      </div>
+      <div class="perk">
+        <div class="perk-dot"></div>
+        <div class="perk-label">Telegram alerts — daily + special on 70+ mornings</div>
+      </div>
+      <div class="perk">
+        <div class="perk-dot"></div>
+        <div class="perk-label">Evening preview email — plan the night before</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <div class="price-num">₹49</div>
+      <div class="price-period">/month</div>
+    </div>
+    <div class="price-chai">less than a chai a week</div>
+    <div class="price-annual-note">or ₹399/year — save 32%</div>
+    <button class="cta-btn cta-primary">Go Premium</button>
+    <div class="closer">"India's first native sunrise quality forecaster — starting with Chennai, expanding across India."</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     DRAFT C — "The Split"
+     ═══════════════════════════════════ -->
+<div class="draft-section">
+  <div class="draft-label">Draft C — The Split</div>
+  <div class="glass draft-c">
+    <div class="top-section">
+      <div class="badge"><div class="badge-dot"></div> Premium</div>
+      <div class="story">
+        Seaside Beacon is India's first native sunrise quality forecaster, a one-person project built, maintained, and funded by <strong>a student with a passion for the coastline and its life</strong>. The weather APIs, AI models, and servers behind every forecast cost real money. ₹49/month — less than ₹2 a day — less than a chai a week — keeps the forecasts running and the 4 AM emails going out.
+      </div>
+    </div>
+    <div class="bottom-section">
+      <div class="what-you-get">What you get</div>
+      <div class="feature-list">
+        <div class="feat"><span class="feat-check">✓</span> 7-day sunrise forecast</div>
+        <div class="feat"><span class="feat-check">✓</span> Photography insights — DSLR, mobile, composition</div>
+        <div class="feat"><span class="feat-check">✓</span> Daily Telegram alerts + special 70+ pings</div>
+        <div class="feat"><span class="feat-check">✓</span> Evening preview email (you pick the time)</div>
+      </div>
+      <div class="price-area">
+        <div class="price-left">
+          <div class="amount">₹49<span>/mo</span></div>
+          <div class="chai-line">less than a chai a week</div>
+        </div>
+        <div class="price-right">
+          <div class="annual">₹399/year</div>
+          <div class="save">save 32%</div>
+        </div>
+      </div>
+      <button class="cta-btn cta-primary">Go Premium</button>
+      <div class="mission">Starting with Chennai's beaches, expanding to coastlines across India. Your support helps us get there.</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

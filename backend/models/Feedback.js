@@ -6,7 +6,9 @@ const feedbackSchema = new mongoose.Schema({
     required: true,
     enum: ['spot-on', 'close', 'missed']
   },
-  comment: { type: String, default: '' },
+  comment: { type: String, required: true },
+  userName: { type: String, required: true },
+  visitDate: { type: String, required: true },
   beach: {
     type: String,
     required: true,

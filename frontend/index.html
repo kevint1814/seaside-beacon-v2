@@ -291,6 +291,225 @@
       <p class="form-note">No spam. Unsubscribe anytime.</p>
       <div class="form-message" id="subscribeMessage"></div>
     </form>
+
+    <!-- ── Premium Upsell (hidden for premium users) ── -->
+    <div class="modal-premium-upsell" id="modalPremiumUpsell">
+      <div class="upsell-divider">
+        <span class="upsell-divider-line"></span>
+        <span class="upsell-divider-text">or go further</span>
+        <span class="upsell-divider-line"></span>
+      </div>
+
+      <div class="upsell-pitch">
+        <div class="upsell-brand-header">
+          <div class="pm-brand-logo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          </div>
+          <div class="pm-brand-text">
+            <span class="pm-brand-name" style="font-size:13px;">Seaside Beacon</span>
+            <span class="pm-brand-tier">Premium</span>
+          </div>
+        </div>
+        <p class="upsell-headline">Your beaches get a better forecast.<br>This project gets to keep going.</p>
+
+        <p class="upsell-story">Seaside Beacon is India's first native sunrise quality forecaster, a one-person project built, maintained, and funded by <strong>a student with a passion for the coastline and its life</strong>. The weather APIs, AI models, and servers behind every forecast cost real money. Your support keeps the forecast services alive and the 4 AM emails going out.</p>
+
+        <div class="upsell-features">
+          <div class="upsell-feature">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <div>
+              <span class="uf-title">7 days of forecasts in advance</span>
+              <span class="uf-sub">Know which morning this week is worth the alarm</span>
+            </div>
+          </div>
+          <div class="upsell-feature">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <div>
+              <span class="uf-title">Photography insights</span>
+              <span class="uf-sub">DSLR & mobile settings, composition, golden hour</span>
+            </div>
+          </div>
+          <div class="upsell-feature">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            <div>
+              <span class="uf-title">Telegram + special alerts</span>
+              <span class="uf-sub">Daily forecasts + instant ping on 70+ mornings</span>
+            </div>
+          </div>
+          <div class="upsell-feature">
+            <svg viewBox="0 0 24 24"><path d="M17 18a5 5 0 00-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><polyline points="8 5 12 9 16 5"/></svg>
+            <div>
+              <span class="uf-title">Evening preview email</span>
+              <span class="uf-sub">Plan your morning the night before</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="upsell-price-row">
+          <div class="upsell-price-left">
+            <span class="upsell-amount">₹49<span>/mo</span></span>
+            <span class="upsell-chai">less than a chai a week</span>
+          </div>
+          <div class="upsell-price-right">
+            <span class="upsell-annual">₹399/year</span>
+            <span class="upsell-save">save 32%</span>
+          </div>
+        </div>
+
+        <p class="upsell-trust">Cancel anytime · Zero spam</p>
+
+        <button type="button" class="upsell-cta" id="upsellGoPremium">
+          Go Premium
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+
+        <p class="upsell-mission">Starting with Chennai's beaches, expanding to the coastlines across India. Your support helps us get there.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── PREMIUM LOGIN MODAL ────────────────────────── -->
+<div class="modal-overlay" id="premiumModal" aria-hidden="true">
+  <div class="modal-panel premium-modal-panel">
+    <button type="button" class="modal-close" id="closePremiumModal" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <!-- State: Login form (default) -->
+    <div class="pm-state" id="pmLogin">
+      <div class="pm-brand-header">
+        <div class="pm-brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </div>
+        <div class="pm-brand-text">
+          <span class="pm-brand-name">Seaside Beacon</span>
+          <span class="pm-brand-tier">Premium</span>
+        </div>
+      </div>
+      <h2 class="pm-title">Sign in to your account</h2>
+      <p class="pm-sub">Enter your email — we'll send a magic link. No password needed.</p>
+      <form id="premiumLoginForm" autocomplete="off">
+        <div class="form-row">
+          <label class="form-label">Email</label>
+          <input type="email" id="premiumEmailInput" class="form-input" placeholder="you@example.com" required>
+        </div>
+        <button type="submit" class="btn-subscribe pm-btn" id="premiumLoginBtn">
+          <span id="premiumLoginText">Send Magic Link</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <div class="form-message" id="premiumLoginMessage"></div>
+      </form>
+      <p class="pm-footer-note">New here? <button type="button" class="pm-link" id="pmGoToPricing">See what Premium includes</button></p>
+    </div>
+
+    <!-- State: Check your inbox -->
+    <div class="pm-state hidden" id="pmCheckInbox">
+      <div class="pm-icon pm-icon-sent">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--copper)" stroke-width="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/></svg>
+      </div>
+      <h2 class="pm-title">Check your inbox</h2>
+      <p class="pm-sub">We sent a sign-in link to <strong id="pmSentEmail">—</strong>. Click it to sign in — it expires in 15 minutes.</p>
+      <p class="pm-sub pm-sub-subtle">Didn't get it? Check your spam folder, or <button type="button" class="pm-link" id="pmResend">resend the link</button>.</p>
+    </div>
+
+    <!-- State: Account info (when logged in) -->
+    <div class="pm-state hidden" id="pmAccount">
+      <div class="pm-account-header">
+        <div class="pm-avatar" id="pmAvatar">K</div>
+        <div>
+          <p class="pm-account-email" id="pmAccountEmail">—</p>
+          <p class="pm-account-plan" id="pmAccountPlan">—</p>
+        </div>
+      </div>
+      <div class="pm-account-details">
+        <div class="pm-detail-row">
+          <span class="pm-detail-label">Status</span>
+          <span class="pm-detail-value pm-status-badge" id="pmAccountStatus">Active</span>
+        </div>
+        <div class="pm-detail-row">
+          <span class="pm-detail-label">Beach</span>
+          <span class="pm-detail-value" id="pmAccountBeach">Marina</span>
+        </div>
+        <div class="pm-detail-row">
+          <span class="pm-detail-label">Renews</span>
+          <span class="pm-detail-value" id="pmAccountRenews">—</span>
+        </div>
+      </div>
+      <div class="pm-account-actions">
+        <button type="button" class="pm-action-btn" id="pmManageTelegram">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Link Telegram
+        </button>
+        <button type="button" class="pm-action-btn pm-action-danger" id="pmCancelSub">Cancel subscription</button>
+        <button type="button" class="pm-action-btn pm-action-logout" id="pmLogout">Sign out</button>
+      </div>
+    </div>
+
+    <!-- State: Pricing + Features (for new users) -->
+    <div class="pm-state hidden" id="pmPricing">
+      <div class="pm-brand-header">
+        <div class="pm-brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </div>
+        <div class="pm-brand-text">
+          <span class="pm-brand-name">Seaside Beacon</span>
+          <span class="pm-brand-tier">Premium</span>
+        </div>
+      </div>
+
+      <p class="pm-pricing-headline">Your beaches get a better forecast. This project gets to keep going.</p>
+
+      <div class="pm-features-list">
+        <div class="pm-feat-row">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <div>
+            <span class="pm-feat-title">7 days of forecasts in advance</span>
+            <span class="pm-feat-sub">Know which morning this week is worth the alarm</span>
+          </div>
+        </div>
+        <div class="pm-feat-row">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <div>
+            <span class="pm-feat-title">Photography insights</span>
+            <span class="pm-feat-sub">DSLR & mobile settings, composition, golden hour</span>
+          </div>
+        </div>
+        <div class="pm-feat-row">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <div>
+            <span class="pm-feat-title">Telegram + special alerts</span>
+            <span class="pm-feat-sub">Daily forecasts + instant ping on 70+ mornings</span>
+          </div>
+        </div>
+        <div class="pm-feat-row">
+          <svg viewBox="0 0 24 24"><path d="M17 18a5 5 0 00-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><polyline points="8 5 12 9 16 5"/></svg>
+          <div>
+            <span class="pm-feat-title">Evening preview email</span>
+            <span class="pm-feat-sub">Plan your morning the night before</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pm-plans">
+        <button type="button" class="pm-plan-card" id="pmPlanMonthly" data-plan="monthly">
+          <span class="pm-plan-name">Monthly</span>
+          <span class="pm-plan-price">₹49<span class="pm-plan-period">/mo</span></span>
+          <span class="pm-plan-note">Cancel anytime</span>
+        </button>
+        <button type="button" class="pm-plan-card pm-plan-popular" id="pmPlanAnnual" data-plan="annual">
+          <span class="pm-plan-badge">Save 32%</span>
+          <span class="pm-plan-name">Annual</span>
+          <span class="pm-plan-price">₹399<span class="pm-plan-period">/yr</span></span>
+          <span class="pm-plan-note">₹33/mo · Best value</span>
+        </button>
+      </div>
+
+      <p class="pm-pricing-trust">Cancel anytime · Zero spam</p>
+      <p class="pm-footer-note">Already a member? <button type="button" class="pm-link" id="pmGoToLogin">Sign in</button></p>
+    </div>
+
   </div>
 </div>
 
@@ -327,6 +546,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="orange" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </div>
       <span class="nav-name">Seaside Beacon</span>
+      <span class="nav-premium-badge" id="navPremiumBadge">Premium</span>
     </a>
     <div class="nav-links">
       <div class="nav-indicator" id="navIndicator"></div>
@@ -337,6 +557,10 @@
       <a href="#story" class="nav-link" data-section="story">The Story</a>
       <a href="#contact" class="nav-link" data-section="contact">Contact</a>
       <button type="button" class="btn-nav-cta" id="navSubscribeBtn">Daily Briefing</button>
+      <button type="button" class="btn-nav-premium" id="navPremiumBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span id="navPremiumText">Premium</span>
+      </button>
     </div>
     <button type="button" class="nav-hamburger" id="navHamburger" aria-label="Menu">
       <span></span><span></span>
@@ -351,6 +575,10 @@
     <a href="#story" class="drawer-link">The Story</a>
     <a href="#contact" class="drawer-link">Contact</a>
     <button type="button" class="drawer-cta" id="drawerSubscribeBtn">Daily Briefing</button>
+    <button type="button" class="drawer-premium" id="drawerPremiumBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span id="drawerPremiumText">Premium</span>
+    </button>
   </div>
 
   <!-- ── HERO ─────────────────────────────────────── -->
@@ -909,9 +1137,9 @@
 
           <form class="community-form" id="photoForm">
             <div class="form-row">
-              <label class="form-label">Your photo</label>
+              <label class="form-label">Your photo <span class="form-required">*</span></label>
               <label class="photo-upload" id="photoUploadLabel">
-                <input type="file" id="photoFile" accept="image/*" hidden>
+                <input type="file" id="photoFile" accept="image/*" hidden required>
                 <div class="photo-upload-area" id="photoUploadArea">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V8M8 12l4-4 4 4"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
                   <span class="photo-upload-text">Tap to choose a photo</span>
@@ -919,8 +1147,8 @@
               </label>
             </div>
             <div class="form-row">
-              <label class="form-label">Beach</label>
-              <select id="photoBeach" class="form-select">
+              <label class="form-label">Beach <span class="form-required">*</span></label>
+              <select id="photoBeach" class="form-select" required>
                 <option value="marina">Marina Beach</option>
                 <option value="elliot">Elliot's Beach</option>
                 <option value="covelong">Covelong Beach</option>
@@ -929,12 +1157,12 @@
             </div>
             <div class="form-row-half">
               <div class="form-row">
-                <label class="form-label">Date</label>
-                <input type="date" id="photoDate" class="form-input">
+                <label class="form-label">Date <span class="form-required">*</span></label>
+                <input type="date" id="photoDate" class="form-input" required>
               </div>
               <div class="form-row">
-                <label class="form-label">Your name <span class="form-optional">(optional)</span></label>
-                <input type="text" id="photoName" class="form-input" placeholder="First name">
+                <label class="form-label">Your name <span class="form-required">*</span></label>
+                <input type="text" id="photoName" class="form-input" placeholder="First name" required>
               </div>
             </div>
             <button type="submit" class="btn-subscribe" id="photoSubmitBtn">
@@ -951,11 +1179,21 @@
           <p class="community-card-body">We score the sky at 4 AM. You see it at 6. Tell us if we got it right — your honesty is what makes this forecast sharper, every single day.</p>
 
           <form class="community-form" id="feedbackForm">
+            <div class="feedback-name-date-row">
+              <div class="form-row" style="flex:1;margin-bottom:0;">
+                <label class="form-label">Your name <span class="form-required">*</span></label>
+                <input type="text" id="feedbackName" class="form-input" placeholder="e.g. Arjun" required>
+              </div>
+              <div class="form-row" style="flex:1;margin-bottom:0;">
+                <label class="form-label">Date you went <span class="form-required">*</span></label>
+                <input type="date" id="feedbackDate" class="form-input feedback-date-input" required>
+              </div>
+            </div>
             <div class="form-row">
-              <label class="form-label">How was our forecast?</label>
+              <label class="form-label">How was our forecast? <span class="form-required">*</span></label>
               <div class="feedback-options">
                 <label class="feedback-option">
-                  <input type="radio" name="rating" value="spot-on" hidden>
+                  <input type="radio" name="rating" value="spot-on" hidden required>
                   <span class="feedback-chip feedback-chip-good">Spot on</span>
                 </label>
                 <label class="feedback-option">
@@ -969,12 +1207,12 @@
               </div>
             </div>
             <div class="form-row">
-              <label class="form-label">What did the sky actually look like? <span class="form-optional">(optional)</span></label>
-              <textarea id="feedbackComment" class="form-textarea" rows="3" placeholder="Describe what you saw..."></textarea>
+              <label class="form-label">What did the sky actually look like? <span class="form-required">*</span></label>
+              <textarea id="feedbackComment" class="form-textarea" rows="3" placeholder="Describe what you saw..." required></textarea>
             </div>
             <div class="form-row">
-              <label class="form-label">Beach</label>
-              <select id="feedbackBeach" class="form-select">
+              <label class="form-label">Beach <span class="form-required">*</span></label>
+              <select id="feedbackBeach" class="form-select" required>
                 <option value="marina">Marina Beach</option>
                 <option value="elliot">Elliot's Beach</option>
                 <option value="covelong">Covelong Beach</option>
@@ -1107,6 +1345,40 @@
           </button>
           <div class="form-message" id="stripMessage"></div>
         </div>
+
+        <!-- Premium upsell card below free form -->
+        <div class="strip-premium-card" id="stripPremiumUpsell">
+          <div class="strip-premium-glow"></div>
+          <div class="strip-premium-inner">
+            <div class="strip-premium-header">
+              <div class="strip-premium-logo">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+              </div>
+              <div class="strip-premium-brand">
+                <span class="strip-premium-name">Seaside Beacon <strong>Premium</strong></span>
+                <span class="strip-premium-divider"></span>
+              </div>
+            </div>
+            <div class="strip-premium-features">
+              <span class="strip-feat">7 days in advance</span>
+              <span class="strip-feat-dot">·</span>
+              <span class="strip-feat">Photography insights</span>
+              <span class="strip-feat-dot">·</span>
+              <span class="strip-feat">Telegram alerts</span>
+            </div>
+            <div class="strip-premium-bottom">
+              <div class="strip-premium-pricing">
+                <span class="strip-premium-price">₹49<span class="strip-premium-per">/mo</span></span>
+                <span class="strip-premium-annual">or ₹399/yr — save 32%</span>
+              </div>
+              <button type="button" class="strip-premium-btn" id="stripGoPremium">
+                Go Premium
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -1184,6 +1456,7 @@
 
 </div><!-- /page -->
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="script.js" defer></script>
 </body>
 </html>

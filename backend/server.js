@@ -19,6 +19,9 @@ const predictRoutes = require('./routes/predict');
 const communityRoutes = require('./routes/community');
 const adminRoutes = require('./routes/admin');
 const deviceRoutes = require('./routes/device');
+const authRoutes = require('./routes/auth');
+const paymentRoutes = require('./routes/payment');
+const telegramRoutes = require('./routes/telegram');
 const { initializeEmailJobs } = require('./jobs/dailyEmail');
 const { initializeDailyDigest } = require('./services/notifyAdmin');
 const { trackVisitMiddleware } = require('./services/visitTracker');
@@ -53,8 +56,15 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+// JSON body parser — skip for Razorpay webhook (needs raw body for signature verification)
+app.use((req, res, next) => {
+  if (req.path === '/api/payment/webhook') return next();
+  express.json({ limit: '25mb' })(req, res, next);
+});
+app.use((req, res, next) => {
+  if (req.path === '/api/payment/webhook') return next();
+  express.urlencoded({ extended: true, limit: '25mb' })(req, res, next);
+});
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -77,12 +87,14 @@ app.get('/', (req, res) => {
   res.json({
     status: 'online',
     service: 'Seaside Beacon API',
-    version: '4.0.0',
+    version: '5.0.0',
     endpoints: {
       beaches: 'GET /api/beaches',
       predict: 'GET /api/predict/:beach',
       subscribe: 'POST /api/subscribe',
-      unsubscribe: 'POST /api/unsubscribe'
+      unsubscribe: 'POST /api/unsubscribe',
+      auth: 'POST /api/auth/magic-link',
+      premium: 'POST /api/payment/create-subscription'
     }
   });
 });
@@ -118,6 +130,9 @@ app.use('/api', subscribeRoutes);
 app.use('/api', predictRoutes);
 app.use('/api', communityRoutes);
 app.use('/api', deviceRoutes);   // POST /api/register-device + POST /api/device-settings
+app.use('/api', authRoutes);     // POST /api/auth/magic-link + GET /api/auth/verify + GET /api/auth/me
+app.use('/api', paymentRoutes);  // POST /api/payment/create-subscription + webhook + cancel
+app.use('/api', telegramRoutes); // POST /api/telegram/webhook
 app.use('/api', adminRoutes);    // POST /api/admin/login + GET /api/admin/metrics
 app.use('/', adminRoutes);       // GET /admin (serves dashboard HTML)
 
@@ -172,6 +187,9 @@ async function startServer() {
       console.log(`⚡ Caching: Prediction 10min | Hourly 30min | Daily 2h | Open-Meteo 6h`);
       console.log(`📊 Analytics: Visit tracking ✓`);
       console.log(`🖥️  Admin: ${process.env.ADMIN_PASS ? '/admin (password set)' : '/admin (default pass — change ADMIN_PASS!)'}`);
+      console.log(`💳 Razorpay: ${process.env.RAZORPAY_KEY_ID ? 'Configured ✓' : 'Not configured'}`);
+      console.log(`📱 Telegram: ${process.env.TELEGRAM_BOT_TOKEN ? 'Bot configured ✓' : 'Not configured (set TELEGRAM_BOT_TOKEN)'}`);
+      console.log(`🔐 Auth: Magic link (15min TTL → 30d session)`);
       console.log('═══════════════════════════════════════');
     });
 
@@ -184,6 +202,14 @@ async function startServer() {
     // Push notifications at 4:00 AM + 8:30 PM IST
     const { initializePushJobs } = require('./jobs/pushNotifications');
     initializePushJobs();
+
+    // Set Telegram webhook automatically on startup
+    if (process.env.TELEGRAM_BOT_TOKEN && process.env.API_URL) {
+      const telegramService = require('./services/telegramService');
+      telegramService.setWebhook(`${process.env.API_URL}/api/telegram/webhook`).catch(err => {
+        console.warn('⚠️  Telegram webhook setup failed:', err.message);
+      });
+    }
 
   } catch (error) {
     console.error('❌ Startup error:', error.message);

@@ -164,4 +164,24 @@ router.get('/predict/:beach', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/forecast/7day/:beach
+ * Premium — returns 7-day scored forecast.
+ * Auth checked on frontend; endpoint is open but
+ * only linked from premium UI.
+ */
+router.get('/forecast/7day/:beach', async (req, res) => {
+  try {
+    const { beach } = req.params;
+    console.log(`\n📅 7-day forecast request for: ${beach}`);
+
+    const data = await weatherService.get7DayForecast(beach);
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('7-day forecast error:', error.message);
+    res.status(500).json({ success: false, message: error.message || '7-day forecast failed' });
+  }
+});
+
 module.exports = router;

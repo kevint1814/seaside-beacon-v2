@@ -1874,8 +1874,198 @@ setTimeout(() => {
 // Initialize cron schedule (runs immediately on module load)
 initializeCacheWarmup();
 
+// ═══════════════════════════════════════════════════════
+// 7-DAY FORECAST (Premium)
+// Uses Open-Meteo exclusively — free, 16-day range.
+// Scores each day's 6 AM slot with the same v5.4 algorithm.
+// ═══════════════════════════════════════════════════════
+
+const _7dayCache = {};
+const SEVEN_DAY_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours
+
+async function get7DayForecast(beachKey) {
+  const beach = BEACHES[beachKey];
+  if (!beach) throw new Error(`Beach '${beachKey}' not found`);
+
+  // Cache check
+  const cacheKey = `7day_${beachKey}`;
+  const cached = _7dayCache[cacheKey];
+  if (cached && (Date.now() - cached.fetchedAt < SEVEN_DAY_CACHE_TTL)) {
+    console.log(`⚡ Serving cached 7-day forecast for ${beach.name}`);
+    return cached.data;
+  }
+
+  const roundedLat = Math.round(beach.coordinates.lat * 10) / 10;
+  const roundedLon = Math.round(beach.coordinates.lon * 10) / 10;
+
+  console.log(`📡 Fetching 7-day Open-Meteo data for ${beach.name}...`);
+
+  // Fetch forecast + air quality in parallel (7 days)
+  const forecastUrl = OPENMETEO_PROXY
+    ? `${OPENMETEO_PROXY}/forecast`
+    : 'https://api.open-meteo.com/v1/forecast';
+
+  const aqUrl = OPENMETEO_PROXY
+    ? `${OPENMETEO_PROXY}/air-quality`
+    : 'https://air-quality-api.open-meteo.com/v1/air-quality';
+
+  const [forecastRes, aqRes] = await Promise.all([
+    axios.get(forecastUrl, {
+      params: {
+        latitude: roundedLat,
+        longitude: roundedLon,
+        hourly: 'cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,pressure_msl,visibility,relative_humidity_2m,temperature_2m,wind_speed_10m,wind_direction_10m,precipitation_probability,weather_code',
+        daily: 'sunrise,sunset',
+        timezone: 'Asia/Kolkata',
+        forecast_days: 8  // 8 to ensure we always get 7 full "tomorrow" days
+      },
+      timeout: 10000
+    }),
+    axios.get(aqUrl, {
+      params: {
+        latitude: roundedLat,
+        longitude: roundedLon,
+        hourly: 'aerosol_optical_depth',
+        timezone: 'Asia/Kolkata',
+        forecast_days: 8
+      },
+      timeout: 8000
+    }).catch(() => null)
+  ]);
+
+  const hourly = forecastRes.data?.hourly;
+  const daily = forecastRes.data?.daily;
+  const aqHourly = aqRes?.data?.hourly;
+
+  if (!hourly || !hourly.time || !hourly.cloud_cover_high) {
+    throw new Error('Open-Meteo returned incomplete data');
+  }
+
+  // Find all 6 AM slots starting from tomorrow
+  const now = new Date();
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const nowIST = new Date(now.getTime() + istOffset);
+  const currentHour = nowIST.getUTCHours();
+
+  // Start from tomorrow if past 6 AM, else today counts as day 1
+  let startDate = new Date(nowIST);
+  if (currentHour >= 6) {
+    startDate.setUTCDate(startDate.getUTCDate() + 1);
+  }
+
+  const days = [];
+
+  for (let d = 0; d < 7; d++) {
+    const targetDate = new Date(startDate);
+    targetDate.setUTCDate(targetDate.getUTCDate() + d);
+    const dateStr = `${targetDate.getUTCFullYear()}-${String(targetDate.getUTCMonth() + 1).padStart(2, '0')}-${String(targetDate.getUTCDate()).padStart(2, '0')}`;
+    const targetStr = `${dateStr}T06:00`;
+
+    const idx = hourly.time.indexOf(targetStr);
+    if (idx < 0) continue;
+
+    // Extract Open-Meteo data at 6 AM
+    const highCloud = hourly.cloud_cover_high[idx];
+    const midCloud = hourly.cloud_cover_mid[idx];
+    const lowCloud = hourly.cloud_cover_low[idx];
+    const cloudCover = hourly.cloud_cover[idx];
+    const humidity = hourly.relative_humidity_2m?.[idx];
+    const visibility = hourly.visibility?.[idx];  // meters
+    const temperature = hourly.temperature_2m?.[idx];
+    const windSpeed = hourly.wind_speed_10m?.[idx];
+    const windDir = hourly.wind_direction_10m?.[idx];
+    const precipProb = hourly.precipitation_probability?.[idx] || 0;
+    const weatherCode = hourly.weather_code?.[idx] || 0;
+
+    // Pressure trend (midnight to 6 AM)
+    const idxMidnight = idx - 6;
+    const pressureMsl = [];
+    if (idxMidnight >= 0) {
+      for (let i = idxMidnight; i <= idx; i++) {
+        pressureMsl.push(hourly.pressure_msl[i]);
+      }
+    }
+
+    // AOD at 6 AM
+    const aod = aqHourly?.aerosol_optical_depth?.[idx] ?? null;
+
+    // Sunrise/sunset from daily data
+    const dayIdx = daily?.time?.indexOf(dateStr);
+    const sunrise = dayIdx >= 0 ? daily.sunrise[dayIdx] : null;
+    const sunset = dayIdx >= 0 ? daily.sunset[dayIdx] : null;
+
+    // Build a fake AccuWeather-format object so calculateSunriseScore works
+    const fakeAWForecast = {
+      CloudCover: cloudCover ?? 0,
+      RelativeHumidity: humidity ?? 50,
+      PrecipitationProbability: precipProb,
+      HasPrecipitation: precipProb > 50,
+      Wind: { Speed: { Value: windSpeed ?? 0 } },
+      IconPhrase: weatherCodeToPhrase(weatherCode),
+      Visibility: { Value: (visibility ?? 10000) / 1000, Unit: 'km' },
+      Ceiling: { Value: null, Unit: 'm' }
+    };
+
+    const omForecast = {
+      highCloud, midCloud, lowCloud,
+      cloudCover, visibility, humidity, pressureMsl,
+      time: targetStr
+    };
+
+    const { score, breakdown } = calculateSunriseScore(fakeAWForecast, {
+      dailyData: null,
+      airQuality: aod != null ? { aod } : null,
+      openMeteoForecast: omForecast
+    });
+
+    const verdict = getVerdict(score);
+
+    days.push({
+      date: dateStr,
+      dayName: targetDate.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
+      score,
+      verdict,
+      sunrise: sunrise ? new Date(sunrise).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : null,
+      conditions: {
+        cloudCover: cloudCover ?? 0,
+        humidity: humidity ?? 0,
+        temperature: temperature != null ? Math.round(temperature) : null,
+        windSpeed: windSpeed != null ? Math.round(windSpeed) : null,
+        visibility: visibility != null ? Math.round(visibility / 1000 * 10) / 10 : null,
+        precipProbability: precipProb
+      }
+    });
+  }
+
+  const result = {
+    beach: beach.name,
+    beachKey: beach.key,
+    days,
+    generatedAt: new Date().toISOString()
+  };
+
+  _7dayCache[cacheKey] = { data: result, fetchedAt: Date.now() };
+  console.log(`📅 7-day forecast cached for ${beach.name} (${days.length} days)`);
+
+  return result;
+}
+
+// WMO weather code → simple phrase
+function weatherCodeToPhrase(code) {
+  if (code === 0) return 'Clear sky';
+  if (code <= 3) return 'Partly cloudy';
+  if (code <= 49) return 'Foggy';
+  if (code <= 59) return 'Drizzle';
+  if (code <= 69) return 'Rain';
+  if (code <= 79) return 'Snow';
+  if (code <= 84) return 'Rain showers';
+  if (code <= 94) return 'Thunderstorm';
+  return 'Thunderstorm with hail';
+}
+
 module.exports = {
   getTomorrow6AMForecast,
+  get7DayForecast,
   getBeaches,
   isPredictionTimeAvailable,
   getTimeUntilAvailable,

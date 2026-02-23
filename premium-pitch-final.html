@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seaside Beacon — Premium Pitch (Refined)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --sky-zenith:    #04050f;
+    --sky-mid:       #0a0d1f;
+    --dawn-copper:   #c4733a;
+    --dawn-amber:    #d4924a;
+    --dawn-gold:     #c9a055;
+    --accent:        #c4733a;
+    --accent-bright: #d4924a;
+    --glass-fill-2:    rgba(20,16,10,0.07);
+    --glass-border:    rgba(255,255,255,0.08);
+    --glass-border-hi: rgba(255,255,255,0.16);
+    --specular:        rgba(255,255,255,0.18);
+    --t1: rgba(240,238,250,0.95);
+    --t2: rgba(210,205,235,0.62);
+    --t3: rgba(190,185,220,0.38);
+    --ff-display: 'Cormorant Garamond', Georgia, serif;
+    --ff-body:    'Instrument Sans', system-ui, sans-serif;
+    --r-xl: 30px;
+    --blur-md:  blur(3px) saturate(1.25) brightness(1.22) contrast(1.08);
+    --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  body {
+    background: var(--sky-zenith);
+    color: var(--t1);
+    font-family: var(--ff-body);
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+
+  .draft-label {
+    font-family: var(--ff-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    padding: 6px 14px;
+    border: 1px solid rgba(196,115,58,0.3);
+    border-radius: 20px;
+    display: inline-block;
+  }
+
+  .draft-section {
+    max-width: 480px;
+    margin: 0 auto 80px;
+  }
+
+  /* Glass base */
+  .glass {
+    background: var(--glass-fill-2);
+    backdrop-filter: var(--blur-md);
+    -webkit-backdrop-filter: var(--blur-md);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--r-xl);
+    position: relative;
+    overflow: hidden;
+  }
+  .glass::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 5%, var(--specular) 30%, rgba(140,180,255,0.07) 50%, rgba(200,140,255,0.055) 70%, transparent 95%);
+  }
+
+  /* ═══════════════════════════════════════
+     REFINED DRAFT — A + C hybrid
+     ═══════════════════════════════════════ */
+  .premium-pitch {
+    padding: 36px 28px;
+  }
+
+  .premium-pitch .eyebrow {
+    font-family: var(--ff-body);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--dawn-amber);
+    margin-bottom: 16px;
+  }
+
+  .premium-pitch .headline {
+    font-family: var(--ff-display);
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--t1);
+    margin-bottom: 20px;
+  }
+
+  .premium-pitch .story {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--t2);
+    margin-bottom: 28px;
+  }
+  .premium-pitch .story strong {
+    color: var(--t1);
+    font-weight: 600;
+  }
+
+  /* Feature rows — minimal line icons instead of emojis */
+  .premium-pitch .features {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .premium-pitch .feature-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: rgba(196,115,58,0.05);
+    border: 1px solid rgba(196,115,58,0.10);
+    border-radius: 14px;
+  }
+
+  /* Minimal line icons — thin strokes, copper color */
+  .premium-pitch .feature-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .premium-pitch .feature-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--dawn-amber);
+    stroke-width: 1.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .premium-pitch .feature-text {
+    font-size: 13.5px;
+    color: var(--t1);
+    font-weight: 500;
+  }
+  .premium-pitch .feature-sub {
+    font-size: 11.5px;
+    color: var(--t3);
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+  /* Pricing box — from Draft C */
+  .premium-pitch .price-area {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    background: rgba(196,115,58,0.06);
+    border: 1px solid rgba(196,115,58,0.15);
+    border-radius: 16px;
+    margin-bottom: 18px;
+  }
+  .premium-pitch .price-left .amount {
+    font-family: var(--ff-display);
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--t1);
+  }
+  .premium-pitch .price-left .amount span {
+    font-size: 14px;
+    color: var(--t3);
+    font-weight: 400;
+  }
+  .premium-pitch .price-left .chai-line {
+    font-size: 11px;
+    color: var(--dawn-amber);
+    margin-top: 3px;
+  }
+  .premium-pitch .price-right {
+    text-align: right;
+  }
+  .premium-pitch .price-right .annual {
+    font-size: 14px;
+    color: var(--t1);
+    font-weight: 600;
+  }
+  .premium-pitch .price-right .save {
+    font-size: 11px;
+    color: var(--dawn-amber);
+    margin-top: 3px;
+  }
+
+  /* CTA button */
+  .cta-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 50px;
+    font-family: var(--ff-body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s var(--ease-spring);
+  }
+  .cta-primary {
+    background: linear-gradient(135deg, var(--dawn-copper), var(--dawn-amber));
+    color: #fff;
+  }
+  .cta-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(196,115,58,0.3);
+  }
+
+  /* Trust line */
+  .premium-pitch .trust-line {
+    font-size: 11.5px;
+    color: var(--t3);
+    text-align: center;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+
+  /* Mission closer — from Draft C */
+  .premium-pitch .mission {
+    font-size: 12px;
+    color: var(--t3);
+    text-align: center;
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="draft-section">
+  <div class="draft-label">Final — Refined</div>
+  <div class="glass premium-pitch">
+
+    <div class="eyebrow">Premium</div>
+
+    <div class="headline">Your beaches get a better forecast. This project gets to keep going.</div>
+
+    <div class="story">
+      Seaside Beacon is India's first native sunrise quality forecaster, a one-person project built, maintained, and funded by <strong>a student with a passion for the coastline and its life</strong>. The weather APIs, AI models, and servers behind every forecast cost real money. Your support keeps the forecasts running and the 4 AM emails going out.
+    </div>
+
+    <div class="features">
+      <div class="feature-row">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="18" x2="9" y2="18.01"/></svg>
+        </div>
+        <div>
+          <div class="feature-text">7-day forecast</div>
+          <div class="feature-sub">Know which morning this week is worth the alarm</div>
+        </div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2 L12 4"/><path d="M12 20 L12 22"/><path d="M4.93 4.93 L6.34 6.34"/><path d="M17.66 17.66 L19.07 19.07"/><path d="M2 12 L4 12"/><path d="M20 12 L22 12"/><path d="M4.93 19.07 L6.34 17.66"/><path d="M17.66 6.34 L19.07 4.93"/></svg>
+        </div>
+        <div>
+          <div class="feature-text">Photography insights</div>
+          <div class="feature-sub">DSLR & mobile settings, composition, golden hour timing</div>
+        </div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div>
+          <div class="feature-text">Telegram + special email alerts</div>
+          <div class="feature-sub">Daily forecasts + instant ping on 70+ mornings</div>
+        </div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><polyline points="8 5 12 9 16 5"/></svg>
+        </div>
+        <div>
+          <div class="feature-text">Evening preview email</div>
+          <div class="feature-sub">Plan your morning the night before — you choose the time</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="price-area">
+      <div class="price-left">
+        <div class="amount">₹49<span>/mo</span></div>
+        <div class="chai-line">less than a chai a week</div>
+      </div>
+      <div class="price-right">
+        <div class="annual">₹399/year</div>
+        <div class="save">save 32%</div>
+      </div>
+    </div>
+
+    <div class="trust-line">Cancel anytime · Zero spam</div>
+
+    <button class="cta-btn cta-primary">Go Premium</button>
+
+    <div class="mission">Starting with Chennai's beaches, expanding to coastlines across India. Your support helps us get there.</div>
+
+  </div>
+</div>
+
+</body>
+</html>
