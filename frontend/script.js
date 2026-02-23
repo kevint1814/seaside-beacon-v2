@@ -1448,6 +1448,9 @@ function renderForecast() {
 
   renderAnalysisPanel(f, pred, p, w.beach);
   setTimeout(()=>document.getElementById('forecastMaster').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+
+  // Auto-prompt subscribe modal after forecast loads
+  maybePromptSubscribe();
 }
 
 /**
@@ -1823,11 +1826,26 @@ function showUnavailable(td) {
 // ─────────────────────────────────────────────
 // MODALS
 // ─────────────────────────────────────────────
+function maybePromptSubscribe() {
+  if (localStorage.getItem('sb_subscribed')) return;
+  const dismissed = localStorage.getItem('sb_modal_dismissed');
+  if (dismissed && Date.now() - Number(dismissed) < 86400000) return; // 1 day cooldown
+  setTimeout(() => {
+    // Pre-fill beach dropdown with the one they just checked
+    const sel = document.getElementById('beachSelect');
+    if (sel) sel.value = state.beach;
+    openModal();
+  }, 3000);
+}
 function openModal() { const m=document.getElementById('emailModal'); m.classList.add('active'); m.setAttribute('aria-hidden','false'); }
 function closeModalFn() {
   const modal = document.getElementById('emailModal');
   modal.classList.remove('active');
   modal.setAttribute('aria-hidden','true');
+  // Mark as dismissed (1 day cooldown) unless already subscribed
+  if (!localStorage.getItem('sb_subscribed')) {
+    localStorage.setItem('sb_modal_dismissed', String(Date.now()));
+  }
   // Reset flip animation so modal is clean on reopen
   const panel = modal.querySelector('.modal-panel');
   if (panel) {
@@ -1876,6 +1894,7 @@ async function submitSub(email,beach,msgId,btnId) {
     });
     const d=await res.json();
     if(d.success){
+      localStorage.setItem('sb_subscribed', '1');
       showMsg(msgId,d.message||'✓ Subscribed — preview at 8:30 PM, final forecast at 4 AM.',true);
       // GPay-style card flip success
       const card = document.getElementById(btnId)?.closest('.sub-form-card');
