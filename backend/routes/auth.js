@@ -12,9 +12,9 @@ const router = express.Router();
 
 const PremiumUser = require('../models/PremiumUser');
 
-const isLocal = process.env.NODE_ENV === 'development';
-const APP_URL = isLocal ? `http://localhost:${process.env.PORT || 3000}` : (process.env.APP_URL || 'https://www.seasidebeacon.com');
-const API_URL = isLocal ? `http://localhost:${process.env.PORT || 3000}` : (process.env.API_URL || 'https://api.seasidebeacon.com');
+// Always default to production — for local dev, set APP_URL & API_URL in .env
+const APP_URL = process.env.APP_URL || 'https://www.seasidebeacon.com';
+const API_URL = process.env.API_URL || 'https://api.seasidebeacon.com';
 
 const MAGIC_LINK_TTL = 15 * 60 * 1000;   // 15 minutes
 const AUTH_TOKEN_TTL = 30 * 24 * 60 * 60 * 1000;  // 30 days

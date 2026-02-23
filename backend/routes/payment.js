@@ -11,6 +11,7 @@ const router = express.Router();
 
 const PremiumUser = require('../models/PremiumUser');
 const { requirePremium } = require('./auth');
+const { sendPremiumWelcomeEmail } = require('../services/emailService');
 
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
@@ -260,6 +261,11 @@ async function handleActivated(payload) {
   await user.save();
 
   console.log(`✅ Premium activated: ${user.email} (${user.plan})`);
+
+  // Send premium welcome email (non-blocking)
+  sendPremiumWelcomeEmail(user.email, user.plan)
+    .then(() => console.log(`✅ Premium welcome email sent to ${user.email}`))
+    .catch(err => console.error(`❌ Premium welcome email failed for ${user.email}:`, err.message));
 }
 
 
