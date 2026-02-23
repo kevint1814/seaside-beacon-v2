@@ -995,16 +995,21 @@ function findNext6AM(hourlyData) {
 function scoreCloudCover(cloudCover) {
   let score;
 
-  if (cloudCover >= 30 && cloudCover <= 60) {
-    // OPTIMAL: Peak drama at 45%. Clouds act as canvas for red/orange reflection.
-    score = 15 + Math.round(3 * (1 - Math.abs(cloudCover - 45) / 15));
-  } else if (cloudCover > 60 && cloudCover <= 75) {
-    // Decent but increasingly blocked light
-    const dropoff = (cloudCover - 60) / 15;
+  // v5.4: Widened optimal range to 30-70% (was 30-60%).
+  // Ground truth (Feb 23, 2026): 69% cloud scored 12/18 but produced a warm,
+  // photogenic sunrise. At low solar angles, 60-70% cloud acts as a color screen
+  // catching horizontal light — not blocking it. Dropoff now starts at 70%.
+  if (cloudCover >= 30 && cloudCover <= 70) {
+    // OPTIMAL: Peak drama at 50% (shifted from 45 to center the wider band).
+    // Clouds act as canvas for red/orange reflection at sunrise angles.
+    score = 15 + Math.round(3 * (1 - Math.abs(cloudCover - 50) / 20));
+  } else if (cloudCover > 70 && cloudCover <= 80) {
+    // Moderate overcast — light still gets through at horizon angles
+    const dropoff = (cloudCover - 70) / 10;
     score = Math.round(15 - dropoff * 5);
-  } else if (cloudCover > 75 && cloudCover <= 90) {
+  } else if (cloudCover > 80 && cloudCover <= 90) {
     // Heavy overcast — most light blocked
-    const dropoff = (cloudCover - 75) / 15;
+    const dropoff = (cloudCover - 80) / 10;
     score = Math.round(10 - dropoff * 7);
   } else if (cloudCover > 90) {
     // Total overcast — almost no light gets through
@@ -1058,23 +1063,29 @@ function scoreVisibility(visibilityKm) {
 function scoreHumidity(humidity) {
   let score;
 
+  // v5.4: Softened 75-85% band for Chennai coastal baseline.
+  // Ground truth (Feb 23, 2026): 79% humidity scored ~8/15 but produced warm visible
+  // colors in photos. Chennai dawn is ALWAYS 75-90% — penalizing this range too hard
+  // means the algorithm structurally underscores most Chennai mornings.
+  // 75-82% now scores 10→8 (was 9→7). 82-88% now scores 8→5 (was 6→4).
   if (humidity <= 55) {
     score = 15;    // Exceptional — rare at dawn, vivid crisp colors
   } else if (humidity <= 65) {
     score = 15 - Math.round((humidity - 55) / 10 * 3);  // 15→12
   } else if (humidity <= 75) {
-    score = 12 - Math.round((humidity - 65) / 10 * 3);  // 12→9
+    score = 12 - Math.round((humidity - 65) / 10 * 2);  // 12→10  (v5.4: was 12→9)
   } else if (humidity <= 82) {
-    score = 9 - Math.round((humidity - 75) / 7 * 2);    // 9→7
+    // v5.4: Chennai baseline — warm pastels clearly visible, light haze adds atmosphere
+    score = 10 - Math.round((humidity - 75) / 7 * 2);   // 10→8  (v5.4: was 9→7)
   } else if (humidity <= 88) {
-    // Chennai baseline — colours visible, horizon hazy, pastels common
-    score = 6 - Math.round((humidity - 82) / 6 * 2);    // 6→4  (v5.3: was 7→5)
+    // Elevated Chennai baseline — colours still visible but increasingly pastel
+    score = 8 - Math.round((humidity - 82) / 6 * 3);    // 8→5  (v5.4: was 6→4)
   } else if (humidity <= 93) {
     // v5.3: Research shows f(RH) > 2.0 above 80% — sea-salt aerosols heavily swollen
-    // 91% RH at tropical coast = significant color muting, not just "baseline"
-    score = 4 - Math.round((humidity - 88) / 5 * 2);    // 4→2  (v5.3: was 5→3)
+    // 91% RH at tropical coast = significant color muting
+    score = 4 - Math.round((humidity - 88) / 5 * 2);    // 4→2
   } else if (humidity <= 97) {
-    score = 2 - Math.round((humidity - 93) / 4 * 1);    // 2→1  (v5.3: was 3→1)
+    score = 2 - Math.round((humidity - 93) / 4 * 1);    // 2→1
   } else {
     score = Math.max(0, 1 - Math.round((humidity - 97) / 3));
   }
@@ -1332,6 +1343,23 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
     console.log(`  ⚠️  v5.3 Low-stratus discount: -${lowStratusDiscount} (H:${highCloud}%+M:${midCloud || 0}% < 15%, L:${lowCloud}% > 40%)`);
   }
 
+  // ── v5.4 NEW: ELEVATED CANVAS BONUS on cloud cover score ──
+  // Ground truth (Feb 23, 2026): 69% cloud with high+mid dominance produced warm,
+  // colorful sunrise. When total cloud is 60-80% but the clouds are elevated (not low
+  // stratus), the extra coverage HELPS — more canvas surface catching low-angle light.
+  // This corrects the case where scoreCloudCover penalizes 70-80% but the cloud type
+  // actually makes it a positive condition.
+  let elevatedCanvasBonus = 0;
+  if (highCloud != null && cloudCover >= 60 && cloudCover <= 80) {
+    const elevatedPct = (highCloud || 0) + (midCloud || 0);
+    if (elevatedPct >= 30 && lowCloud < 40) {
+      // Elevated clouds dominate — the "overcast" is actually a color canvas
+      elevatedCanvasBonus = 3;
+      cloudScore = Math.min(18, cloudScore + elevatedCanvasBonus);
+      console.log(`  ✨ v5.4 Elevated canvas bonus: +${elevatedCanvasBonus} (H:${highCloud}%+M:${midCloud || 0}%=${elevatedPct}% elevated, L:${lowCloud}% low, total ${cloudCover}%)`);
+    }
+  }
+
   // ── BASE FACTOR 3: Humidity (max 15) ──
   const humidScore = scoreHumidity(humidity);
 
@@ -1406,7 +1434,7 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   return {
     score: finalScore,
     breakdown: {
-      cloudCover: { value: cloudCover, score: cloudScore, maxScore: 18, lowStratusDiscount },
+      cloudCover: { value: cloudCover, score: cloudScore, maxScore: 18, lowStratusDiscount, elevatedCanvasBonus },
       multiLevelCloud: {
         high: highCloud,
         mid: midCloud,
