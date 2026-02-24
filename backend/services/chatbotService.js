@@ -159,20 +159,22 @@ function formatWeatherForAI(weatherData) {
 async function get7DayContext() {
   try {
     // Fetch for Marina (representative of Chennai — all beaches share same grid)
-    const days = await weatherService.get7DayForecast('marina');
-    if (!days || days.length === 0) return null;
-    return days;
+    const result = await weatherService.get7DayForecast('marina');
+    // get7DayForecast returns { beach, beachKey, days: [...], generatedAt }
+    if (!result || !result.days || result.days.length === 0) return null;
+    return result.days;
   } catch (err) {
     return null;
   }
 }
 
 function format7DayForAI(days) {
-  if (!days || days.length === 0) return '';
+  if (!days || !Array.isArray(days) || days.length === 0) return '';
 
   let text = '\n\n7-DAY SUNRISE FORECAST (Marina Beach, Chennai):\n';
   for (const day of days) {
-    const date = new Date(day.date);
+    // day.date is "YYYY-MM-DD"; append T12:00 to avoid UTC midnight → wrong IST day
+    const date = new Date(day.date + 'T12:00:00+05:30');
     const dayName = date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
     const c = day.conditions || {};
     text += `\n${dayName}: Score ${day.score || 0}/100 — ${day.verdict || '—'}`;
