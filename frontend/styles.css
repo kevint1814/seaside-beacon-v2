@@ -786,6 +786,68 @@ body.is-premium .hero-badge-logo::before {
 }
 @media (max-width:900px) { .hero-badge { display:none; } }
 
+/* Hero Telegram status bar */
+.hero-tg-status {
+  display:inline-flex; align-items:center; gap:6px;
+  margin-top:6px; padding:5px 12px; border-radius:999px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+  font-size:11px; color:var(--t3);
+}
+.hero-tg-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:#d97706; /* orange = not linked */
+  flex-shrink:0;
+}
+.hero-tg-status.linked .hero-tg-dot { background:#059669; }
+.hero-tg-status.linked .hero-tg-link { display:none; }
+.hero-tg-text { color:var(--t3); }
+.hero-tg-link {
+  background:none; border:none; color:var(--dawn-copper,#c4733a);
+  font-size:11px; font-weight:600; cursor:pointer; padding:0; font-family:inherit;
+  text-decoration:underline; text-underline-offset:2px;
+}
+.hero-tg-link:hover { color:var(--dawn-amber,#d4924a); }
+
+/* Mobile hero badge */
+.hero-badge-mobile {
+  display:none; /* hidden on desktop */
+  align-items:center; justify-content:center; gap:8px;
+  margin:16px auto 0; padding:0;
+}
+.hero-badge-m-logo {
+  width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  position:relative;
+}
+.hero-badge-m-logo::before {
+  content:''; position:absolute; inset:-1px; border-radius:50%;
+  background:conic-gradient(from 0deg, rgba(196,115,58,0.5), rgba(212,176,120,0.2), rgba(196,115,58,0.5));
+  opacity:0.7;
+}
+.hero-badge-m-logo::after {
+  content:''; position:absolute; inset:0; border-radius:50%;
+  background:var(--bg1,#0e0d0b);
+}
+.hero-badge-m-logo svg {
+  stroke:var(--dawn-copper,#c4733a); position:relative; z-index:1;
+  filter:drop-shadow(0 0 4px rgba(196,115,58,0.3));
+}
+.hero-badge-m-name {
+  font-family:'Cormorant Garamond',serif;
+  font-size:12px; font-weight:500; color:var(--t2,#b8ae9e);
+  letter-spacing:2.5px; text-transform:uppercase;
+}
+.hero-badge-m-tier {
+  font-family:var(--ff-body,'Instrument Sans',sans-serif);
+  font-size:8px; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:var(--dawn-copper,#c4733a);
+  display:none;
+}
+body.is-premium .hero-badge-m-tier { display:inline; }
+body.is-premium .hero-badge-m-name { color:var(--t1,#e8e0d4); }
+body.is-premium .hero-badge-m-logo::before { opacity:1; }
+@media (max-width:900px) { .hero-badge-mobile { display:flex; } }
+
 .hero-scroll-cue {
   position:absolute; bottom:32px; left:50%;
   transform:translateX(-50%);
@@ -3516,6 +3578,64 @@ html.loading .nav.scrolled::after {
   display:inline-block; padding:2px 8px; border-radius:4px; margin-top:4px;
   font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600;
 }
+/* Weather phrase */
+.sd-detail-phrase {
+  font-size:11px; color:var(--t3); margin-top:2px; letter-spacing:0.3px;
+}
+/* Sunrise & Golden Hour strip */
+.sd-sun-strip {
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; margin-bottom:4px;
+}
+.sd-sun-item {
+  display:flex; align-items:center; gap:5px;
+  padding:6px 10px; border-radius:8px;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);
+  font-size:11.5px; color:var(--t2);
+}
+.sd-sun-item.sd-golden {
+  background:rgba(196,115,58,0.06); border-color:rgba(196,115,58,0.15);
+}
+.sd-sun-icon { font-size:13px; }
+.sd-golden .sd-sun-icon { color:var(--dawn-copper,#c4733a); }
+.sd-sun-label { color:var(--t3); font-size:10px; text-transform:uppercase; letter-spacing:0.5px; }
+.sd-sun-val { font-weight:600; color:var(--t1); }
+.sd-golden .sd-sun-val { color:var(--dawn-copper,#c4733a); }
+
+/* Cloud layers & atmosphere */
+.sd-detail-layers {
+  margin-top:14px; padding:12px 14px;
+  background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05);
+  border-radius:12px;
+}
+.sd-layers-title {
+  font-size:10.5px; font-weight:600; text-transform:uppercase;
+  letter-spacing:1px; color:var(--t3); margin-bottom:10px;
+}
+.sd-layers-grid { display:flex; flex-direction:column; gap:7px; }
+.sd-layer-item {
+  display:grid; grid-template-columns:70px 1fr 36px; align-items:center; gap:8px;
+}
+.sd-layer-name { font-size:11px; color:var(--t2); }
+.sd-layer-bar {
+  height:6px; border-radius:3px; background:rgba(255,255,255,0.06); overflow:hidden;
+}
+.sd-layer-fill {
+  height:100%; border-radius:3px; transition:width 0.5s ease;
+}
+.sd-layer-val { font-size:11px; color:var(--t2); text-align:right; font-weight:500; }
+.sd-atmos-row {
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; padding-top:10px;
+  border-top:1px solid rgba(255,255,255,0.04);
+}
+.sd-atmos-chip {
+  display:flex; align-items:center; gap:5px;
+  padding:4px 10px; border-radius:6px;
+  background:rgba(255,255,255,0.03);
+  font-size:11px; color:var(--t2);
+}
+.sd-atmos-label { color:var(--t3); font-size:9.5px; text-transform:uppercase; letter-spacing:0.5px; }
+.sd-atmos-val { font-weight:600; }
+
 /* What to Expect insight */
 .sd-detail-insight {
   margin-top:16px; padding:14px 16px;
@@ -3616,6 +3736,39 @@ html.loading .nav.scrolled::after {
 .pref-msg {
   text-align:center; margin-top:12px; font-family:'Instrument Sans',sans-serif;
   font-size:13px; transition:opacity 0.2s;
+}
+.pref-divider {
+  height:1px; background:rgba(255,255,255,0.06); margin:16px 0 14px;
+}
+.pref-tg-section { text-align:center; }
+.pref-tg-header {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  font-size:13px; font-weight:500; color:var(--t1);
+  margin-bottom:6px;
+}
+.pref-tg-header svg { stroke:var(--t2); }
+.pref-tg-badge {
+  font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;
+  padding:2px 8px; border-radius:4px;
+  background:rgba(217,119,6,0.12); color:#d97706;
+}
+.pref-tg-badge.linked {
+  background:rgba(5,150,105,0.12); color:#059669;
+}
+.pref-tg-desc {
+  font-size:12px; color:var(--t3); margin:0 0 10px; line-height:1.5;
+}
+.pref-tg-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 20px; border:1px solid rgba(196,115,58,0.3); border-radius:999px;
+  background:rgba(196,115,58,0.06); color:var(--dawn-copper,#c4733a);
+  font-size:12px; font-weight:500; cursor:pointer; font-family:inherit;
+  transition:all 0.3s ease;
+}
+.pref-tg-btn:hover { background:rgba(196,115,58,0.12); border-color:rgba(196,115,58,0.5); }
+.pref-tg-btn.linked {
+  border-color:rgba(5,150,105,0.3); background:rgba(5,150,105,0.06); color:#059669;
+  cursor:default;
 }
 
 /* ═══ Subscription Management ═══ */

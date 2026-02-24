@@ -2020,19 +2020,43 @@ async function get7DayForecast(beachKey) {
 
     const verdict = getVerdict(score);
 
+    // Golden hour from sunrise
+    const sunriseDate = sunrise ? new Date(sunrise) : null;
+    const goldenHourData = sunriseDate ? calculateGoldenHour(sunriseDate) : null;
+
+    // Pressure at 6 AM
+    const pressure6AM = pressureMsl.length > 0 ? pressureMsl[pressureMsl.length - 1] : null;
+    // Pressure trend: rising/falling/stable
+    let pressureTrend = 'stable';
+    if (pressureMsl.length >= 4) {
+      const diff = pressureMsl[pressureMsl.length - 1] - pressureMsl[0];
+      if (diff > 1) pressureTrend = 'rising';
+      else if (diff < -1) pressureTrend = 'falling';
+    }
+
     days.push({
       date: dateStr,
       dayName: targetDate.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
       score,
       verdict,
       sunrise: sunrise ? new Date(sunrise).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : null,
+      sunset: sunset ? new Date(sunset).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : null,
+      goldenHour: goldenHourData,
       conditions: {
         cloudCover: cloudCover ?? 0,
+        highCloud: highCloud ?? 0,
+        midCloud: midCloud ?? 0,
+        lowCloud: lowCloud ?? 0,
         humidity: humidity ?? 0,
         temperature: temperature != null ? Math.round(temperature) : null,
         windSpeed: windSpeed != null ? Math.round(windSpeed) : null,
+        windDirection: windDir != null ? Math.round(windDir) : null,
         visibility: visibility != null ? Math.round(visibility / 1000 * 10) / 10 : null,
-        precipProbability: precipProb
+        precipProbability: precipProb,
+        pressure: pressure6AM != null ? Math.round(pressure6AM) : null,
+        pressureTrend,
+        aod: aod != null ? Math.round(aod * 100) / 100 : null,
+        weatherPhrase: weatherCodeToPhrase(weatherCode)
       }
     });
   }

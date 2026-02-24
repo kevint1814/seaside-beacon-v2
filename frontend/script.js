@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════
-// SEASIDE BEACON v6.5
+// SEASIDE BEACON v6.6
 // Liquid Glass · Beach Sunrise · Ultra Premium
 // ═══════════════════════════════════════════════
-console.log('🌅 Seaside Beacon v6.5 — loaded');
+console.log('🌅 Seaside Beacon v6.6 — loaded');
 
 const CONFIG = {
   API_URL: (window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')
@@ -2918,6 +2918,36 @@ function updatePremiumUI() {
   const heroBadgeTier = document.getElementById('heroBadgeTier');
   if (heroBadgeTier) heroBadgeTier.textContent = isPremium ? 'Premium' : '';
 
+  // Mobile badge tier
+  const mobileTier = document.getElementById('heroBadgeMobileTier');
+  if (mobileTier) mobileTier.textContent = isPremium ? 'Premium' : '';
+
+  // Telegram status bar in hero (only for premium users)
+  const heroTgStatus = document.getElementById('heroTelegramStatus');
+  if (heroTgStatus && isPremium) {
+    heroTgStatus.classList.remove('hidden');
+    const tgLinked = !!(user && user.telegramChatId);
+    heroTgStatus.classList.toggle('linked', tgLinked);
+    const heroTgText = document.getElementById('heroTgText');
+    if (heroTgText) heroTgText.textContent = tgLinked ? 'Telegram linked' : 'Telegram';
+  } else if (heroTgStatus) {
+    heroTgStatus.classList.add('hidden');
+  }
+
+  // Telegram settings inside Alert Settings section
+  const prefTgBadge = document.getElementById('prefTgBadge');
+  const prefTgBtn = document.getElementById('prefTgLinkBtn');
+  const prefTgBtnText = document.getElementById('prefTgBtnText');
+  if (user && user.telegramChatId) {
+    if (prefTgBadge) { prefTgBadge.textContent = 'Linked'; prefTgBadge.classList.add('linked'); }
+    if (prefTgBtn) { prefTgBtn.classList.add('linked'); }
+    if (prefTgBtnText) prefTgBtnText.textContent = 'Telegram Connected';
+  } else {
+    if (prefTgBadge) { prefTgBadge.textContent = 'Not linked'; prefTgBadge.classList.remove('linked'); }
+    if (prefTgBtn) { prefTgBtn.classList.remove('linked'); }
+    if (prefTgBtnText) prefTgBtnText.textContent = 'Link Telegram';
+  }
+
   // Update forecast section note for premium users
   const forecastNote = document.getElementById('forecastSectionNote');
   if (forecastNote) {
@@ -2944,8 +2974,8 @@ function updatePremiumUI() {
   const navBtn = document.getElementById('navPremiumBtn');
 
   if (isPremium) {
-    if (navText) navText.textContent = 'My Profile';
-    if (drawerText) drawerText.textContent = 'My Profile';
+    if (navText) navText.textContent = 'Profile';
+    if (drawerText) drawerText.textContent = 'Profile';
     if (navBtn) navBtn.classList.add('premium-active');
   } else if (user && !user.isActive) {
     // Logged in but not premium (cancelled/expired)
@@ -3116,6 +3146,9 @@ function initPremium() {
   //    (these must not depend on async calls)
   // ═══════════════════════════════════════════
   const premiumModal = document.getElementById('premiumModal');
+
+  // Hero Telegram link button
+  document.getElementById('heroTgLink')?.addEventListener('click', () => openTelegramModal());
 
   // Nav premium buttons → open premium modal
   document.getElementById('navPremiumBtn')?.addEventListener('click', () => openPremiumModal());
@@ -3540,11 +3573,30 @@ function show7DayDetail(index) {
 
   // Wind info
   const wind = f.windSpeed ?? 0;
+  const windDirLabel = f.windDirection != null ? _windDirLabel(f.windDirection) : '';
 
-  // Sunrise time — backend already returns formatted string like "06:30 am"
+  // Cloud layers
+  const hc = f.highCloud ?? 0;
+  const mc = f.midCloud ?? 0;
+  const lc = f.lowCloud ?? 0;
+
+  // Pressure
+  const pressure = f.pressure ?? null;
+  const pTrend = f.pressureTrend || 'stable';
+  const pTrendIcon = pTrend === 'rising' ? '↑' : pTrend === 'falling' ? '↓' : '→';
+  const pTrendColor = pTrend === 'rising' ? '#059669' : pTrend === 'falling' ? '#dc2626' : 'var(--t2)';
+
+  // AOD
+  const aod = f.aod;
+  const aodLabel = aod == null ? '—' : aod <= 0.1 ? 'Very Clear' : aod <= 0.25 ? 'Good' : aod <= 0.5 ? 'Hazy' : 'Very Hazy';
+  const aodColor = aod == null ? 'var(--t3)' : aod <= 0.25 ? '#059669' : aod <= 0.5 ? '#d97706' : '#dc2626';
+  const aodBg = aod == null ? 'rgba(255,255,255,0.04)' : aod <= 0.25 ? 'rgba(5,150,105,0.15)' : aod <= 0.5 ? 'rgba(217,119,6,0.15)' : 'rgba(220,38,38,0.15)';
+
+  // Sunrise / golden hour
   const sunrise = day.sunrise || '';
+  const gh = day.goldenHour || {};
 
-  // AI insight — generate a "What to Expect" narrative
+  // AI insight
   const expectInsight = generate7DayInsight(day, f);
 
   detail.innerHTML = `
@@ -3556,9 +3608,31 @@ function show7DayDetail(index) {
       <div class="sd-detail-score-big" style="color:${color}">${score}</div>
       <div>
         <div class="sd-detail-verdict">${verdict}</div>
-        ${sunrise ? `<div class="sd-detail-sunrise-time">Sunrise at ${sunrise}</div>` : ''}
+        ${f.weatherPhrase ? `<div class="sd-detail-phrase">${f.weatherPhrase}</div>` : ''}
       </div>
     </div>
+
+    ${sunrise ? `
+    <div class="sd-sun-strip">
+      <div class="sd-sun-item">
+        <span class="sd-sun-icon">☀</span>
+        <span class="sd-sun-label">Sunrise</span>
+        <span class="sd-sun-val">${sunrise}</span>
+      </div>
+      ${gh.start ? `
+      <div class="sd-sun-item sd-golden">
+        <span class="sd-sun-icon">✦</span>
+        <span class="sd-sun-label">Golden Hour</span>
+        <span class="sd-sun-val">${gh.start} – ${gh.end}</span>
+      </div>` : ''}
+      ${gh.peak ? `
+      <div class="sd-sun-item">
+        <span class="sd-sun-icon">◉</span>
+        <span class="sd-sun-label">Peak Light</span>
+        <span class="sd-sun-val">${gh.peak}</span>
+      </div>` : ''}
+    </div>` : ''}
+
     <div class="sd-detail-conditions">
       <div class="sd-cond-card">
         <div class="sd-cond-label">Cloud Cover</div>
@@ -3576,11 +3650,49 @@ function show7DayDetail(index) {
         <span class="sd-cond-badge" style="color:${visColor};background:${visBg}">${visLabel}</span>
       </div>
       <div class="sd-cond-card">
-        <div class="sd-cond-label">Wind</div>
+        <div class="sd-cond-label">Wind ${windDirLabel}</div>
         <div class="sd-cond-value">${wind} km/h</div>
         <span class="sd-cond-badge" style="color:var(--t2);background:rgba(255,255,255,0.06)">${wind < 15 ? 'Calm' : wind < 25 ? 'Moderate' : 'Strong'}</span>
       </div>
     </div>
+
+    <div class="sd-detail-layers">
+      <div class="sd-layers-title">Cloud Layers & Atmosphere</div>
+      <div class="sd-layers-grid">
+        <div class="sd-layer-item">
+          <span class="sd-layer-name">High Cloud</span>
+          <div class="sd-layer-bar"><div class="sd-layer-fill" style="width:${hc}%;background:${hc >= 20 && hc <= 70 ? '#059669' : hc < 20 ? '#d97706' : '#dc2626'}"></div></div>
+          <span class="sd-layer-val">${hc}%</span>
+        </div>
+        <div class="sd-layer-item">
+          <span class="sd-layer-name">Mid Cloud</span>
+          <div class="sd-layer-bar"><div class="sd-layer-fill" style="width:${mc}%;background:${mc <= 40 ? '#059669' : mc <= 65 ? '#d97706' : '#dc2626'}"></div></div>
+          <span class="sd-layer-val">${mc}%</span>
+        </div>
+        <div class="sd-layer-item">
+          <span class="sd-layer-name">Low Cloud</span>
+          <div class="sd-layer-bar"><div class="sd-layer-fill" style="width:${lc}%;background:${lc <= 30 ? '#059669' : lc <= 60 ? '#d97706' : '#dc2626'}"></div></div>
+          <span class="sd-layer-val">${lc}%</span>
+        </div>
+      </div>
+      <div class="sd-atmos-row">
+        ${aod != null ? `<div class="sd-atmos-chip">
+          <span class="sd-atmos-label">AOD</span>
+          <span class="sd-atmos-val">${aod}</span>
+          <span class="sd-cond-badge" style="color:${aodColor};background:${aodBg};margin:0;font-size:9px">${aodLabel}</span>
+        </div>` : ''}
+        ${pressure ? `<div class="sd-atmos-chip">
+          <span class="sd-atmos-label">Pressure</span>
+          <span class="sd-atmos-val">${pressure} hPa</span>
+          <span style="color:${pTrendColor};font-size:11px;font-weight:600">${pTrendIcon} ${pTrend}</span>
+        </div>` : ''}
+        ${f.precipProbability > 0 ? `<div class="sd-atmos-chip">
+          <span class="sd-atmos-label">Rain</span>
+          <span class="sd-atmos-val">${f.precipProbability}%</span>
+        </div>` : ''}
+      </div>
+    </div>
+
     <div class="sd-detail-insight">
       <div class="sd-insight-header">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dawn-copper,#c4733a)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
@@ -3594,62 +3706,91 @@ function show7DayDetail(index) {
   detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function _windDirLabel(deg) {
+  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
 function generate7DayInsight(day, c) {
   const score = day.score || 0;
   const cc = c.cloudCover ?? 0;
+  const hc = c.highCloud ?? 0;
+  const mc = c.midCloud ?? 0;
+  const lc = c.lowCloud ?? 0;
   const hm = c.humidity ?? 0;
   const vis = c.visibility ?? 0;
   const wind = c.windSpeed ?? 0;
   const precip = c.precipProbability ?? 0;
+  const aod = c.aod;
+  const pTrend = c.pressureTrend || 'stable';
 
-  // Build a human-readable narrative based on conditions
   let parts = [];
 
-  // Cloud assessment
-  if (cc >= 30 && cc <= 60) {
-    parts.push('Cloud cover is in the ideal range for dramatic sunrise colors — expect vivid oranges and purples as light scatters through partial cloud layers.');
+  // Cloud layers analysis (more nuanced than just total cover)
+  if (hc >= 20 && hc <= 70 && lc < 30) {
+    parts.push('High-altitude clouds with clear lower skies — the ideal recipe for vivid sunrise colors. Light will scatter beautifully through the upper layers.');
+  } else if (cc >= 30 && cc <= 60) {
+    parts.push('Partial cloud cover in the sweet spot for dramatic sunrise colors — expect oranges and purples as light filters through the cloud layers.');
+  } else if (lc > 60) {
+    parts.push('Heavy low cloud cover may block the horizon. Sunrise could be hidden behind a thick blanket, but watch for breaks — edge-lighting can be spectacular.');
   } else if (cc < 15) {
-    parts.push('Very clear skies mean a clean sunrise, but the lack of clouds may limit color drama. Look for soft pastel tones near the horizon.');
-  } else if (cc < 30) {
-    parts.push('Mostly clear skies with some thin cloud cover. Colors may be subtle but the sunrise will be clearly visible.');
-  } else if (cc <= 80) {
-    parts.push('Heavy cloud cover could diffuse the sunrise light. There\'s a chance of dramatic edge-lighting if breaks appear near the horizon.');
+    parts.push('Very clear skies mean a clean sunrise, but without clouds to catch the light, color drama will be limited. Look for soft pastels near the horizon.');
+  } else if (cc > 80) {
+    parts.push('Thick overcast skies are likely to block most sunrise color. Only for those who enjoy moody, atmospheric conditions.');
   } else {
-    parts.push('Thick overcast skies are likely to block most sunrise color. Consider skipping this morning unless you enjoy moody, atmospheric shots.');
+    parts.push('Mixed cloud cover with some color potential. The sunrise should be visible with moderate atmospheric drama.');
   }
 
-  // Humidity + visibility combo
+  // AOD (aerosol optical depth) — affects color intensity
+  if (aod != null) {
+    if (aod > 0.4) {
+      parts.push('High aerosol levels will scatter light intensely — expect deep reds and oranges, though haze may soften the horizon.');
+    } else if (aod >= 0.15 && aod <= 0.35) {
+      parts.push('Moderate aerosol depth enhances color saturation without heavy haze — a sweet spot for photography.');
+    } else if (aod < 0.08) {
+      parts.push('Very clean air means sharp, crisp light but potentially less color saturation.');
+    }
+  }
+
+  // Pressure trend
+  if (pTrend === 'falling') {
+    parts.push('Falling pressure suggests incoming weather changes — could bring interesting cloud dynamics.');
+  } else if (pTrend === 'rising') {
+    parts.push('Rising pressure indicates clearing skies — conditions should stabilize or improve.');
+  }
+
+  // Humidity + visibility
   if (hm > 70 && vis < 8) {
-    parts.push('High humidity and reduced visibility may create a hazy, dreamy atmosphere — good for silhouette photography.');
+    parts.push('High humidity and reduced visibility create a hazy, dreamy atmosphere — good for silhouettes.');
   } else if (hm <= 55 && vis >= 10) {
     parts.push('Low humidity and excellent visibility will produce crisp, sharp light with strong contrast.');
   } else if (vis < 5) {
-    parts.push('Poor visibility may significantly obscure the horizon — sunrise may not be clearly visible.');
+    parts.push('Poor visibility may obscure the horizon — sunrise may not be clearly visible.');
   }
 
   // Wind
   if (wind >= 25) {
-    parts.push('Strong winds could create choppy sea texture but may also clear the air for sharper light.');
+    parts.push('Strong winds will create choppy sea texture but may clear the air for sharper light.');
   } else if (wind < 8) {
-    parts.push('Calm winds mean smooth water reflections — ideal for mirror-like beach sunrise shots.');
+    parts.push('Calm winds mean smooth water — ideal for mirror-like reflections.');
   }
 
-  // Rain check
+  // Rain
   if (precip > 60) {
     parts.push('High chance of rain — bring weather protection if you head out.');
   } else if (precip > 30) {
-    parts.push('Some chance of showers, but rain breaks can produce extraordinary rainbow opportunities.');
+    parts.push('Some chance of showers, but rain breaks can produce rainbow opportunities.');
   }
 
-  // Score-based summary
+  // Score summary
   if (score >= 80) {
-    parts.push('Overall, this looks like an exceptional morning — highly recommended for photographers and sunrise chasers alike.');
+    parts.push('An exceptional morning — highly recommended.');
   } else if (score >= 60) {
-    parts.push('A solid morning with good potential. Worth setting the alarm for.');
+    parts.push('Solid potential. Worth setting the alarm.');
   } else if (score >= 40) {
-    parts.push('Conditions are mixed. Could surprise you, but temper expectations.');
+    parts.push('Mixed conditions. Could surprise you.');
   } else {
-    parts.push('Challenging conditions. Only for the dedicated early risers.');
+    parts.push('Challenging conditions. For dedicated early risers only.');
   }
 
   return parts.join(' ');

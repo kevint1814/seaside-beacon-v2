@@ -232,7 +232,7 @@
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   <link rel="preconnect" href="https://api.seasidebeacon.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=6.5">
+  <link rel="stylesheet" href="styles.css?v=6.6">
 </head>
 <body>
 
@@ -760,6 +760,20 @@
           Get the daily briefing
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
+        <div class="hero-tg-status hidden" id="heroTelegramStatus">
+          <span class="hero-tg-dot" id="heroTgDot"></span>
+          <span class="hero-tg-text" id="heroTgText">Telegram</span>
+          <button type="button" class="hero-tg-link" id="heroTgLink">Link now</button>
+        </div>
+      </div>
+
+      <!-- Mobile badge (hidden on desktop) -->
+      <div class="hero-badge-mobile" id="heroBadgeMobile">
+        <div class="hero-badge-m-logo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </div>
+        <span class="hero-badge-m-name">Seaside Beacon</span>
+        <span class="hero-badge-m-tier" id="heroBadgeMobileTier"></span>
       </div>
 
       <div class="hero-rule"></div>
@@ -1618,6 +1632,20 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
         <p class="pref-msg hidden" id="prefMsg"></p>
+
+        <!-- Telegram Settings -->
+        <div class="pref-divider"></div>
+        <div class="pref-tg-section" id="prefTelegramSection">
+          <div class="pref-tg-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            <span>Telegram Alerts</span>
+            <span class="pref-tg-badge" id="prefTgBadge">Not linked</span>
+          </div>
+          <p class="pref-tg-desc">Get instant sunrise alerts on Telegram alongside email.</p>
+          <button type="button" class="pref-tg-btn" id="prefTgLinkBtn" onclick="openTelegramModal()">
+            <span id="prefTgBtnText">Link Telegram</span>
+          </button>
+        </div>
       </div>
     </div>
   </section>
@@ -1697,6 +1725,6 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="script.js?v=6.5" defer></script>
+<script src="script.js?v=6.6" defer></script>
 </body>
 </html>
