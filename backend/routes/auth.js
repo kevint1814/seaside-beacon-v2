@@ -26,6 +26,17 @@ const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : nul
 
 const BCRYPT_ROUNDS = 10;
 
+// Short-lived one-time codes for OAuth redirect (avoids token in URL)
+const _oauthCodes = new Map(); // code → { authToken, createdAt }
+const OAUTH_CODE_TTL = 60 * 1000; // 60 seconds
+// Cleanup expired codes every 5 min
+setInterval(() => {
+  const now = Date.now();
+  for (const [code, data] of _oauthCodes.entries()) {
+    if (now - data.createdAt > OAUTH_CODE_TTL) _oauthCodes.delete(code);
+  }
+}, 5 * 60 * 1000);
+
 
 // ─── Middleware: require premium auth ───
 async function requirePremium(req, res, next) {
@@ -132,6 +143,10 @@ router.post('/auth/register', async (req, res) => {
     });
 
   } catch (err) {
+    // Handle duplicate key error (race condition: two concurrent registrations)
+    if (err.code === 11000) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists. Try signing in.' });
+    }
     console.error('Register error:', err.message);
     res.status(500).json({ success: false, message: 'Something went wrong' });
   }
@@ -469,13 +484,38 @@ router.get('/auth/google/callback', async (req, res) => {
     const authToken = await generateAuthSession(user);
     console.log(`✅ Google OAuth redirect login: ${normalised}`);
 
-    // Redirect to frontend with auth token
-    res.redirect(`${APP_URL}?googleAuth=success&token=${authToken}`);
+    // Use short-lived one-time code instead of exposing auth token in URL
+    const oauthCode = crypto.randomBytes(32).toString('hex');
+    _oauthCodes.set(oauthCode, { authToken, createdAt: Date.now() });
+    res.redirect(`${APP_URL}?googleAuth=success&code=${oauthCode}`);
 
   } catch (err) {
     console.error('Google OAuth callback error:', err.message);
     res.redirect(`${APP_URL}?googleAuthError=server_error`);
   }
+});
+
+
+// ═══════════════════════════════════════
+// POST /api/auth/exchange-code
+// Exchange one-time OAuth code for auth token (prevents token in URL)
+// ═══════════════════════════════════════
+router.post('/auth/exchange-code', (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ success: false, message: 'Code required' });
+
+  const data = _oauthCodes.get(code);
+  if (!data) return res.status(400).json({ success: false, message: 'Invalid or expired code' });
+
+  // One-time use — delete immediately
+  _oauthCodes.delete(code);
+
+  // Check expiry
+  if (Date.now() - data.createdAt > OAUTH_CODE_TTL) {
+    return res.status(400).json({ success: false, message: 'Code expired' });
+  }
+
+  res.json({ success: true, authToken: data.authToken });
 });
 
 

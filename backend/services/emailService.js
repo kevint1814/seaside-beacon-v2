@@ -81,7 +81,7 @@ async function sendEmail(mailOptions) {
       return await fallback(mailOptions);
     } catch (fallbackErr) {
       console.error(`❌ Fallback also failed: ${fallbackErr.message}`);
-      throw primaryErr;
+      throw fallbackErr; // throw the most recent failure
     }
   }
 }

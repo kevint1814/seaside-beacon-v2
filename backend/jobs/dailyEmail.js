@@ -187,10 +187,15 @@ async function sendDailyPredictions() {
 
         // Generate AI insights once per beach (needed for premium emails)
         if (!insightsCache[beachKey]) {
-          insightsCache[beachKey] = await aiService.generatePhotographyInsights(
-            weatherData,
-            allWeatherData
-          );
+          try {
+            insightsCache[beachKey] = await aiService.generatePhotographyInsights(
+              weatherData,
+              allWeatherData
+            );
+          } catch (aiErr) {
+            console.warn(`⚠️  AI insights failed for ${beachKey}: ${aiErr.message}`);
+            insightsCache[beachKey] = null; // continue without AI insights
+          }
         }
 
         // Premium users get enhanced email with photography insights
@@ -282,10 +287,15 @@ async function sendEveningPreviews() {
 
         // Generate AI insights once per beach
         if (!insightsCache[beachKey]) {
-          insightsCache[beachKey] = await aiService.generatePhotographyInsights(
-            weatherData,
-            allWeatherData
-          );
+          try {
+            insightsCache[beachKey] = await aiService.generatePhotographyInsights(
+              weatherData,
+              allWeatherData
+            );
+          } catch (aiErr) {
+            console.warn(`⚠️  AI insights failed for ${beachKey}: ${aiErr.message}`);
+            insightsCache[beachKey] = null;
+          }
         }
 
         await emailService.sendEveningPreviewEmail(

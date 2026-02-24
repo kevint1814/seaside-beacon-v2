@@ -11,6 +11,29 @@ const PremiumUser = require('../models/PremiumUser');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
+// Per-user chatbot rate limiter: max 10 messages per 60 seconds
+const _chatRateMap = new Map(); // chatId → { count, resetAt }
+const CHAT_RATE_LIMIT = 10;
+const CHAT_RATE_WINDOW = 60 * 1000; // 1 minute
+function checkChatRateLimit(chatId) {
+  const key = String(chatId);
+  const now = Date.now();
+  let entry = _chatRateMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + CHAT_RATE_WINDOW };
+    _chatRateMap.set(key, entry);
+  }
+  entry.count++;
+  return entry.count <= CHAT_RATE_LIMIT;
+}
+// Cleanup stale entries every 5 min
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of _chatRateMap.entries()) {
+    if (now > v.resetAt) _chatRateMap.delete(k);
+  }
+}, 5 * 60 * 1000);
+
 /**
  * POST /api/telegram/webhook
  * Receives incoming messages from Telegram Bot API
@@ -62,7 +85,11 @@ router.post('/telegram/webhook', async (req, res) => {
         return;
       }
 
-      // Premium user — route to AI chatbot
+      // Premium user — route to AI chatbot (with rate limiting)
+      if (!checkChatRateLimit(chatId)) {
+        await sendTelegramMessage(chatId, '⏳ You\'re sending messages too quickly. Please wait a moment and try again.');
+        return;
+      }
       await sendTypingAction(chatId);
       const response = await chatbotService.chat(chatId, text, userName);
       await sendTelegramMessage(chatId, response);
@@ -247,6 +274,10 @@ async function handleCommand(chatId, text, userName) {
       // Unknown command — treat as AI chat if linked
       const user = await PremiumUser.findOne({ telegramChatId: chatId.toString(), status: 'active' });
       if (user) {
+        if (!checkChatRateLimit(chatId)) {
+          await sendTelegramMessage(chatId, '⏳ You\'re sending messages too quickly. Please wait a moment.');
+          return;
+        }
         await sendTypingAction(chatId);
         const response = await chatbotService.chat(chatId, text, userName);
         await sendTelegramMessage(chatId, response);
@@ -265,26 +296,25 @@ async function handleCodeLinking(chatId, code) {
   try {
     const codeUpper = code.toUpperCase();
 
-    const users = await PremiumUser.find({
+    // Use regex to match first 8 chars of authToken in DB (avoids loading all users)
+    const regex = new RegExp('^' + codeUpper, 'i');
+    const matchedUser = await PremiumUser.findOne({
       status: 'active',
-      authToken: { $exists: true, $ne: null }
+      authToken: { $regex: regex }
     });
 
-    const matchedUser = users.find(u =>
-      u.authToken && u.authToken.substring(0, 8).toUpperCase() === codeUpper
-    );
-
     if (matchedUser) {
-      const existing = await PremiumUser.findOne({ telegramChatId: chatId.toString() });
-      if (existing && existing.email !== matchedUser.email) {
-        existing.telegramChatId = null;
-        existing.telegramLinkedAt = null;
-        await existing.save();
-      }
+      // Atomic: unlink any other account tied to this chatId, then link this one
+      await PremiumUser.updateMany(
+        { telegramChatId: chatId.toString(), _id: { $ne: matchedUser._id } },
+        { $set: { telegramChatId: null, telegramLinkedAt: null } }
+      );
 
-      matchedUser.telegramChatId = chatId.toString();
-      matchedUser.telegramLinkedAt = new Date();
-      await matchedUser.save();
+      // Atomic findOneAndUpdate to avoid race conditions
+      await PremiumUser.findOneAndUpdate(
+        { _id: matchedUser._id },
+        { $set: { telegramChatId: chatId.toString(), telegramLinkedAt: new Date() } }
+      );
 
       await sendTelegramMessage(chatId,
         `🎉 <b>Account linked successfully!</b>\n\n` +

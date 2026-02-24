@@ -56,6 +56,7 @@ if (CHAT_PROVIDERS.length > 0) {
 const chatHistory = new Map();    // chatId → [{ role, content }]  (OpenAI format)
 const HISTORY_LIMIT = 20;
 const HISTORY_TTL = 2 * 60 * 60 * 1000; // 2hr
+const MAX_CONVERSATIONS = 500; // cap total tracked conversations
 const lastActivity = new Map();
 
 // ─── System prompt ───
@@ -178,6 +179,14 @@ async function chat(chatId, userMessage, userName) {
 
     // Manage conversation history
     if (!chatHistory.has(chatIdStr)) {
+      // Evict oldest conversation if at capacity
+      if (chatHistory.size >= MAX_CONVERSATIONS) {
+        let oldestKey = null, oldestTime = Infinity;
+        for (const [k, t] of lastActivity.entries()) {
+          if (t < oldestTime) { oldestTime = t; oldestKey = k; }
+        }
+        if (oldestKey) { chatHistory.delete(oldestKey); lastActivity.delete(oldestKey); }
+      }
       chatHistory.set(chatIdStr, []);
     }
     lastActivity.set(chatIdStr, Date.now());
@@ -186,7 +195,7 @@ async function chat(chatId, userMessage, userName) {
 
     // Fetch live weather for context (cached internally by weatherService)
     let weatherContext = '';
-    const needsWeather = /today|tomorrow|forecast|score|beach|sunrise|weather|morning|golden|cloud|humidity|wind|predict|how.*look/i.test(userMessage);
+    const needsWeather = /\b(today|tomorrow|forecast|score|beach|sunrise|weather|morning|golden.?hour|cloud.?cover|humidity|wind|predict|how.{0,10}look)\b/i.test(userMessage);
     if (needsWeather) {
       try {
         const liveData = await getLiveWeatherContext();

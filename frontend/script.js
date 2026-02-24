@@ -10,6 +10,14 @@ const CONFIG = {
     : 'https://api.seasidebeacon.com/api'
 };
 
+// Sanitize text for safe innerHTML insertion (escapes HTML entities)
+function _esc(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = String(str);
+  return d.innerHTML;
+}
+
 const state = {
   beach:'marina', weather:null, photography:null, loading:false,
   _loadInterval:null, _pipeTimeouts:[]
@@ -1301,10 +1309,11 @@ async function handlePredict() {
   try {
     // Include auth token if premium, so backend can bypass 6 PM lock
     const _authToken = localStorage.getItem('sb_auth_token');
-    const _predictUrl = _authToken
-      ? `${CONFIG.API_URL}/predict/${state.beach}?authToken=${encodeURIComponent(_authToken)}`
-      : `${CONFIG.API_URL}/predict/${state.beach}`;
-    data = await fetchTimeout(_predictUrl, 70000);
+    const _predictUrl = `${CONFIG.API_URL}/predict/${state.beach}`;
+    const _fetchOpts = _authToken
+      ? { headers: { 'x-auth-token': _authToken } }
+      : {};
+    data = await fetchTimeout(_predictUrl, 70000, _fetchOpts);
   } catch(err) {
     error = err;
   }
@@ -1351,11 +1360,11 @@ async function handlePredict() {
   renderForecast();
 }
 
-async function fetchTimeout(url, ms) {
+async function fetchTimeout(url, ms, opts = {}) {
   const ctrl = new AbortController();
   const id = setTimeout(()=>ctrl.abort(), ms);
   try {
-    const res = await fetch(url, {signal:ctrl.signal});
+    const res = await fetch(url, { signal: ctrl.signal, ...opts });
     clearTimeout(id);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
@@ -1731,14 +1740,14 @@ function renderConditionsTab(f,pred,p) {
 
   document.getElementById('atmGrid').innerHTML = items.map(d=>`
     <div class="atm-card reveal">
-      <div class="atm-top"><span class="atm-lbl">${d.lbl}</span><span class="atm-badge ${d.cls}">${d.rating}</span></div>
-      <div class="atm-val">${d.val}</div>
-      <div class="atm-body">${d.body}</div>
+      <div class="atm-top"><span class="atm-lbl">${_esc(d.lbl)}</span><span class="atm-badge ${d.cls}">${_esc(d.rating)}</span></div>
+      <div class="atm-val">${_esc(d.val)}</div>
+      <div class="atm-body">${_esc(d.body)}</div>
     </div>`).join('');
 
   const pattern = document.getElementById('patternBox');
   const overall = p?.atmosphericAnalysis?.overallPattern||p?.insight||'';
-  pattern.innerHTML = overall?`<strong>Sky pattern</strong><br>${overall}`:'';
+  pattern.innerHTML = overall?`<strong>Sky pattern</strong><br>${_esc(overall)}`:'';
   pattern.style.display = overall?'':'none';
   setTimeout(observeReveal, 50);
 }
@@ -1750,7 +1759,7 @@ function renderDSLRTab(p) {
     {lbl:'Shutter',      val:cs.shutterSpeed||'1/125s', why:cs.shutterWhy||''},
     {lbl:'Aperture',     val:cs.aperture||'f/8–f/11',  why:cs.apertureWhy||''},
     {lbl:'White Balance',val:cs.whiteBalance||'5500K',  why:cs.wbWhy||''}
-  ].map(s=>`<div class="setting-card"><div class="sc-label">${s.lbl}</div><div class="sc-val">${s.val}</div>${s.why?`<div class="sc-why">${s.why}</div>`:''}</div>`).join('');
+  ].map(s=>`<div class="setting-card"><div class="sc-label">${_esc(s.lbl)}</div><div class="sc-val">${_esc(s.val)}</div>${s.why?`<div class="sc-why">${_esc(s.why)}</div>`:''}</div>`).join('');
   renderTips('dslrProTips', p?.dslr?.proTips||[], 'Pro tips');
   renderTips('dslrCompTips', p?.dslr?.compositionTips||[], 'Composition');
 }
@@ -1762,15 +1771,15 @@ function renderMobileTab(p) {
     {lbl:'HDR',       val:ps.hdr||'Auto',                       why:ps.hdrWhy||''},
     {lbl:'Exposure',  val:ps.exposure||'0',                     why:ps.exposureWhy||''},
     {lbl:ps.additionalSetting||'Grid', val:'On',                why:ps.additionalWhy||'Align the horizon on the lower third.'}
-  ].map(s=>`<div class="setting-card"><div class="sc-label">${s.lbl}</div><div class="sc-val">${s.val}</div>${s.why?`<div class="sc-why">${s.why}</div>`:''}</div>`).join('');
+  ].map(s=>`<div class="setting-card"><div class="sc-label">${_esc(s.lbl)}</div><div class="sc-val">${_esc(s.val)}</div>${s.why?`<div class="sc-why">${_esc(s.why)}</div>`:''}</div>`).join('');
   renderTips('mobileProTips', p?.mobile?.proTips||[], 'Pro tips');
   renderTips('mobileCompTips', p?.mobile?.compositionTips||[], 'Composition');
 }
 
 function renderTips(id, tips, heading) {
   const el=document.getElementById(id); if(!el||!tips.length){if(el)el.innerHTML='';return;}
-  el.innerHTML=`<div class="tips-heading">${heading}</div>`+
-    tips.map((t,i)=>`<div class="tip-row"><div class="tip-n">${i+1}</div><span>${t}</span></div>`).join('');
+  el.innerHTML=`<div class="tips-heading">${_esc(heading)}</div>`+
+    tips.map((t,i)=>`<div class="tip-row"><div class="tip-n">${i+1}</div><span>${_esc(t)}</span></div>`).join('');
 }
 
 function renderCompositionTab(p) {
@@ -1800,7 +1809,7 @@ function renderCompositionTab(p) {
           <span class="cc-suit ${suitCls[suit]||'cs-fair'}">${suit}</span>
         </div>
         <div class="cc-meta">${m.sub}</div>
-        <div class="cc-reason">${reason}</div>
+        <div class="cc-reason">${_esc(reason)}</div>
       </div>`;
     }).join('');
 }
@@ -3449,34 +3458,49 @@ function _initGSI() {
 function _handleGoogleOAuthReturn() {
   const params = new URLSearchParams(window.location.search);
 
-  if (params.get('googleAuth') === 'success' && params.get('token')) {
-    const token = params.get('token');
-    // Clean URL (remove query params)
+  if (params.get('googleAuth') === 'success' && params.get('code')) {
+    const code = params.get('code');
+    // Clean URL immediately (remove query params — code is one-time use)
     window.history.replaceState({}, '', window.location.pathname);
 
-    // Save auth and load user profile
-    savePremiumAuth(token);
-    showToast('Signed in with Google!');
-
-    // Fetch user info and update UI
-    fetch(CONFIG.API_URL + '/auth/me', {
-      headers: { 'x-auth-token': token }
+    // Exchange one-time code for auth token (avoids token in URL)
+    fetch(CONFIG.API_URL + '/auth/exchange-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
     })
     .then(r => r.json())
     .then(d => {
-      if (d.success && d.user) {
-        premiumState.user = d.user;
-        updatePremiumUI();
-        if (d.user.isActive) {
-          showPremiumSplash(d.user);
-        } else {
-          // Google OAuth returned but no active subscription — open pricing
-          openPremiumModal('pricing');
-          showToast('Signed in! Choose a plan to activate premium.');
-        }
+      if (!d.success || !d.authToken) {
+        showToast('Sign-in expired. Please try again.');
+        return;
       }
+      const token = d.authToken;
+      savePremiumAuth(token);
+      showToast('Signed in with Google!');
+
+      // Fetch user info and update UI
+      return fetch(CONFIG.API_URL + '/auth/me', {
+        headers: { 'x-auth-token': token }
+      })
+      .then(r => r.json())
+      .then(u => {
+        if (u.success && u.user) {
+          premiumState.user = u.user;
+          updatePremiumUI();
+          if (u.user.isActive) {
+            showPremiumSplash(u.user);
+          } else {
+            openPremiumModal('pricing');
+            showToast('Signed in! Choose a plan to activate premium.');
+          }
+        }
+      });
     })
-    .catch(err => console.warn('Post-OAuth user fetch failed:', err));
+    .catch(err => {
+      console.warn('Post-OAuth code exchange failed:', err);
+      showToast('Sign-in failed. Please try again.');
+    });
 
   } else if (params.get('googleAuthError')) {
     const err = params.get('googleAuthError');
@@ -3641,7 +3665,7 @@ function show7DayDetail(index) {
       <div class="sd-detail-score-big" style="color:${color}">${score}</div>
       <div>
         <div class="sd-detail-verdict">${verdict}</div>
-        ${f.weatherPhrase ? `<div class="sd-detail-phrase">${f.weatherPhrase}</div>` : ''}
+        ${f.weatherPhrase ? `<div class="sd-detail-phrase">${_esc(f.weatherPhrase)}</div>` : ''}
       </div>
     </div>
 
@@ -3731,7 +3755,7 @@ function show7DayDetail(index) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dawn-copper,#c4733a)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         <span>What to Expect</span>
       </div>
-      <p class="sd-insight-text">${expectInsight}</p>
+      <p class="sd-insight-text">${_esc(expectInsight)}</p>
     </div>
   `;
 

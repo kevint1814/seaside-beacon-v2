@@ -69,7 +69,11 @@ app.use((req, res, next) => {
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: 'Too many requests, please try again later'
+  message: 'Too many requests, please try again later',
+  skip: (req) => {
+    // Exempt server-to-server webhooks from rate limiting
+    return req.path === '/api/payment/webhook' || req.path === '/api/telegram/webhook';
+  }
 });
 app.use('/api/', limiter);
 

@@ -102,6 +102,10 @@ router.post('/feedback', async (req, res) => {
     if (!rating || !beach || !name || !date || !comment) {
       return res.status(400).json({ success: false, message: 'All fields are required: name, date, rating, comment, and beach.' });
     }
+    const validRatings = ['Spot On', 'Close', 'Missed'];
+    if (!validRatings.includes(rating)) {
+      return res.status(400).json({ success: false, message: 'Invalid rating. Use: Spot On, Close, or Missed.' });
+    }
 
     const feedback = await Feedback.create({
       rating,

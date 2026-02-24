@@ -97,6 +97,10 @@ router.get('/beaches', async (req, res) => {
 router.get('/predict/:beach', async (req, res) => {
   try {
     const { beach } = req.params;
+    const validBeaches = weatherService.getBeaches().map(b => b.key);
+    if (!validBeaches.includes(beach)) {
+      return res.status(400).json({ success: false, message: 'Invalid beach. Valid options: ' + validBeaches.join(', ') });
+    }
     console.log(`\n📍 Prediction for: ${beach}`);
 
     // Track this forecast request (non-blocking)
