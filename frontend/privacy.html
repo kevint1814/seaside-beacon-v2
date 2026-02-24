@@ -189,154 +189,163 @@
   </nav>
 
   <main class="legal-wrap">
-    <div class="legal-eyebrow">Legal</div>
+    <div class="legal-eyebrow">Your data</div>
     <h1 class="legal-title">Privacy Policy</h1>
     <p class="legal-updated">Last updated: 24 February 2026</p>
 
     <section class="legal-section">
-      <h2>1. Overview</h2>
-      <p>Seaside Beacon ("we", "our", "the Service") respects your privacy. This policy explains what data we collect, why we collect it, how we use it, and your rights regarding that data. We are committed to keeping things minimal — we only collect what is necessary to deliver the Service.</p>
+      <h2>The short version</h2>
+      <p>We keep things simple. We only collect what we need to send you sunrise forecasts and run the service. We don't sell your data, we don't track you across the internet, and we don't use your information for ads. This page explains exactly what we collect, why, and how we protect it.</p>
     </section>
 
     <section class="legal-section">
-      <h2>2. Data We Collect</h2>
+      <h2>What we collect and why</h2>
+      <p>Here's a clear breakdown of everything we store:</p>
       <table class="data-table">
         <thead>
           <tr>
-            <th>Data</th>
-            <th>Purpose</th>
-            <th>Stored Where</th>
+            <th>What</th>
+            <th>Why</th>
+            <th>Where it lives</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>Email address</td>
-            <td>Account creation, daily forecast emails, subscription management</td>
-            <td>MongoDB (encrypted at rest)</td>
+            <td>So we can send you forecasts and manage your account</td>
+            <td>Our database (encrypted at rest)</td>
           </tr>
           <tr>
             <td>Name (optional)</td>
-            <td>Personalisation of emails and greetings</td>
-            <td>MongoDB</td>
+            <td>To personalise your emails and greetings</td>
+            <td>Our database</td>
           </tr>
           <tr>
-            <td>Password (hashed)</td>
-            <td>Account authentication</td>
-            <td>MongoDB (bcrypt hash, never stored in plain text)</td>
+            <td>Password</td>
+            <td>To keep your account secure</td>
+            <td>Stored as a bcrypt hash — we never see or store the actual password</td>
           </tr>
           <tr>
             <td>Beach preference</td>
-            <td>Sending you the forecast for the beach you care about</td>
-            <td>MongoDB</td>
+            <td>So your forecast is for the beach you care about</td>
+            <td>Our database</td>
           </tr>
           <tr>
             <td>Telegram chat ID</td>
-            <td>Linking your Telegram account for alerts and the AI assistant</td>
-            <td>MongoDB</td>
+            <td>To send you alerts and connect you to the AI assistant</td>
+            <td>Our database</td>
           </tr>
           <tr>
             <td>Payment info</td>
-            <td>Processing Premium subscriptions</td>
-            <td>Razorpay (we never store card details — Razorpay handles this)</td>
+            <td>To process your Premium subscription</td>
+            <td>Razorpay handles this entirely — we never see or store your card details</td>
           </tr>
           <tr>
             <td>Chat messages</td>
-            <td>AI assistant conversation context (per-session, in-memory only)</td>
-            <td>Server RAM (not persisted — cleared on restart or after 2 hours of inactivity)</td>
+            <td>So the AI assistant remembers context during your conversation</td>
+            <td>Server memory only — automatically cleared after 2 hours or on restart. Never saved to a database</td>
+          </tr>
+          <tr>
+            <td>Support tickets</td>
+            <td>To track and resolve your issues</td>
+            <td>Our database — includes the issue description you provide and your contact info</td>
           </tr>
           <tr>
             <td>Community feedback</td>
-            <td>Sunrise accuracy ratings and optional comments</td>
-            <td>MongoDB</td>
+            <td>Your sunrise accuracy ratings help us improve the algorithm</td>
+            <td>Our database</td>
           </tr>
         </tbody>
       </table>
     </section>
 
     <section class="legal-section">
-      <h2>3. What We Do Not Collect</h2>
+      <h2>What we don't do</h2>
+      <p>Just to be clear:</p>
       <ul>
-        <li>We do not track your location or use GPS data.</li>
-        <li>We do not use cookies for advertising or cross-site tracking.</li>
-        <li>We do not sell, rent, or share your personal data with third parties for marketing purposes.</li>
-        <li>We do not store your credit card or bank details — all payment processing is handled by Razorpay.</li>
-        <li>We do not use analytics trackers or embed third-party tracking scripts.</li>
+        <li>We don't track your location or use GPS.</li>
+        <li>We don't use advertising cookies or track you across websites.</li>
+        <li>We don't sell, rent, or share your data with anyone for marketing.</li>
+        <li>We don't store your credit card or bank details — Razorpay handles all of that.</li>
+        <li>We don't run analytics trackers or third-party tracking scripts on the website.</li>
       </ul>
     </section>
 
     <section class="legal-section">
-      <h2>4. How We Use Your Data</h2>
+      <h2>How we use your data</h2>
       <ul>
-        <li><strong style="color:var(--t1);font-weight:500">Email delivery:</strong> Sending your daily sunrise forecasts (8:30 PM preview and 4 AM morning alert) and account-related notifications.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Forecast personalisation:</strong> Showing you the forecast for your selected beach.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Telegram alerts:</strong> Sending sunrise score notifications and AI assistant responses to your linked Telegram account.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Service improvement:</strong> Aggregated, anonymised community feedback helps us calibrate the scoring algorithm.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Subscription management:</strong> Processing payments and managing your Premium access status via Razorpay.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Forecast emails:</strong> Free users get the morning forecast at 4 AM IST. Premium users also get an evening preview at 8:30 PM IST to plan ahead.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Personalisation:</strong> Showing you the forecast for your chosen beach.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Telegram:</strong> Sending sunrise alerts, AI assistant responses, and support ticket confirmations.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Improving the algorithm:</strong> Aggregated, anonymous community feedback helps us calibrate how scores are calculated.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Subscription management:</strong> Processing payments and managing your Premium status through Razorpay.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Support:</strong> Responding to tickets raised via the Telegram bot or email.</li>
       </ul>
     </section>
 
     <section class="legal-section">
-      <h2>5. Third-Party Services</h2>
-      <p>We integrate with the following services, each governed by their own privacy policies:</p>
+      <h2>Services we work with</h2>
+      <p>We use a few external services to keep things running. Each one has their own privacy practices:</p>
       <ul>
-        <li><strong style="color:var(--t1);font-weight:500">Open-Meteo</strong> — Weather forecast data. No user data is sent; we only query public weather APIs.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Razorpay</strong> — Payment processing. Your payment data is handled directly by Razorpay under their security standards (PCI DSS compliant). We receive only subscription status, not card details.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Telegram</strong> — Messaging platform for alerts and the AI assistant. Your Telegram chat ID is stored to deliver messages. Message content is processed in-memory and not persisted.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Google (OAuth)</strong> — If you sign in with Google, we receive your name and email. We do not access your Google contacts, files, or any other data.</li>
-        <li><strong style="color:var(--t1);font-weight:500">AI Providers (Gemini, Groq)</strong> — Chat messages are sent to AI providers to generate responses. These providers process messages per their terms and do not retain conversation data beyond request processing.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Resend</strong> — Email delivery service. Your email address is shared with Resend solely for the purpose of delivering forecast emails.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Open-Meteo</strong> — provides the weather and atmospheric data. We only send location coordinates for Chennai's beaches, never any user data.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Razorpay</strong> — handles all payment processing. They're PCI DSS compliant. We only receive your subscription status, never your card details.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Telegram</strong> — delivers alerts and hosts the AI assistant. Your chat ID is stored so we can send you messages.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Google (OAuth)</strong> — if you sign in with Google, we get your name and email. Nothing else — no contacts, no files, no browsing data.</li>
+        <li><strong style="color:var(--t1);font-weight:500">AI providers (Gemini, Groq)</strong> — power the chatbot. Messages are sent to generate responses but aren't stored by these providers beyond processing.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Resend</strong> — delivers our forecast emails. Your email address is shared with them solely for delivery.</li>
       </ul>
     </section>
 
     <section class="legal-section">
-      <h2>6. Data Security</h2>
-      <p>We take reasonable measures to protect your data:</p>
+      <h2>How we keep things safe</h2>
+      <p>We take reasonable steps to protect your data:</p>
       <ul>
-        <li>Passwords are hashed using bcrypt and never stored or transmitted in plain text.</li>
-        <li>Authentication uses JWT tokens transmitted over HTTPS only.</li>
-        <li>Database access is restricted to the application server with authentication credentials.</li>
-        <li>The Service is served entirely over HTTPS (TLS encrypted in transit).</li>
-        <li>AI assistant conversations are stored in server memory only and automatically purged after 2 hours of inactivity or on server restart.</li>
+        <li>Passwords are hashed with bcrypt — we can't see them even if we wanted to.</li>
+        <li>Login sessions use JWT tokens over HTTPS only.</li>
+        <li>The entire site runs on HTTPS (encrypted in transit).</li>
+        <li>Database access is restricted and authenticated.</li>
+        <li>Chat conversations live in server memory and auto-clear after 2 hours.</li>
       </ul>
-      <p>No system is 100% secure. While we take care to protect your data, we cannot guarantee absolute security and encourage you to use a strong, unique password for your account.</p>
+      <p>That said, no system is bulletproof. We do our best, but we'd recommend using a strong, unique password for your account — the usual good practice.</p>
     </section>
 
     <section class="legal-section">
-      <h2>7. Data Retention</h2>
+      <h2>How long we keep your data</h2>
       <ul>
-        <li><strong style="color:var(--t1);font-weight:500">Active accounts:</strong> Data is retained as long as your account is active.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Free subscribers:</strong> Email and beach preference are retained until you unsubscribe. Unsubscribing removes your data from the mailing list.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Premium accounts:</strong> Account data is retained until you cancel your subscription and request deletion.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Chat history:</strong> Not persisted. Cleared after 2 hours of inactivity or when the server restarts.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Community feedback:</strong> Retained indefinitely to support algorithm calibration. Feedback does not contain personally identifying information beyond what you voluntarily submit.</li>
-      </ul>
-    </section>
-
-    <section class="legal-section">
-      <h2>8. Your Rights</h2>
-      <p>You have the right to:</p>
-      <ul>
-        <li><strong style="color:var(--t1);font-weight:500">Access</strong> — Request a copy of the data we hold about you.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Correction</strong> — Ask us to correct inaccurate data.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Deletion</strong> — Request deletion of your account and associated data. Email us and we will process the request within 7 days.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Unsubscribe</strong> — Every forecast email contains an unsubscribe link. One click, no questions.</li>
-        <li><strong style="color:var(--t1);font-weight:500">Data portability</strong> — Request your data in a machine-readable format.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Active accounts:</strong> As long as you're using the service.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Free subscribers:</strong> Until you unsubscribe. Hit unsubscribe in any email and your data is removed from the mailing list.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Premium accounts:</strong> Until you cancel and request deletion.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Chat messages:</strong> Never saved permanently. Cleared after 2 hours of inactivity or when the server restarts.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Support tickets:</strong> Kept for reference until the issue is resolved, then archived.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Community feedback:</strong> Kept to help improve the algorithm. Doesn't contain personal info beyond what you voluntarily share.</li>
       </ul>
     </section>
 
     <section class="legal-section">
-      <h2>9. Children's Privacy</h2>
-      <p>Seaside Beacon is not directed at children under 13. We do not knowingly collect personal data from children. If you believe a child has provided us with personal information, please contact us and we will delete it promptly.</p>
+      <h2>Your rights</h2>
+      <p>You're in control of your data. You can:</p>
+      <ul>
+        <li><strong style="color:var(--t1);font-weight:500">See your data</strong> — ask us for a copy of what we have.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Fix it</strong> — if anything's wrong, let us know and we'll correct it.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Delete it</strong> — email us and we'll remove your account and data within 7 days.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Unsubscribe</strong> — every email has a one-click unsubscribe link. No hoops to jump through.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Export it</strong> — request your data in a format you can take with you.</li>
+      </ul>
     </section>
 
     <section class="legal-section">
-      <h2>10. Changes to This Policy</h2>
-      <p>We may update this Privacy Policy from time to time. Changes will be reflected on this page with an updated "Last updated" date. For significant changes, we will notify Premium subscribers via email.</p>
+      <h2>Kids</h2>
+      <p>Seaside Beacon isn't aimed at children under 13. We don't knowingly collect data from kids. If you think a child has signed up, let us know and we'll remove their information right away.</p>
     </section>
 
     <section class="legal-section">
-      <h2>11. Contact</h2>
-      <p>For privacy-related questions, data requests, or concerns, reach out at <strong style="color:var(--t1);font-weight:500">support@seasidebeacon.com</strong>.</p>
+      <h2>Changes</h2>
+      <p>If we update this policy, we'll change the date at the top. For anything significant, we'll let Premium subscribers know by email. No surprises.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>Talk to us</h2>
+      <p>Questions about your privacy, data requests, or just want to know more? Reach out at <strong style="color:var(--t1);font-weight:500">support@seasidebeacon.com</strong> or chat with our AI assistant on Telegram — it can handle support queries and raise tickets for you too.</p>
     </section>
   </main>
 
