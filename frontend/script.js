@@ -2768,7 +2768,7 @@ function populateAccountPanel() {
   // Telegram button text
   const tgBtn = document.getElementById('pmManageTelegram');
   if (tgBtn) {
-    tgBtn.innerHTML = user.telegramChatId
+    tgBtn.innerHTML = user.telegramLinked
       ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Telegram Connected'
       : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Link Telegram';
   }
@@ -2928,10 +2928,11 @@ function updatePremiumUI() {
   if (mobileTier) mobileTier.textContent = isPremium ? 'Premium' : '';
 
   // Telegram status bar in hero (only for premium users)
+  // API returns `telegramLinked` (boolean), not `telegramChatId`
   const heroTgStatus = document.getElementById('heroTelegramStatus');
   if (heroTgStatus && isPremium) {
     heroTgStatus.classList.remove('hidden');
-    const tgLinked = !!(user && user.telegramChatId);
+    const tgLinked = !!(user && user.telegramLinked);
     heroTgStatus.classList.toggle('linked', tgLinked);
     const heroTgText = document.getElementById('heroTgText');
     if (heroTgText) heroTgText.textContent = tgLinked ? 'Telegram linked' : 'Telegram';
@@ -2943,7 +2944,7 @@ function updatePremiumUI() {
   const prefTgBadge = document.getElementById('prefTgBadge');
   const prefTgBtn = document.getElementById('prefTgLinkBtn');
   const prefTgBtnText = document.getElementById('prefTgBtnText');
-  if (user && user.telegramChatId) {
+  if (user && user.telegramLinked) {
     if (prefTgBadge) { prefTgBadge.textContent = 'Linked'; prefTgBadge.classList.add('linked'); }
     if (prefTgBtn) { prefTgBtn.classList.add('linked'); }
     if (prefTgBtnText) prefTgBtnText.textContent = 'Telegram Connected';
