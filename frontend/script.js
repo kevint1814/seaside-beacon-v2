@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════
-// SEASIDE BEACON v6.3
+// SEASIDE BEACON v6.4
 // Liquid Glass · Beach Sunrise · Ultra Premium
 // ═══════════════════════════════════════════════
-console.log('🌅 Seaside Beacon v6.3 — loaded');
+console.log('🌅 Seaside Beacon v6.4 — loaded');
 
 const CONFIG = {
   API_URL: (window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')
@@ -1947,7 +1947,22 @@ function initModals() {
   document.getElementById('emailModal')?.addEventListener('click', e=>{ if(e.target.id==='emailModal') closeModalFn(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModalFn(); });
   ['navSubscribeBtn','heroSubscribeBtn','drawerSubscribeBtn'].forEach(id=>
-    document.getElementById(id)?.addEventListener('click', openModal)
+    document.getElementById(id)?.addEventListener('click', () => {
+      if (document.body.classList.contains('is-premium')) {
+        // Premium users → scroll to their alert settings section on the page
+        const premSettings = document.getElementById('premiumSettingsSection');
+        if (premSettings) {
+          premSettings.classList.remove('hidden');
+          premSettings.scrollIntoView({behavior:'smooth',block:'center'});
+        }
+        // Close drawer if open
+        document.getElementById('navDrawer')?.classList.add('hidden');
+        document.getElementById('navHamburger')?.classList.remove('open');
+      } else {
+        // Normal users → open the subscribe modal
+        openModal();
+      }
+    })
   );
 }
 
@@ -2899,6 +2914,10 @@ function updatePremiumUI() {
     }
   });
 
+  // Update hero badge tier
+  const heroBadgeTier = document.getElementById('heroBadgeTier');
+  if (heroBadgeTier) heroBadgeTier.textContent = isPremium ? 'Premium' : '';
+
   // Update forecast section note for premium users
   const forecastNote = document.getElementById('forecastSectionNote');
   if (forecastNote) {
@@ -3374,8 +3393,10 @@ async function fetch7DayForecast(beach) {
     });
     const data = await res.json();
 
-    if (data.success && data.data) {
-      render7DayGrid(data.data);
+    // Backend returns { success, data: { beach, beachKey, days: [...], generatedAt } }
+    const days = data.data?.days || data.data;
+    if (data.success && Array.isArray(days) && days.length > 0) {
+      render7DayGrid(days);
     } else {
       grid.innerHTML = '<p style="text-align:center;color:var(--t3);font-size:13px;grid-column:1/-1;">Forecast unavailable</p>';
     }
