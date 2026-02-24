@@ -72,7 +72,8 @@ const SYSTEM_PROMPT = `You are the Seaside Beacon Assistant — an expert compan
 - **Sunrise quality forecasting**: cloud layers (high/mid/low), aerosol optical depth (AOD), humidity, visibility, pressure trends, and how they combine to create color
 - **Photography guidance**: golden hour timing, camera settings for sunrise, composition tips for each Chennai beach, phone vs DSLR advice
 - **Weather interpretation**: what cloud cover percentages mean visually, why 30-60% cloud is ideal, how AOD creates vivid reds/oranges, pressure trends and clearing skies
-- **Seaside Beacon features**: how the scoring algorithm works (0-100), what each factor measures, how to read the 7-day forecast, premium vs free features, email alerts, Telegram alerts
+- **Seaside Beacon features**: how the scoring algorithm works (0-100), what each factor measures, how to read the 7-day forecast calendar, premium vs free features, email alerts, Telegram alerts
+- **7-day planning**: you have access to the full 7-day sunrise forecast and can tell users which day looks best, compare days, and help them plan their week around the best sunrises
 - **Local knowledge**: best spots at each beach, parking, timing, crowd levels, seasonal patterns (Oct-Mar is peak sunrise season in Chennai)
 
 ## Scoring system
@@ -88,6 +89,8 @@ const SYSTEM_PROMPT = `You are the Seaside Beacon Assistant — an expert compan
 - Use occasional emojis naturally but don't overdo it
 - When given live weather data, interpret it conversationally — don't just list numbers
 - If asked about today/tomorrow, use the live data provided in the context
+- If asked about the week ahead, best day this week, or any specific day — use the 7-DAY FORECAST data provided in context
+- When recommending the best day, compare scores across the 7-day forecast and pick the highest
 - For photography questions, give practical actionable advice
 - For technical questions about our system, be transparent about how it works
 - If you don't know something specific, say so honestly
@@ -152,6 +155,36 @@ function formatWeatherForAI(weatherData) {
   return text;
 }
 
+// ─── Fetch 7-day forecast context ───
+async function get7DayContext() {
+  try {
+    // Fetch for Marina (representative of Chennai — all beaches share same grid)
+    const days = await weatherService.get7DayForecast('marina');
+    if (!days || days.length === 0) return null;
+    return days;
+  } catch (err) {
+    return null;
+  }
+}
+
+function format7DayForAI(days) {
+  if (!days || days.length === 0) return '';
+
+  let text = '\n\n7-DAY SUNRISE FORECAST (Marina Beach, Chennai):\n';
+  for (const day of days) {
+    const date = new Date(day.date);
+    const dayName = date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+    const c = day.conditions || {};
+    text += `\n${dayName}: Score ${day.score || 0}/100 — ${day.verdict || '—'}`;
+    if (c.cloudCover != null) text += ` | Cloud ${c.cloudCover}%`;
+    if (c.humidity != null) text += ` | Humidity ${c.humidity}%`;
+    if (c.visibility != null) text += ` | Vis ${c.visibility}km`;
+    if (day.sunrise) text += ` | Sunrise ${day.sunrise}`;
+  }
+  text += '\n\nNote: All 4 Chennai beaches share similar conditions. Scores above are for Marina but apply approximately to all beaches.';
+  return text;
+}
+
 // ─── Call a single provider (OpenAI-compatible) ───
 async function callProvider(provider, messages) {
   const client = provider.isGroq ? provider.client : provider.client;
@@ -195,11 +228,14 @@ async function chat(chatId, userMessage, userName) {
 
     // Fetch live weather for context (cached internally by weatherService)
     let weatherContext = '';
-    const needsWeather = /\b(today|tomorrow|forecast|score|beach|sunrise|weather|morning|golden.?hour|cloud.?cover|humidity|wind|predict|how.{0,10}look)\b/i.test(userMessage);
+    const needsWeather = /\b(today|tomorrow|forecast|score|beach|sunrise|weather|morning|golden.?hour|cloud.?cover|humidity|wind|predict|how.{0,10}look|week|7.?day|next.?few|which day|best day|this week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(userMessage);
     if (needsWeather) {
       try {
-        const liveData = await getLiveWeatherContext();
-        weatherContext = '\n\n' + formatWeatherForAI(liveData);
+        const [liveData, sevenDayData] = await Promise.all([
+          getLiveWeatherContext(),
+          get7DayContext()
+        ]);
+        weatherContext = '\n\n' + formatWeatherForAI(liveData) + format7DayForAI(sevenDayData);
       } catch (err) {
         weatherContext = '\n\nLive weather data temporarily unavailable.';
       }
