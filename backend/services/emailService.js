@@ -311,14 +311,16 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     const headerBg = score >= 85 ? '#059669' : score >= 70 ? '#C4733A' : score >= 55 ? '#C4733A' : score >= 40 ? '#8B6040' : '#7A5A4A';
     const verdictEmoji = score >= 85 ? '🔥' : score >= 70 ? '🌅' : score >= 55 ? '☀️' : score >= 40 ? '☁️' : '🌫️';
 
-    // Extract insights
-    const insight = photographyInsights.insight || '';
-    const greeting = photographyInsights.greeting || '';
-    const goldenHour = photographyInsights.goldenHour || { start: 'N/A', peak: 'N/A', end: 'N/A', quality: 'N/A' };
-    const sunriseExp = photographyInsights.sunriseExperience || {};
-    const dslrSettings = photographyInsights.dslr?.cameraSettings || {};
-    const dslrTips = photographyInsights.dslr?.compositionTips || [];
-    const beachComp = photographyInsights.beachComparison || null;
+    // Extract insights (null-safe — photographyInsights is null for free users)
+    const pi = photographyInsights || {};
+    const insight = pi.insight || '';
+    const greeting = pi.greeting || '';
+    // Use AI golden hour if available, fall back to weather data's calculated golden hour
+    const goldenHour = pi.goldenHour || weatherData.goldenHour || { start: 'N/A', peak: 'N/A', end: 'N/A', quality: 'N/A' };
+    const sunriseExp = pi.sunriseExperience || {};
+    const dslrSettings = pi.dslr?.cameraSettings || {};
+    const dslrTips = pi.dslr?.compositionTips || [];
+    const beachComp = pi.beachComparison || null;
 
     // Cloud label
     // v5.3: low stratus check for fallback label

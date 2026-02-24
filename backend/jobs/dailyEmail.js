@@ -199,7 +199,7 @@ async function sendDailyPredictions() {
           subscriber.email,
           weatherData,
           isPremium ? insightsCache[beachKey] : null,  // Photography gated
-          { isPremium }
+          isPremium
         );
 
         subscriber.lastEmailSent = new Date();
