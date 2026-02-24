@@ -2529,8 +2529,14 @@ function handleGoogleCredentialResponse(response) {
       savePremiumAuth(d.authToken);
       premiumState.user = d.user;
       updatePremiumUI();
-      closePremiumModal();
-      showPremiumSplash(d.user);
+      if (d.user.isActive) {
+        closePremiumModal();
+        showPremiumSplash(d.user);
+      } else {
+        // Google signed in but no active subscription — show pricing
+        showPmState('pmPricing');
+        showToast('Signed in! Choose a plan to activate premium.');
+      }
       if (window._premiumAuthCallback) {
         window._premiumAuthCallback();
         window._premiumAuthCallback = null;
@@ -2694,6 +2700,9 @@ function openPremiumModal(startState) {
   } else if (premiumState.user && premiumState.user.isActive) {
     showPmState('pmAccount');
     populateAccountPanel();
+  } else if (premiumState.user && !premiumState.user.isActive) {
+    // Signed in but no active subscription — show pricing so they can subscribe
+    showPmState('pmPricing');
   } else if (startState === 'pricing') {
     showPmState('pmPricing');
   } else {
@@ -3223,9 +3232,15 @@ function initPremium() {
         savePremiumAuth(d.authToken);
         premiumState.user = d.user;
         updatePremiumUI();
-        closePremiumModal();
-        showPremiumSplash(d.user);
-        showToast(d.user.isActive ? 'Welcome back! Premium is active.' : 'Signed in successfully.');
+        if (d.user.isActive) {
+          closePremiumModal();
+          showPremiumSplash(d.user);
+          showToast('Welcome back! Premium is active.');
+        } else {
+          // Signed in but no active subscription — show pricing
+          showPmState('pmPricing');
+          showToast('Signed in! Choose a plan to activate premium.');
+        }
         if (window._premiumAuthCallback) { window._premiumAuthCallback(); window._premiumAuthCallback = null; }
       } else {
         showMsg('premiumLoginMessage', d.message || 'Sign-in failed.', false);
@@ -3260,8 +3275,14 @@ function initPremium() {
         savePremiumAuth(d.authToken);
         premiumState.user = d.user;
         updatePremiumUI();
-        closePremiumModal();
-        showToast('Account created! Welcome to Seaside Beacon.');
+        if (d.user.isActive) {
+          closePremiumModal();
+          showToast('Account created! Premium is active.');
+        } else {
+          // Account created but needs payment — show pricing
+          showPmState('pmPricing');
+          showToast('Account created! Choose a plan to get started.');
+        }
         if (window._premiumAuthCallback) { window._premiumAuthCallback(); window._premiumAuthCallback = null; }
       } else {
         showMsg('premiumRegisterMessage', d.message || 'Registration failed.', false);
@@ -3446,7 +3467,13 @@ function _handleGoogleOAuthReturn() {
       if (d.success && d.user) {
         premiumState.user = d.user;
         updatePremiumUI();
-        showPremiumSplash(d.user);
+        if (d.user.isActive) {
+          showPremiumSplash(d.user);
+        } else {
+          // Google OAuth returned but no active subscription — open pricing
+          openPremiumModal('pricing');
+          showToast('Signed in! Choose a plan to activate premium.');
+        }
       }
     })
     .catch(err => console.warn('Post-OAuth user fetch failed:', err));
