@@ -163,7 +163,7 @@ async function chat(chatId, userMessage, userName) {
     const chatSession = model.startChat({
       history: history.slice(0, -1), // all except the latest message
       generationConfig: {
-        maxOutputTokens: 500,
+        maxOutputTokens: 1024,
         temperature: 0.7,
       }
     });

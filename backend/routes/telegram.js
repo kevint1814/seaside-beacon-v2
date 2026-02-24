@@ -329,11 +329,47 @@ async function sendTypingAction(chatId) {
 }
 
 /**
+ * Split long text into chunks at paragraph/line boundaries
+ */
+function splitMessage(text, maxLen) {
+  const chunks = [];
+  let remaining = text;
+
+  while (remaining.length > maxLen) {
+    // Try to split at last double-newline within limit
+    let splitAt = remaining.lastIndexOf('\n\n', maxLen);
+    // Fallback: split at last single newline
+    if (splitAt <= 0) splitAt = remaining.lastIndexOf('\n', maxLen);
+    // Last resort: split at space
+    if (splitAt <= 0) splitAt = remaining.lastIndexOf(' ', maxLen);
+    // Absolute fallback: hard cut
+    if (splitAt <= 0) splitAt = maxLen;
+
+    chunks.push(remaining.substring(0, splitAt).trim());
+    remaining = remaining.substring(splitAt).trim();
+  }
+
+  if (remaining.length > 0) chunks.push(remaining);
+  return chunks;
+}
+
+/**
  * Send message via Telegram Bot API
+ * Automatically splits messages exceeding Telegram's 4096-char limit
  */
 async function sendTelegramMessage(chatId, text) {
   if (!BOT_TOKEN) {
     console.warn('⚠️ TELEGRAM_BOT_TOKEN not set');
+    return;
+  }
+
+  // Telegram has a 4096-char limit per message — split if needed
+  const MAX_LEN = 4000; // leave room for safety
+  if (text.length > MAX_LEN) {
+    const chunks = splitMessage(text, MAX_LEN);
+    for (const chunk of chunks) {
+      await sendTelegramMessage(chatId, chunk);
+    }
     return;
   }
 
