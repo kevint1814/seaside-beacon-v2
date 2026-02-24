@@ -3783,71 +3783,73 @@ function generate7DayInsight(day, c) {
 
   let parts = [];
 
-  // Cloud layers analysis (more nuanced than just total cover)
+  // ── Sky canvas: cloud layers → what the sky will look like ──
   if (hc >= 20 && hc <= 70 && lc < 30) {
-    parts.push('High-altitude clouds with clear lower skies — the ideal recipe for vivid sunrise colors. Light will scatter beautifully through the upper layers.');
+    parts.push('Expect a textured sky — high cirrus clouds will catch the first light and glow in oranges and magentas while the lower horizon stays clean. This is the kind of sky that produces those layered, painterly sunrise frames.');
+  } else if (cc >= 30 && cc <= 60 && mc >= 20) {
+    parts.push('A dramatic sky is likely — mid-level altocumulus will scatter light across the dome, painting wide bands of purple and copper. Great conditions for wide-angle compositions that fill the frame with color.');
   } else if (cc >= 30 && cc <= 60) {
-    parts.push('Partial cloud cover in the sweet spot for dramatic sunrise colors — expect oranges and purples as light filters through the cloud layers.');
+    parts.push('Partial cloud in the sweet spot for color — the sky should light up with warm oranges and pinks as sunlight filters through the cloud edges. Good contrast between lit clouds and open sky patches.');
   } else if (lc > 60) {
-    parts.push('Heavy low cloud cover may block the horizon. Sunrise could be hidden behind a thick blanket, but watch for breaks — edge-lighting can be spectacular.');
+    parts.push('A thick low cloud blanket may sit over the horizon, blocking the sun disk. But watch the edges — if any breaks appear, the rim-lighting effect on cloud edges can be intensely photogenic. Best shot: silhouettes against whatever glow leaks through.');
   } else if (cc < 15) {
-    parts.push('Very clear skies mean a clean sunrise, but without clouds to catch the light, color drama will be limited. Look for soft pastels near the horizon.');
+    parts.push('An open, clean sky — expect soft pastel gradients from deep blue overhead to warm peach near the horizon. Without clouds to catch color, the drama will be subtle. Best for minimalist compositions: lone figure, clean horizon line, negative space.');
   } else if (cc > 80) {
-    parts.push('Thick overcast skies are likely to block most sunrise color. Only for those who enjoy moody, atmospheric conditions.');
+    parts.push('Heavy overcast will mute the sky — expect flat, grey-blue tones with little color breakthrough. Consider this a moody-tone morning: desaturated silhouettes, long exposures of waves, or black-and-white work.');
   } else {
-    parts.push('Mixed cloud cover with some color potential. The sunrise should be visible with moderate atmospheric drama.');
+    parts.push('A mixed sky with scattered clouds — some color pockets are likely near the horizon as light catches cloud breaks. The drama will be moderate but watch for surprise gaps where concentrated light punches through.');
   }
 
-  // AOD (aerosol optical depth) — affects color intensity
+  // ── Color intensity: AOD ──
   if (aod != null) {
     if (aod > 0.4) {
-      parts.push('High aerosol levels will scatter light intensely — expect deep reds and oranges, though haze may soften the horizon.');
+      parts.push('Elevated aerosols will amplify warm tones — the sky should lean into deep reds, burnt oranges, and amber. Horizon may appear softened by haze, giving a diffused, cinematic quality. Silhouettes will pop against this warm backdrop.');
     } else if (aod >= 0.15 && aod <= 0.35) {
-      parts.push('Moderate aerosol depth enhances color saturation without heavy haze — a sweet spot for photography.');
+      parts.push('Aerosol levels are in the color sweet spot — enough particles to enhance saturation without heavy haze. Expect rich, natural warmth across the sky with good horizon definition. Ideal for both wide landscapes and tight telephoto crops of the sun disk.');
     } else if (aod < 0.08) {
-      parts.push('Very clean air means sharp, crisp light but potentially less color saturation.');
+      parts.push('Very clean atmosphere — the sky will produce sharp, high-contrast light but cooler tones overall. Colors will be crisp and true rather than dramatic. Great for detail shots and sharp horizon work.');
     }
   }
 
-  // Pressure trend
+  // ── Sky dynamics: pressure trend ──
   if (pTrend === 'falling') {
-    parts.push('Falling pressure suggests incoming weather changes — could bring interesting cloud dynamics.');
+    parts.push('Falling pressure means the sky is unsettled — cloud shapes may shift quickly around sunrise, which can create fast-changing light. Be ready to shoot rapidly as conditions evolve.');
   } else if (pTrend === 'rising') {
-    parts.push('Rising pressure indicates clearing skies — conditions should stabilize or improve.');
+    parts.push('Rising pressure is clearing the sky — look for dramatic cloud-edge breakups as the atmosphere stabilizes. These transitions often produce the best color windows.');
   }
 
-  // Humidity + visibility
+  // ── Atmosphere: humidity + visibility → how the light feels ──
   if (hm > 70 && vis < 8) {
-    parts.push('High humidity and reduced visibility create a hazy, dreamy atmosphere — good for silhouettes.');
+    parts.push('Humid, hazy air will diffuse the light — expect a soft, dreamy glow rather than crisp rays. The sky will have a watercolor quality. Great conditions for moody silhouettes and layered depth shots.');
   } else if (hm <= 55 && vis >= 10) {
-    parts.push('Low humidity and excellent visibility will produce crisp, sharp light with strong contrast.');
+    parts.push('Dry air and sharp visibility — light will be crisp with defined edges on clouds and the horizon. Colors will appear vivid and punchy. Ideal for high-contrast photography with clean, saturated tones.');
   } else if (vis < 5) {
-    parts.push('Poor visibility may obscure the horizon — sunrise may not be clearly visible.');
+    parts.push('Poor visibility will veil the horizon — the sun disk may not be visible at sunrise. If you go, focus on close-range atmospheric shots and textures rather than the distant sky.');
   }
 
-  // Wind
+  // ── Conditions on the ground: wind + water ──
   if (wind >= 25) {
-    parts.push('Strong winds will create choppy sea texture but may clear the air for sharper light.');
+    parts.push('Strong wind will churn the sea surface — no reflections today, but rough water adds dramatic texture. Faster shutter speeds to freeze spray, or go long-exposure for misty wave effects.');
   } else if (wind < 8) {
-    parts.push('Calm winds mean smooth water — ideal for mirror-like reflections.');
+    parts.push('Calm wind means glass-like water — perfect for mirror reflections of whatever sky color develops. Use this: shoot low to the waterline for symmetrical reflection compositions.');
   }
 
-  // Rain
+  // ── Rain factor ──
   if (precip > 60) {
-    parts.push('High chance of rain — bring weather protection if you head out.');
+    parts.push('High rain probability — protect your gear if you head out. Post-rain clearings can produce extraordinary color, so stay alert for breaks.');
   } else if (precip > 30) {
-    parts.push('Some chance of showers, but rain breaks can produce rainbow opportunities.');
+    parts.push('Some rain risk, but breaks in showers can produce rainbow opportunities and dramatic god-ray lighting through cloud gaps.');
   }
 
-  // Score summary
+  // ── Bottom line: photography verdict ──
   if (score >= 80) {
-    parts.push('An exceptional morning — highly recommended.');
+    parts.push('A rare sky day — set that alarm, charge the battery, and get there early. This is the kind of morning that produces portfolio shots.');
   } else if (score >= 60) {
-    parts.push('Solid potential. Worth setting the alarm.');
+    parts.push('Strong potential for a rewarding shoot. Worth the early wake-up — conditions favor good color and interesting light.');
   } else if (score >= 40) {
-    parts.push('Mixed conditions. Could surprise you.');
+    parts.push('Mixed conditions, but surprises happen. If you go, focus on composition and mood over chasing vivid color.');
   } else {
-    parts.push('Challenging conditions. For dedicated early risers only.');
+    parts.push('Tough sky for color. But moody, atmospheric work — silhouettes, long exposures, black-and-white — can still yield compelling frames for the dedicated.');
   }
 
   return parts.join(' ');
