@@ -232,7 +232,7 @@
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   <link rel="preconnect" href="https://api.seasidebeacon.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=6.1">
+  <link rel="stylesheet" href="styles.css?v=6.2">
 </head>
 <body>
 
@@ -590,7 +590,6 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           Link Telegram
         </button>
-        <button type="button" class="pm-action-btn pm-action-danger" id="pmCancelSub">Cancel subscription</button>
         <button type="button" class="pm-action-btn pm-action-logout" id="pmLogout">Sign out</button>
       </div>
     </div>
@@ -716,7 +715,7 @@
       <button type="button" class="btn-nav-cta" id="navSubscribeBtn">Daily Briefing</button>
       <button type="button" class="btn-nav-premium" id="navPremiumBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <span id="navPremiumText">Premium</span>
+        <span id="navPremiumText">Premium Login</span>
       </button>
     </div>
     <button type="button" class="nav-hamburger" id="navHamburger" aria-label="Menu">
@@ -734,7 +733,7 @@
     <button type="button" class="drawer-cta" id="drawerSubscribeBtn">Daily Briefing</button>
     <button type="button" class="drawer-premium" id="drawerPremiumBtn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      <span id="drawerPremiumText">Premium</span>
+      <span id="drawerPremiumText">Premium Login</span>
     </button>
   </div>
 
@@ -977,8 +976,12 @@
               </div>
             </div>
             <button type="button" class="btn-text" id="unavailSubscribeBtn">
-              Get the evening preview + 4 AM forecast
+              Subscribe for free 4 AM forecast emails
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button type="button" class="btn-text unavail-premium-cta" id="unavailPremiumBtn">
+              Or go Premium to unlock anytime access + 7-day forecasts
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </button>
           </div>
 
@@ -1671,6 +1674,6 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="script.js?v=6.1" defer></script>
+<script src="script.js?v=6.2" defer></script>
 </body>
 </html>

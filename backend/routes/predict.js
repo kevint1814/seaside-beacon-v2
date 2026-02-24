@@ -140,7 +140,8 @@ router.get('/predict/:beach', async (req, res) => {
     metrics.trackPredictionCache(false);
 
     // ── Fetch selected beach first (fail fast if unavailable) ──
-    const primaryWeather = await weatherService.getTomorrow6AMForecast(beach);
+    // Premium users bypass the 6 PM time restriction
+    const primaryWeather = await weatherService.getTomorrow6AMForecast(beach, { forceAvailable: isPremiumUser });
 
     if (!primaryWeather.available) {
       const response = { success: true, data: { weather: primaryWeather, photography: null } };

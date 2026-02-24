@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════
-// SEASIDE BEACON v6.1
+// SEASIDE BEACON v6.2
 // Liquid Glass · Beach Sunrise · Ultra Premium
 // ═══════════════════════════════════════════════
-console.log('🌅 Seaside Beacon v6.1 — loaded');
+console.log('🌅 Seaside Beacon v6.2 — loaded');
 
 const CONFIG = {
   API_URL: (window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')
@@ -1265,11 +1265,13 @@ function countdownTo6PM() {
 function initForecast() {
   document.getElementById('predictBtn')?.addEventListener('click', handlePredict);
   document.getElementById('unavailSubscribeBtn')?.addEventListener('click', openModal);
+  document.getElementById('unavailPremiumBtn')?.addEventListener('click', () => openPremiumModal('pricing'));
 }
 
 async function handlePredict() {
   if (state.loading) return;
-  if (!isAvailable()) { showUnavailable(); return; }
+  // Premium users bypass the 6 PM time lock
+  if (!isAvailable() && !document.body.classList.contains('is-premium')) { showUnavailable(); return; }
   state.loading = true;
   setLoadingState(true);
 
@@ -1286,7 +1288,12 @@ async function handlePredict() {
   let data, error;
 
   try {
-    data = await fetchTimeout(`${CONFIG.API_URL}/predict/${state.beach}`, 70000);
+    // Include auth token if premium, so backend can bypass 6 PM lock
+    const _authToken = localStorage.getItem('sb_auth_token');
+    const _predictUrl = _authToken
+      ? `${CONFIG.API_URL}/predict/${state.beach}?authToken=${encodeURIComponent(_authToken)}`
+      : `${CONFIG.API_URL}/predict/${state.beach}`;
+    data = await fetchTimeout(_predictUrl, 70000);
   } catch(err) {
     error = err;
   }
@@ -2905,8 +2912,8 @@ function updatePremiumUI() {
     if (navBtn) navBtn.classList.remove('premium-active');
   } else {
     // Not logged in
-    if (navText) navText.textContent = 'Premium';
-    if (drawerText) drawerText.textContent = 'Premium';
+    if (navText) navText.textContent = 'Premium Login';
+    if (drawerText) drawerText.textContent = 'Premium Login';
     if (navBtn) navBtn.classList.remove('premium-active');
   }
 }
@@ -3097,8 +3104,8 @@ function initPremium() {
   document.getElementById('pmLogout')?.addEventListener('click', () => { closePremiumModal(); logoutPremium(); });
   document.getElementById('pmCancelSub')?.addEventListener('click', () => { closePremiumModal(); cancelPremium(); });
   document.getElementById('pmManageTelegram')?.addEventListener('click', () => {
-    const tgBotName = 'SeasideBeaconBot';
-    alert(`To link Telegram:\n\n1. Open Telegram and search for @${tgBotName}\n2. Send: /start ${premiumState.user?.email || 'your@email.com'}\n3. You'll get a confirmation message.\n\nAfter linking, you'll receive forecast alerts directly on Telegram.`);
+    closePremiumModal();
+    openTelegramModal();
   });
 
   // Upsell CTAs
