@@ -118,8 +118,9 @@ Be empathetic with frustrated users. Don't be defensive about bugs or wrong scor
 ## Rules
 - Keep it short. This is Telegram, not an essay
 - Use emojis naturally but don't overdo it (1-3 per message is fine)
-- If asked about a specific day, check the 7-DAY FORECAST data and quote the actual score — never guess or make up numbers
-- If asked about today/tomorrow, use the LIVE FORECAST data
+- CRITICAL: When asked about today or tomorrow for ANY beach, ONLY use the scores from the "DEFINITIVE TOMORROW FORECAST" section. That section has per-beach scores. NEVER use the 7-day outlook scores for tomorrow — those are Marina-only approximations
+- For "which day this week looks best" or days beyond tomorrow, use the 7-DAY OUTLOOK data
+- NEVER invent, estimate, or guess a score. Only quote numbers you can see in the provided data. If a beach's score is not in the data, say you don't have it right now
 - When comparing days, just tell them which day looks best and why in plain words
 - If you don't know something, say so. Don't bluff
 - Be honest about bad days — don't oversell a score of 30 as worth waking up for
@@ -167,7 +168,7 @@ async function getLiveWeatherContext() {
 function formatWeatherForAI(weatherData) {
   if (!weatherData) return 'No live weather data available right now.';
 
-  let text = 'LIVE FORECAST DATA (for tomorrow\'s sunrise):\n';
+  let text = '=== DEFINITIVE TOMORROW FORECAST (per-beach, use THESE scores for today/tomorrow questions) ===\n';
   for (const [key, d] of Object.entries(weatherData)) {
     const gh = d.goldenHour;
     text += `\n${d.beach}: Score ${d.score}/100 — ${d.verdict}`;
@@ -200,7 +201,8 @@ async function get7DayContext() {
 function format7DayForAI(days) {
   if (!days || !Array.isArray(days) || days.length === 0) return '';
 
-  let text = '\n\n7-DAY SUNRISE FORECAST (Marina Beach, Chennai):\n';
+  let text = '\n\n=== 7-DAY OUTLOOK (Marina-based, APPROXIMATE, for week-ahead comparison ONLY) ===\n';
+  text += 'IMPORTANT: For tomorrow specifically, ALWAYS use the DEFINITIVE TOMORROW FORECAST above — it has accurate per-beach scores. This 7-day data is only for comparing which OTHER day this week looks better.\n';
   for (const day of days) {
     // day.date is "YYYY-MM-DD"; append T12:00 to avoid UTC midnight → wrong IST day
     const date = new Date(day.date + 'T12:00:00+05:30');
@@ -212,7 +214,7 @@ function format7DayForAI(days) {
     if (c.visibility != null) text += ` | Vis ${c.visibility}km`;
     if (day.sunrise) text += ` | Sunrise ${day.sunrise}`;
   }
-  text += '\n\nNote: All 4 Chennai beaches share similar conditions. Scores above are for Marina but apply approximately to all beaches.';
+  text += '\n\n(These scores are approximate and Marina-based. For tomorrow, always refer to the DEFINITIVE per-beach scores above.)';
   return text;
 }
 
@@ -259,7 +261,7 @@ async function chat(chatId, userMessage, userName) {
 
     // Fetch live weather for context (cached internally by weatherService)
     let weatherContext = '';
-    const needsWeather = /\b(today|tomorrow|forecast|score|beach|sunrise|weather|morning|golden.?hour|cloud.?cover|humidity|wind|predict|how.{0,10}look|week|7.?day|next.?few|which day|best day|this week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(userMessage);
+    const needsWeather = /\b(today|tomorrow|tmrw|tmr|2moro|2mrw|forecast|score|beach|sunrise|sunset|weather|morning|golden.?hour|cloud|humidity|wind|predict|how.{0,10}look|week|7.?day|next.?few|which day|best day|this week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|marina|elliot|covelong|thiruvanmiyur|besant|ecr|photo|shoot|camera|dslr|sky|haze|fog|rain|clear)\b/i.test(userMessage);
     if (needsWeather) {
       try {
         const [liveData, sevenDayData] = await Promise.all([
