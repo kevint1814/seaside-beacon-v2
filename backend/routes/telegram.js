@@ -12,6 +12,27 @@ const SupportTicket = require('../models/SupportTicket');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
+// Per-user session tracker: intro message after 1hr+ gap
+const SESSION_GAP = 60 * 60 * 1000; // 1 hour
+const _lastChatTime = new Map(); // chatId → timestamp
+
+function shouldShowIntro(chatId) {
+  const key = String(chatId);
+  const now = Date.now();
+  const last = _lastChatTime.get(key);
+  _lastChatTime.set(key, now);
+  // Show intro if no previous chat or gap > 1 hour
+  return !last || (now - last) > SESSION_GAP;
+}
+
+const INTRO_MESSAGE =
+  `☀️ <b>Hey! I'm your Seaside Beacon assistant.</b>\n\n` +
+  `Here's what I can help with:\n\n` +
+  `🌅 <b>Sunrise forecasts</b> — ask about any day's sunrise, which day looks best this week, or what the sky will look like\n` +
+  `📸 <b>Photography tips</b> — camera settings, composition ideas, best time to shoot based on conditions\n` +
+  `💬 <b>Support</b> — payment issues, account problems, bugs, feature requests. Just describe your issue or type /support\n\n` +
+  `Just type naturally — I'm here to help! 🙂`;
+
 // Per-user chatbot rate limiter: max 10 messages per 60 seconds
 const _chatRateMap = new Map(); // chatId → { count, resetAt }
 const CHAT_RATE_LIMIT = 10;
@@ -32,6 +53,10 @@ setInterval(() => {
   const now = Date.now();
   for (const [k, v] of _chatRateMap.entries()) {
     if (now > v.resetAt) _chatRateMap.delete(k);
+  }
+  // Also clean up old session timestamps (>24hr)
+  for (const [k, t] of _lastChatTime.entries()) {
+    if (now - t > 24 * 60 * 60 * 1000) _lastChatTime.delete(k);
   }
 }, 5 * 60 * 1000);
 
@@ -91,6 +116,13 @@ router.post('/telegram/webhook', async (req, res) => {
         await sendTelegramMessage(chatId, '⏳ You\'re sending messages too quickly. Please wait a moment and try again.');
         return;
       }
+
+      // New session intro (1hr+ gap since last message)
+      const isNewSession = shouldShowIntro(chatId);
+      if (isNewSession) {
+        await sendTelegramMessage(chatId, INTRO_MESSAGE);
+      }
+
       await sendTypingAction(chatId);
       const response = await chatbotService.chat(chatId, text, userName);
       await sendTelegramMessage(chatId, response);
@@ -331,6 +363,10 @@ async function handleCommand(chatId, text, userName) {
         if (!checkChatRateLimit(chatId)) {
           await sendTelegramMessage(chatId, '⏳ You\'re sending messages too quickly. Please wait a moment.');
           return;
+        }
+        const isNewSession = shouldShowIntro(chatId);
+        if (isNewSession) {
+          await sendTelegramMessage(chatId, INTRO_MESSAGE);
         }
         await sendTypingAction(chatId);
         const response = await chatbotService.chat(chatId, text, userName);
