@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════
-// SEASIDE BEACON v6.7
+// SEASIDE BEACON v6.8
 // Liquid Glass · Beach Sunrise · Ultra Premium
 // ═══════════════════════════════════════════════
-console.log('🌅 Seaside Beacon v6.7 — loaded');
+console.log('🌅 Seaside Beacon v6.8 — loaded');
 
 const CONFIG = {
   API_URL: (window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')

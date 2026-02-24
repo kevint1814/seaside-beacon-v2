@@ -1927,10 +1927,10 @@ async function get7DayForecast(beachKey) {
         longitude: roundedLon,
         hourly: 'aerosol_optical_depth',
         timezone: 'Asia/Kolkata',
-        forecast_days: 8
+        forecast_days: 5  // AQ API supports max ~5 days; days 6-7 will be null
       },
       timeout: 8000
-    }).catch(() => null)
+    }).catch(err => { console.warn('⚠️ 7-day AQ fetch failed:', err.message); return null; })
   ]);
 
   const hourly = forecastRes.data?.hourly;
@@ -1986,8 +1986,12 @@ async function get7DayForecast(beachKey) {
       }
     }
 
-    // AOD at 6 AM
-    const aod = aqHourly?.aerosol_optical_depth?.[idx] ?? null;
+    // AOD at 6 AM — use time-based lookup since AQ array may be shorter than forecast array
+    let aod = null;
+    if (aqHourly?.time && aqHourly?.aerosol_optical_depth) {
+      const aqIdx = aqHourly.time.indexOf(targetStr);
+      if (aqIdx >= 0) aod = aqHourly.aerosol_optical_depth[aqIdx] ?? null;
+    }
 
     // Sunrise/sunset from daily data
     const dayIdx = daily?.time?.indexOf(dateStr);
