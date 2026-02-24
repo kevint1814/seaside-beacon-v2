@@ -6,7 +6,6 @@
 
 const express = require('express');
 const router = express.Router();
-const telegramService = require('../services/telegramService');
 const chatbotService = require('../services/chatbotService');
 const PremiumUser = require('../models/PremiumUser');
 
@@ -87,9 +86,30 @@ async function handleCommand(chatId, text, userName) {
 
       // /start with email → link via email
       if (email && /^\S+@\S+\.\S+$/.test(email)) {
-        await telegramService.processUpdate({
-          message: { chat: { id: chatId }, text, from: { first_name: userName } }
-        });
+        const user = await PremiumUser.findOne({ email, status: 'active' });
+        if (!user) {
+          await sendTelegramMessage(chatId,
+            '❌ No active premium account found for this email.\n\n' +
+            'Make sure you have an active premium subscription at seasidebeacon.com'
+          );
+          return;
+        }
+
+        user.telegramChatId = String(chatId);
+        user.telegramLinkedAt = new Date();
+        await user.save();
+
+        await sendTelegramMessage(chatId,
+          `🎉 <b>Account linked!</b>\n\n` +
+          `Email: ${user.email}\n` +
+          `Plan: ${user.plan === 'annual' ? '₹399/year' : '₹49/month'}\n\n` +
+          `You now have:\n` +
+          `• 🔔 Instant alerts for 70+ mornings\n` +
+          `• 🌅 Daily forecasts at 4 AM & 8:30 PM\n` +
+          `• 💬 <b>AI sunrise assistant</b> — just type any question!\n\n` +
+          `Commands: /forecast · /status · /help · /unlink`
+        );
+        console.log(`📱 Telegram email-linked: ${email} → chat ${chatId}`);
         return;
       }
 

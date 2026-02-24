@@ -214,7 +214,8 @@ async function sendDailyPredictions() {
     }
 
     // Step 5: Send Telegram alerts to premium users (non-blocking)
-    telegramService.sendDailyTelegramAlerts(allWeatherData).catch(err => {
+    // Pass insightsCache so Telegram gets the same AI content as emails
+    telegramService.sendDailyTelegramAlerts(allWeatherData, insightsCache).catch(err => {
       console.error('❌ Telegram daily alerts failed:', err.message);
     });
 
@@ -301,9 +302,10 @@ async function sendEveningPreviews() {
       }
     }
 
-    // Send evening Telegram alerts (non-blocking)
-    telegramService.sendDailyTelegramAlerts(allWeatherData).catch(err => {
-      console.error('❌ Telegram evening alerts failed:', err.message);
+    // Send evening Telegram previews (non-blocking)
+    // Pass insightsCache so Telegram gets the same AI content as emails
+    telegramService.sendEveningTelegramPreviews(allWeatherData, insightsCache).catch(err => {
+      console.error('❌ Telegram evening previews failed:', err.message);
     });
 
     // Update site stats
@@ -373,8 +375,8 @@ async function sendSpecialAlert() {
 
     console.log(`🔔 Special 70+ alert: ${emailCount} emails sent`);
 
-    // Also send via Telegram
-    telegramService.sendSpecialTelegramAlert(bestBeach, hotBeaches).catch(err => {
+    // Also send via Telegram — pass allWeatherData for conditions detail
+    telegramService.sendSpecialTelegramAlert(bestBeach, hotBeaches, allWeatherData).catch(err => {
       console.error('❌ Telegram special alert failed:', err.message);
     });
   } catch (error) {
