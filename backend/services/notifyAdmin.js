@@ -297,6 +297,69 @@ function notifyNewPhotoSubmission(name, beach, date, photoUrl) {
 }
 
 // ══════════════════════════════════════════
+// Support ticket alert (instant)
+// ══════════════════════════════════════════
+const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
+
+async function notifySupportTicket(ticket) {
+  const catEmoji = {
+    payment: '💳', account: '👤', forecast: '🌅',
+    bug: '🐛', feature: '💡', general: '📩'
+  };
+  const emoji = catEmoji[ticket.category] || '📩';
+  const time = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+  // 1. Email notification
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
+<body style="font-family:-apple-system,sans-serif;padding:40px;background:#f5f5f5;">
+  <div style="max-width:480px;margin:0 auto;background:white;border-radius:12px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+    <p style="font-size:28px;margin:0 0 6px 0;">🎫</p>
+    <h2 style="color:#1a1a1a;margin:0 0 4px 0;font-size:18px;">New Support Ticket</h2>
+    <p style="color:#c4733a;font-size:13px;font-weight:600;margin:0 0 14px 0;">${ticket.ticketId} · ${ticket.category.toUpperCase()}</p>
+    <div style="background:#f9f9f9;border-radius:8px;padding:14px;margin:0 0 16px 0;">
+      ${ticket.userName ? `<p style="margin:0 0 5px 0;font-size:13px;"><strong>User:</strong> ${ticket.userName}</p>` : ''}
+      ${ticket.userEmail ? `<p style="margin:0 0 5px 0;font-size:13px;"><strong>Email:</strong> ${ticket.userEmail}</p>` : ''}
+      <p style="margin:0 0 5px 0;font-size:13px;"><strong>Telegram:</strong> ${ticket.telegramChatId}</p>
+      <p style="margin:0 0 8px 0;font-size:13px;"><strong>Subject:</strong> ${ticket.subject}</p>
+      <p style="margin:0;font-size:13px;color:#555;line-height:1.6;"><strong>Details:</strong> ${ticket.description}</p>
+    </div>
+    <p style="color:#ccc;font-size:10px;margin:0;">Seaside Beacon · ${time}</p>
+  </div>
+</body></html>`;
+
+  sendAdminEmail(
+    `${emoji} ${ticket.ticketId} — ${ticket.subject}`,
+    html,
+    `Support Ticket ${ticket.ticketId}\nCategory: ${ticket.category}\nUser: ${ticket.userEmail || ticket.userName || 'Unknown'}\nSubject: ${ticket.subject}\nDetails: ${ticket.description}`
+  );
+
+  // 2. Telegram DM to admin (instant — you see it on your phone)
+  if (ADMIN_TELEGRAM_CHAT_ID && process.env.TELEGRAM_BOT_TOKEN) {
+    try {
+      const tgText =
+        `🎫 <b>New Support Ticket</b>\n\n` +
+        `<b>${ticket.ticketId}</b> · ${ticket.category}\n` +
+        `${ticket.userName ? `From: ${ticket.userName}` : ''}${ticket.userEmail ? ` (${ticket.userEmail})` : ''}\n\n` +
+        `<b>${ticket.subject}</b>\n` +
+        `${ticket.description}\n\n` +
+        `<i>${time}</i>`;
+
+      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: ADMIN_TELEGRAM_CHAT_ID,
+          text: tgText,
+          parse_mode: 'HTML'
+        })
+      });
+    } catch (e) {
+      console.warn('⚠️ Admin Telegram notify failed:', e.message);
+    }
+  }
+}
+
+// ══════════════════════════════════════════
 // Cron — 8:00 AM IST every day
 // ══════════════════════════════════════════
 function initializeDailyDigest() {
@@ -312,5 +375,6 @@ module.exports = {
   initializeDailyDigest,
   sendDailyDigest,           // Manual trigger for testing
   notifyNewFeedback,
-  notifyNewPhotoSubmission
+  notifyNewPhotoSubmission,
+  notifySupportTicket
 };

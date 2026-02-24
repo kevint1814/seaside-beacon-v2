@@ -3034,6 +3034,10 @@ body.cinema-mode .section-divider {
   display:flex; flex-direction:column; align-items:center; text-align:center; gap:4px;
 }
 .footer-line { font-size:12px; color:var(--t3); margin:0; line-height:1.5; }
+.footer-legal { font-size:11px; color:var(--t3); margin-top:4px; }
+.footer-legal a { color:var(--t3); text-decoration:none; transition:color 0.2s; }
+.footer-legal a:hover { color:var(--accent-bright); }
+.footer-dot { margin:0 6px; opacity:0.5; }
 .footer-credit { font-size:11px; color:var(--t4); margin-top:2px; }
 
 /* ═══════════════════════════════════════════════════════

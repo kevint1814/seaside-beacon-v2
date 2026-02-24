@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Privacy Policy | Seaside Beacon</title>
+  <meta name="description" content="Privacy Policy for Seaside Beacon — how we collect, use, and protect your data.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.seasidebeacon.com/privacy.html">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky-zenith: #04050f;
+      --sky-mid: #0a0d1f;
+      --accent: #c4733a;
+      --accent-bright: #d4924a;
+      --accent-border: rgba(196,115,58,0.32);
+      --accent-subtle: rgba(196,115,58,0.08);
+      --glass-border: rgba(255,255,255,0.08);
+      --t1: rgba(240,238,250,0.95);
+      --t2: rgba(210,205,235,0.62);
+      --t3: rgba(190,185,220,0.38);
+      --t4: rgba(170,165,210,0.22);
+      --ff-display: 'Cormorant Garamond', Georgia, serif;
+      --ff-body: 'Instrument Sans', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--ff-body);
+      background: linear-gradient(180deg, var(--sky-zenith) 0%, var(--sky-mid) 100%);
+      color: var(--t1);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: rgba(196,115,58,0.25); color: var(--t1); }
+
+    .legal-nav {
+      padding: 20px clamp(20px, 5vw, 56px);
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .legal-nav a {
+      text-decoration: none;
+      color: var(--t2);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      transition: color 0.2s;
+    }
+    .legal-nav a:hover { color: var(--accent-bright); }
+    .legal-nav .nav-brand {
+      font-family: var(--ff-display);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--t1);
+      letter-spacing: 0.5px;
+    }
+    .nav-sep { color: var(--t4); font-size: 11px; }
+
+    .legal-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 56px clamp(20px, 5vw, 40px) 80px;
+    }
+
+    .legal-eyebrow {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .legal-title {
+      font-family: var(--ff-display);
+      font-size: clamp(32px, 5vw, 42px);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: var(--t1);
+      margin-bottom: 8px;
+    }
+    .legal-updated {
+      font-size: 12px;
+      color: var(--t3);
+      margin-bottom: 40px;
+    }
+
+    .legal-section {
+      margin-bottom: 36px;
+    }
+    .legal-section h2 {
+      font-family: var(--ff-display);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--t1);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .legal-section p {
+      font-size: 14px;
+      color: var(--t2);
+      line-height: 1.82;
+      margin-bottom: 12px;
+    }
+    .legal-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 12px;
+    }
+    .legal-section li {
+      font-size: 14px;
+      color: var(--t2);
+      line-height: 1.82;
+      padding-left: 18px;
+      position: relative;
+      margin-bottom: 4px;
+    }
+    .legal-section li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.6;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    .data-table th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--accent-border);
+      font-weight: 600;
+    }
+    .data-table td {
+      padding: 10px 14px;
+      color: var(--t2);
+      border-bottom: 1px solid var(--glass-border);
+      vertical-align: top;
+      line-height: 1.65;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .legal-footer {
+      border-top: 1px solid var(--glass-border);
+      padding: 24px clamp(20px, 5vw, 56px);
+      text-align: center;
+    }
+    .legal-footer p {
+      font-size: 12px;
+      color: var(--t3);
+      line-height: 1.5;
+    }
+    .legal-footer a {
+      color: var(--accent-bright);
+      text-decoration: none;
+    }
+    .legal-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <nav class="legal-nav">
+    <a href="/" class="nav-brand">Seaside Beacon</a>
+    <span class="nav-sep">/</span>
+    <a href="/terms.html">Terms</a>
+    <span class="nav-sep">·</span>
+    <a href="/privacy.html">Privacy</a>
+  </nav>
+
+  <main class="legal-wrap">
+    <div class="legal-eyebrow">Legal</div>
+    <h1 class="legal-title">Privacy Policy</h1>
+    <p class="legal-updated">Last updated: 24 February 2026</p>
+
+    <section class="legal-section">
+      <h2>1. Overview</h2>
+      <p>Seaside Beacon ("we", "our", "the Service") respects your privacy. This policy explains what data we collect, why we collect it, how we use it, and your rights regarding that data. We are committed to keeping things minimal — we only collect what is necessary to deliver the Service.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>2. Data We Collect</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Purpose</th>
+            <th>Stored Where</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Email address</td>
+            <td>Account creation, daily forecast emails, subscription management</td>
+            <td>MongoDB (encrypted at rest)</td>
+          </tr>
+          <tr>
+            <td>Name (optional)</td>
+            <td>Personalisation of emails and greetings</td>
+            <td>MongoDB</td>
+          </tr>
+          <tr>
+            <td>Password (hashed)</td>
+            <td>Account authentication</td>
+            <td>MongoDB (bcrypt hash, never stored in plain text)</td>
+          </tr>
+          <tr>
+            <td>Beach preference</td>
+            <td>Sending you the forecast for the beach you care about</td>
+            <td>MongoDB</td>
+          </tr>
+          <tr>
+            <td>Telegram chat ID</td>
+            <td>Linking your Telegram account for alerts and the AI assistant</td>
+            <td>MongoDB</td>
+          </tr>
+          <tr>
+            <td>Payment info</td>
+            <td>Processing Premium subscriptions</td>
+            <td>Razorpay (we never store card details — Razorpay handles this)</td>
+          </tr>
+          <tr>
+            <td>Chat messages</td>
+            <td>AI assistant conversation context (per-session, in-memory only)</td>
+            <td>Server RAM (not persisted — cleared on restart or after 2 hours of inactivity)</td>
+          </tr>
+          <tr>
+            <td>Community feedback</td>
+            <td>Sunrise accuracy ratings and optional comments</td>
+            <td>MongoDB</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="legal-section">
+      <h2>3. What We Do Not Collect</h2>
+      <ul>
+        <li>We do not track your location or use GPS data.</li>
+        <li>We do not use cookies for advertising or cross-site tracking.</li>
+        <li>We do not sell, rent, or share your personal data with third parties for marketing purposes.</li>
+        <li>We do not store your credit card or bank details — all payment processing is handled by Razorpay.</li>
+        <li>We do not use analytics trackers or embed third-party tracking scripts.</li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>4. How We Use Your Data</h2>
+      <ul>
+        <li><strong style="color:var(--t1);font-weight:500">Email delivery:</strong> Sending your daily sunrise forecasts (8:30 PM preview and 4 AM morning alert) and account-related notifications.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Forecast personalisation:</strong> Showing you the forecast for your selected beach.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Telegram alerts:</strong> Sending sunrise score notifications and AI assistant responses to your linked Telegram account.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Service improvement:</strong> Aggregated, anonymised community feedback helps us calibrate the scoring algorithm.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Subscription management:</strong> Processing payments and managing your Premium access status via Razorpay.</li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>5. Third-Party Services</h2>
+      <p>We integrate with the following services, each governed by their own privacy policies:</p>
+      <ul>
+        <li><strong style="color:var(--t1);font-weight:500">Open-Meteo</strong> — Weather forecast data. No user data is sent; we only query public weather APIs.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Razorpay</strong> — Payment processing. Your payment data is handled directly by Razorpay under their security standards (PCI DSS compliant). We receive only subscription status, not card details.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Telegram</strong> — Messaging platform for alerts and the AI assistant. Your Telegram chat ID is stored to deliver messages. Message content is processed in-memory and not persisted.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Google (OAuth)</strong> — If you sign in with Google, we receive your name and email. We do not access your Google contacts, files, or any other data.</li>
+        <li><strong style="color:var(--t1);font-weight:500">AI Providers (Gemini, Groq)</strong> — Chat messages are sent to AI providers to generate responses. These providers process messages per their terms and do not retain conversation data beyond request processing.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Resend</strong> — Email delivery service. Your email address is shared with Resend solely for the purpose of delivering forecast emails.</li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>6. Data Security</h2>
+      <p>We take reasonable measures to protect your data:</p>
+      <ul>
+        <li>Passwords are hashed using bcrypt and never stored or transmitted in plain text.</li>
+        <li>Authentication uses JWT tokens transmitted over HTTPS only.</li>
+        <li>Database access is restricted to the application server with authentication credentials.</li>
+        <li>The Service is served entirely over HTTPS (TLS encrypted in transit).</li>
+        <li>AI assistant conversations are stored in server memory only and automatically purged after 2 hours of inactivity or on server restart.</li>
+      </ul>
+      <p>No system is 100% secure. While we take care to protect your data, we cannot guarantee absolute security and encourage you to use a strong, unique password for your account.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>7. Data Retention</h2>
+      <ul>
+        <li><strong style="color:var(--t1);font-weight:500">Active accounts:</strong> Data is retained as long as your account is active.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Free subscribers:</strong> Email and beach preference are retained until you unsubscribe. Unsubscribing removes your data from the mailing list.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Premium accounts:</strong> Account data is retained until you cancel your subscription and request deletion.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Chat history:</strong> Not persisted. Cleared after 2 hours of inactivity or when the server restarts.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Community feedback:</strong> Retained indefinitely to support algorithm calibration. Feedback does not contain personally identifying information beyond what you voluntarily submit.</li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>8. Your Rights</h2>
+      <p>You have the right to:</p>
+      <ul>
+        <li><strong style="color:var(--t1);font-weight:500">Access</strong> — Request a copy of the data we hold about you.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Correction</strong> — Ask us to correct inaccurate data.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Deletion</strong> — Request deletion of your account and associated data. Email us and we will process the request within 7 days.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Unsubscribe</strong> — Every forecast email contains an unsubscribe link. One click, no questions.</li>
+        <li><strong style="color:var(--t1);font-weight:500">Data portability</strong> — Request your data in a machine-readable format.</li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>9. Children's Privacy</h2>
+      <p>Seaside Beacon is not directed at children under 13. We do not knowingly collect personal data from children. If you believe a child has provided us with personal information, please contact us and we will delete it promptly.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>10. Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. Changes will be reflected on this page with an updated "Last updated" date. For significant changes, we will notify Premium subscribers via email.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>11. Contact</h2>
+      <p>For privacy-related questions, data requests, or concerns, reach out at <strong style="color:var(--t1);font-weight:500">support@seasidebeacon.com</strong>.</p>
+    </section>
+  </main>
+
+  <footer class="legal-footer">
+    <p>Seaside Beacon · India's first sunrise quality forecast for beaches</p>
+    <p><a href="/">Home</a> · <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a></p>
+  </footer>
+
+</body>
+</html>

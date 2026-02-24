@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const chatbotService = require('../services/chatbotService');
 const PremiumUser = require('../models/PremiumUser');
+const SupportTicket = require('../models/SupportTicket');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -179,17 +180,70 @@ async function handleCommand(chatId, text, userName) {
         '☀️ <b>Seaside Beacon Bot — Commands</b>\n\n' +
         '/forecast — Tomorrow\'s scores for all beaches\n' +
         '/status — Your account & subscription info\n' +
+        '/support — Raise a support ticket\n' +
         '/unlink — Disconnect your account\n' +
         '/help — This message\n\n' +
         '💬 <b>AI Assistant</b>\n' +
         'Just type any question naturally:\n' +
         '• "How will tomorrow\'s sunrise look?"\n' +
-        '• "What does 45% cloud cover mean?"\n' +
         '• "Best settings for phone photography?"\n' +
-        '• "Why is AOD important for sunrises?"\n' +
-        '• "Marina vs Elliot\'s — which is better?"\n\n' +
-        'I have real-time access to all forecast data and deep knowledge about sunrise photography.'
+        '• "Which beach is best this week?"\n' +
+        '• "I have a payment issue"\n\n' +
+        'I can also help with account issues, payments, bugs, and feature requests — just ask!'
       );
+      return;
+    }
+
+    case '/support': {
+      const user = await PremiumUser.findOne({ telegramChatId: chatId.toString() });
+      const parts = text.replace('/support', '').trim();
+
+      if (!parts) {
+        await sendTelegramMessage(chatId,
+          '🎫 <b>Raise a Support Ticket</b>\n\n' +
+          'Send your issue after the command:\n' +
+          '<code>/support your message here</code>\n\n' +
+          'Examples:\n' +
+          '• <code>/support Payment deducted but premium not activated</code>\n' +
+          '• <code>/support Not receiving morning emails</code>\n' +
+          '• <code>/support Forecast score seems wrong for Marina</code>\n\n' +
+          'Or just describe your issue to me in chat and I\'ll offer to raise a ticket for you.'
+        );
+        return;
+      }
+
+      // Auto-detect category from message
+      const msg = parts.toLowerCase();
+      let category = 'general';
+      if (/pay|bill|charge|razorpay|refund|invoice|₹|rupee|deduct/i.test(msg)) category = 'payment';
+      else if (/account|login|password|sign.?in|email|link|unlink/i.test(msg)) category = 'account';
+      else if (/bug|error|crash|broken|not work|glitch/i.test(msg)) category = 'bug';
+      else if (/feature|request|add|wish|suggest|idea|can you add|would be nice/i.test(msg)) category = 'feature';
+      else if (/forecast|score|predict|weather|wrong|inaccurate|data/i.test(msg)) category = 'forecast';
+
+      const ticket = await chatbotService.createTicket({
+        chatId,
+        userEmail: user?.email || null,
+        userName: userName || user?.name || null,
+        category,
+        subject: parts.length > 80 ? parts.substring(0, 80) + '...' : parts,
+        description: parts
+      });
+
+      if (ticket) {
+        await sendTelegramMessage(chatId,
+          `✅ <b>Ticket raised!</b>\n\n` +
+          `🎫 <b>${ticket.ticketId}</b>\n` +
+          `Category: ${ticket.category}\n` +
+          `Status: Open\n\n` +
+          `We've notified the team — you'll hear back soon. ` +
+          `You can also keep chatting with me in the meantime!`
+        );
+      } else {
+        await sendTelegramMessage(chatId,
+          '⚠️ Something went wrong creating your ticket. Please try again, or email us at support@seasidebeacon.com'
+        );
+      }
       return;
     }
 
