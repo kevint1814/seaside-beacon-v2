@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════
-// SEASIDE BEACON v6.2
+// SEASIDE BEACON v6.3
 // Liquid Glass · Beach Sunrise · Ultra Premium
 // ═══════════════════════════════════════════════
-console.log('🌅 Seaside Beacon v6.2 — loaded');
+console.log('🌅 Seaside Beacon v6.3 — loaded');
 
 const CONFIG = {
   API_URL: (window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')
@@ -40,7 +40,14 @@ document.addEventListener('click', function(e) {
   if (id === 'pmGoToRegister') { showPmState('pmRegister'); }
   else if (id === 'pmGoToLogin' || id === 'pmPricingGoToLogin' || id === 'pmForgotBackToLogin') { showPmState('pmLogin'); }
   else if (id === 'pmGoToForgot') { showPmState('pmForgotPassword'); }
-  else if (id === 'pmGoToPricing') { showPmState('pmPricing'); }
+  else if (id === 'pmGoToPricing') {
+    // Close premium modal, open the classy subscribe modal with upsell
+    if (typeof closePremiumModal === 'function') closePremiumModal();
+    if (typeof openModal === 'function') {
+      openModal();
+      setTimeout(function(){ var el = document.getElementById('modalPremiumUpsell'); if (el) el.scrollIntoView({behavior:'smooth',block:'start'}); }, 200);
+    }
+  }
   // Google sign-in
   else if (id === 'pmGoogleSignIn' || id === 'pmGoogleSignUp') {
     if (typeof triggerGoogleSignIn === 'function') triggerGoogleSignIn();
@@ -1265,7 +1272,11 @@ function countdownTo6PM() {
 function initForecast() {
   document.getElementById('predictBtn')?.addEventListener('click', handlePredict);
   document.getElementById('unavailSubscribeBtn')?.addEventListener('click', openModal);
-  document.getElementById('unavailPremiumBtn')?.addEventListener('click', () => openPremiumModal('pricing'));
+  document.getElementById('unavailPremiumBtn')?.addEventListener('click', () => {
+    openModal();
+    // Scroll to the premium upsell section inside the modal
+    setTimeout(() => document.getElementById('modalPremiumUpsell')?.scrollIntoView({behavior:'smooth',block:'start'}), 200);
+  });
 }
 
 async function handlePredict() {
@@ -1470,8 +1481,8 @@ function renderForecast() {
   // Auto-prompt subscribe modal after forecast loads
   maybePromptSubscribe();
 
-  // Load 7-day calendar for premium users
-  fetch7DayForecast(w.beach);
+  // Load 7-day calendar for premium users (use beachKey, not display name)
+  fetch7DayForecast(w.beachKey || state.beach);
 }
 
 /**
@@ -2896,6 +2907,18 @@ function updatePremiumUI() {
       : 'Predictions available from 6 PM IST';
   }
 
+  // Change Daily Briefing → Alert Settings for premium users
+  const navSubBtn = document.getElementById('navSubscribeBtn');
+  const drawerSubBtn = document.getElementById('drawerSubscribeBtn');
+  const heroSubBtn = document.getElementById('heroSubscribeBtn');
+  if (isPremium) {
+    if (navSubBtn) navSubBtn.textContent = 'Alert Settings';
+    if (drawerSubBtn) drawerSubBtn.textContent = 'Alert Settings';
+    if (heroSubBtn) {
+      heroSubBtn.innerHTML = 'Manage your alert settings <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+    }
+  }
+
   // Update nav premium button text
   const navText = document.getElementById('navPremiumText');
   const drawerText = document.getElementById('drawerPremiumText');
@@ -3109,8 +3132,11 @@ function initPremium() {
   });
 
   // Upsell CTAs
-  document.getElementById('upsellGoPremium')?.addEventListener('click', () => { closeModalFn(); openPremiumModal('pricing'); });
-  document.getElementById('stripGoPremium')?.addEventListener('click', () => openPremiumModal('pricing'));
+  document.getElementById('upsellGoPremium')?.addEventListener('click', () => { closeModalFn(); openPremiumModal(); });
+  document.getElementById('stripGoPremium')?.addEventListener('click', () => {
+    openModal();
+    setTimeout(() => document.getElementById('modalPremiumUpsell')?.scrollIntoView({behavior:'smooth',block:'start'}), 200);
+  });
 
   // Paywall buttons
   document.querySelectorAll('[data-premium-action="checkout"]').forEach(btn => {

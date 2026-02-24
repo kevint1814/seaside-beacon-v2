@@ -232,7 +232,7 @@
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   <link rel="preconnect" href="https://api.seasidebeacon.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=6.2">
+  <link rel="stylesheet" href="styles.css?v=6.3">
 </head>
 <body>
 
@@ -1559,14 +1559,23 @@
 
   <!-- Premium Email Settings (replaces sub strip for premium users) -->
   <section class="sub-section hidden" id="premiumSettingsSection">
-    <div class="sub-content">
-      <h2 class="sub-headline" style="text-align:center;">Email & Alert Settings</h2>
-      <p class="sub-tagline" style="text-align:center;">Customize when you receive your sunrise forecasts</p>
-    </div>
-    <div class="sub-form-col" style="max-width:480px;margin:24px auto 0;">
-      <div class="sub-form-card">
+    <div class="prem-settings-wrap">
+      <!-- Premium Badge -->
+      <div class="pm-brand-header">
+        <div class="pm-brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </div>
+        <div class="pm-brand-text">
+          <span class="pm-brand-name">Seaside Beacon</span>
+          <span class="pm-brand-tier">Premium</span>
+        </div>
+      </div>
+      <h2 class="prem-settings-title">Email & Alert Settings</h2>
+      <p class="prem-settings-sub">Customize when your sunrise forecasts arrive</p>
+
+      <div class="prem-settings-form">
         <div class="pref-group">
-          <label class="form-label" for="prefMorningTime">Morning forecast time <span class="form-required">*</span></label>
+          <label class="form-label" for="prefMorningTime">Morning forecast</label>
           <select id="prefMorningTime" class="form-select">
             <option value="03:30">3:30 AM</option>
             <option value="04:00" selected>4:00 AM (default)</option>
@@ -1574,8 +1583,8 @@
             <option value="05:00">5:00 AM</option>
           </select>
         </div>
-        <div class="pref-group" style="margin-top:14px;">
-          <label class="form-label" for="prefEveningTime">Evening preview time <span class="form-required">*</span></label>
+        <div class="pref-group">
+          <label class="form-label" for="prefEveningTime">Evening preview</label>
           <select id="prefEveningTime" class="form-select">
             <option value="19:30">7:30 PM</option>
             <option value="20:00">8:00 PM</option>
@@ -1584,8 +1593,8 @@
             <option value="21:30">9:30 PM</option>
           </select>
         </div>
-        <div class="pref-group" style="margin-top:14px;">
-          <label class="form-label" for="prefBeach">Preferred beach <span class="form-required">*</span></label>
+        <div class="pref-group">
+          <label class="form-label" for="prefBeach">Preferred beach</label>
           <select id="prefBeach" class="form-select">
             <option value="marina">Marina Beach</option>
             <option value="elliot">Elliot's Beach (Besant Nagar)</option>
@@ -1593,7 +1602,10 @@
             <option value="thiruvanmiyur">Thiruvanmiyur Beach</option>
           </select>
         </div>
-        <button type="button" id="savePrefBtn" class="form-submit" onclick="saveEmailPreferences()">Save Preferences</button>
+        <button type="button" id="savePrefBtn" class="btn-subscribe pm-btn" onclick="saveEmailPreferences()">
+          <span id="savePrefText">Save Preferences</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
         <p class="pref-msg hidden" id="prefMsg"></p>
       </div>
     </div>
@@ -1674,6 +1686,6 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="script.js?v=6.2" defer></script>
+<script src="script.js?v=6.3" defer></script>
 </body>
 </html>
