@@ -21,6 +21,7 @@ const AUTH_TOKEN_TTL = 30 * 24 * 60 * 60 * 1000;  // 30 days
 
 // Google OAuth client
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 const BCRYPT_ROUNDS = 10;
@@ -361,9 +362,120 @@ router.post('/auth/reset-password', async (req, res) => {
 // ═══════════════════════════════════════
 // GET /api/auth/google-client-id
 // Returns Google client ID for frontend GSI
+// Also returns redirect URI for OAuth flow
 // ═══════════════════════════════════════
 router.get('/auth/google-client-id', (req, res) => {
-  res.json({ clientId: GOOGLE_CLIENT_ID || null });
+  const apiBase = process.env.API_URL || `${req.protocol}://${req.get('host')}/api`;
+  res.json({
+    clientId: GOOGLE_CLIENT_ID || null,
+    redirectSupported: !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET)
+  });
+});
+
+// ═══════════════════════════════════════
+// GET /api/auth/google/redirect
+// Initiates OAuth 2.0 redirect to Google
+// ═══════════════════════════════════════
+router.get('/auth/google/redirect', (req, res) => {
+  if (!GOOGLE_CLIENT_ID) {
+    return res.status(500).send('Google Sign-In not configured');
+  }
+
+  const API_BASE = process.env.API_URL
+    ? process.env.API_URL.replace(/\/api\/?$/, '')
+    : `${req.protocol}://${req.get('host')}`;
+  const redirectUri = `${API_BASE}/api/auth/google/callback`;
+
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'openid email profile',
+    prompt: 'select_account',
+    access_type: 'online'
+  });
+
+  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+});
+
+// ═══════════════════════════════════════
+// GET /api/auth/google/callback
+// Google redirects here after user signs in
+// Exchanges code for ID token, creates session, redirects to frontend
+// ═══════════════════════════════════════
+router.get('/auth/google/callback', async (req, res) => {
+  try {
+    const { code, error } = req.query;
+
+    if (error || !code) {
+      console.error('Google OAuth callback error:', error);
+      return res.redirect(`${APP_URL}?googleAuthError=${encodeURIComponent(error || 'no_code')}`);
+    }
+
+    if (!GOOGLE_CLIENT_SECRET) {
+      console.error('GOOGLE_CLIENT_SECRET not set');
+      return res.redirect(`${APP_URL}?googleAuthError=server_config`);
+    }
+
+    const API_BASE = process.env.API_URL
+      ? process.env.API_URL.replace(/\/api\/?$/, '')
+      : `${req.protocol}://${req.get('host')}`;
+    const redirectUri = `${API_BASE}/api/auth/google/callback`;
+
+    // Exchange authorization code for tokens
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code'
+      })
+    });
+
+    const tokens = await tokenRes.json();
+
+    if (!tokens.id_token) {
+      console.error('No id_token in Google response:', tokens);
+      return res.redirect(`${APP_URL}?googleAuthError=token_failed`);
+    }
+
+    // Verify the ID token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name } = payload;
+    const normalised = email.toLowerCase().trim();
+
+    // Find or create user (same logic as POST /auth/google)
+    let user = await PremiumUser.findOne({ $or: [{ googleId }, { email: normalised }] });
+
+    if (user) {
+      if (!user.googleId) user.googleId = googleId;
+      if (name && !user.name) user.name = name;
+    } else {
+      user = new PremiumUser({
+        email: normalised,
+        googleId,
+        name: name || null,
+        status: 'pending'
+      });
+    }
+
+    const authToken = await generateAuthSession(user);
+    console.log(`✅ Google OAuth redirect login: ${normalised}`);
+
+    // Redirect to frontend with auth token
+    res.redirect(`${APP_URL}?googleAuth=success&token=${authToken}`);
+
+  } catch (err) {
+    console.error('Google OAuth callback error:', err.message);
+    res.redirect(`${APP_URL}?googleAuthError=server_error`);
+  }
 });
 
 

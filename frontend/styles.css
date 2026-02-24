@@ -426,7 +426,7 @@ input, select, textarea { font-family:inherit; }
   position: fixed; top:12px; left:50%; z-index:300;
   transform: translateX(-50%);
   height: 48px;
-  width: fit-content; max-width: min(96vw, 920px); min-width: min(88vw, 320px);
+  width: fit-content; max-width: min(97vw, 980px); min-width: min(88vw, 320px);
   display: flex; align-items:center; justify-content:space-between;
   padding: 0 24px 0 20px;
   border-radius: 999px;
@@ -725,36 +725,65 @@ input, select, textarea { font-family:inherit; }
 .hst-sep { width:1px; height:34px; background:linear-gradient(180deg, transparent, var(--prism-blue) 25%, rgba(255,255,255,0.14) 50%, var(--prism-warm) 75%, transparent); margin-right:20px; flex-shrink:0; }
 
 /* Hero floating badge (right side) */
+/* Hero badge — stylized vertical wordmark, no glass canvas */
 .hero-badge {
-  position:absolute; top:50%; right:clamp(24px,5vw,64px);
+  position:absolute; top:50%; right:clamp(20px,4vw,56px);
   transform:translateY(-50%);
+  pointer-events:none;
 }
 .hero-badge-inner {
-  display:flex; flex-direction:column; align-items:center; gap:10px;
-  padding:24px 20px;
-  background:rgba(255,255,255,0.02);
-  border:1px solid rgba(255,255,255,0.06);
-  border-radius:18px;
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  display:flex; flex-direction:column; align-items:center; gap:0;
+  padding:0; background:none; border:none; border-radius:0;
 }
 .hero-badge-logo {
-  width:52px; height:52px; border-radius:14px;
-  background:linear-gradient(135deg,rgba(196,115,58,0.12),rgba(212,146,74,0.06));
-  border:1px solid rgba(196,115,58,0.2);
+  width:40px; height:40px; border-radius:50%;
+  background:none; border:none;
   display:flex; align-items:center; justify-content:center;
+  margin-bottom:16px;
+  position:relative;
 }
-.hero-badge-logo svg { stroke:var(--dawn-copper,#c4733a); }
+.hero-badge-logo::before {
+  content:''; position:absolute; inset:-2px;
+  border-radius:50%;
+  background:conic-gradient(from 0deg, rgba(196,115,58,0.5), rgba(212,176,120,0.2), rgba(196,115,58,0.5));
+  opacity:0.7;
+}
+.hero-badge-logo::after {
+  content:''; position:absolute; inset:0;
+  border-radius:50%;
+  background:var(--bg1,#0e0d0b);
+}
+.hero-badge-logo svg {
+  stroke:var(--dawn-copper,#c4733a); position:relative; z-index:1;
+  filter:drop-shadow(0 0 6px rgba(196,115,58,0.3));
+}
 .hero-badge-name {
-  font-family:var(--ff-body,'Instrument Sans',sans-serif);
-  font-size:12px; font-weight:500; color:var(--t1,#e8e0d4);
-  letter-spacing:0.3px; text-align:center;
+  font-family:'Cormorant Garamond',serif;
+  font-size:13px; font-weight:500; color:var(--t2,#b8ae9e);
+  letter-spacing:3.5px; text-transform:uppercase;
+  writing-mode:vertical-rl; text-orientation:mixed;
+  line-height:1; white-space:nowrap;
 }
 .hero-badge-tier {
-  font-size:9.5px; font-weight:600; letter-spacing:2.5px;
-  text-transform:uppercase; color:var(--dawn-copper,#c4733a);
-  display:none;
+  font-family:var(--ff-body,'Instrument Sans',sans-serif);
+  font-size:8px; font-weight:700; letter-spacing:3px;
+  text-transform:uppercase; writing-mode:vertical-rl;
+  color:var(--dawn-copper,#c4733a);
+  margin-top:12px; display:none;
+  position:relative;
+}
+.hero-badge-tier::before {
+  content:''; position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+  width:1px; height:16px;
+  background:linear-gradient(to bottom, transparent, rgba(196,115,58,0.4), transparent);
+  writing-mode:horizontal-tb;
 }
 body.is-premium .hero-badge-tier { display:block; }
+body.is-premium .hero-badge-name { color:var(--t1,#e8e0d4); }
+body.is-premium .hero-badge-logo::before {
+  background:conic-gradient(from 0deg, rgba(196,115,58,0.7), rgba(212,176,120,0.3), rgba(196,115,58,0.7));
+  opacity:1;
+}
 @media (max-width:900px) { .hero-badge { display:none; } }
 
 .hero-scroll-cue {
@@ -1383,15 +1412,17 @@ body.is-premium .tab-lock { display:none; }
 body.is-premium .nav-premium-badge { display:inline-block; }
 
 .btn-nav-premium {
-  display:inline-flex; align-items:center; gap:6px;
-  padding:7px 16px; border:1px solid rgba(196,115,58,0.35);
-  border-radius:50px; background:rgba(196,115,58,0.08);
-  color:var(--dawn-copper,#c4733a); font-size:12px; font-weight:500;
+  display:inline-flex; align-items:center; gap:5px;
+  padding:6px 14px; border:1px solid rgba(196,115,58,0.35);
+  border-radius:999px; background:rgba(196,115,58,0.08);
+  color:var(--dawn-copper,#c4733a); font-size:11.5px; font-weight:500;
   letter-spacing:0.15px; cursor:pointer; transition:all 0.3s ease;
   font-family:inherit; white-space:nowrap; flex-shrink:0;
+  position:relative; z-index:1; margin-left:4px;
+  line-height:1;
 }
 .btn-nav-premium:hover { background:rgba(196,115,58,0.15); border-color:rgba(196,115,58,0.5); }
-.btn-nav-premium svg { stroke:var(--dawn-copper,#c4733a); }
+.btn-nav-premium svg { stroke:var(--dawn-copper,#c4733a); width:11px; height:11px; flex-shrink:0; }
 .btn-nav-premium.premium-active {
   background:linear-gradient(135deg,rgba(196,115,58,0.15),rgba(212,146,74,0.1));
   border-color:rgba(196,115,58,0.4);
@@ -3484,6 +3515,23 @@ html.loading .nav.scrolled::after {
 .sd-cond-badge {
   display:inline-block; padding:2px 8px; border-radius:4px; margin-top:4px;
   font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600;
+}
+/* What to Expect insight */
+.sd-detail-insight {
+  margin-top:16px; padding:14px 16px;
+  background:rgba(196,115,58,0.04);
+  border:1px solid rgba(196,115,58,0.12);
+  border-radius:12px;
+}
+.sd-insight-header {
+  display:flex; align-items:center; gap:7px;
+  font-family:'Cormorant Garamond',serif; font-size:14px; font-weight:600;
+  color:var(--dawn-copper,#c4733a); letter-spacing:0.5px;
+  margin-bottom:8px; text-transform:uppercase;
+}
+.sd-insight-text {
+  font-size:12.5px; line-height:1.65; color:var(--t2,#b8ae9e);
+  margin:0;
 }
 
 /* ═══ Telegram Link Modal ═══ */

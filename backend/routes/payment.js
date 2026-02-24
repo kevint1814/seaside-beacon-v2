@@ -266,10 +266,24 @@ router.post('/payment/switch-plan', requirePremium, async (req, res) => {
 
     // Use Razorpay subscription update API
     // annual→monthly: change at cycle end. monthly→annual: change now
-    await razorpayAPI('PATCH', `/subscriptions/${user.razorpaySubscriptionId}`, {
-      plan_id: PLANS[newPlan].id,
-      schedule_change_at: user.plan === 'annual' ? 'cycle_end' : 'now'
-    });
+    try {
+      await razorpayAPI('PATCH', `/subscriptions/${user.razorpaySubscriptionId}`, {
+        plan_id: PLANS[newPlan].id,
+        schedule_change_at: user.plan === 'annual' ? 'cycle_end' : 'now'
+      });
+    } catch (rzpErr) {
+      // Razorpay doesn't allow plan updates for UPI subscriptions
+      const msg = rzpErr.message || '';
+      if (msg.includes('payment mode is upi') || msg.includes('cannot be updated')) {
+        console.warn('UPI subscription cannot be updated directly. Advising user to cancel and resubscribe.');
+        return res.status(400).json({
+          success: false,
+          upiBlock: true,
+          message: `UPI subscriptions can't be switched directly. Please cancel your current ${PLANS[user.plan].display} plan first, then subscribe fresh to ${PLANS[newPlan].display}. Your access continues until the current billing period ends.`
+        });
+      }
+      throw rzpErr;  // re-throw non-UPI errors
+    }
 
     const changeAt = user.plan === 'annual' ? 'end of current annual period' : 'next billing cycle';
     user.plan = newPlan;
@@ -279,7 +293,7 @@ router.post('/payment/switch-plan', requirePremium, async (req, res) => {
     res.json({ success: true, message: `Plan will switch to ${PLANS[newPlan].display} at ${changeAt}.` });
   } catch (err) {
     console.error('Switch plan error:', err.message);
-    res.status(500).json({ success: false, message: 'Failed to switch plan' });
+    res.status(500).json({ success: false, message: 'Failed to switch plan. Please try again.' });
   }
 });
 

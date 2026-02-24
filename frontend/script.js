@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════
-// SEASIDE BEACON v6.4
+// SEASIDE BEACON v6.5
 // Liquid Glass · Beach Sunrise · Ultra Premium
 // ═══════════════════════════════════════════════
-console.log('🌅 Seaside Beacon v6.4 — loaded');
+console.log('🌅 Seaside Beacon v6.5 — loaded');
 
 const CONFIG = {
   API_URL: (window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')
@@ -1925,7 +1925,7 @@ function maybePromptSubscribe() {
     openModal();
   }, 3000);
 }
-function openModal() { const m=document.getElementById('emailModal'); m.classList.add('active'); m.setAttribute('aria-hidden','false'); }
+function openModal() { const m=document.getElementById('emailModal'); m.classList.add('active'); m.setAttribute('aria-hidden','false'); m.scrollTop=0; const p=m.querySelector('.modal-panel'); if(p) p.scrollTop=0; }
 function closeModalFn() {
   const modal = document.getElementById('emailModal');
   modal.classList.remove('active');
@@ -3061,8 +3061,8 @@ async function switchPlan(newPlan) {
     const data = await res.json();
 
     msgEl.classList.remove('hidden');
+    msgEl.style.color = data.success ? '#059669' : (data.upiBlock ? '#d97706' : '#dc2626');
     msgEl.textContent = data.message;
-    msgEl.style.color = data.success ? '#059669' : '#dc2626';
 
     if (data.success) {
       setTimeout(() => loadSubscriptionInfo(), 1500);
@@ -3316,6 +3316,7 @@ function initPremium() {
       .then(function(d) {
         if (d.clientId) {
           window.GOOGLE_CLIENT_ID = d.clientId;
+          window._googleRedirectSupported = !!d.redirectSupported;
           _initGSI();
         }
       })
@@ -3323,6 +3324,9 @@ function initPremium() {
   } catch (err) {
     console.warn('Google setup error:', err);
   }
+
+  // Handle Google OAuth redirect callback (user returning from Google sign-in page)
+  _handleGoogleOAuthReturn();
 
   // ═══════════════════════════════════════════
   // 4. INIT — auth check + plans
@@ -3340,14 +3344,24 @@ function triggerGoogleSignIn() {
     showToast('Google Sign-In is not configured yet. Use email and password.');
     return;
   }
+
+  // Primary: OAuth redirect flow — opens Google sign-in page, redirects back automatically
+  if (window._googleRedirectSupported) {
+    window.location.href = CONFIG.API_URL + '/auth/google/redirect';
+    return;
+  }
+
+  // Fallback: GSI One Tap prompt (may be blocked by browser)
   if (window._googleReady && typeof google !== 'undefined' && google.accounts) {
     google.accounts.id.prompt(function(notification) {
       if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        showToast('Google popup was blocked. Allow popups or use email/password.');
+        // If One Tap fails, try redirect as last resort
+        window.location.href = CONFIG.API_URL + '/auth/google/redirect';
       }
     });
   } else {
-    showToast('Google Sign-In is loading. Try again in a moment.');
+    // GSI not loaded — use redirect flow directly
+    window.location.href = CONFIG.API_URL + '/auth/google/redirect';
   }
 }
 
@@ -3368,6 +3382,44 @@ function _initGSI() {
     console.log('✅ Google Sign-In initialized');
   } catch (err) {
     console.warn('Google Sign-In init error:', err);
+  }
+}
+
+// Handle return from Google OAuth redirect flow
+function _handleGoogleOAuthReturn() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('googleAuth') === 'success' && params.get('token')) {
+    const token = params.get('token');
+    // Clean URL (remove query params)
+    window.history.replaceState({}, '', window.location.pathname);
+
+    // Save auth and load user profile
+    savePremiumAuth(token);
+    showToast('Signed in with Google!');
+
+    // Fetch user info and update UI
+    fetch(CONFIG.API_URL + '/auth/me', {
+      headers: { 'x-auth-token': token }
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success && d.user) {
+        premiumState.user = d.user;
+        updatePremiumUI();
+        showPremiumSplash(d.user);
+      }
+    })
+    .catch(err => console.warn('Post-OAuth user fetch failed:', err));
+
+  } else if (params.get('googleAuthError')) {
+    const err = params.get('googleAuthError');
+    window.history.replaceState({}, '', window.location.pathname);
+    if (err === 'server_config') {
+      showToast('Google Sign-In not fully configured on server.');
+    } else {
+      showToast('Google sign-in was cancelled or failed. Try again.');
+    }
   }
 }
 
@@ -3461,7 +3513,7 @@ function show7DayDetail(index) {
   const score = day.score || 0;
   const color = getScoreColor(score);
   const verdict = day.verdict || '—';
-  const f = day.forecast || {};
+  const f = day.conditions || {};
 
   // Highlight active day in grid
   document.querySelectorAll('.sd-day').forEach(el => el.classList.remove('active'));
@@ -3489,8 +3541,11 @@ function show7DayDetail(index) {
   // Wind info
   const wind = f.windSpeed ?? 0;
 
-  // Sunrise time
-  const sunrise = day.sunrise ? new Date(day.sunrise).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }) : '';
+  // Sunrise time — backend already returns formatted string like "06:30 am"
+  const sunrise = day.sunrise || '';
+
+  // AI insight — generate a "What to Expect" narrative
+  const expectInsight = generate7DayInsight(day, f);
 
   detail.innerHTML = `
     <div class="sd-detail-header">
@@ -3501,35 +3556,103 @@ function show7DayDetail(index) {
       <div class="sd-detail-score-big" style="color:${color}">${score}</div>
       <div>
         <div class="sd-detail-verdict">${verdict}</div>
-        ${sunrise ? `<div class="sd-detail-sunrise-time">☀ Sunrise at ${sunrise}</div>` : ''}
+        ${sunrise ? `<div class="sd-detail-sunrise-time">Sunrise at ${sunrise}</div>` : ''}
       </div>
     </div>
     <div class="sd-detail-conditions">
       <div class="sd-cond-card">
-        <div class="sd-cond-label">☁️ Cloud Cover</div>
+        <div class="sd-cond-label">Cloud Cover</div>
         <div class="sd-cond-value">${cc}%</div>
         <span class="sd-cond-badge" style="color:${cloudColor};background:${cloudBg}">${cloudLabel}</span>
       </div>
       <div class="sd-cond-card">
-        <div class="sd-cond-label">💧 Humidity</div>
+        <div class="sd-cond-label">Humidity</div>
         <div class="sd-cond-value">${hm}%</div>
         <span class="sd-cond-badge" style="color:${humColor};background:${humBg}">${humLabel}</span>
       </div>
       <div class="sd-cond-card">
-        <div class="sd-cond-label">👁️ Visibility</div>
+        <div class="sd-cond-label">Visibility</div>
         <div class="sd-cond-value">${vis} km</div>
         <span class="sd-cond-badge" style="color:${visColor};background:${visBg}">${visLabel}</span>
       </div>
       <div class="sd-cond-card">
-        <div class="sd-cond-label">💨 Wind</div>
+        <div class="sd-cond-label">Wind</div>
         <div class="sd-cond-value">${wind} km/h</div>
         <span class="sd-cond-badge" style="color:var(--t2);background:rgba(255,255,255,0.06)">${wind < 15 ? 'Calm' : wind < 25 ? 'Moderate' : 'Strong'}</span>
       </div>
+    </div>
+    <div class="sd-detail-insight">
+      <div class="sd-insight-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dawn-copper,#c4733a)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <span>What to Expect</span>
+      </div>
+      <p class="sd-insight-text">${expectInsight}</p>
     </div>
   `;
 
   detail.classList.remove('hidden');
   detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function generate7DayInsight(day, c) {
+  const score = day.score || 0;
+  const cc = c.cloudCover ?? 0;
+  const hm = c.humidity ?? 0;
+  const vis = c.visibility ?? 0;
+  const wind = c.windSpeed ?? 0;
+  const precip = c.precipProbability ?? 0;
+
+  // Build a human-readable narrative based on conditions
+  let parts = [];
+
+  // Cloud assessment
+  if (cc >= 30 && cc <= 60) {
+    parts.push('Cloud cover is in the ideal range for dramatic sunrise colors — expect vivid oranges and purples as light scatters through partial cloud layers.');
+  } else if (cc < 15) {
+    parts.push('Very clear skies mean a clean sunrise, but the lack of clouds may limit color drama. Look for soft pastel tones near the horizon.');
+  } else if (cc < 30) {
+    parts.push('Mostly clear skies with some thin cloud cover. Colors may be subtle but the sunrise will be clearly visible.');
+  } else if (cc <= 80) {
+    parts.push('Heavy cloud cover could diffuse the sunrise light. There\'s a chance of dramatic edge-lighting if breaks appear near the horizon.');
+  } else {
+    parts.push('Thick overcast skies are likely to block most sunrise color. Consider skipping this morning unless you enjoy moody, atmospheric shots.');
+  }
+
+  // Humidity + visibility combo
+  if (hm > 70 && vis < 8) {
+    parts.push('High humidity and reduced visibility may create a hazy, dreamy atmosphere — good for silhouette photography.');
+  } else if (hm <= 55 && vis >= 10) {
+    parts.push('Low humidity and excellent visibility will produce crisp, sharp light with strong contrast.');
+  } else if (vis < 5) {
+    parts.push('Poor visibility may significantly obscure the horizon — sunrise may not be clearly visible.');
+  }
+
+  // Wind
+  if (wind >= 25) {
+    parts.push('Strong winds could create choppy sea texture but may also clear the air for sharper light.');
+  } else if (wind < 8) {
+    parts.push('Calm winds mean smooth water reflections — ideal for mirror-like beach sunrise shots.');
+  }
+
+  // Rain check
+  if (precip > 60) {
+    parts.push('High chance of rain — bring weather protection if you head out.');
+  } else if (precip > 30) {
+    parts.push('Some chance of showers, but rain breaks can produce extraordinary rainbow opportunities.');
+  }
+
+  // Score-based summary
+  if (score >= 80) {
+    parts.push('Overall, this looks like an exceptional morning — highly recommended for photographers and sunrise chasers alike.');
+  } else if (score >= 60) {
+    parts.push('A solid morning with good potential. Worth setting the alarm for.');
+  } else if (score >= 40) {
+    parts.push('Conditions are mixed. Could surprise you, but temper expectations.');
+  } else {
+    parts.push('Challenging conditions. Only for the dedicated early risers.');
+  }
+
+  return parts.join(' ');
 }
 
 function close7DayDetail() {
