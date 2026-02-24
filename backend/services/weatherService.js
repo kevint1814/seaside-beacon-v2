@@ -2021,7 +2021,11 @@ async function get7DayForecast(beachKey) {
     const verdict = getVerdict(score);
 
     // Golden hour from sunrise
-    const sunriseDate = sunrise ? new Date(sunrise) : null;
+    // Open-Meteo returns IST times (timezone:'Asia/Kolkata') like "2026-02-25T06:15"
+    // new Date() treats these as UTC, so append +05:30 to prevent double-conversion
+    const sunriseISO = sunrise ? (sunrise.includes('+') ? sunrise : sunrise + '+05:30') : null;
+    const sunsetISO = sunset ? (sunset.includes('+') ? sunset : sunset + '+05:30') : null;
+    const sunriseDate = sunriseISO ? new Date(sunriseISO) : null;
     const goldenHourData = sunriseDate ? calculateGoldenHour(sunriseDate) : null;
 
     // Pressure at 6 AM
@@ -2039,8 +2043,8 @@ async function get7DayForecast(beachKey) {
       dayName: targetDate.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
       score,
       verdict,
-      sunrise: sunrise ? new Date(sunrise).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : null,
-      sunset: sunset ? new Date(sunset).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : null,
+      sunrise: sunriseDate ? sunriseDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : null,
+      sunset: sunsetISO ? new Date(sunsetISO).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : null,
       goldenHour: goldenHourData,
       conditions: {
         cloudCover: cloudCover ?? 0,

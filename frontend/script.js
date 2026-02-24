@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════
-// SEASIDE BEACON v6.6
+// SEASIDE BEACON v6.7
 // Liquid Glass · Beach Sunrise · Ultra Premium
 // ═══════════════════════════════════════════════
-console.log('🌅 Seaside Beacon v6.6 — loaded');
+console.log('🌅 Seaside Beacon v6.7 — loaded');
 
 const CONFIG = {
   API_URL: (window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')
@@ -1945,7 +1945,10 @@ function closeModalFn() {
 function initModals() {
   document.getElementById('closeModal')?.addEventListener('click', closeModalFn);
   document.getElementById('emailModal')?.addEventListener('click', e=>{ if(e.target.id==='emailModal') closeModalFn(); });
-  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModalFn(); });
+  document.getElementById('telegramModal')?.addEventListener('click', e=>{ if(e.target.id==='telegramModal') closeTelegramModal(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape') { closeModalFn(); closeTelegramModal(); }
+  });
   ['navSubscribeBtn','heroSubscribeBtn','drawerSubscribeBtn'].forEach(id=>
     document.getElementById(id)?.addEventListener('click', () => {
       if (document.body.classList.contains('is-premium')) {
@@ -2785,6 +2788,7 @@ function openTelegramModal() {
   const modal = document.getElementById('telegramModal');
   if (!modal) return;
   modal.classList.remove('hidden');
+  modal.classList.add('active');
   modal.setAttribute('aria-hidden', 'false');
 
   // Generate link code from auth token
@@ -2800,6 +2804,7 @@ function closeTelegramModal() {
   const modal = document.getElementById('telegramModal');
   if (!modal) return;
   modal.classList.add('hidden');
+  modal.classList.remove('active');
   modal.setAttribute('aria-hidden', 'true');
   // Remember dismissal for this session
   sessionStorage.setItem('sb_tg_dismissed', '1');
