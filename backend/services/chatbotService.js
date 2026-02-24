@@ -1,23 +1,64 @@
 // ==========================================
 // Seaside Beacon — Telegram AI Chatbot
-// Gemini-powered sunrise & photography assistant
+// 3-tier failover: Gemini Flash → Groq → Flash-Lite
+// Same provider chain as aiService.js
 // ==========================================
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const OpenAI = require('openai');
+const Groq = require('groq-sdk');
 const weatherService = require('./weatherService');
 
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_FLASH_MODEL || 'gemini-2.0-flash';
+// ─── Provider config (mirrors aiService.js) ───
+const GEMINI_FLASH_MODEL = process.env.GEMINI_FLASH_MODEL || 'gemini-2.5-flash';
+const GEMINI_LITE_MODEL = process.env.GEMINI_LITE_MODEL || 'gemini-2.5-flash-lite';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
-const genAI = GEMINI_KEY ? new GoogleGenerativeAI(GEMINI_KEY) : null;
+// ─── Initialize providers ───
+let geminiFlash, groqClient, geminiLite;
+
+try {
+  if (process.env.GEMINI_API_KEY) {
+    geminiFlash = new OpenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    });
+  }
+} catch (e) { /* skip */ }
+
+try {
+  if (process.env.GROQ_API_KEY) {
+    groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  }
+} catch (e) { /* skip */ }
+
+try {
+  if (process.env.GEMINI_API_KEY) {
+    geminiLite = new OpenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    });
+  }
+} catch (e) { /* skip */ }
+
+const CHAT_PROVIDERS = [
+  geminiFlash && { name: 'gemini-flash', client: geminiFlash, model: GEMINI_FLASH_MODEL },
+  groqClient && { name: 'groq', client: groqClient, model: GROQ_MODEL, isGroq: true },
+  geminiLite && { name: 'gemini-lite', client: geminiLite, model: GEMINI_LITE_MODEL }
+].filter(Boolean);
+
+if (CHAT_PROVIDERS.length > 0) {
+  console.log(`💬 Chatbot provider chain: ${CHAT_PROVIDERS.map(p => p.name).join(' → ')}`);
+} else {
+  console.warn('⚠️  No chatbot providers configured');
+}
 
 // ─── Per-user conversation memory (in-memory, resets on restart) ───
-const chatHistory = new Map();    // chatId → [{ role, parts }]
-const HISTORY_LIMIT = 20;         // keep last 20 messages per user
-const HISTORY_TTL = 2 * 60 * 60 * 1000; // clear after 2hr inactivity
+const chatHistory = new Map();    // chatId → [{ role, content }]  (OpenAI format)
+const HISTORY_LIMIT = 20;
+const HISTORY_TTL = 2 * 60 * 60 * 1000; // 2hr
 const lastActivity = new Map();
 
-// ─── System prompt: the soul of the chatbot ───
+// ─── System prompt ───
 const SYSTEM_PROMPT = `You are the Seaside Beacon Assistant — an expert companion for India's first native sunrise quality forecaster, built for the beaches of Chennai.
 
 ## Who you are
@@ -43,7 +84,7 @@ const SYSTEM_PROMPT = `You are the Seaside Beacon Assistant — an expert compan
 
 ## How to behave
 - Keep responses concise for Telegram (2-4 short paragraphs max)
-- Use occasional emojis naturally (☀️ 🌅 📸) but don't overdo it
+- Use occasional emojis naturally but don't overdo it
 - When given live weather data, interpret it conversationally — don't just list numbers
 - If asked about today/tomorrow, use the live data provided in the context
 - For photography questions, give practical actionable advice
@@ -90,7 +131,6 @@ async function getLiveWeatherContext() {
   return Object.keys(context).length > 0 ? context : null;
 }
 
-// Format weather context into readable text for the AI
 function formatWeatherForAI(weatherData) {
   if (!weatherData) return 'No live weather data available right now.';
 
@@ -111,9 +151,25 @@ function formatWeatherForAI(weatherData) {
   return text;
 }
 
+// ─── Call a single provider (OpenAI-compatible) ───
+async function callProvider(provider, messages) {
+  const client = provider.isGroq ? provider.client : provider.client;
+
+  const response = await client.chat.completions.create({
+    model: provider.model,
+    messages,
+    max_tokens: 1024,
+    temperature: 0.7
+  });
+
+  const text = response.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Empty response from provider');
+  return text;
+}
+
 // ─── Main chat function ───
 async function chat(chatId, userMessage, userName) {
-  if (!genAI) {
+  if (CHAT_PROVIDERS.length === 0) {
     return 'The AI assistant is not configured yet. Please try again later.';
   }
 
@@ -140,40 +196,56 @@ async function chat(chatId, userMessage, userName) {
       }
     }
 
-    // Build the model
-    const model = genAI.getGenerativeModel({
-      model: MODEL,
-      systemInstruction: SYSTEM_PROMPT
-    });
-
-    // Build conversation with context
+    // Build user message with context
     const contextMessage = weatherContext
       ? `[User: ${userName || 'Premium User'}]${weatherContext}\n\nUser question: ${userMessage}`
       : `[User: ${userName || 'Premium User'}]\n\nUser question: ${userMessage}`;
 
-    // Add user message to history
-    history.push({ role: 'user', parts: [{ text: contextMessage }] });
+    // Add to history (OpenAI format)
+    history.push({ role: 'user', content: contextMessage });
 
-    // Trim history if too long
+    // Trim history
     while (history.length > HISTORY_LIMIT) {
       history.shift();
     }
 
-    // Create chat session with history
-    const chatSession = model.startChat({
-      history: history.slice(0, -1), // all except the latest message
-      generationConfig: {
-        maxOutputTokens: 1024,
-        temperature: 0.7,
+    // Build messages array: system + conversation history
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...history
+    ];
+
+    // 3-tier failover
+    let response = null;
+    for (const provider of CHAT_PROVIDERS) {
+      try {
+        response = await callProvider(provider, messages);
+        break; // success — stop trying
+      } catch (err) {
+        const code = err.status || err.code || '';
+        console.warn(`⚠️  Chatbot ${provider.name} failed (${code}): ${err.message?.substring(0, 120)}`);
+        // Continue to next provider
       }
-    });
+    }
 
-    // Send the latest message
-    const result = await chatSession.sendMessage(contextMessage);
-    const response = result.response.text();
+    if (!response) {
+      // All providers failed
+      console.error('❌ All chatbot providers failed');
+      // Remove the user message we just added (don't pollute history with failed turns)
+      history.pop();
+      return '☀️ I\'m having trouble connecting right now. Please try again in a moment!';
+    }
 
-    // Add assistant response to history (store without weather context for cleaner history)
-    history.push({ role: 'model', parts: [{ text: response }] });
+    // Clean up any markdown that slipped through (Groq/Llama may use ** instead of HTML)
+    response = response
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/\*(.+?)\*/g, '<i>$1</i>')
+      .replace(/^### (.+)$/gm, '<b>$1</b>')
+      .replace(/^## (.+)$/gm, '<b>$1</b>')
+      .replace(/^# (.+)$/gm, '<b>$1</b>');
+
+    // Add assistant response to history
+    history.push({ role: 'assistant', content: response });
 
     return response;
 
@@ -200,6 +272,6 @@ setInterval(() => {
       lastActivity.delete(chatId);
     }
   }
-}, 30 * 60 * 1000); // check every 30 min
+}, 30 * 60 * 1000);
 
 module.exports = { chat };
