@@ -152,9 +152,13 @@ function goldenHourBlock(weatherData, photographyInsights) {
  * golden hour, AI insight, conditions, photography (premium)
  */
 async function sendDailyTelegramAlerts(allWeatherData, insightsCache = {}) {
+  const now = new Date();
   const premiumUsers = await PremiumUser.find({
-    status: 'active',
-    telegramChatId: { $ne: null }
+    telegramChatId: { $ne: null },
+    $or: [
+      { status: 'active' },
+      { cancelledWithGrace: true, currentPeriodEnd: { $gt: now } }
+    ]
   });
 
   if (premiumUsers.length === 0) {
@@ -250,9 +254,13 @@ async function sendDailyTelegramAlerts(allWeatherData, insightsCache = {}) {
  * Send special 70+ alert via Telegram — matches email
  */
 async function sendSpecialTelegramAlert(bestBeach, allHotBeaches, allWeatherData = {}) {
+  const now = new Date();
   const premiumUsers = await PremiumUser.find({
-    status: 'active',
-    telegramChatId: { $ne: null }
+    telegramChatId: { $ne: null },
+    $or: [
+      { status: 'active' },
+      { cancelledWithGrace: true, currentPeriodEnd: { $gt: now } }
+    ]
   });
 
   if (premiumUsers.length === 0) return 0;
@@ -316,9 +324,13 @@ async function sendSpecialTelegramAlert(bestBeach, allHotBeaches, allWeatherData
  * Premium only, per-user preferred beach
  */
 async function sendEveningTelegramPreviews(allWeatherData, insightsCache = {}) {
+  const now = new Date();
   const premiumUsers = await PremiumUser.find({
-    status: 'active',
-    telegramChatId: { $ne: null }
+    telegramChatId: { $ne: null },
+    $or: [
+      { status: 'active' },
+      { cancelledWithGrace: true, currentPeriodEnd: { $gt: now } }
+    ]
   });
 
   if (premiumUsers.length === 0) {

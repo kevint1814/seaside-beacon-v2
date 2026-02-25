@@ -12,6 +12,26 @@ const SupportTicket = require('../models/SupportTicket');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
+// Helper: check if user has active premium access (includes grace period)
+function isUserActive(user) {
+  if (!user) return false;
+  if (user.status === 'active') return true;
+  if (user.cancelledWithGrace && user.currentPeriodEnd && new Date() < user.currentPeriodEnd) return true;
+  return false;
+}
+
+// Helper: find active user by query (includes grace period users)
+function findActiveUser(query) {
+  const now = new Date();
+  return PremiumUser.findOne({
+    ...query,
+    $or: [
+      { status: 'active' },
+      { cancelledWithGrace: true, currentPeriodEnd: { $gt: now } }
+    ]
+  });
+}
+
 // Per-user session tracker: intro message after 1hr+ gap
 const SESSION_GAP = 60 * 60 * 1000; // 1 hour
 const _lastChatTime = new Map(); // chatId → timestamp
@@ -103,10 +123,11 @@ router.post('/telegram/webhook', async (req, res) => {
         return;
       }
 
-      if (user.status !== 'active') {
+      if (!isUserActive(user)) {
         await sendTelegramMessage(chatId,
-          '☀️ The AI assistant is available for active premium subscribers.\n\n' +
-          '<a href="https://www.seasidebeacon.com">Subscribe at seasidebeacon.com →</a>'
+          '☀️ Your premium subscription has ended, so the AI assistant is no longer available.\n\n' +
+          'Resubscribe anytime to get it back!\n' +
+          '<a href="https://www.seasidebeacon.com">seasidebeacon.com →</a>'
         );
         return;
       }
@@ -146,7 +167,7 @@ async function handleCommand(chatId, text, userName) {
 
       // /start with email → link via email
       if (email && /^\S+@\S+\.\S+$/.test(email)) {
-        const user = await PremiumUser.findOne({ email, status: 'active' });
+        const user = await findActiveUser({ email });
         if (!user) {
           await sendTelegramMessage(chatId,
             '❌ No active premium account found for this email.\n\n' +
@@ -174,7 +195,7 @@ async function handleCommand(chatId, text, userName) {
       }
 
       // Plain /start → welcome message
-      const user = await PremiumUser.findOne({ telegramChatId: chatId.toString(), status: 'active' });
+      const user = await findActiveUser({ telegramChatId: chatId.toString() });
       if (user) {
         await sendTelegramMessage(chatId,
           `☀️ <b>Welcome back, ${userName || user.name || 'sunrise chaser'}!</b>\n\n` +
@@ -280,7 +301,7 @@ async function handleCommand(chatId, text, userName) {
     }
 
     case '/forecast': {
-      const user = await PremiumUser.findOne({ telegramChatId: chatId.toString(), status: 'active' });
+      const user = await findActiveUser({ telegramChatId: chatId.toString() });
       if (!user) {
         await sendTelegramMessage(chatId, '🔒 /forecast is for linked premium users. Link your account first!');
         return;
@@ -358,7 +379,7 @@ async function handleCommand(chatId, text, userName) {
 
     default: {
       // Unknown command — treat as AI chat if linked
-      const user = await PremiumUser.findOne({ telegramChatId: chatId.toString(), status: 'active' });
+      const user = await findActiveUser({ telegramChatId: chatId.toString() });
       if (user) {
         if (!checkChatRateLimit(chatId)) {
           await sendTelegramMessage(chatId, '⏳ You\'re sending messages too quickly. Please wait a moment.');
@@ -388,8 +409,7 @@ async function handleCodeLinking(chatId, code) {
 
     // Use regex to match first 8 chars of authToken in DB (avoids loading all users)
     const regex = new RegExp('^' + codeUpper, 'i');
-    const matchedUser = await PremiumUser.findOne({
-      status: 'active',
+    const matchedUser = await findActiveUser({
       authToken: { $regex: regex }
     });
 

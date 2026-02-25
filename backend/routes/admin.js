@@ -28,6 +28,26 @@ const ADMIN_PASS = process.env.ADMIN_PASS || 'beacon2026';
 const _sessions = new Map();
 const SESSION_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
+// ── Stale pending user cleanup (runs at most once per hour) ──
+let _lastPendingCleanup = 0;
+async function cleanupStalePendingUsers() {
+  const now = Date.now();
+  if (now - _lastPendingCleanup < 60 * 60 * 1000) return; // throttle: 1hr
+  _lastPendingCleanup = now;
+  try {
+    const cutoff = new Date(now - 24 * 60 * 60 * 1000);
+    const result = await PremiumUser.deleteMany({
+      status: 'pending',
+      createdAt: { $lt: cutoff }
+    });
+    if (result.deletedCount > 0) {
+      console.log(`🧹 Cleaned up ${result.deletedCount} stale pending user(s) (>24h old)`);
+    }
+  } catch (err) {
+    console.error('Pending cleanup error:', err.message);
+  }
+}
+
 function generateToken() {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -65,6 +85,9 @@ router.post('/admin/login', (req, res) => {
 // ── Full metrics — lifetime from MongoDB + session from memory ──
 router.get('/admin/metrics', requireAuth, async (req, res) => {
   try {
+    // Housekeeping: remove stale pending users (throttled, max 1x/hr)
+    cleanupStalePendingUsers();
+
     const snapshot = getMetricsSnapshot();
     const visitStats = await getStats();
 
@@ -110,11 +133,26 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
 
     // ── Premium Users ──
     const premiumUsers = await PremiumUser.find({})
-      .sort({ subscribedAt: -1 })
-      .select('email plan status currentPeriodEnd preferredBeach telegramChatId lastLogin subscribedAt alertTime eveningPreviewTime cancelledAt lastPaymentFailed')
+      .select('email plan status currentPeriodEnd preferredBeach telegramChatId lastLogin subscribedAt alertTime eveningPreviewTime cancelledAt lastPaymentFailed cancelledWithGrace createdAt')
       .lean();
 
-    const activePremium = premiumUsers.filter(u => u.status === 'active');
+    // Sort: active first, then grace period, then pending, then cancelled/expired
+    const statusOrder = { active: 0, pending: 2, cancelled: 3, expired: 4 };
+    const now = new Date();
+    premiumUsers.sort((a, b) => {
+      const aGrace = a.cancelledWithGrace && a.currentPeriodEnd && new Date(a.currentPeriodEnd) > now;
+      const bGrace = b.cancelledWithGrace && b.currentPeriodEnd && new Date(b.currentPeriodEnd) > now;
+      const aOrder = a.status === 'active' ? 0 : aGrace ? 1 : (statusOrder[a.status] ?? 5);
+      const bOrder = b.status === 'active' ? 0 : bGrace ? 1 : (statusOrder[b.status] ?? 5);
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return new Date(b.subscribedAt || b.createdAt) - new Date(a.subscribedAt || a.createdAt);
+    });
+
+    // Active includes grace period users
+    const activePremium = premiumUsers.filter(u =>
+      u.status === 'active' ||
+      (u.cancelledWithGrace && u.currentPeriodEnd && new Date(u.currentPeriodEnd) > now)
+    );
     const cancelledCount = await PremiumUser.countDocuments({ status: 'cancelled' });
     const telegramLinked = await PremiumUser.countDocuments({ telegramChatId: { $exists: true, $ne: null } });
 

@@ -109,7 +109,7 @@ router.post('/auth/register', async (req, res) => {
             name: existing.name,
             plan: existing.plan,
             status: existing.status,
-            isActive: existing.status === 'active'
+            isActive: existing.isActive
           }
         });
       }
@@ -200,7 +200,7 @@ router.post('/auth/login', async (req, res) => {
         name: user.name,
         plan: user.plan,
         status: user.status,
-        isActive: user.status === 'active'
+        isActive: user.isActive
       }
     });
 
@@ -277,7 +277,7 @@ router.post('/auth/google', async (req, res) => {
         name: user.name,
         plan: user.plan,
         status: user.status,
-        isActive: user.status === 'active'
+        isActive: user.isActive
       }
     });
 
@@ -533,7 +533,7 @@ router.get('/auth/me', requirePremium, async (req, res) => {
       name: user.name,
       plan: user.plan,
       status: user.status,
-      isActive: user.status === 'active',
+      isActive: user.isActive,
       preferredBeach: user.preferredBeach,
       alertTime: user.alertTime,
       eveningPreviewTime: user.eveningPreviewTime,

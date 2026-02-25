@@ -114,10 +114,14 @@ router.get('/predict/:beach', async (req, res) => {
     if (authToken) {
       try {
         const PremiumUser = require('../models/PremiumUser');
+        const now = new Date();
         const premUser = await PremiumUser.findOne({
           authToken,
-          authTokenExpiry: { $gt: new Date() },
-          status: 'active'
+          authTokenExpiry: { $gt: now },
+          $or: [
+            { status: 'active' },
+            { cancelledWithGrace: true, currentPeriodEnd: { $gt: now } }
+          ]
         });
         if (premUser) isPremiumUser = true;
       } catch (e) {

@@ -15,7 +15,7 @@ const OpenAI = require('openai');
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const GEMINI_FLASH_MODEL = process.env.GEMINI_FLASH_MODEL || 'gemini-2.5-flash';
 const GEMINI_LITE_MODEL = process.env.GEMINI_LITE_MODEL || 'gemini-2.5-flash-lite';
-const AI_MAX_TOKENS = parseInt(process.env.AI_MAX_TOKENS || process.env.GROQ_MAX_TOKENS) || 3000;
+const AI_MAX_TOKENS = parseInt(process.env.AI_MAX_TOKENS || process.env.GROQ_MAX_TOKENS) || 3500;
 const AI_TEMPERATURE = parseFloat(process.env.AI_TEMPERATURE || process.env.GROQ_TEMPERATURE) || 0.7;
 
 // ── Initialize providers ─────────────────────────────

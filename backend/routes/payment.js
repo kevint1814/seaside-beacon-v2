@@ -322,9 +322,9 @@ router.post('/payment/cancel-with-refund', requirePremium, async (req, res) => {
       });
     }
 
-    // Cancel immediately on Razorpay
+    // Cancel on Razorpay (stops future billing)
     await razorpayAPI('POST', `/subscriptions/${user.razorpaySubscriptionId}/cancel`, {
-      cancel_at_cycle_end: 0  // Immediate cancellation
+      cancel_at_cycle_end: 0  // Cancel billing immediately
     });
 
     // Process refund if there was a payment
@@ -346,19 +346,25 @@ router.post('/payment/cancel-with-refund', requirePremium, async (req, res) => {
       // Still cancel even if refund fails — can be processed manually
     }
 
+    // Grant access until day 8 (end of first billing period)
+    // User already paid for this period — fair to let them use it
+    const graceEnd = new Date(new Date(subStart).getTime() + (8 * 24 * 60 * 60 * 1000));
     user.status = 'cancelled';
     user.cancelledAt = new Date();
+    user.cancelledWithGrace = true;
+    user.currentPeriodEnd = graceEnd;
     await user.save();
 
-    console.log(`📭 Premium cancelled with refund: ${user.email} (${daysSince.toFixed(1)} days)`);
+    console.log(`📭 Premium cancelled with refund + grace: ${user.email} (${daysSince.toFixed(1)} days, access until ${graceEnd.toISOString().split('T')[0]})`);
 
     // Send cancellation email with refund notice (non-blocking)
     sendCancellationEmail(user.email, true)
       .catch(err => console.error(`❌ Cancellation email failed: ${err.message}`));
 
+    const daysRemaining = Math.ceil((graceEnd - Date.now()) / (1000 * 60 * 60 * 24));
     res.json({
       success: true,
-      message: 'Subscription cancelled. Your refund will be processed within 5-7 business days.'
+      message: `Subscription cancelled. Your refund will be processed within 5-7 business days. You'll still have premium access for ${daysRemaining} more day${daysRemaining !== 1 ? 's' : ''}.`
     });
   } catch (err) {
     console.error('Cancel with refund error:', err.message);
@@ -455,6 +461,12 @@ async function handleCancelled(payload) {
 
   const user = await PremiumUser.findOne({ razorpaySubscriptionId: sub.id });
   if (!user) return;
+
+  // If user cancelled with 7-day grace period, don't override — they keep access until currentPeriodEnd
+  if (user.cancelledWithGrace && user.currentPeriodEnd && new Date() < user.currentPeriodEnd) {
+    console.log(`📭 Razorpay cancelled webhook for ${user.email} — grace period active until ${user.currentPeriodEnd.toISOString().split('T')[0]}, skipping status change`);
+    return;
+  }
 
   user.status = 'cancelled';
   await user.save();

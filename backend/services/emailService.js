@@ -1060,7 +1060,8 @@ async function sendPremiumWelcomeEmail(userEmail, plan) {
         'List-Unsubscribe': `<${getUnsubscribeUrl(userEmail)}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
       },
-      text: `Welcome to Seaside Beacon Premium!\n\nYou're now on the ${planDisplay} plan. Here's what you've unlocked:\n\n• 7 days of forecasts in advance — plan your week, not just tomorrow\n• DSLR camera settings — ISO, aperture, shutter speed tuned to the day's light\n• Mobile photography tips — get stunning shots with just your phone\n• Priority alerts — 70+ score mornings delivered before anyone else\n\nThank you for supporting India's first native sunrise quality forecaster. Starting with Chennai's beaches, expanding to coastlines across India. Your support helps us get there.\n\nSeaside Beacon — Made in Chennai\n${APP_URL}`,
+      text: `Welcome to Seaside Beacon Premium!\n\nYou're now on the ${planDisplay} plan. Here's what you've unlocked:\n\n• 7 days of forecasts in advance — plan your week, not just tomorrow\n• DSLR camera settings — ISO, aperture, shutter speed tuned to the day's light\n• Mobile photography tips — get stunning shots with just your phone\n• AI Sunrise Assistant on Telegram — ask about conditions, get photography advice, compare days
+• Priority alerts — 70+ score mornings delivered before anyone else\n\nThank you for supporting India's first native sunrise quality forecaster. Starting with Chennai's beaches, expanding to coastlines across India. Your support helps us get there.\n\nSeaside Beacon — Made in Chennai\n${APP_URL}`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -1166,6 +1167,19 @@ async function sendPremiumWelcomeEmail(userEmail, plan) {
               </table>
 
               <!-- Feature 4 -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td style="width:36px;vertical-align:top;padding-top:2px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#FDF5EE" style="width:32px;height:32px;border:1px solid #E8D5C0;text-align:center;line-height:32px;font-size:15px;">🤖</td></tr></table>
+                  </td>
+                  <td style="padding-left:14px;vertical-align:top;">
+                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:#2a2420;">AI Sunrise Assistant on Telegram</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Chat with your personal sunrise guide. Ask about conditions, get photography advice, compare days, and find the best morning this week.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 5 -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px;">
                 <tr>
                   <td style="width:36px;vertical-align:top;padding-top:2px;">

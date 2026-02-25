@@ -118,6 +118,10 @@ const premiumUserSchema = new mongoose.Schema({
     type: String,
     enum: ['monthly', 'annual', null],
     default: null
+  },
+  cancelledWithGrace: {
+    type: Boolean,
+    default: false   // true when 7-day refund cancel grants access until period end
   }
 }, {
   timestamps: true  // createdAt, updatedAt
@@ -132,7 +136,11 @@ premiumUserSchema.index({ telegramChatId: 1 });
 
 // ─── Virtuals ───
 premiumUserSchema.virtual('isActive').get(function () {
-  return this.status === 'active';
+  // Active subscription
+  if (this.status === 'active') return true;
+  // Cancelled with grace period — still active until currentPeriodEnd
+  if (this.cancelledWithGrace && this.currentPeriodEnd && new Date() < this.currentPeriodEnd) return true;
+  return false;
 });
 
 // ─── Methods ───
@@ -150,15 +158,34 @@ premiumUserSchema.methods.isGoogleUser = function () {
 
 // ─── Statics ───
 premiumUserSchema.statics.findActiveByEmail = function (email) {
-  return this.findOne({ email: email.toLowerCase().trim(), status: 'active' });
+  const now = new Date();
+  return this.findOne({
+    email: email.toLowerCase().trim(),
+    $or: [
+      { status: 'active' },
+      { cancelledWithGrace: true, currentPeriodEnd: { $gt: now } }
+    ]
+  });
 };
 
 premiumUserSchema.statics.getActiveCount = function () {
-  return this.countDocuments({ status: 'active' });
+  const now = new Date();
+  return this.countDocuments({
+    $or: [
+      { status: 'active' },
+      { cancelledWithGrace: true, currentPeriodEnd: { $gt: now } }
+    ]
+  });
 };
 
 premiumUserSchema.statics.getActiveUsers = function () {
-  return this.find({ status: 'active' });
+  const now = new Date();
+  return this.find({
+    $or: [
+      { status: 'active' },
+      { cancelledWithGrace: true, currentPeriodEnd: { $gt: now } }
+    ]
+  });
 };
 
 module.exports = mongoose.model('PremiumUser', premiumUserSchema);
