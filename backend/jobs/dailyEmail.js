@@ -17,6 +17,11 @@ const telegramService = require('../services/telegramService');
 
 const ALL_BEACHES = weatherService.getBeaches().map(b => b.key);
 
+// Rate limiting: Brevo allows max 300 emails/day, ~5/second on free tier
+// 250ms delay = 4 emails/sec = safe margin under the 5/sec limit
+const EMAIL_DELAY_MS = parseInt(process.env.EMAIL_DELAY_MS) || 250;
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * Fetch weather for all beaches once — returns { marina: data, elliot: data, ... }
  * Used by both storeDailyScores and sendDailyPredictions to avoid duplicate API calls.
@@ -212,6 +217,9 @@ async function sendDailyPredictions() {
 
         emailCount++;
         console.log(`✅ Email sent to ${subscriber.email}${isPremium ? ' (premium)' : ''}`);
+
+        // Rate limit: pause between sends to stay under Brevo's per-second limit
+        if (emailCount < subscribers.length) await delay(EMAIL_DELAY_MS);
       } catch (error) {
         console.error(`❌ Error for ${subscriber.email}:`, error.message);
         continue;
@@ -306,6 +314,9 @@ async function sendEveningPreviews() {
 
         emailCount++;
         console.log(`✅ Evening preview sent to ${premiumUser.email} (premium)`);
+
+        // Rate limit: pause between sends
+        if (emailCount < premiumUsers.length) await delay(EMAIL_DELAY_MS);
       } catch (error) {
         console.error(`❌ Evening preview error for ${premiumUser.email}:`, error.message);
         continue;
@@ -400,14 +411,27 @@ async function sendSpecialAlert() {
  * - 7:00 PM IST: Special 70+ alert (premium only)
  * - 8:30 PM IST: Evening preview (premium only)
  */
+function validateTimeFormat(timeStr, label) {
+  if (!/^\d{2}:\d{2}$/.test(timeStr)) {
+    console.error(`❌ Invalid ${label} format: "${timeStr}" — expected HH:MM (e.g. "04:00"). Falling back to default.`);
+    return null;
+  }
+  const [h, m] = timeStr.split(':').map(Number);
+  if (h < 0 || h > 23 || m < 0 || m > 59) {
+    console.error(`❌ Invalid ${label} time: "${timeStr}" — hour must be 0-23, minute 0-59. Falling back to default.`);
+    return null;
+  }
+  return { hour: String(h).padStart(2, '0'), min: String(m).padStart(2, '0') };
+}
+
 function initializeEmailJobs() {
   const TZ = { timezone: process.env.TIMEZONE || 'Asia/Kolkata' };
 
   // Morning definitive forecast
   const DAILY_EMAIL_TIME = process.env.DAILY_EMAIL_TIME || '04:00';
-  const [dailyHour, dailyMin] = DAILY_EMAIL_TIME.split(':');
-  cron.schedule(`${dailyMin} ${dailyHour} * * *`, sendDailyPredictions, TZ);
-  console.log(`📅 Scheduled morning forecast emails at ${DAILY_EMAIL_TIME} IST`);
+  const dailyParsed = validateTimeFormat(DAILY_EMAIL_TIME, 'DAILY_EMAIL_TIME') || { hour: '04', min: '00' };
+  cron.schedule(`${dailyParsed.min} ${dailyParsed.hour} * * *`, sendDailyPredictions, TZ);
+  console.log(`📅 Scheduled morning forecast emails at ${dailyParsed.hour}:${dailyParsed.min} IST`);
 
   // Special 70+ alert at 7 PM (premium only)
   cron.schedule('0 19 * * *', sendSpecialAlert, TZ);
@@ -415,9 +439,9 @@ function initializeEmailJobs() {
 
   // Evening preview at 8:30 PM (premium only)
   const EVENING_TIME = process.env.EVENING_PREVIEW_TIME || '20:30';
-  const [eveningHour, eveningMin] = EVENING_TIME.split(':');
-  cron.schedule(`${eveningMin} ${eveningHour} * * *`, sendEveningPreviews, TZ);
-  console.log(`🌙 Scheduled evening preview emails at ${EVENING_TIME} IST (premium only)`);
+  const eveningParsed = validateTimeFormat(EVENING_TIME, 'EVENING_PREVIEW_TIME') || { hour: '20', min: '30' };
+  cron.schedule(`${eveningParsed.min} ${eveningParsed.hour} * * *`, sendEveningPreviews, TZ);
+  console.log(`🌙 Scheduled evening preview emails at ${eveningParsed.hour}:${eveningParsed.min} IST (premium only)`);
 
   console.log(`✅ All email jobs initialized successfully`);
 }

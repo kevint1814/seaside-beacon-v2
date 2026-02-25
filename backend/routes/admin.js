@@ -140,6 +140,39 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
       telegramLinked: telegramLinked
     };
 
+    // ── Email Health ──
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
+    const fortyEightHoursAgo = new Date(now - 48 * 60 * 60 * 1000);
+
+    // Subscribers who got an email in the last 24h (healthy)
+    const emailedLast24h = await Subscriber.countDocuments({
+      isActive: true,
+      lastEmailSent: { $gte: twentyFourHoursAgo }
+    });
+    // Subscribers who haven't been emailed in 48+ hours (stale — should be 0)
+    const staleSubscribers = await Subscriber.find({
+      isActive: true,
+      $or: [
+        { lastEmailSent: null },
+        { lastEmailSent: { $lt: fortyEightHoursAgo } }
+      ]
+    }).select('email preferredBeach lastEmailSent subscribedAt').lean();
+
+    const emailHealth = {
+      activeSubscribers: allSubscribers.length,
+      emailedLast24h,
+      staleCount: staleSubscribers.length,
+      staleList: staleSubscribers.slice(0, 20), // show top 20
+      deliveryRate: allSubscribers.length > 0
+        ? Math.round((emailedLast24h / allSubscribers.length) * 100)
+        : 0,
+      provider: process.env.EMAIL_PROVIDER || 'brevo',
+      dailyLimit: (process.env.EMAIL_PROVIDER || 'brevo') === 'brevo' ? 300 : 100,
+      estimatedDailyUsage: allSubscribers.length + activePremium.length * 2, // morning + evening + alert
+      rateLimitWarning: (allSubscribers.length + activePremium.length * 2) > 250
+    };
+
     // ── Recent Feedback ──
     const recentFeedback = await Feedback.find({})
       .sort({ createdAt: -1 })
@@ -168,6 +201,7 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
         limit: 300
       },
       premium: premiumStats,
+      emailHealth,
       feedback: recentFeedback,
       scores: recentScores,
       siteStats,

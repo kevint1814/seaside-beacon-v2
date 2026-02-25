@@ -439,6 +439,49 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
     </div>
   </div>
 
+  <!-- ROW 3.25: Email Health -->
+  <div class="row" style="grid-template-columns:1fr">
+    <div class="card">
+      <div class="card-title">Email Health <span class="badge" id="emailHealthBadge" style="background:var(--green-bg);color:var(--green)">Healthy</span></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px">
+        <div>
+          <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Delivery Rate</div>
+          <div class="stat-val" style="font-size:24px" id="ehDeliveryRate">—<span style="font-size:11px;color:var(--t4);font-weight:400">%</span></div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Emailed (24h)</div>
+          <div class="stat-val" style="font-size:24px" id="ehEmailed24h">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Stale (48h+)</div>
+          <div class="stat-val" style="font-size:24px" id="ehStaleCount">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Daily Usage</div>
+          <div class="stat-val" style="font-size:24px" id="ehDailyUsage">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Provider</div>
+          <div class="stat-val" style="font-size:24px;text-transform:capitalize" id="ehProvider">—</div>
+        </div>
+      </div>
+      <div id="ehQuotaBar" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t4);margin-bottom:4px">
+          <span>Daily quota usage</span>
+          <span id="ehQuotaLabel">— / 300</span>
+        </div>
+        <div class="prog"><div class="prog-fill" id="ehQuotaFill" style="width:0%;background:var(--green)"></div></div>
+      </div>
+      <div id="ehStaleSection" style="display:none">
+        <div style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:8px">Subscribers not emailed in 48+ hours:</div>
+        <div class="scroll-y" style="max-height:120px">
+          <table class="tbl"><thead><tr><th>Email</th><th>Beach</th><th>Last Email</th><th>Joined</th></tr></thead>
+          <tbody id="ehStaleBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ROW 3.5: Community Feedback -->
   <div class="row" style="grid-template-columns:1fr">
     <div class="card">
@@ -628,6 +671,44 @@ function render(d){
   $('avgTenure', p?.avgTenure||0);
   $('telegramCount', p?.telegramLinked||0);
   premiumTable(p||{});
+
+  // Email Health
+  const eh = d.emailHealth;
+  if (eh) {
+    $('ehDeliveryRate', eh.deliveryRate);
+    $('ehEmailed24h', eh.emailedLast24h);
+    $('ehStaleCount', eh.staleCount);
+    $('ehDailyUsage', eh.estimatedDailyUsage);
+    $('ehProvider', eh.provider);
+    $('ehQuotaLabel', eh.estimatedDailyUsage + ' / ' + eh.dailyLimit);
+    const quotaPct = Math.min(100, Math.round((eh.estimatedDailyUsage / eh.dailyLimit) * 100));
+    const qFill = document.getElementById('ehQuotaFill');
+    qFill.style.width = quotaPct + '%';
+    qFill.style.background = quotaPct > 85 ? 'var(--red)' : quotaPct > 60 ? 'var(--amber)' : 'var(--green)';
+    const badge = document.getElementById('emailHealthBadge');
+    if (eh.staleCount > 0 || eh.deliveryRate < 80) {
+      badge.textContent = 'Issues';
+      badge.style.background = 'rgba(239,68,68,0.15)';
+      badge.style.color = 'var(--red)';
+    } else if (eh.rateLimitWarning || eh.deliveryRate < 95) {
+      badge.textContent = 'Warning';
+      badge.style.background = 'rgba(245,158,11,0.15)';
+      badge.style.color = 'var(--amber)';
+    } else {
+      badge.textContent = 'Healthy';
+      badge.style.background = 'var(--green-bg)';
+      badge.style.color = 'var(--green)';
+    }
+    if (eh.staleCount > 0 && eh.staleList) {
+      document.getElementById('ehStaleSection').style.display = 'block';
+      const staleBody = document.getElementById('ehStaleBody');
+      staleBody.innerHTML = eh.staleList.map(s =>
+        `<tr><td>${s.email}</td><td>${s.preferredBeach}</td><td>${s.lastEmailSent ? timeAgo(new Date(s.lastEmailSent)) : 'Never'}</td><td>${timeAgo(new Date(s.subscribedAt))}</td></tr>`
+      ).join('');
+    } else {
+      document.getElementById('ehStaleSection').style.display = 'none';
+    }
+  }
 
   // Performance
   $('avgMs',(se.performance?.avgResponseTime||0));$('p95Ms',(se.performance?.p95ResponseTime||0));

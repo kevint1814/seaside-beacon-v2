@@ -22,15 +22,24 @@ async function sendViaBrevo(mailOptions) {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) throw new Error('BREVO_API_KEY not set');
 
+  // Build headers safely — forward all mail headers including List-Unsubscribe-Post
+  const brevoHeaders = {};
+  if (mailOptions.headers) {
+    if (mailOptions.headers['List-Unsubscribe']) {
+      brevoHeaders['List-Unsubscribe'] = mailOptions.headers['List-Unsubscribe'];
+    }
+    if (mailOptions.headers['List-Unsubscribe-Post']) {
+      brevoHeaders['List-Unsubscribe-Post'] = mailOptions.headers['List-Unsubscribe-Post'];
+    }
+  }
+
   const payload = {
     sender: { name: mailOptions.from.name, email: mailOptions.from.address },
     to: [{ email: mailOptions.to }],
     subject: mailOptions.subject,
     htmlContent: mailOptions.html,
     textContent: mailOptions.text,
-    headers: {
-      'List-Unsubscribe': mailOptions.headers['List-Unsubscribe']
-    }
+    headers: brevoHeaders
   };
 
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -117,7 +126,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
       },
-      text: `Welcome to Seaside Beacon!\n\nYou're subscribed to daily sunrise forecasts for ${beachDisplay}.\n\nEvery evening at 8:30 PM IST, you'll get an early preview — plan your morning before bed. Then at 4:00 AM IST, the definitive forecast arrives with overnight model updates, closest to sunrise.\n\nYour first email arrives at the next scheduled time (8:30 PM or 4:00 AM IST).\n\nUnsubscribe: ${unsubscribeUrl}\n\nSeaside Beacon — Made in Chennai`,
+      text: `Welcome to Seaside Beacon!\n\nYou're subscribed to daily sunrise forecasts for ${beachDisplay}.\n\nEvery morning at 4:00 AM IST, you'll get the definitive sunrise forecast — score, verdict, and what the sky will actually look like. Built from overnight model updates, right before sunrise.\n\nYour first email arrives tomorrow at 4:00 AM IST.\n\nWant evening previews and photography settings? Upgrade to Premium at ${APP_URL}/pricing\n\nUnsubscribe: ${unsubscribeUrl}\n\nSeaside Beacon — Made in Chennai`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -161,7 +170,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:28px 40px 0;text-align:center;">
               <h2 style="margin:0 0 16px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;color:#2a2420;letter-spacing:-0.3px;">You're all set.</h2>
-              <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.75;color:#6b6058;">Every evening at <strong style="color:#2a2420;">8:30 PM IST</strong>, you'll get an early preview to plan your morning. Then at <strong style="color:#2a2420;">4:00 AM IST</strong>, the definitive forecast arrives — built from overnight model updates, right before sunrise.</p>
+              <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.75;color:#6b6058;">Every morning at <strong style="color:#2a2420;">4:00 AM IST</strong>, you'll get the definitive sunrise forecast — score, verdict, and what the sky will actually look like. Built from overnight model updates, right before sunrise.</p>
             </td></tr>
           </table>
 
@@ -244,8 +253,8 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
             <tr><td style="padding:0 40px 40px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr><td bgcolor="#FDF5EE" style="border:1px solid #E8D5C0;padding:22px 24px;text-align:center;">
-                  <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:600;color:#2a2420;">Your first email arrives soon</p>
-                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Evening preview at 8:30 PM · Final forecast at 4:00 AM IST · If conditions are good, set your alarm for 5:30 AM.</p>
+                  <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:600;color:#2a2420;">Your first email arrives tomorrow</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Daily forecast at 4:00 AM IST · If conditions are good, set your alarm for 5:30 AM.</p>
                 </td></tr>
               </table>
             </td></tr>
@@ -930,7 +939,7 @@ async function sendTestEmail(toEmail) {
     from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
     to: toEmail,
     subject: '🧪 Seaside Beacon — Email Test',
-    headers: { 'List-Unsubscribe': `<${getUnsubscribeUrl(toEmail)}>` },
+    headers: { 'List-Unsubscribe': `<${getUnsubscribeUrl(toEmail)}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
     text: `This is a test email from Seaside Beacon.\nProvider: ${EMAIL_PROVIDER}\nTimestamp: ${new Date().toISOString()}\n\nIf you received this, the email system is working correctly.`,
     html: `
 <!DOCTYPE html><html><head><meta charset="UTF-8"></head>
@@ -974,7 +983,7 @@ async function sendSpecialAlertEmail(toEmail, bestBeach, allHotBeaches) {
     from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
     to: toEmail,
     subject: `🔥 ${bestBeach.score}/100 — ${bestBeach.beachName} tomorrow`,
-    headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>` },
+    headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
     text: `Tomorrow's sunrise at ${bestBeach.beachName} is scoring ${bestBeach.score}/100 — ${bestBeach.verdict}. This is a special alert for mornings worth the alarm. Full forecast at 4 AM.`,
     html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#faf8f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -1403,11 +1412,11 @@ async function sendCancellationEmail(userEmail, refundInitiated) {
 async function sendPasswordResetEmail(userEmail, resetUrl) {
   try {
     const mailOptions = {
-      from: { name: 'Seaside Beacon', address: process.env.EMAIL_FROM || 'noreply@seasidebeacon.com' },
+      from: { name: 'Seaside Beacon', address: process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com' },
       to: userEmail,
       subject: 'Reset your Seaside Beacon password',
       text: `Reset your password: ${resetUrl}\n\nThis link expires in 30 minutes. If you didn't request this, ignore this email.`,
-      headers: { 'List-Unsubscribe': `<${API_URL}/api/unsubscribe?email=${encodeURIComponent(userEmail)}>` },
+      headers: { 'List-Unsubscribe': `<${API_URL}/api/unsubscribe?email=${encodeURIComponent(userEmail)}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
       html: `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#F5EFE6;font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif;">
