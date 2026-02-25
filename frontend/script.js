@@ -1618,13 +1618,15 @@ function renderAnalysisPanel(f,pred,p,beachName) {
   document.getElementById('deepSubtitle').textContent = `For ${beachName} · ${morningLabel}`;
   show('deepPanel');
   renderConditionsTab(f,pred,p);
-  // Only render premium photography tabs if user is premium — otherwise show locked placeholder
+  // Only render premium photography tabs if user is premium - otherwise show locked placeholder
   if (document.body.classList.contains('is-premium')) {
+    renderPhotographersTab(p, pred);
     renderDSLRTab(p);
     renderMobileTab(p);
   } else {
-    renderLockedTab('dslr', 'DSLR camera settings, pro tips, and composition guidance — personalised to this morning\'s conditions.');
-    renderLockedTab('mobile', 'Mobile camera settings, editing presets, and shooting tips — tuned to today\'s light.');
+    renderLockedTab('photographers', 'AI-powered sunrise insights, sky descriptions, and photography recommendations tailored to this morning.');
+    renderLockedTab('dslr', 'DSLR camera settings, pro tips, and composition guidance personalised to this morning\'s conditions.');
+    renderLockedTab('mobile', 'Mobile camera settings, editing presets, and shooting tips tuned to today\'s light.');
   }
   renderCompositionTab(p);
 }
@@ -1752,6 +1754,68 @@ function renderConditionsTab(f,pred,p) {
   setTimeout(observeReveal, 50);
 }
 
+function renderPhotographersTab(p, pred) {
+  const el = document.getElementById('photoInsightsContent');
+  if (!el) return;
+
+  const score = pred?.score || 0;
+  const greeting = p?.greeting || '';
+  const insight = p?.insight || '';
+  const sunriseExp = p?.sunriseExperience || {};
+  const beachComp = p?.beachComparison || {};
+
+  // Worth waking up badge
+  let worthClass = 'pi-worth-maybe', worthText = 'Maybe worth it';
+  if (score >= 70) { worthClass = 'pi-worth-yes'; worthText = 'Set that alarm!'; }
+  else if (score >= 50) { worthClass = 'pi-worth-maybe'; worthText = 'Could surprise you'; }
+  else { worthClass = 'pi-worth-no'; worthText = 'Probably skip today'; }
+
+  let html = '';
+
+  // AI Greeting + Insight
+  if (greeting || insight) {
+    html += `<div class="pi-section">
+      <div class="pi-section-label">AI Sunrise Brief</div>
+      <div class="pi-section-text">${greeting ? `<b>${_esc(greeting)}</b><br>` : ''}${_esc(insight)}</div>
+      <span class="pi-worth-badge ${worthClass}">${worthText}</span>
+    </div>`;
+  }
+
+  // What you'll see
+  if (sunriseExp.whatYoullSee) {
+    html += `<div class="pi-section">
+      <div class="pi-section-label">What You'll See</div>
+      <div class="pi-section-text">${_esc(sunriseExp.whatYoullSee)}</div>
+    </div>`;
+  }
+
+  // Beach vibes
+  if (sunriseExp.beachVibes) {
+    html += `<div class="pi-section">
+      <div class="pi-section-label">Beach Vibes</div>
+      <div class="pi-section-text">${_esc(sunriseExp.beachVibes)}</div>
+    </div>`;
+  }
+
+  // Worth waking up
+  if (sunriseExp.worthWakingUp) {
+    html += `<div class="pi-section">
+      <div class="pi-section-label">Worth Waking Up?</div>
+      <div class="pi-section-text">${_esc(sunriseExp.worthWakingUp)}</div>
+    </div>`;
+  }
+
+  // Fallback if no AI content
+  if (!html) {
+    html = `<div class="pi-section">
+      <div class="pi-section-label">AI Insights</div>
+      <div class="pi-section-text">AI insights are being generated. Check back shortly, or view the DSLR and Mobile tabs for camera settings.</div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
 function renderDSLRTab(p) {
   const cs=p?.dslr?.cameraSettings||{};
   document.getElementById('dslrGrid').innerHTML = [
@@ -1818,7 +1882,7 @@ function renderCompositionTab(p) {
 // TABS
 // ─────────────────────────────────────────────
 function initTabs() {
-  const PREMIUM_TABS = ['dslr', 'mobile'];
+  const PREMIUM_TABS = ['photographers', 'dslr', 'mobile'];
 
   document.querySelectorAll('.ap-tab').forEach(tab=>{
     tab.addEventListener('click', ()=>{
