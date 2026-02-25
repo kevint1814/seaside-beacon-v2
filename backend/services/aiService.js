@@ -263,6 +263,12 @@ JSON response:
     "beachVibes": "2 sentences about what ${beach} feels like at dawn — temperature, breeze, crowds, sounds. Use specific details from CONTEXT.",
     "worthWakingUp": "${score >= 70 ? 'Yes — 1-2 enthusiastic sentences about why' : score >= 40 ? 'Maybe — 2 sentences, honest about what you will and won\'t get. Don\'t say it\'s not worth it.' : 'Probably not for sunrise — but 1-2 sentences about whether the beach walk itself is nice'}"
   },
+  "photographyBrief": {
+    "lightQuality": "2-3 sentences for photographers about the quality and character of light this morning. Describe: direction, warmth, harshness vs softness, how it changes during the window. Mention if light is flat, directional, golden, diffused, or dramatic. Be specific — photographers need to plan their approach.",
+    "bestShots": "2-3 sentences suggesting specific shot types that work best in these conditions. Examples: silhouettes against the glow, reflections in wet sand, long exposure waves, moody B&W, wide golden landscapes, close-up textures in soft light, sun-star through clouds. Be creative and specific to ${beach}'s features.",
+    "colorPalette": "1-2 sentences describing the exact color palette photographers should expect — warm oranges and golds, muted pastels, cool greys, vivid reds, etc. This helps them plan white balance and post-processing.",
+    "challenges": "1-2 sentences about photography challenges this morning and how to handle them — e.g. high dynamic range, lens flare from clear sun, flat light needing creative composition, wind affecting stability, haze reducing contrast."
+  },
   "goldenHour": {
     "quality": "${score >= 85 ? 'Excellent' : score >= 70 ? 'Very Good' : score >= 55 ? 'Good' : score >= 40 ? 'Fair' : 'Poor'}",
     "tip": "One sentence — when to arrive and what to look for."
@@ -398,6 +404,7 @@ NEVER describe weather data. Describe what a PERSON SEES and FEELS.`;
       greeting: aiData.greeting,
       insight: aiData.insight,
       sunriseExperience: aiData.sunriseExperience,
+      photographyBrief: aiData.photographyBrief || null,
       goldenHour: goldenHourFinal,
       atmosphericAnalysis,
       dslr,
@@ -507,17 +514,100 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
     ? generateBeachComparison(allWeatherData)
     : null;
 
+  // ── Photography brief (photographer-specific insights) ──
+  const photographyBrief = generatePhotographyBrief(score, cloudCover, humidity, visibility, windSpeed, beach, breakdown);
+
   return {
     source: 'rules',
     greeting,
     insight,
     sunriseExperience,
+    photographyBrief,
     goldenHour,
     atmosphericAnalysis,
     dslr,
     mobile,
     beachComparison
   };
+}
+
+// ==========================================
+// PHOTOGRAPHY BRIEF — For Photographers tab
+// Detailed insights for serious photographers
+// ==========================================
+
+function generatePhotographyBrief(score, cloudCover, humidity, visibility, windSpeed, beach, breakdown) {
+  const highCloud = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
+  const lowCloud = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
+  const aodValue = breakdown?.aod?.value ?? null;
+  const isHazy = aodValue != null && aodValue >= 0.4;
+  const isPostRain = breakdown?.isPostRain ?? false;
+
+  // Light quality assessment
+  let lightQuality;
+  if (score >= 85) {
+    lightQuality = isPostRain
+      ? 'Exceptional light this morning — post-rain clarity means razor-sharp golden light with intense color saturation. The light will be strongly directional from the east, creating defined shadows and vivid warm tones across everything it touches. Best natural light conditions you can ask for.'
+      : `Strong golden directional light expected. ${hasHighCanvas() ? 'High cloud cover creates a natural diffuser above while leaving the horizon clear — you get both warm direct light AND soft fill from the cloud canvas.' : 'Clear air means hard, contrasty light once the sun clears the horizon — beautiful for dramatic shadow work.'} Colors will peak in the 5 minutes bracketing sunrise.`;
+  } else if (score >= 70) {
+    lightQuality = `Good quality warm light with a mix of direct and diffused. ${cloudCover >= 30 && cloudCover <= 60 ? 'Partial cloud acts as a giant softbox — the light will be warm but not harsh, great for portraits and landscapes alike.' : 'The light will transition from soft amber pre-sunrise to stronger golden tones as the sun clears.'} Expect usable shooting light for 15-20 minutes around sunrise.`;
+  } else if (score >= 55) {
+    lightQuality = isHazy
+      ? 'Soft, diffused light filtered through atmospheric haze. This is actually good for even lighting without harsh shadows — think natural beauty dish effect. Colors will be muted pastels. The sun disc itself will be a soft amber ball you can shoot directly without blinding flare.'
+      : `Mixed light conditions — some warmth near the horizon but filtered through ${cloudCover > 60 ? 'heavy cloud, giving flat, even illumination with no strong directional quality' : 'moderate cloud, creating intermittent warm patches when gaps align with the sun'}. Work with what the sky gives you rather than waiting for a specific moment.`;
+  } else if (score >= 40) {
+    lightQuality = 'Flat, even light with minimal color temperature variation. The diffused illumination eliminates harsh shadows — useful for detail shots, textures, and compositions where you want even exposure across the frame. Not a golden hour morning, but the soft light has its uses.';
+  } else {
+    lightQuality = 'Very flat, low-contrast light — the sky acts as one massive softbox. Minimal color, minimal shadow. This is challenging for sunrise photography but ideal for moody, atmospheric work. Lean into the grey — it can produce powerful images if you compose intentionally.';
+  }
+
+  // Best shots recommendation
+  let bestShots;
+  if (score >= 70) {
+    bestShots = `Wide golden landscapes with the full color show, sun-star effects as the disc peeks over the horizon, silhouettes of ${beach === 'marina' ? 'the lighthouse and fishing boats' : beach === 'covelong' ? 'rock formations against the golden sky' : beach === 'thiruvanmiyur' ? 'the breakwater with golden water trails' : 'walkers and landmarks'} against the warm glow. Wet sand reflections will mirror the sky — get low for maximum impact. Golden water trail shots from a slightly elevated position.`;
+  } else if (score >= 55) {
+    if (isHazy) {
+      bestShots = `The hazy light is perfect for minimalist compositions — isolated subjects against soft gradients. Telephoto compression shots of the muted sun disc work beautifully. ${beach === 'covelong' ? 'The rock formations will look incredible as dark shapes in the warm haze.' : beach === 'marina' ? 'Fishing boat silhouettes against the soft amber horizon.' : 'Simple foreground subjects against the layered atmosphere.'} Also great for abstract water texture close-ups.`;
+    } else {
+      bestShots = `Focus on compositional photography rather than sky-dominant shots. ${beach === 'marina' ? 'The lighthouse makes a strong anchor for rule-of-thirds compositions. Fishing nets and boats add human interest.' : beach === 'covelong' ? 'Rock formations and tidal pools are your foreground — use the moderate sky color as background.' : beach === 'thiruvanmiyur' ? 'Tidal pools reflecting whatever color is available. Breakwater lines create leading lines.' : 'Find strong foreground elements to anchor your compositions.'} Mid-range focal lengths (35-70mm) will serve you best.`;
+    }
+  } else {
+    bestShots = `Moody black and white is your friend this morning — the grey tones and atmospheric depth convert beautifully. Long exposure waves (10-30 seconds with ND filter) create ethereal water against ${beach === 'covelong' ? 'the rock formations' : beach === 'marina' ? 'the lighthouse silhouette' : 'dark sand and structures'}. Close-up textures — wet sand patterns, shells, seaweed — benefit from the even light. High contrast B&W processing will make these pop.`;
+  }
+
+  // Color palette
+  let colorPalette;
+  if (score >= 85) {
+    colorPalette = isPostRain
+      ? 'Expect vivid, saturated oranges, deep amber, and intense golden-yellow — the clean air means colors will be punchy and true. Set white balance to Daylight (5200-5500K) to preserve the natural warmth without over-cooking it.'
+      : `Rich warm tones — deep orange at the horizon fading through amber to soft pink. ${hasHighCanvas() ? 'The cloud canvas will pick up reds and violets higher up.' : 'Concentrated color band at the horizon with clean blue sky above.'} Shoot in RAW — the dynamic range of colors will reward careful processing.`;
+  } else if (score >= 55) {
+    colorPalette = isHazy
+      ? 'Muted pastels — soft peach, faded apricot, pale lavender. The haze desaturates everything. Lean into the muted palette rather than fighting it in post. White balance at 6000-6500K adds subtle warmth.'
+      : `Moderate warm tones — soft orange and amber near the horizon, ${cloudCover > 60 ? 'with cooler grey-blue tones dominating the upper sky. The contrast between warm and cool creates interesting split-tone opportunities.' : 'fading to warm yellows. Not vivid but genuinely pleasant color.'}`;
+  } else {
+    colorPalette = 'Cool greys with possible warm hints near the horizon. This is a desaturated palette — work with it. Blue-grey tones, steel water, muted sand. Consider shooting for B&W from the start, or embrace the cool tones for a moody color grade.';
+  }
+
+  // Challenges
+  let challenges;
+  if (score >= 80 && cloudCover < 30) {
+    challenges = 'High dynamic range is the main challenge — the bright sun disc against darker foreground will blow highlights easily. Use graduated ND filter or bracket exposures (-2, 0, +2 EV). Direct sun will also cause lens flare — use your lens hood and consider using it creatively rather than avoiding it.';
+  } else if (isHazy) {
+    challenges = `Atmospheric haze reduces contrast and sharpness. Use a circular polarizer to cut through scatter. In post, Dehaze slider is your best friend (+30-50). Focus manually — autofocus may hunt in the low-contrast hazy conditions. ${windSpeed > 15 ? `Wind at ${windSpeed}km/h adds camera stability concerns — brace firmly or use a tripod.` : ''}`;
+  } else if (cloudCover > 70) {
+    challenges = `Flat light makes everything look same-y — you need to create visual interest through composition, not light. ${windSpeed > 20 ? `Strong wind will test your tripod stability and may kick up sand near your gear. Protect your front element.` : ''} Expose for the brightest part of the sky to retain what little tonal variation exists.`;
+  } else if (windSpeed > 20) {
+    challenges = `Wind at ${windSpeed}km/h is the main concern — tripod shots below 1/60s will need solid footing. Sand particles may hit your front lens element, so use a UV filter as protection and wipe frequently. The upside: wind creates dramatic wave action for long exposures.`;
+  } else {
+    challenges = `Moderate conditions — no major challenges. Main thing to watch is the transition speed: the best color window is short (5-8 minutes), so have your composition set up before the color peaks. ${humidity > 70 ? 'High humidity may cause lens fogging if you step from an air-conditioned car — arrive 5 minutes early to acclimate.' : ''}`;
+  }
+
+  function hasHighCanvas() {
+    return highCloud != null && highCloud >= 30;
+  }
+
+  return { lightQuality, bestShots, colorPalette, challenges };
 }
 
 // ==========================================

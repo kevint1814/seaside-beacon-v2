@@ -1759,57 +1759,102 @@ function renderPhotographersTab(p, pred) {
   if (!el) return;
 
   const score = pred?.score || 0;
-  const greeting = p?.greeting || '';
-  const insight = p?.insight || '';
-  const sunriseExp = p?.sunriseExperience || {};
-  const beachComp = p?.beachComparison || {};
+  const pb = p?.photographyBrief || {};
+  const gh = p?.goldenHour || {};
+  const atm = p?.atmosphericAnalysis || {};
 
-  // Worth waking up badge
-  let worthClass = 'pi-worth-maybe', worthText = 'Maybe worth it';
-  if (score >= 70) { worthClass = 'pi-worth-yes'; worthText = 'Set that alarm!'; }
-  else if (score >= 50) { worthClass = 'pi-worth-maybe'; worthText = 'Could surprise you'; }
-  else { worthClass = 'pi-worth-no'; worthText = 'Probably skip today'; }
+  // Shooting verdict badge
+  let verdictClass = 'pi-worth-maybe', verdictText = 'Decent conditions';
+  if (score >= 80) { verdictClass = 'pi-worth-yes'; verdictText = 'Exceptional light'; }
+  else if (score >= 65) { verdictClass = 'pi-worth-yes'; verdictText = 'Good shooting day'; }
+  else if (score >= 50) { verdictClass = 'pi-worth-maybe'; verdictText = 'Workable conditions'; }
+  else if (score >= 35) { verdictClass = 'pi-worth-no'; verdictText = 'Challenging light'; }
+  else { verdictClass = 'pi-worth-no'; verdictText = 'Tough conditions'; }
 
   let html = '';
 
-  // AI Greeting + Insight
-  if (greeting || insight) {
+  // Light Quality — the #1 thing photographers care about
+  if (pb.lightQuality) {
     html += `<div class="pi-section">
-      <div class="pi-section-label">AI Sunrise Brief</div>
-      <div class="pi-section-text">${greeting ? `<b>${_esc(greeting)}</b><br>` : ''}${_esc(insight)}</div>
-      <span class="pi-worth-badge ${worthClass}">${worthText}</span>
+      <div class="pi-section-label">Light Quality</div>
+      <span class="pi-worth-badge ${verdictClass}">${verdictText}</span>
+      <div class="pi-section-text">${_esc(pb.lightQuality)}</div>
     </div>`;
   }
 
-  // What you'll see
-  if (sunriseExp.whatYoullSee) {
+  // Golden Hour Window — exact timing
+  if (gh.start && gh.start !== 'N/A') {
+    const qualityClass = (gh.quality === 'Excellent' || gh.quality === 'Very Good') ? 'pi-worth-yes' : gh.quality === 'Good' ? 'pi-worth-maybe' : 'pi-worth-no';
     html += `<div class="pi-section">
-      <div class="pi-section-label">What You'll See</div>
-      <div class="pi-section-text">${_esc(sunriseExp.whatYoullSee)}</div>
+      <div class="pi-section-label">Golden Hour Window</div>
+      <div class="pi-golden-times">
+        <span class="pi-time-chip">Arrive <b>${_esc(gh.start)}</b></span>
+        <span class="pi-time-chip pi-time-peak">Peak <b>${_esc(gh.peak)}</b></span>
+        <span class="pi-time-chip">Wraps <b>${_esc(gh.end)}</b></span>
+      </div>
+      <span class="pi-worth-badge ${qualityClass}">${_esc(gh.quality)} quality</span>
+      ${gh.tip ? `<div class="pi-section-text" style="margin-top:8px">${_esc(gh.tip)}</div>` : ''}
     </div>`;
   }
 
-  // Beach vibes
-  if (sunriseExp.beachVibes) {
+  // Best Shots — what to shoot today
+  if (pb.bestShots) {
     html += `<div class="pi-section">
-      <div class="pi-section-label">Beach Vibes</div>
-      <div class="pi-section-text">${_esc(sunriseExp.beachVibes)}</div>
+      <div class="pi-section-label">Best Shots Today</div>
+      <div class="pi-section-text">${_esc(pb.bestShots)}</div>
     </div>`;
   }
 
-  // Worth waking up
-  if (sunriseExp.worthWakingUp) {
+  // Color Palette — what colors to expect
+  if (pb.colorPalette) {
     html += `<div class="pi-section">
-      <div class="pi-section-label">Worth Waking Up?</div>
-      <div class="pi-section-text">${_esc(sunriseExp.worthWakingUp)}</div>
+      <div class="pi-section-label">Color Palette</div>
+      <div class="pi-section-text">${_esc(pb.colorPalette)}</div>
     </div>`;
   }
 
-  // Fallback if no AI content
+  // Shooting Conditions — atmospheric factors that affect photography
+  if (atm.visibility || atm.wind) {
+    html += `<div class="pi-section">
+      <div class="pi-section-label">Shooting Conditions</div>
+      <div class="pi-conditions-grid">
+        ${atm.visibility ? `<div class="pi-cond-card">
+          <div class="pi-cond-label">Clarity</div>
+          <div class="pi-cond-val">${_esc(atm.visibility.rating)}</div>
+          <div class="pi-cond-detail">${_esc(atm.visibility.value)}km visibility</div>
+        </div>` : ''}
+        ${atm.wind ? `<div class="pi-cond-card">
+          <div class="pi-cond-label">Stability</div>
+          <div class="pi-cond-val">${_esc(atm.wind.rating)}</div>
+          <div class="pi-cond-detail">${_esc(atm.wind.value)}km/h wind</div>
+        </div>` : ''}
+        ${atm.humidity ? `<div class="pi-cond-card">
+          <div class="pi-cond-label">Moisture</div>
+          <div class="pi-cond-val">${_esc(atm.humidity.rating)}</div>
+          <div class="pi-cond-detail">${_esc(atm.humidity.value)}% humidity</div>
+        </div>` : ''}
+        ${atm.cloudCover ? `<div class="pi-cond-card">
+          <div class="pi-cond-label">Cloud Cover</div>
+          <div class="pi-cond-val">${_esc(atm.cloudCover.rating)}</div>
+          <div class="pi-cond-detail">${_esc(atm.cloudCover.value)}% coverage</div>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // Challenges & Tips — practical heads-up
+  if (pb.challenges) {
+    html += `<div class="pi-section">
+      <div class="pi-section-label">Heads Up</div>
+      <div class="pi-section-text">${_esc(pb.challenges)}</div>
+    </div>`;
+  }
+
+  // Fallback if no photography content
   if (!html) {
     html = `<div class="pi-section">
-      <div class="pi-section-label">AI Insights</div>
-      <div class="pi-section-text">AI insights are being generated. Check back shortly, or view the DSLR and Mobile tabs for camera settings.</div>
+      <div class="pi-section-label">Photography Insights</div>
+      <div class="pi-section-text">Photography insights are being generated. Check the DSLR and Mobile tabs for camera settings in the meantime.</div>
     </div>`;
   }
 
