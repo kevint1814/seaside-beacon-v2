@@ -138,17 +138,17 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
     // ALIGNED with verdict thresholds: 85 EXCELLENT / 70 VERY GOOD / 55 GOOD / 40 FAIR / 25 POOR / <25 UNFAVORABLE
     let toneInstruction;
     if (score >= 85) {
-      toneInstruction = 'Exceptional morning. Be genuinely excited. Describe the full unfolding scene: the dark horizon glowing orange, color spreading fast across the clouds, the sun breaking the horizon as a sharp golden-white disc too bright to stare at, a shimmering golden trail stretching across the water toward the viewer, long shadows on the sand, fishing boats or landmarks silhouetted against the glow. This is the kind of morning where you stop walking and just watch. Use the CONTEXT for beach-specific details.';
+      toneInstruction = 'THIS IS THE ONE! Full excitement mode. You\'re hyped and you want them hyped. Paint the scene with energy: the dark horizon glowing orange, color spreading fast across the clouds, the sun breaking the horizon as a sharp golden-white disc, a shimmering golden trail stretching across the water. This is a "drop everything and GO" morning. Make them feel like they\'d be crazy to miss it! Use the CONTEXT for beach-specific details.';
     } else if (score >= 70) {
-      toneInstruction = 'Good morning. Confident and warm. Paint the scene: warm amber light building on the horizon, the sun appearing as a bright golden disc, orange and pink tones spreading through the clouds, a clear golden reflection path on the water. Mention how the light hits the beach — the sand turning warm gold, the water catching the color. Worth setting the alarm for.';
+      toneInstruction = 'Great morning! Be warm and enthusiastic — this is worth getting excited about. Paint the scene: warm amber light building on the horizon, the sun appearing as a bright golden disc, orange and pink tones spreading through the clouds, a clear golden reflection path on the water. Hype it up — "set that alarm, you won\'t regret it!" energy.';
     } else if (score >= 55) {
-      toneInstruction = 'Decent morning — pleasant, not spectacular. Describe specifically: Will the sun appear as a warm amber disc through light haze, or be partially hidden by cloud? Will there be soft peach or orange tones near the horizon? The water will likely have a gentle warm glow rather than a sharp golden trail. Mention the quiet beach at that hour — waves, cool breeze, few people around. Set honest expectations but make the scene feel real.';
+      toneInstruction = 'Nice morning ahead! Be encouraging and warm. Describe specifically: Will the sun appear as a warm amber disc through light haze, or be partially hidden by cloud? Soft peach or orange tones near the horizon? Gentle warm glow on the water. Set honest expectations but keep it positive — there\'s still something lovely to see! Mention the quiet beach vibes.';
     } else if (score >= 40) {
-      toneInstruction = 'Mixed morning. Honest but not dismissive. Describe the actual scene: Will the sun punch through cloud gaps as a soft orange disc? Will there be warm grey with hints of peach at the horizon? The water may have a subtle glow even on grey mornings. Acknowledge what IS there — the peaceful empty beach, the sound of waves, cool air, soft early light even without vivid color. The experience of being at the beach at dawn matters, even when the sky doesn\'t perform.';
+      toneInstruction = 'Mixed morning — be honest but still friendly and warm. Not every morning is a banger and that\'s okay! Describe what they might see: sun punching through cloud gaps, warm grey with hints of peach, subtle glow on the water. The beach at dawn is still a vibe — the quiet, the waves, the cool air. It\'s worth going for the experience even if the sky doesn\'t put on a show.';
     } else if (score >= 25) {
-      toneInstruction = 'Poor morning for color. Be straight: the sky will shift from dark to flat grey, the horizon just gradually brightening. No defined sun disc moment, no warm colors — just the world slowly getting lighter. But describe the beach itself — the quiet, the waves, the cool pre-dawn air. A walk is still pleasant even without the sky show.';
+      toneInstruction = 'Not a great sky morning — be straight but still chill about it. The sky will shift from dark to flat grey. No vivid colors. But hey, the beach itself is still nice at dawn — the quiet, the waves, cool pre-dawn air. A walk is always a good idea even if the sunrise isn\'t cooperating.';
     } else {
-      toneInstruction = 'Unfavorable. The sunrise won\'t be visible — thick grey from horizon to horizon, like someone slowly turning up a dimmer switch. No sun disc, no warm tones. Be brief about the sky (there\'s nothing to describe). If they still want to go, mention the beach at dawn is still calm and quiet — just don\'t expect to see a sunrise.';
+      toneInstruction = 'Skip morning for sunrise. Be honest and brief — thick grey, no sun disc, no warm tones. But keep it friendly! "Sleep in guilt-free!" energy. If they still want to go, the beach at dawn is calm and quiet — just don\'t set expectations for a sunrise show.';
     }
 
     // Build comparison context from all beaches if available
@@ -247,16 +247,17 @@ CONTEXT: ${context}
 ${comparisonContext}
 
 WRITING STYLE:
-- Talk like a friend texting about this morning's sunrise. Say "this morning" or "today", NEVER "tomorrow".
-- Plain words: "orange and pink streaks", "grey and flat", "soft warm glow". No weather numbers.
-- Bad days: honest and brief. Good days: genuinely excited.
+- You're excited to tell people about this morning! Say "this morning" or "today", NEVER "tomorrow".
+- Plain words with energy: "the sky's gonna go all orange and pink!", "honestly? pretty grey", "soft warm glow — really nice"
+- Great days: go off! Full enthusiasm. Mid days: warm and encouraging. Bad days: honest but still friendly — "not the morning for it, but hey, sleep in guilt-free!"
+- Start greetings with a warm opener — "Good morning!", "Hey!", "Rise and shine!" — then the forecast info
 - NEVER use: "spectacular", "breathtaking", "nature's canvas", "painted sky", "serene", "magical", "treat yourself", "every sunrise is unique."
 - Keep greeting and insight concise (1-2 sentences). The sunriseExperience fields can be a bit more descriptive (2-3 sentences each).
 - Beach comparisons: keep each beach reason to 1 sentence.
 
 JSON response:
 {
-  "greeting": "One friendly sentence. Match tone to score. Say 'this morning' not 'tomorrow'.",
+  "greeting": "One enthusiastic, warm sentence with a greeting. Start with energy! Match hype level to score. Say 'this morning' not 'tomorrow'.",
   "insight": "2 sentences. What the sky will look like and feel like. Plain language.",
   "sunriseExperience": {
     "whatYoullSee": "2-3 sentences painting a picture. What colors, where in the sky, how it builds as the sun comes up. No technical terms.",
@@ -288,7 +289,15 @@ JSON response:
 Beach keys MUST be exactly: ${beachKeys.length > 1 ? beachKeys.join(', ') : 'N/A'}. NOT full names like "Marina Beach".`;
 
 
-    const systemPrompt = `You are Beacon — a friendly sunrise guide for Chennai beaches. Talk like a friend who was just at the beach describing what someone will see THIS morning. Simple words, no jargon. Excited when good, honest when bad. BE CONCISE — keep every field short. Always respond with valid JSON only.
+    const systemPrompt = `You are Beacon — a hyped-up, enthusiastic sunrise buddy for Chennai beaches. You're THAT friend who gets everyone excited about going to the beach at dawn. You genuinely love sunrises and it shows in everything you write.
+
+YOUR VIBE:
+- When the score is high (70+), you're buzzing with excitement. You make people feel like they'd be CRAZY to miss this morning
+- When it's mid-range (40-69), you're warm and encouraging — find the silver lining, mention what IS there to enjoy
+- When it's low (<40), you're honest and chill about it — no fake hype, but still friendly. "Sleep in, no guilt!" energy
+- You greet people warmly. Start with energy — "Good morning!", "Hey early bird!", "Rise and shine!" — like you're happy to see them
+- Use exclamation marks naturally! Short punchy sentences mixed with descriptive ones. Talk like you're voice-noting a friend
+- BE CONCISE — keep every field short. Always respond with valid JSON only
 
 KEY SCIENCE (inform your descriptions, NEVER use these terms directly):
 - High clouds (cirrus) = color canvas, catch pre-sunrise light → vivid orange/red. More high cloud = more color.
@@ -437,45 +446,45 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   const pressureTrend = breakdown?.pressureTrend?.value ?? null;
   const isPostRain = breakdown?.isPostRain ?? false;
 
-  // ── Greeting — friendly, direct, like texting a friend ──
+  // ── Greeting — enthusiastic, warm, like a friend who's excited about the morning ──
   // Enhanced with v5 factor awareness
   let greeting;
   if (score >= 85) {
-    const postRainNote = isPostRain ? ' The air is crystal clear after the rain — colors will be extra vivid.' : '';
-    greeting = `This morning's looking really good at ${beach} — the kind of morning where the whole sky lights up orange and pink. Set that alarm.${postRainNote}`;
+    const postRainNote = isPostRain ? ' The rain cleared the air out completely — colors are going to be VIVID!' : '';
+    greeting = `Good morning! Oh this is a good one at ${beach} — the whole sky's gonna light up orange and pink! Set that alarm, you do NOT want to miss this!${postRainNote}`;
   } else if (score >= 70) {
-    const clearAirNote = aodValue != null && aodValue < 0.2 ? ' The air is super clean today, so colors should pop.' : '';
-    greeting = `Solid morning ahead at ${beach} — you should see some nice warm colors across the sky. Worth the early wake-up.${clearAirNote}`;
+    const clearAirNote = aodValue != null && aodValue < 0.2 ? ' Plus the air is super clean today, so those colors should really pop!' : '';
+    greeting = `Rise and shine! Looking like a really solid morning at ${beach} — warm colors across the sky, definitely worth the early wake-up!${clearAirNote}`;
   } else if (score >= 55) {
-    greeting = `This morning at ${beach} will be pleasant but nothing dramatic. You'll see some color near the horizon, just don't expect the sky to light up.`;
+    greeting = `Good morning! ${beach} is looking pleasant this morning — you'll catch some nice color near the horizon. Not the biggest show, but still a lovely way to start the day!`;
   } else if (score >= 40) {
-    const lowCloudNote = lowCloud != null && lowCloud >= 60 ? ' Low clouds may limit the horizon color.' : '';
-    greeting = `Quiet morning ahead at ${beach} — don't expect vivid colors, but there may be some soft warm tones near the horizon.${lowCloudNote} A peaceful time for a beach walk either way.`;
+    const lowCloudNote = lowCloud != null && lowCloud >= 60 ? ' Low clouds might block some horizon color, but' : ' But';
+    greeting = `Hey, good morning! Keeping it real — ${beach} won't be the most colorful this morning.${lowCloudNote} the beach at dawn is still a whole vibe. Peaceful walk, cool breeze, you'll enjoy it!`;
   } else if (score >= 25) {
-    greeting = `This morning's sunrise at ${beach} won't have much to show — the sky will be washed out and grey. Not worth the early alarm for the view.`;
+    greeting = `Morning! Gonna be honest — ${beach} is looking pretty grey this morning. Not worth the early alarm just for the view. Sleep in guilt-free!`;
   } else {
-    greeting = `No real sunrise to see at ${beach} this morning — overcast and grey. Save your sleep.`;
+    greeting = `Hey! Not gonna sugarcoat it — ${beach} is fully overcast this morning. Save your sleep and catch a better sunrise later this week!`;
   }
 
-  // ── Insight — what you'll experience, not weather data ──
+  // ── Insight — what you'll experience, with energy and warmth ──
   let insight;
   if (cloudCover >= 30 && cloudCover <= 60) {
     if (humidity <= 55) {
-      insight = `The kind of morning where you stop walking and stare — the sky will light up vivid orange and deep pink, and the colors will look sharp and saturated because the air is so clean.${highCloud != null && highCloud >= 30 && lowCloud < 40 ? ' The clouds are high up where they catch the best light.' : ''} One of those mornings you remember.`;
+      insight = `This is the kind of morning where you stop walking and just stare! The sky's gonna light up vivid orange and deep pink, and the air is clean enough that those colors will look sharp and intense.${highCloud != null && highCloud >= 30 && lowCloud < 40 ? ' The clouds are sitting high up where they catch all the best light — perfect setup!' : ''} Seriously, one of those mornings you remember.`;
     } else if (humidity <= 70) {
-      insight = `You'll see warm amber and soft orange tones as the sun comes up — nice colors, just slightly softened by the moisture in the air. The kind of morning that looks beautiful in person even if it's not the most vivid sunrise possible.`;
+      insight = `You'll see warm amber and soft orange tones as the sun comes up — really nice colors, just slightly softened by the moisture in the air. It's the kind of morning that looks beautiful in person. Grab a chai and enjoy it!`;
     } else {
-      insight = `There'll be some warm tones near the horizon, but the heavy moisture in the air will soften and fade everything. More of a hazy warm glow than sharp, vivid colors. Still pleasant to watch, just don't expect the sky to pop.`;
+      insight = `There'll be some warm tones near the horizon, but the humidity is going to soften everything a bit. Think hazy warm glow rather than sharp vivid colors. Still pleasant to watch though!`;
     }
   } else if (cloudCover < 30) {
-    insight = `Mostly clear sky this morning — which means the sunrise will be a clean golden glow at the horizon rather than a colorful sky-wide show. Without clouds to catch the light, expect pale yellows and soft blues. Pretty, but quiet.`;
+    insight = `Mostly clear sky this morning! That means a clean golden glow at the horizon rather than a big colorful sky show. Expect pale yellows and soft blues — pretty and peaceful, just not the dramatic kind.`;
   } else if (cloudCover <= 75) {
     const pressureNote = pressureTrend != null && pressureTrend < -2
-      ? ' The clouds may be breaking apart — watch for vivid color bursting through the gaps.'
+      ? ' Oh and the clouds might be breaking apart — keep watching for vivid color bursting through the gaps!'
       : '';
-    insight = `Cloudy sky, so it's a bit of a gamble — if the sun finds a gap near the horizon, you could get a nice moment of warm color breaking through. Otherwise it'll be soft, diffused light.${pressureNote}`;
+    insight = `Cloudy sky, so it's a bit of a gamble this morning! If the sun finds a gap near the horizon, you could get a really nice moment of warm color breaking through.${pressureNote} Worth keeping an eye on!`;
   } else {
-    insight = `Thick cloud cover this morning — the sky will just gradually brighten from dark grey to lighter grey. No warm colors breaking through. The beach will be quiet and moody in that flat early light.`;
+    insight = `Heavy cloud cover this morning — the sky will just slowly brighten from dark grey to lighter grey. Not much color coming through, but the beach in that flat early light has its own quiet, moody thing going on.`;
   }
 
   // ── Sunrise experience (general audience) ──
@@ -664,23 +673,23 @@ function generateSunriseExperience(score, cloudCover, humidity, visibility, wind
   // Beach vibes — the physical experience of being there
   let beachVibes;
   if (windSpeed <= 10) {
-    beachVibes = `The air will feel still at ${temperature}°C — you\'ll hear the waves clearly without any wind noise. The sand will be cool underfoot, and ${beach} will be nearly empty at this hour. A calm, quiet setting.`;
+    beachVibes = `Super calm out there this morning! ${temperature}°C, barely any wind — you\'ll hear every wave. The sand will be cool underfoot, and ${beach} will be nearly empty. Just you and the ocean, honestly the best kind of morning.`;
   } else if (windSpeed <= 20) {
-    beachVibes = `A gentle breeze coming off the water at ${temperature}°C — you\'ll feel it on your face as you walk along the shore. The waves will have a steady rhythm. ${beach} will be peaceful with just a few early walkers.`;
+    beachVibes = `Nice gentle breeze coming off the water at ${temperature}°C — refreshing! The waves will have a steady rhythm as you walk the shore. ${beach} will be peaceful with just a few early walkers sharing the moment.`;
   } else {
-    beachVibes = `You\'ll feel the wind as soon as you step onto the sand — ${windSpeed}km/h makes ${temperature}°C feel cooler than it is. The sea will be active, waves louder than usual. Hair and clothes blowing around kind of morning.`;
+    beachVibes = `Heads up — it\'s breezy out there! ${windSpeed}km/h makes ${temperature}°C feel cooler than it sounds. The sea will be active and the waves will be loud. Hair blowing everywhere kind of morning, but honestly that\'s kinda fun!`;
   }
 
-  // Worth waking up — the honest human recommendation
+  // Worth waking up — honest recommendation with personality
   let worthWakingUp;
   if (score >= 70) {
-    worthWakingUp = 'Yes — this is the kind of morning where you\'ll stand there watching and lose track of time. The sky will put on a real show. Set the alarm.';
+    worthWakingUp = 'Absolutely yes! This is the kind of morning where you\'ll stand there watching and completely lose track of time. The sky is going to put on a proper show. Set that alarm, you won\'t regret it!';
   } else if (score >= 55) {
-    worthWakingUp = 'If you\'re up for it, it\'ll be a pleasant morning at the beach. The sunrise will have some nice color — nothing jaw-dropping, but the whole experience of being there at dawn makes it worth it.';
+    worthWakingUp = 'If you\'re up for it, definitely go! The sunrise will have some nice color, and the whole experience of being at the beach at dawn just hits different. Not the biggest show, but still a great way to start the day!';
   } else if (score >= 40) {
-    worthWakingUp = 'The sky won\'t be the star this morning — colors will be subtle at best. But the beach at dawn has its own thing going on: quiet water, cool air, soft light, barely anyone around. If you enjoy that, it\'s still a nice outing.';
+    worthWakingUp = 'The sky won\'t be the star this morning, but honestly? The beach at dawn has its own thing going on — quiet water, cool air, soft light, barely anyone around. If you enjoy that vibe, still totally worth it!';
   } else {
-    worthWakingUp = 'Not for the sunrise — there won\'t be much to see in the sky. But if you\'re already awake and nearby, a dawn beach walk in the grey light is its own kind of peaceful. Just don\'t set an alarm expecting color.';
+    worthWakingUp = 'Not for the sunrise — the sky isn\'t cooperating today. But hey, if you\'re already awake and nearby, a dawn beach walk in the grey light has its own peaceful charm. Just don\'t set an alarm expecting color!';
   }
 
   return { whatYoullSee, beachVibes, worthWakingUp };
