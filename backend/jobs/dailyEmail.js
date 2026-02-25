@@ -226,13 +226,59 @@ async function sendDailyPredictions() {
       }
     }
 
-    // Step 5: Send Telegram alerts to premium users (non-blocking)
+    // Step 5: Send to premium users who are NOT in the Subscriber collection
+    // (Premium users who ARE subscribers already got their email above with isPremium=true)
+    const subscriberEmails = new Set(subscribers.map(s => s.email));
+    const premiumOnlyUsers = premiumUsers.filter(u => !subscriberEmails.has(u.email));
+
+    if (premiumOnlyUsers.length > 0) {
+      console.log(`📧 Sending to ${premiumOnlyUsers.length} premium-only users (not in subscriber list)`);
+      for (const premiumUser of premiumOnlyUsers) {
+        try {
+          const beachKey = premiumUser.preferredBeach || 'marina';
+          const weatherData = allWeatherData[beachKey];
+
+          if (!weatherData) {
+            console.log(`⏰ Skipping premium-only ${premiumUser.email} — no weather for ${beachKey}`);
+            continue;
+          }
+
+          weatherData.allBeachNames = allBeachNames;
+
+          // Generate AI insights if not cached yet for this beach
+          if (!insightsCache[beachKey]) {
+            try {
+              insightsCache[beachKey] = await aiService.generatePhotographyInsights(weatherData, allWeatherData);
+            } catch (aiErr) {
+              console.warn(`⚠️  AI insights failed for ${beachKey}: ${aiErr.message}`);
+              insightsCache[beachKey] = null;
+            }
+          }
+
+          await emailService.sendDailyPredictionEmail(
+            premiumUser.email,
+            weatherData,
+            insightsCache[beachKey],  // Premium always gets AI insights
+            true                       // isPremium = true
+          );
+
+          emailCount++;
+          console.log(`✅ Email sent to ${premiumUser.email} (premium-only)`);
+          if (emailCount < subscribers.length + premiumOnlyUsers.length) await delay(EMAIL_DELAY_MS);
+        } catch (error) {
+          console.error(`❌ Error for premium-only ${premiumUser.email}:`, error.message);
+          continue;
+        }
+      }
+    }
+
+    // Step 6: Send Telegram alerts to premium users (non-blocking)
     // Pass insightsCache so Telegram gets the same AI content as emails
     telegramService.sendDailyTelegramAlerts(allWeatherData, insightsCache).catch(err => {
       console.error('❌ Telegram daily alerts failed:', err.message);
     });
 
-    // Step 6: Update site stats
+    // Step 7: Update site stats
     await SiteStats.recordDailyRun(beachCount, emailCount);
     console.log(`📈 Stats updated: +${beachCount} forecasts, +${emailCount} emails`);
 
@@ -250,9 +296,44 @@ async function sendDailyPredictions() {
  * - Does NOT update subscriber.lastEmailSent (that tracks morning definitive emails)
  * - Uses sendEveningPreviewEmail() for purple theme + preview disclaimer
  */
+/**
+ * Send evening preview emails — respects each premium user's chosen time.
+ *
+ * Runs every 30 minutes from 6 PM to 10 PM. Each run checks the current IST time
+ * and sends only to users whose eveningPreviewTime falls within this 30-min window.
+ * Default is 20:30 for users who haven't customised their time.
+ *
+ * Example: cron fires at 20:00 → sends to users with time 20:00–20:29
+ *          cron fires at 20:30 → sends to users with time 20:30–20:59 (default slot)
+ */
 async function sendEveningPreviews() {
   try {
-    console.log('\n🌙 Starting evening preview email job...');
+    // Determine current IST time slot (the 30-min window this run covers)
+    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const slotHour = nowIST.getHours();
+    const slotMin = nowIST.getMinutes() < 30 ? 0 : 30;
+    const slotStart = `${String(slotHour).padStart(2, '0')}:${String(slotMin).padStart(2, '0')}`;
+    const slotEndMin = slotMin + 29;
+    const slotEnd = `${String(slotHour).padStart(2, '0')}:${String(slotEndMin).padStart(2, '0')}`;
+
+    console.log(`\n🌙 Evening preview check — slot ${slotStart} to ${slotEnd} IST`);
+
+    // Get all active premium users
+    const allPremiumUsers = await PremiumUser.getActiveUsers();
+
+    // Filter to users whose eveningPreviewTime falls in this slot
+    const premiumUsers = allPremiumUsers.filter(u => {
+      const userTime = u.eveningPreviewTime || '20:30';
+      const [h, m] = userTime.split(':').map(Number);
+      return h === slotHour && m >= slotMin && m <= slotEndMin;
+    });
+
+    if (premiumUsers.length === 0) {
+      console.log(`⏰ No premium users scheduled for ${slotStart} slot — skipping`);
+      return;
+    }
+
+    console.log(`📧 Found ${premiumUsers.length} premium users for ${slotStart} slot (of ${allPremiumUsers.length} total)`);
 
     // Step 1: Fetch all beach weather ONCE
     const allWeatherData = await fetchAllBeachWeather();
@@ -268,15 +349,6 @@ async function sendEveningPreviews() {
     const beachList = weatherService.getBeaches();
     const allBeachNames = {};
     beachList.forEach(b => { allBeachNames[b.key] = b.name; });
-
-    // Step 3: Send previews to PREMIUM subscribers only
-    const premiumUsers = await PremiumUser.getActiveUsers();
-    console.log(`📧 Found ${premiumUsers.length} active premium users for evening preview`);
-
-    if (premiumUsers.length === 0) {
-      console.log('⏰ No premium users — skipping evening preview');
-      return;
-    }
 
     const insightsCache = {};
     let emailCount = 0;
@@ -313,7 +385,7 @@ async function sendEveningPreviews() {
         );
 
         emailCount++;
-        console.log(`✅ Evening preview sent to ${premiumUser.email} (premium)`);
+        console.log(`✅ Evening preview sent to ${premiumUser.email} (${premiumUser.eveningPreviewTime || '20:30'})`);
 
         // Rate limit: pause between sends
         if (emailCount < premiumUsers.length) await delay(EMAIL_DELAY_MS);
@@ -323,15 +395,17 @@ async function sendEveningPreviews() {
       }
     }
 
-    // Send evening Telegram previews (non-blocking)
-    // Pass insightsCache so Telegram gets the same AI content as emails
-    telegramService.sendEveningTelegramPreviews(allWeatherData, insightsCache).catch(err => {
-      console.error('❌ Telegram evening previews failed:', err.message);
-    });
+    // Send evening Telegram previews only during the default 20:30 slot
+    // (Telegram doesn't have per-user timing — send once at default time)
+    if (slotStart === '20:30') {
+      telegramService.sendEveningTelegramPreviews(allWeatherData, insightsCache).catch(err => {
+        console.error('❌ Telegram evening previews failed:', err.message);
+      });
+    }
 
     // Update site stats
     await SiteStats.recordDailyRun(0, emailCount);
-    console.log(`📊 Evening preview: ${emailCount} emails sent (premium only)`);
+    console.log(`📊 Evening preview (${slotStart} slot): ${emailCount} emails sent`);
     console.log('✅ Evening preview job completed\n');
   } catch (error) {
     console.error('❌ Evening preview job failed:', error.message);
@@ -437,11 +511,11 @@ function initializeEmailJobs() {
   cron.schedule('0 19 * * *', sendSpecialAlert, TZ);
   console.log(`🔔 Scheduled special 70+ alert at 19:00 IST (premium only)`);
 
-  // Evening preview at 8:30 PM (premium only)
-  const EVENING_TIME = process.env.EVENING_PREVIEW_TIME || '20:30';
-  const eveningParsed = validateTimeFormat(EVENING_TIME, 'EVENING_PREVIEW_TIME') || { hour: '20', min: '30' };
-  cron.schedule(`${eveningParsed.min} ${eveningParsed.hour} * * *`, sendEveningPreviews, TZ);
-  console.log(`🌙 Scheduled evening preview emails at ${eveningParsed.hour}:${eveningParsed.min} IST (premium only)`);
+  // Evening preview — runs every 30 min from 6 PM to 10 PM IST
+  // Each run checks which premium users have their eveningPreviewTime in the current slot
+  // Default is 20:30 for users who haven't customised their time
+  cron.schedule('0,30 18-21 * * *', sendEveningPreviews, TZ);
+  console.log(`🌙 Scheduled evening preview checks every 30 min (18:00–21:30 IST, per-user timing)`);
 
   console.log(`✅ All email jobs initialized successfully`);
 }

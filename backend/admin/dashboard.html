@@ -727,9 +727,22 @@ function render(d){
   // Subscribers
   subTable(s);
 
-  // Feed subscriber list to email module
-  if (s.list && s.list.length) {
-    allSubEmails = s.list.map(sub => ({ email: sub.email, preferredBeach: sub.preferredBeach }));
+  // Feed subscriber + premium list to email module (deduplicated)
+  {
+    const emailMap = new Map();
+    // Add all active subscribers
+    if (s.list && s.list.length) {
+      s.list.forEach(sub => emailMap.set(sub.email, { email: sub.email, preferredBeach: sub.preferredBeach }));
+    }
+    // Add active premium users (may overlap with subscribers — Map deduplicates)
+    if (p.list && p.list.length) {
+      p.list.filter(u => u.status === 'active').forEach(u => {
+        if (!emailMap.has(u.email)) {
+          emailMap.set(u.email, { email: u.email, preferredBeach: u.preferredBeach || 'marina', premium: true });
+        }
+      });
+    }
+    allSubEmails = [...emailMap.values()];
     if (emailMode === 'all') updateRecipientCount();
   }
 

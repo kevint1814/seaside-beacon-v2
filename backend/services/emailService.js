@@ -435,6 +435,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
             </td></tr>
           </table>
 
+          ${(greeting || insight) ? `
           <!-- ═══ INSIGHT ═══ -->
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:28px 40px;">
@@ -444,7 +445,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
                 </td></tr>
               </table>
             </td></tr>
-          </table>
+          </table>` : ''}
 
           ${sunriseExp.whatYoullSee || sunriseExp.beachVibes ? `
           <!-- ═══ WHAT TO EXPECT ═══ -->
@@ -590,11 +591,17 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
             </td></tr>
           </table>
 
-          ${includePhotography ? `
-          <!-- ═══ PHOTOGRAPHY 2x2 ═══ -->
+          ${(includePhotography && isPremium) ? `
+          <!-- ═══ FOR PHOTOGRAPHERS (PREMIUM ONLY) ═══ -->
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-            <tr><td style="padding:0 40px 20px;">
-              <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#a09080;">📷 Photography Settings</p>
+            <tr><td style="padding:0 40px 6px;">
+              <p style="margin:0 0 4px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#C4733A;">📷 For Photographers</p>
+              <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#a09080;">Rule-based camera settings tuned to today's conditions</p>
+            </td></tr>
+          </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:10px 40px 20px;">
+              <p style="margin:0 0 14px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:#a09080;">⚙️ DSLR Settings</p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td width="48%" style="padding:0 6px 10px 0;vertical-align:top;">
@@ -649,18 +656,31 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
               </table>`).join('')}
             </td></tr>
           </table>` : ''}
-          ` : `
-          <!-- ═══ PHOTOGRAPHY SKIPPED ═══ -->
+          ` : (isPremium ? `
+          <!-- ═══ PHOTOGRAPHY SKIPPED (PREMIUM, LOW SCORE) ═══ -->
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr><td style="padding:0 40px 28px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:22px 24px;text-align:center;">
-                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:#8a7e72;">Photography section skipped — conditions aren't favorable enough today. We'll include camera settings when the sky is worth shooting. 📷</p>
+                  <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.6;color:#8a7e72;">📷 Photography settings skipped - conditions aren't favorable enough today. We'll include camera settings when the sky is worth shooting.</p>
                 </td></tr>
               </table>
             </td></tr>
           </table>
-          `}
+          ` : `
+          <!-- ═══ PREMIUM UPSELL (FREE USER) ═══ -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td style="padding:0 40px 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td bgcolor="#FDF5EE" style="border:1px solid #E8D5C0;padding:22px 24px;text-align:center;">
+                  <p style="margin:0 0 8px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;font-weight:600;color:#C4733A;">📷 For Photographers</p>
+                  <p style="margin:0 0 12px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Get DSLR settings, mobile tips, and composition advice tuned to each morning's conditions.</p>
+                  <a href="${APP_URL}/pricing" style="font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;color:#C4733A;text-decoration:underline;">Upgrade to Premium</a>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+          `)}
 
         </td></tr>
 

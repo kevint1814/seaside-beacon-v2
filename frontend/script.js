@@ -2537,12 +2537,13 @@ function handleGoogleCredentialResponse(response) {
     if (d.success && d.authToken) {
       savePremiumAuth(d.authToken);
       premiumState.user = d.user;
-      updatePremiumUI();
       if (d.user.isActive) {
-        closePremiumModal();
-        showPremiumSplash(d.user);
+        // Hard refresh so all premium sections load fresh
+        location.reload();
+        return;
       } else {
-        // Google signed in but no active subscription — show pricing
+        // Google signed in but no active subscription - show pricing
+        updatePremiumUI();
         showPmState('pmPricing');
         showToast('Signed in! Choose a plan to activate premium.');
       }
@@ -2585,7 +2586,8 @@ async function logoutPremium() {
     });
   } catch (e) { /* silent */ }
   clearPremiumAuth();
-  updatePremiumUI();
+  // Hard refresh to cleanly remove all premium UI state
+  location.reload();
 }
 
 // ─── Plan fetching ───
@@ -3240,13 +3242,13 @@ function initPremium() {
       if (d.success && d.authToken) {
         savePremiumAuth(d.authToken);
         premiumState.user = d.user;
-        updatePremiumUI();
         if (d.user.isActive) {
-          closePremiumModal();
-          showPremiumSplash(d.user);
-          showToast('Welcome back! Premium is active.');
+          // Hard refresh so all premium sections load fresh
+          location.reload();
+          return;
         } else {
-          // Signed in but no active subscription — show pricing
+          // Signed in but no active subscription - show pricing (no reload needed)
+          updatePremiumUI();
           showPmState('pmPricing');
           showToast('Signed in! Choose a plan to activate premium.');
         }
@@ -3283,12 +3285,13 @@ function initPremium() {
       if (d.success && d.authToken) {
         savePremiumAuth(d.authToken);
         premiumState.user = d.user;
-        updatePremiumUI();
         if (d.user.isActive) {
-          closePremiumModal();
-          showToast('Account created! Premium is active.');
+          // Hard refresh so all premium sections load fresh
+          location.reload();
+          return;
         } else {
-          // Account created but needs payment — show pricing
+          // Account created but needs payment - show pricing
+          updatePremiumUI();
           showPmState('pmPricing');
           showToast('Account created! Choose a plan to get started.');
         }
@@ -3477,9 +3480,8 @@ function _handleGoogleOAuthReturn() {
       }
       const token = d.authToken;
       savePremiumAuth(token);
-      showToast('Signed in with Google!');
 
-      // Fetch user info and update UI
+      // Fetch user info - if active, hard refresh; otherwise show pricing
       return fetch(CONFIG.API_URL + '/auth/me', {
         headers: { 'x-auth-token': token }
       })
@@ -3487,10 +3489,11 @@ function _handleGoogleOAuthReturn() {
       .then(u => {
         if (u.success && u.user) {
           premiumState.user = u.user;
-          updatePremiumUI();
           if (u.user.isActive) {
-            showPremiumSplash(u.user);
+            // Hard refresh so all premium sections load fresh
+            location.reload();
           } else {
+            updatePremiumUI();
             openPremiumModal('pricing');
             showToast('Signed in! Choose a plan to activate premium.');
           }
