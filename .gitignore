@@ -20,10 +20,5 @@ SeasideBeacon/*.xcodeproj/project.xcworkspace/xcuserdata/
 SeasideBeacon/build/
 *.xcuserstate
 
-# Flutter (if still present)
-mobile_app/.dart_tool/
-mobile_app/build/
-mobile_app/.flutter-plugins
-mobile_app/.flutter-plugins-dependencies
-mobile_app/ios/Pods/
-mobile_app/ios/.symlinks/
+# Archives
+docs/dashboard-archive.html

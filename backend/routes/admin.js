@@ -179,7 +179,6 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
     };
 
     // ── Email Health (covers both Subscriber + PremiumUser collections) ──
-    const now = new Date();
     const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
     const fortyEightHoursAgo = new Date(now - 48 * 60 * 60 * 1000);
 
