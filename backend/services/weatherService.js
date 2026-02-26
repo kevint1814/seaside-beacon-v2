@@ -1081,9 +1081,10 @@ function scoreHumidity(humidity) {
     // Elevated Chennai baseline — colours still visible but increasingly pastel
     score = 8 - Math.round((humidity - 82) / 6 * 3);    // 8→5  (v5.4: was 6→4)
   } else if (humidity <= 93) {
-    // v5.3: Research shows f(RH) > 2.0 above 80% — sea-salt aerosols heavily swollen
-    // 91% RH at tropical coast = significant color muting
-    score = 4 - Math.round((humidity - 88) / 5 * 2);    // 4→2
+    // v5.5: Softened from 4→2 to 5→3. Ground truth Feb 26, 2026: 93% humidity at Marina
+    // still produced visible warm pink-peach tones (not flat grey). Previous 4→2 range
+    // was too harsh — warm pastels survive at 90-93% even if colours are heavily muted.
+    score = 5 - Math.round((humidity - 88) / 5 * 2);    // 5→3  (v5.5: was 4→2)
   } else if (humidity <= 97) {
     score = 2 - Math.round((humidity - 93) / 4 * 1);    // 2→1
   } else {
@@ -1334,13 +1335,24 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   // Low clouds block the horizon and don't catch alpenglow — they're neutral to negative.
   // When cloud layer data shows predominantly low cloud with no elevated canvas,
   // discount the cloud cover score because the "optimal amount" argument doesn't apply.
+  //
+  // v5.5 RECALIBRATION (Feb 26, 2026 ground-truth):
+  // High visibility (≥15km) with low cloud means plenty of gaps — sun disc visible,
+  // warm tones on water. Previous flat 50% discount was too harsh for "gappy low stratus".
+  // Now: 50% discount when vis < 10 (true blanket), 30% when vis 10-15, 20% when vis ≥ 15.
   let lowStratusDiscount = 0;
   if (highCloud != null && (highCloud + (midCloud || 0)) < 15 && lowCloud > 40) {
-    // All-low-stratus: cloud cover score is rewarding amount, but there's no canvas
-    // Discount ~50% — the cloud amount is irrelevant without altitude
-    lowStratusDiscount = Math.round(cloudScore * 0.5);
+    let discountRate;
+    if (visibilityKm >= 15) {
+      discountRate = 0.2;  // High vis = gappy stratus, sun breaks through, warm tones on water
+    } else if (visibilityKm >= 10) {
+      discountRate = 0.3;  // Moderate vis = some gaps, partial discount
+    } else {
+      discountRate = 0.5;  // Low vis = true blanket stratus, full discount
+    }
+    lowStratusDiscount = Math.round(cloudScore * discountRate);
     cloudScore -= lowStratusDiscount;
-    console.log(`  ⚠️  v5.3 Low-stratus discount: -${lowStratusDiscount} (H:${highCloud}%+M:${midCloud || 0}% < 15%, L:${lowCloud}% > 40%)`);
+    console.log(`  ⚠️  v5.5 Low-stratus discount: -${lowStratusDiscount} (H:${highCloud}%+M:${midCloud || 0}% < 15%, L:${lowCloud}% > 40%, vis:${visibilityKm.toFixed(1)}km → ${Math.round(discountRate*100)}% discount)`);
   }
 
   // ── v5.4 NEW: ELEVATED CANVAS BONUS on cloud cover score ──
