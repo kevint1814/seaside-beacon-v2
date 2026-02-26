@@ -48,7 +48,7 @@ siteStatsSchema.statics.recordDailyRun = async function(beachCount, emailCount) 
         daysLive: 1
       },
       $set: {
-        lastForecastDate: new Date().toISOString().split('T')[0]
+        lastForecastDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
       }
     },
     { upsert: true, new: true }

@@ -34,6 +34,16 @@ function cachePrediction(beachKey, data) {
   _predictionCache[beachKey] = { data, cachedAt: Date.now() };
 }
 
+// Cleanup stale cache entries every 30 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const key in _predictionCache) {
+    if (now - _predictionCache[key].cachedAt > PREDICTION_CACHE_TTL * 3) {
+      delete _predictionCache[key];
+    }
+  }
+}, 30 * 60 * 1000);
+
 /**
  * GET /api/stats
  * Returns live metrics for the frontend metrics strip

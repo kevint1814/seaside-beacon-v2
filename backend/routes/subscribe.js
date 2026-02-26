@@ -61,10 +61,17 @@ router.post('/subscribe', async (req, res) => {
     // Track in DailyVisit (non-blocking)
     trackNewSub();
 
-    // Welcome email (non-blocking)
+    // Welcome email (non-blocking, with retry)
     emailService.sendWelcomeEmail(subscriber.email, subscriber.preferredBeach)
       .then(() => console.log(`✅ Welcome email sent to ${subscriber.email}`))
-      .catch(err => console.error(`❌ Email error for ${subscriber.email}:`, err.message));
+      .catch(async (err) => {
+        console.error(`❌ Welcome email failed for ${subscriber.email}:`, err.message);
+        // Retry once after 5 seconds
+        await new Promise(r => setTimeout(r, 5000));
+        emailService.sendWelcomeEmail(subscriber.email, subscriber.preferredBeach)
+          .then(() => console.log(`✅ Welcome email sent to ${subscriber.email} (retry)`))
+          .catch(retryErr => console.error(`❌ Welcome email retry failed for ${subscriber.email}:`, retryErr.message));
+      });
 
     console.log(`✅ New subscriber: ${email} → ${preferredBeach}`);
 

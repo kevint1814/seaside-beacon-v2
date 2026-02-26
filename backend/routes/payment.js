@@ -103,8 +103,9 @@ router.post('/payment/create-subscription', requirePremium, async (req, res) => 
     }
 
     const planConfig = PLANS[plan];
-    if (!planConfig.id) {
-      return res.status(500).json({ success: false, message: 'Plan not configured. Contact support.' });
+    if (!planConfig || !planConfig.id) {
+      console.error(`❌ Razorpay plan not configured for "${plan}". Check RAZORPAY_PLAN_MONTHLY / RAZORPAY_PLAN_ANNUAL env vars.`);
+      return res.status(503).json({ success: false, message: 'Payment plans are being configured. Please try again shortly.' });
     }
 
     // Create Razorpay subscription
@@ -204,7 +205,19 @@ router.post('/payment/webhook', express.raw({ type: 'application/json' }), async
     res.json({ status: 'ok' });
 
   } catch (err) {
-    console.error('Webhook error:', err.message);
+    console.error('Webhook error:', err.message, err.stack);
+    // Log to DB for manual review (non-blocking)
+    try {
+      const mongoose = require('mongoose');
+      if (mongoose.connection.readyState === 1) {
+        mongoose.connection.db.collection('webhook_errors').insertOne({
+          error: err.message,
+          stack: err.stack,
+          body: typeof req.body === 'string' ? req.body.substring(0, 500) : JSON.stringify(req.body).substring(0, 500),
+          createdAt: new Date()
+        }).catch(() => {});
+      }
+    } catch (_) {}
     // Still return 200 to prevent retry storms
     res.json({ status: 'ok' });
   }

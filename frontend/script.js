@@ -1,8 +1,7 @@
 // ═══════════════════════════════════════════════
-// SEASIDE BEACON v6.8
+// SEASIDE BEACON v7.3
 // Liquid Glass · Beach Sunrise · Ultra Premium
 // ═══════════════════════════════════════════════
-console.log('🌅 Seaside Beacon v6.8 — loaded');
 
 const CONFIG = {
   API_URL: (window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')
@@ -41,9 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─── Bulletproof modal navigation via event delegation ───
 // This runs independently of initPremium — always works.
 document.addEventListener('click', function(e) {
-  var btn = e.target.closest('[id]');
+  const btn = e.target.closest('[id]');
   if (!btn) return;
-  var id = btn.id;
+  const id = btn.id;
   // Modal state navigation
   if (id === 'pmGoToRegister') { showPmState('pmRegister'); }
   else if (id === 'pmGoToLogin' || id === 'pmPricingGoToLogin' || id === 'pmForgotBackToLogin') { showPmState('pmLogin'); }
@@ -69,6 +68,14 @@ document.addEventListener('click', function(e) {
 function initIntro() {
   const veil = document.getElementById('introVeil');
   if (!veil) return;
+
+  // If user has a premium auth token, skip normal splash —
+  // the premium splash will show once fetchPremiumUser resolves
+  if (localStorage.getItem('sb_auth_token')) {
+    veil.remove();
+    return;
+  }
+
   document.documentElement.classList.add('loading');
 
   // Activate: mark fades in
@@ -1471,7 +1478,7 @@ function renderForecast() {
     condItems.push({lbl:'Pressure', val:`${pTrend>=0?'+':''}${pTrend.toFixed(1)}hPa`, sub:labels.pressureTrend||(pTrend<-2?'Clearing':pTrend<=0.5?'Stable':'Rising')});
   }
   document.getElementById('conditionsStrip').innerHTML = condItems
-    .map(c=>`<div class="cond-item"><div class="cond-label">${c.lbl}</div><div class="cond-val">${c.val}</div><div class="cond-sub">${c.sub}</div></div>`).join('');
+    .map(c=>`<div class="cond-item"><div class="cond-label">${_esc(c.lbl)}</div><div class="cond-val">${_esc(c.val)}</div><div class="cond-sub">${_esc(c.sub)}</div></div>`).join('');
 
   const greetingText = p?.greeting || '';
   const insightText = p?.insight || `${pred.verdict} conditions forecast for ${w.beach} at dawn.`;
@@ -1969,7 +1976,7 @@ function renderLockedTab(tabId, description) {
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
       <p class="locked-title">Premium feature</p>
-      <p class="locked-desc">${description}</p>
+      <p class="locked-desc">${_esc(description)}</p>
       <button class="paywall-btn" onclick="openPremiumModal('pricing')">
         Unlock for ₹49/mo
       </button>
@@ -2029,10 +2036,20 @@ function showUnavailable(td) {
   }
 }
 
+// Clean up intervals on page unload to prevent leaks
+window.addEventListener('beforeunload', () => {
+  if (state._unavailInterval) {
+    clearInterval(state._unavailInterval);
+    state._unavailInterval = null;
+  }
+});
+
 // ─────────────────────────────────────────────
 // MODALS
 // ─────────────────────────────────────────────
 function maybePromptSubscribe() {
+  // Premium users never need the subscribe modal
+  if (premiumState.user && premiumState.user.isActive) return;
   if (localStorage.getItem('sb_subscribed')) return;
   const dismissed = localStorage.getItem('sb_modal_dismissed');
   if (dismissed && Date.now() - Number(dismissed) < 86400000) return; // 1 day cooldown
@@ -2600,6 +2617,10 @@ async function fetchPremiumUser() {
     if (d.success) {
       premiumState.user = d.user;
       updatePremiumUI();
+      // Show premium splash for returning premium users
+      if (d.user.isActive) {
+        showPremiumSplash(d.user);
+      }
       // Check if we should show Telegram prompt
       if (d.user.isActive && !d.user.telegramLinked) {
         checkTelegramPrompt();
@@ -2769,7 +2790,7 @@ async function startPremiumCheckout(planType) {
       },
       modal: {
         ondismiss: function () {
-          console.log('Razorpay checkout closed');
+          // Razorpay checkout closed
         }
       }
     };
@@ -3191,10 +3212,10 @@ async function loadSubscriptionInfo() {
       planOptions.innerHTML = `
         <div class="pm-switch-option">
           <div class="pm-switch-info">
-            <span class="pm-switch-plan">${otherDisplay}</span>
-            <span class="pm-switch-note">${switchNote}</span>
+            <span class="pm-switch-plan">${_esc(otherDisplay)}</span>
+            <span class="pm-switch-note">${_esc(switchNote)}</span>
           </div>
-          <button type="button" class="pm-switch-btn" onclick="switchPlan('${otherPlan}')">Switch</button>
+          <button type="button" class="pm-switch-btn" onclick="switchPlan('${_esc(otherPlan)}')">Switch</button>
         </div>
       `;
     }
@@ -3560,7 +3581,7 @@ function _initGSI() {
       auto_select: false
     });
     window._googleReady = true;
-    console.log('✅ Google Sign-In initialized');
+    // Google Sign-In initialized
   } catch (err) {
     console.warn('Google Sign-In init error:', err);
   }
@@ -3776,7 +3797,7 @@ function show7DayDetail(index) {
     <div class="sd-detail-score-row">
       <div class="sd-detail-score-big" style="color:${color}">${score}</div>
       <div>
-        <div class="sd-detail-verdict">${verdict}</div>
+        <div class="sd-detail-verdict">${_esc(verdict)}</div>
         ${f.weatherPhrase ? `<div class="sd-detail-phrase">${_esc(f.weatherPhrase)}</div>` : ''}
       </div>
     </div>

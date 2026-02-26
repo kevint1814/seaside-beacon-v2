@@ -279,7 +279,7 @@ async function handleCommand(chatId, text, userName) {
         userEmail: user?.email || null,
         userName: userName || user?.name || null,
         category,
-        subject: parts.length > 80 ? parts.substring(0, 80) + '...' : parts,
+        subject: (parts || '').length > 80 ? (parts || '').substring(0, 80) + '...' : (parts || 'No subject'),
         description: parts
       });
 
@@ -320,7 +320,7 @@ async function handleCommand(chatId, text, userName) {
           const data = await require('../services/weatherService').getTomorrow6AMForecast(key, { forceAvailable: true });
           if (data && data.available) {
             const s = data.prediction.score;
-            const emoji = s >= 70 ? '🔥' : s >= 55 ? '🌤' : s >= 40 ? '☁️' : '🌫';
+            const emoji = s >= 85 ? '🔥' : s >= 70 ? '🌅' : s >= 55 ? '☀️' : s >= 40 ? '☁️' : '🌫️';
             lines.push(`${emoji} <b>${data.beach}</b> — ${s}/100`);
             lines.push(`   ${data.prediction.verdict}`);
             if (data.goldenHour) lines.push(`   ✦ Golden hour: ${data.goldenHour.start} – ${data.goldenHour.end}`);
@@ -330,9 +330,9 @@ async function handleCommand(chatId, text, userName) {
         } catch (e) { /* skip */ }
       }
 
-      if (bestBeach && bestScore >= 60) {
+      if (bestBeach && bestScore >= 70) {
         lines.push(`📸 <b>Recommendation:</b> Head to ${bestBeach} — best conditions tomorrow.`);
-      } else if (bestBeach) {
+      } else if (bestBeach && bestScore >= 40) {
         lines.push(`📸 Mixed conditions tomorrow. ${bestBeach} looks most promising at ${bestScore}/100.`);
       }
 

@@ -600,7 +600,7 @@ function generatePhotographyBrief(score, cloudCover, humidity, visibility, windS
 
   // Challenges
   let challenges;
-  if (score >= 80 && cloudCover < 30) {
+  if (score >= 85 && cloudCover < 30) {
     challenges = 'High dynamic range is the main challenge — the bright sun disc against darker foreground will blow highlights easily. Use graduated ND filter or bracket exposures (-2, 0, +2 EV). Direct sun will also cause lens flare — use your lens hood and consider using it creatively rather than avoiding it.';
   } else if (isHazy) {
     challenges = `Atmospheric haze reduces contrast and sharpness. Use a circular polarizer to cut through scatter. In post, Dehaze slider is your best friend (+30-50). Focus manually — autofocus may hunt in the low-contrast hazy conditions. ${windSpeed > 15 ? `Wind at ${windSpeed}km/h adds camera stability concerns — brace firmly or use a tripod.` : ''}`;
@@ -951,9 +951,10 @@ function generateBeachComparison(allWeatherData) {
   }
 
   function suitLabel(score) {
-    if (score >= 80) return 'Best';
-    if (score >= 65) return 'Good';
-    if (score >= 45) return 'Fair';
+    if (score >= 85) return 'Best';
+    if (score >= 70) return 'Good';
+    if (score >= 55) return 'Fair';
+    if (score >= 40) return 'Okay';
     return 'Poor';
   }
 

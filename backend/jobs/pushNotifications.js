@@ -93,7 +93,7 @@ async function sendEveningPush() {
     const title = `Tomorrow's sunrise: ${best.score}/100`;
     const body = best.score >= 70
       ? `${best.beachName} looks promising. Set your alarm for golden hour.`
-      : best.score >= 45
+      : best.score >= 40
         ? `${best.beachName} might deliver something. Worth keeping an eye on.`
         : `Low scores across the board. Maybe save the early alarm for another day.`;
 

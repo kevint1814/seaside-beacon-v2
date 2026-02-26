@@ -115,8 +115,10 @@ async function getStats() {
   const lt = agg[0] || { totalVisits: 0, totalUnique: 0, totalPredictions: 0, totalNewSubs: 0, totalUnsubs: 0, totalDays: 0 };
 
   // Last 7 days
-  const sevenAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    .toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  // Calculate 7 days ago in IST — get today's IST date first, then subtract
+  const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  nowIST.setDate(nowIST.getDate() - 7);
+  const sevenAgo = nowIST.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
   const week = await DailyVisit.find({ date: { $gte: sevenAgo } })
     .sort({ date: 1 })

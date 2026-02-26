@@ -48,7 +48,7 @@ async function fetchAllBeachWeather() {
  * This runs regardless of subscriber count — we're building a dataset
  */
 async function storeDailyScores(allWeatherData) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
   // Idempotent — skip if already stored today
   const existing = await DailyScore.findOne({ date: today, citySlug: 'chennai' });
