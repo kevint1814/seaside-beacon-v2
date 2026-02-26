@@ -769,14 +769,7 @@ input, select, textarea { font-family:inherit; }
   font-size:8px; font-weight:700; letter-spacing:3px;
   text-transform:uppercase; writing-mode:vertical-rl;
   color:var(--dawn-copper,#c4733a);
-  margin-top:4px; display:none;
-  position:relative;
-}
-.hero-badge-tier::before {
-  content:''; position:absolute; top:-3px; left:50%; transform:translateX(-50%);
-  width:1px; height:8px;
-  background:linear-gradient(to bottom, transparent, rgba(196,115,58,0.4), transparent);
-  writing-mode:horizontal-tb;
+  margin-top:2px; display:none;
 }
 body.is-premium .hero-badge-tier { display:block; }
 body.is-premium .hero-badge-name { color:var(--t1,#e8e0d4); }
