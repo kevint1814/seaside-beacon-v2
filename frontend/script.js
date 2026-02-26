@@ -69,10 +69,13 @@ function initIntro() {
   const veil = document.getElementById('introVeil');
   if (!veil) return;
 
-  // If user has a premium auth token, skip normal splash —
-  // the premium splash will show once fetchPremiumUser resolves
+  // If premium auth token exists, hold the veil as a loading screen
+  // until fetchPremiumUser resolves — then swap to premium splash
   if (localStorage.getItem('sb_auth_token')) {
-    veil.remove();
+    document.documentElement.classList.add('loading');
+    requestAnimationFrame(() => veil.classList.add('active'));
+    // Set a safety timeout — if API takes >4s, dismiss veil anyway
+    state._introTimeout = setTimeout(() => dismissIntroVeil(), 4000);
     return;
   }
 
@@ -84,12 +87,16 @@ function initIntro() {
   });
 
   // After 1.8s, fade out veil and reveal page
-  setTimeout(() => {
-    veil.classList.add('fade-out');
-    document.documentElement.classList.remove('loading');
-    // Remove from DOM after transition
-    setTimeout(() => veil.remove(), 900);
-  }, 1800);
+  setTimeout(() => dismissIntroVeil(), 1800);
+}
+
+function dismissIntroVeil() {
+  if (state._introTimeout) { clearTimeout(state._introTimeout); state._introTimeout = null; }
+  const veil = document.getElementById('introVeil');
+  if (!veil) return;
+  veil.classList.add('fade-out');
+  document.documentElement.classList.remove('loading');
+  setTimeout(() => veil.remove(), 900);
 }
 
 // ═════════════════════════════════════════════════════
@@ -2611,24 +2618,25 @@ async function fetchPremiumUser() {
     });
     if (!res.ok) {
       if (res.status === 401) clearPremiumAuth();
+      dismissIntroVeil();
       return null;
     }
     const d = await res.json();
     if (d.success) {
       premiumState.user = d.user;
       updatePremiumUI();
-      // Show premium splash for returning premium users
-      if (d.user.isActive) {
-        showPremiumSplash(d.user);
-      }
+      // Show premium splash for returning premium users (also dismisses normal veil)
+      showPremiumSplash(d.user);
       // Check if we should show Telegram prompt
       if (d.user.isActive && !d.user.telegramLinked) {
         checkTelegramPrompt();
       }
       return d.user;
     }
+    dismissIntroVeil();
   } catch (e) {
     console.warn('Premium auth check failed:', e.message);
+    dismissIntroVeil();
   }
   return null;
 }
@@ -2689,9 +2697,19 @@ function handleGoogleCredentialResponse(response) {
   });
 }
 
-// Premium splash screen on sign-in
+// Premium splash screen on sign-in / page load
 function showPremiumSplash(user) {
-  if (!user || !user.isActive) return;
+  if (!user || !user.isActive) {
+    // Not premium — just dismiss the normal intro veil
+    dismissIntroVeil();
+    return;
+  }
+
+  // Dismiss the normal veil instantly (no fade), then show premium splash
+  const veil = document.getElementById('introVeil');
+  if (veil) { veil.remove(); document.documentElement.classList.remove('loading'); }
+  if (state._introTimeout) { clearTimeout(state._introTimeout); state._introTimeout = null; }
+
   const splash = document.getElementById('premiumSplash');
   if (!splash) return;
   splash.style.display = '';
