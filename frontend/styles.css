@@ -767,9 +767,9 @@ input, select, textarea { font-family:inherit; }
 .hero-badge-tier {
   font-family:var(--ff-body,'Instrument Sans',sans-serif);
   font-size:8px; font-weight:700; letter-spacing:3px;
-  text-transform:uppercase; writing-mode:vertical-rl;
+  text-transform:uppercase;
   color:var(--dawn-copper,#c4733a);
-  margin-top:2px; display:none;
+  display:none; margin-left:6px;
 }
 body.is-premium .hero-badge-tier { display:block; }
 body.is-premium .hero-badge-name { color:var(--t1,#e8e0d4); }
