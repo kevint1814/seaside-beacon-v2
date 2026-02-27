@@ -11,6 +11,7 @@ const sunriseSubmissionSchema = new mongoose.Schema({
   beachName: { type: String },
   date: { type: Date, required: true },
   name: { type: String, default: 'Anonymous' },
+  email: { type: String, default: '' },
   featured: { type: Boolean, default: false },
   spotlighted: { type: Boolean, default: false }, // included in a Sunday Spotlight
   createdAt: { type: Date, default: Date.now }

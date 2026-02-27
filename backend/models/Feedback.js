@@ -8,6 +8,7 @@ const feedbackSchema = new mongoose.Schema({
   },
   comment: { type: String, required: true },
   userName: { type: String, required: true },
+  email: { type: String, default: '' },
   visitDate: { type: String, required: true },
   beach: {
     type: String,

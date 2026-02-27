@@ -246,7 +246,7 @@ async function sendDailyDigest() {
 // ══════════════════════════════════════════
 // Feedback alert (instant — rare)
 // ══════════════════════════════════════════
-function notifyNewFeedback(rating, comment, beach, userName, visitDate) {
+function notifyNewFeedback(rating, comment, beach, userName, email, visitDate) {
   const beachDisplay = BEACH_NAMES[beach] || beach;
   const ratingMap = { 'spot-on': '🎯 Spot-on', 'close': '👌 Close', 'missed': '😕 Missed' };
   const ratingDisplay = ratingMap[rating] || rating;
@@ -258,6 +258,7 @@ function notifyNewFeedback(rating, comment, beach, userName, visitDate) {
     <h2 style="color:#1a1a1a;margin:0 0 14px 0;font-size:18px;">New Feedback!</h2>
     <div style="background:#f9f9f9;border-radius:8px;padding:14px;margin:0 0 16px 0;">
       ${userName ? `<p style="margin:0 0 5px 0;font-size:13px;"><strong>From:</strong> ${userName}</p>` : ''}
+      ${email ? `<p style="margin:0 0 5px 0;font-size:13px;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>` : ''}
       ${visitDate ? `<p style="margin:0 0 5px 0;font-size:13px;"><strong>Visit date:</strong> ${visitDate}</p>` : ''}
       <p style="margin:0 0 5px 0;font-size:13px;"><strong>Rating:</strong> ${ratingDisplay}</p>
       <p style="margin:0 0 5px 0;font-size:13px;"><strong>Beach:</strong> ${beachDisplay}</p>
@@ -274,7 +275,7 @@ function notifyNewFeedback(rating, comment, beach, userName, visitDate) {
 // ══════════════════════════════════════════
 // Photo submission alert (instant — rare)
 // ══════════════════════════════════════════
-function notifyNewPhotoSubmission(name, beach, date, photoUrl) {
+function notifyNewPhotoSubmission(name, email, beach, date, photoUrl) {
   const beachDisplay = BEACH_NAMES[beach] || beach;
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
@@ -284,6 +285,7 @@ function notifyNewPhotoSubmission(name, beach, date, photoUrl) {
     <h2 style="color:#1a1a1a;margin:0 0 14px 0;font-size:18px;">New Sunrise Photo!</h2>
     <div style="background:#f9f9f9;border-radius:8px;padding:14px;margin:0 0 16px 0;">
       <p style="margin:0 0 5px 0;font-size:13px;"><strong>Name:</strong> ${name || 'Anonymous'}</p>
+      ${email ? `<p style="margin:0 0 5px 0;font-size:13px;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>` : ''}
       <p style="margin:0 0 5px 0;font-size:13px;"><strong>Beach:</strong> ${beachDisplay}</p>
       <p style="margin:0;font-size:13px;"><strong>Date:</strong> ${date || 'Not specified'}</p>
     </div>

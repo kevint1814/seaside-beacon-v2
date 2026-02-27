@@ -2248,6 +2248,7 @@ function initCommunity() {
     if (!file) { showMsg('photoMessage', 'Please select a photo.', false); return; }
     if (!document.getElementById('photoDate').value) { showMsg('photoMessage', 'Please select the date.', false); return; }
     if (!document.getElementById('photoName').value.trim()) { showMsg('photoMessage', 'Please enter your name.', false); return; }
+    if (!document.getElementById('photoEmail').value.trim()) { showMsg('photoMessage', 'Please enter your email.', false); return; }
 
     const btn = document.getElementById('photoSubmitBtn');
     const orig = btn.innerHTML;
@@ -2260,6 +2261,7 @@ function initCommunity() {
       formData.append('beach', document.getElementById('photoBeach').value);
       formData.append('date', document.getElementById('photoDate').value);
       formData.append('name', document.getElementById('photoName').value.trim());
+      formData.append('email', document.getElementById('photoEmail').value.trim());
 
       const res = await fetch(`${CONFIG.API_URL}/sunrise-submission`, {
         method: 'POST',
@@ -2292,8 +2294,10 @@ function initCommunity() {
     const feedbackDateVal = document.getElementById('feedbackDate')?.value;
     const rating = document.querySelector('input[name="rating"]:checked');
     const comment = document.getElementById('feedbackComment')?.value.trim();
+    const feedbackEmail = document.getElementById('feedbackEmail')?.value.trim();
 
     if (!feedbackName) { showMsg('feedbackMessage', 'Please enter your name.', false); return; }
+    if (!feedbackEmail) { showMsg('feedbackMessage', 'Please enter your email.', false); return; }
     if (!feedbackDateVal) { showMsg('feedbackMessage', 'Please select the date you went.', false); return; }
     if (!rating) { showMsg('feedbackMessage', 'Please select a rating.', false); return; }
     if (!comment) { showMsg('feedbackMessage', 'Please describe what the sky looked like.', false); return; }
@@ -2310,6 +2314,7 @@ function initCommunity() {
         body: JSON.stringify({
           rating: rating.value,
           name: feedbackName,
+          email: feedbackEmail,
           date: feedbackDateVal,
           comment,
           beach: document.getElementById('feedbackBeach').value

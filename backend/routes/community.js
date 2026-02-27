@@ -45,10 +45,10 @@ router.post('/sunrise-submission', (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No photo uploaded.' });
     }
 
-    const { beach, date, name } = req.body;
+    const { beach, date, name, email } = req.body;
 
-    if (!beach || !date || !name) {
-      return res.status(400).json({ success: false, message: 'Beach, date, and name are required.' });
+    if (!beach || !date || !name || !email) {
+      return res.status(400).json({ success: false, message: 'Beach, date, name, and email are required.' });
     }
 
     // Upload to Cloudinary via buffer
@@ -75,11 +75,12 @@ router.post('/sunrise-submission', (req, res, next) => {
       cloudinaryPublicId: result.public_id,
       beach,
       date: new Date(date),
-      name: name || 'Anonymous'
+      name: name || 'Anonymous',
+      email: email || ''
     });
 
-    console.log(`📸 New sunrise submission: ${submission.beachName} by ${submission.name} (${date})`);
-    notifyNewPhotoSubmission(submission.name, beach, date, result.secure_url);
+    console.log(`📸 New sunrise submission: ${submission.beachName} by ${submission.name} <${email}> (${date})`);
+    notifyNewPhotoSubmission(submission.name, email, beach, date, result.secure_url);
 
     res.json({
       success: true,
@@ -97,10 +98,10 @@ router.post('/sunrise-submission', (req, res, next) => {
 // ─────────────────────────────────────────────
 router.post('/feedback', async (req, res) => {
   try {
-    const { rating, comment, beach, name, date } = req.body;
+    const { rating, comment, beach, name, email, date } = req.body;
 
-    if (!rating || !beach || !name || !date || !comment) {
-      return res.status(400).json({ success: false, message: 'All fields are required: name, date, rating, comment, and beach.' });
+    if (!rating || !beach || !name || !email || !date || !comment) {
+      return res.status(400).json({ success: false, message: 'All fields are required: name, email, date, rating, comment, and beach.' });
     }
     const validRatings = ['Spot On', 'Close', 'Missed'];
     if (!validRatings.includes(rating)) {
@@ -112,11 +113,12 @@ router.post('/feedback', async (req, res) => {
       comment,
       beach,
       userName: name,
+      email: email || '',
       visitDate: date
     });
 
-    console.log(`💬 New feedback: ${feedback.rating} for ${feedback.beachName}${name ? ` by ${name}` : ''}${date ? ` (${date})` : ''}${comment ? ' — "' + comment.substring(0, 50) + '"' : ''}`);
-    notifyNewFeedback(rating, comment, beach, name, date);
+    console.log(`💬 New feedback: ${feedback.rating} for ${feedback.beachName}${name ? ` by ${name}` : ''} <${email}>${date ? ` (${date})` : ''}${comment ? ' — "' + comment.substring(0, 50) + '"' : ''}`);
+    notifyNewFeedback(rating, comment, beach, name, email, date);
 
     res.json({
       success: true,
