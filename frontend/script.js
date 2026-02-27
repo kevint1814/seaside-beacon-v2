@@ -2411,16 +2411,22 @@ async function loadFeaturedGallery() {
       const beachLabel = p.beachName || BEACH_NAMES[p.beach] || p.beach;
       const dateStr = p.date ? new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
       const nameStr = p.name || 'Anonymous';
-      // Use Cloudinary transform for optimized thumbnail
+      // Cloudinary transforms — cropped thumb for front, full image for back
       const thumbUrl = p.cloudinaryUrl.replace('/upload/', '/upload/w_600,h_400,c_fill,f_auto,q_auto/');
-      return `<div class="gallery-card">
-        <img class="gallery-card-img" src="${thumbUrl}" alt="Sunrise at ${beachLabel}" loading="lazy">
-        <div class="gallery-card-body">
-          <p class="gallery-card-beach">${beachLabel}</p>
-          <div class="gallery-card-meta">
-            <span class="gallery-card-name">${nameStr}</span>
-            <span>${dateStr}</span>
+      const fullUrl = p.cloudinaryUrl.replace('/upload/', '/upload/w_800,f_auto,q_auto/');
+      return `<div class="gallery-card" onclick="this.classList.toggle('flipped')">
+        <div class="gallery-front">
+          <img class="gallery-card-img" src="${thumbUrl}" alt="Sunrise at ${beachLabel}" loading="lazy">
+          <div class="gallery-card-body">
+            <p class="gallery-card-beach">${beachLabel}</p>
+            <div class="gallery-card-meta">
+              <span class="gallery-card-name">${nameStr}</span>
+              <span>${dateStr}</span>
+            </div>
           </div>
+        </div>
+        <div class="gallery-back">
+          <img src="${fullUrl}" alt="${beachLabel} full photo by ${nameStr}" loading="lazy">
         </div>
       </div>`;
     }).join('');

@@ -2163,21 +2163,40 @@ body.is-premium .nav-premium-badge { display:inline-block; }
 }
 .gallery-track::-webkit-scrollbar { display: none; }
 
+/* ── Gallery flip card — same pattern as case-card ── */
 .gallery-card {
   flex: 0 0 280px;
   scroll-snap-align: start;
+  perspective: 800px;
+  cursor: pointer;
+  height: 320px;
+  transition: transform 0.35s var(--ease-spring), box-shadow 0.35s;
+}
+.gallery-card:hover {
+  transform: translateY(-4px) scale(1.008);
+}
+.gallery-front, .gallery-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   border-radius: 20px;
   overflow: hidden;
+  transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.gallery-front {
   background: var(--glass-fill);
   backdrop-filter: var(--blur-md);
   -webkit-backdrop-filter: var(--blur-md);
+  border: none;
   box-shadow:
     0 0 0 0.5px rgba(255,255,255,0.10),
     inset 0 0.5px 0 rgba(255,255,255,0.14);
-  transition: transform 0.35s var(--ease-spring), box-shadow 0.35s;
-  position: relative;
+  transform: rotateY(0deg);
+  display: flex;
+  flex-direction: column;
 }
-.gallery-card::before {
+.gallery-front::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -2187,8 +2206,32 @@ body.is-premium .nav-premium-badge { display:inline-block; }
   border-radius: 20px;
   z-index: 1;
 }
-.gallery-card:hover {
-  transform: translateY(-4px) scale(1.008);
+.gallery-back {
+  background: var(--glass-fill);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border: none;
+  box-shadow:
+    0 0 0 0.5px rgba(255,255,255,0.10),
+    inset 0 0.5px 0 rgba(255,255,255,0.14);
+  transform: rotateY(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.gallery-back img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 14px;
+}
+/* Flip state */
+.gallery-card.flipped .gallery-front {
+  transform: rotateY(-180deg);
+}
+.gallery-card.flipped .gallery-back {
+  transform: rotateY(0deg);
 }
 .gallery-card-img {
   width: 100%;
@@ -2220,13 +2263,10 @@ body.is-premium .nav-premium-badge { display:inline-block; }
   color: var(--t2);
   font-weight: 400;
 }
-.gallery-empty {
-  display: none;
-}
 
 /* Gallery responsive */
 @media (max-width: 600px) {
-  .gallery-card { flex: 0 0 240px; }
+  .gallery-card { flex: 0 0 240px; height: 280px; }
   .gallery-card-img { height: 160px; }
 }
 
