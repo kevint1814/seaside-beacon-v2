@@ -659,6 +659,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
         <button class="email-btn email-btn-active" id="selAll">All Subscribers</button>
         <button class="email-btn" id="selCustom">Select Recipients</button>
+        <button class="email-btn" id="selManual">Custom Email</button>
         <span style="font-size:11px;color:var(--t3)" id="recipientCount">0 recipients</span>
       </div>
 
@@ -669,6 +670,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
           <button class="email-btn" id="selNone" style="font-size:10px;padding:4px 8px">Deselect All</button>
         </div>
         <div id="recipientList"></div>
+      </div>
+
+      <!-- Manual email input (hidden by default) -->
+      <div id="manualEmailPicker" style="display:none;margin-bottom:12px">
+        <label style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">To <span style="color:var(--t4);text-transform:none;letter-spacing:0">(comma-separated for multiple)</span></label>
+        <input type="text" id="manualEmailInput" placeholder="e.g. someone@example.com, another@example.com" style="width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:var(--mono);outline:none;box-sizing:border-box">
       </div>
 
       <!-- Sender -->
@@ -1266,12 +1273,18 @@ function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function timeAgo(d){const s=Math.floor((Date.now()-d)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 
 // ── Email Broadcast ──
-let emailMode = 'all'; // 'all' or 'custom'
+let emailMode = 'all'; // 'all', 'custom', or 'manual'
 let allSubEmails = []; // populated from poll data
 let selectedEmails = new Set();
 
+function getManualEmails() {
+  const raw = (document.getElementById('manualEmailInput')?.value || '').trim();
+  if (!raw) return [];
+  return raw.split(/[,;\s]+/).map(e => e.trim().toLowerCase()).filter(e => e && e.includes('@'));
+}
+
 function updateRecipientCount() {
-  const count = emailMode === 'all' ? allSubEmails.length : selectedEmails.size;
+  const count = emailMode === 'all' ? allSubEmails.length : emailMode === 'manual' ? getManualEmails().length : selectedEmails.size;
   $('recipientCount', count + ' recipient' + (count !== 1 ? 's' : ''));
 }
 
@@ -1297,7 +1310,9 @@ function setEmailMode(mode) {
   emailMode = mode;
   document.getElementById('selAll').className = 'email-btn' + (mode === 'all' ? ' email-btn-active' : '');
   document.getElementById('selCustom').className = 'email-btn' + (mode === 'custom' ? ' email-btn-active' : '');
+  document.getElementById('selManual').className = 'email-btn' + (mode === 'manual' ? ' email-btn-active' : '');
   document.getElementById('recipientPicker').style.display = mode === 'custom' ? 'block' : 'none';
+  document.getElementById('manualEmailPicker').style.display = mode === 'manual' ? 'block' : 'none';
   if (mode === 'all') {
     selectedEmails = new Set(allSubEmails.map(s => s.email));
   }
@@ -1387,7 +1402,7 @@ async function sendBroadcast() {
   if (!subject) { resultEl.style.color = 'var(--red)'; resultEl.textContent = 'Subject is required'; return; }
   if (!body) { resultEl.style.color = 'var(--red)'; resultEl.textContent = 'Body is required'; return; }
 
-  const recipients = emailMode === 'all' ? allSubEmails.map(s => s.email) : [...selectedEmails];
+  const recipients = emailMode === 'all' ? allSubEmails.map(s => s.email) : emailMode === 'manual' ? getManualEmails() : [...selectedEmails];
   if (!recipients.length) { resultEl.style.color = 'var(--red)'; resultEl.textContent = 'No recipients selected'; return; }
 
   // Build confirm message
@@ -2052,8 +2067,10 @@ document.getElementById('loginPass').addEventListener('keydown', e=>{if(e.key===
 document.getElementById('loginUser').addEventListener('keydown', e=>{if(e.key==='Enter')document.getElementById('loginPass').focus();});
 document.getElementById('selAll').addEventListener('click', ()=>setEmailMode('all'));
 document.getElementById('selCustom').addEventListener('click', ()=>{setEmailMode('custom');buildRecipientList();});
+document.getElementById('selManual').addEventListener('click', ()=>setEmailMode('manual'));
 document.getElementById('selNone').addEventListener('click', ()=>{selectedEmails.clear();buildRecipientList();updateRecipientCount();});
 document.getElementById('recipientSearch').addEventListener('input', e=>buildRecipientList(e.target.value));
+document.getElementById('manualEmailInput').addEventListener('input', ()=>updateRecipientCount());
 document.getElementById('emailSendBtn').addEventListener('click', sendBroadcast);
 // Search & filter for management tables
 document.getElementById('subSearch').addEventListener('input', renderSubTable);
