@@ -76,16 +76,26 @@ if (AI_PROVIDERS.length === 0) {
  * 3-tier failover: Gemini Flash → Groq → Flash-Lite → rule-based
  */
 async function generatePhotographyInsights(weatherData, allWeatherData = {}) {
-  // Try each AI provider in priority order — no retries within a provider,
-  // just fail fast and move to the next one. This is faster than retry loops.
+  // Try each AI provider in priority order.
+  // For 429 (rate limit), retry up to 2 times with exponential backoff before cascading.
   for (const provider of AI_PROVIDERS) {
-    try {
-      const result = await callAIProvider(provider, weatherData, allWeatherData);
-      return result;
-    } catch (error) {
-      const errorCode = error.status || error.code || '';
-      console.warn(`⚠️  ${provider.name} failed (${errorCode}): ${error.message?.substring(0, 120)}`);
-      // Continue to next provider
+    const MAX_429_RETRIES = 2;
+    for (let attempt = 0; attempt <= MAX_429_RETRIES; attempt++) {
+      try {
+        const result = await callAIProvider(provider, weatherData, allWeatherData);
+        return result;
+      } catch (error) {
+        const errorCode = error.status || error.code || '';
+        const is429 = errorCode === 429 || errorCode === '429';
+        if (is429 && attempt < MAX_429_RETRIES) {
+          const delay = (attempt + 1) * 2000; // 2s, 4s
+          console.warn(`⚠️  ${provider.name} rate-limited (429) — retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_429_RETRIES})`);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        console.warn(`⚠️  ${provider.name} failed (${errorCode}): ${error.message?.substring(0, 120)}`);
+        break; // Move to next provider
+      }
     }
   }
 

@@ -24,6 +24,24 @@ const upload = multer({
 });
 
 // ─────────────────────────────────────────────
+// GET /api/featured-gallery
+// Public endpoint — returns featured sunrise photos for the website gallery
+// ─────────────────────────────────────────────
+router.get('/featured-gallery', async (req, res) => {
+  try {
+    const photos = await SunriseSubmission.find({ featured: true })
+      .sort({ date: -1 })
+      .limit(12)
+      .select('cloudinaryUrl beach beachName name date')
+      .lean();
+    res.json({ success: true, photos });
+  } catch (error) {
+    console.error('❌ Featured gallery error:', error.message);
+    res.status(500).json({ success: false, photos: [] });
+  }
+});
+
+// ─────────────────────────────────────────────
 // POST /api/sunrise-submission
 // ─────────────────────────────────────────────
 router.post('/sunrise-submission', (req, res, next) => {

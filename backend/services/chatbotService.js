@@ -314,17 +314,28 @@ async function chat(chatId, userMessage, userName) {
       ...history
     ];
 
-    // 3-tier failover
+    // 3-tier failover — with 429 retry (up to 2 retries with backoff before cascading)
     let response = null;
+    const MAX_429_RETRIES = 2;
     for (const provider of CHAT_PROVIDERS) {
-      try {
-        response = await callProvider(provider, messages);
-        break; // success - stop trying
-      } catch (err) {
-        const code = err.status || err.code || '';
-        console.warn(`⚠️  Chatbot ${provider.name} failed (${code}): ${err.message?.substring(0, 120)}`);
-        // Continue to next provider
+      for (let attempt = 0; attempt <= MAX_429_RETRIES; attempt++) {
+        try {
+          response = await callProvider(provider, messages);
+          break; // success
+        } catch (err) {
+          const code = err.status || err.code || '';
+          const is429 = code === 429 || code === '429';
+          if (is429 && attempt < MAX_429_RETRIES) {
+            const delay = (attempt + 1) * 2000; // 2s, 4s
+            console.warn(`⚠️  Chatbot ${provider.name} rate-limited (429) — retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_429_RETRIES})`);
+            await new Promise(r => setTimeout(r, delay));
+            continue;
+          }
+          console.warn(`⚠️  Chatbot ${provider.name} failed (${code}): ${err.message?.substring(0, 120)}`);
+          break; // Move to next provider
+        }
       }
+      if (response) break; // success — stop trying providers
     }
 
     if (!response) {

@@ -2388,9 +2388,57 @@ function showMsg(id,msg,ok) {
 }
 
 // ─────────────────────────────────────────────
+// COMMUNITY — FEATURED GALLERY
+// ─────────────────────────────────────────────
+async function loadFeaturedGallery() {
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/featured-gallery`);
+    const data = await res.json();
+    if (!data.success || !data.photos || data.photos.length === 0) return;
+
+    const track = document.getElementById('galleryTrack');
+    const wrap = document.getElementById('featuredGallery');
+    if (!track || !wrap) return;
+
+    const BEACH_NAMES = {
+      marina: 'Marina Beach',
+      elliot: "Elliot's Beach",
+      covelong: 'Covelong Beach',
+      thiruvanmiyur: 'Thiruvanmiyur Beach'
+    };
+
+    track.innerHTML = data.photos.map(p => {
+      const beachLabel = p.beachName || BEACH_NAMES[p.beach] || p.beach;
+      const dateStr = p.date ? new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      const nameStr = p.name || 'Anonymous';
+      // Use Cloudinary transform for optimized thumbnail
+      const thumbUrl = p.cloudinaryUrl.replace('/upload/', '/upload/w_600,h_400,c_fill,f_auto,q_auto/');
+      return `<div class="gallery-card">
+        <img class="gallery-card-img" src="${thumbUrl}" alt="Sunrise at ${beachLabel}" loading="lazy">
+        <div class="gallery-card-body">
+          <p class="gallery-card-beach">${beachLabel}</p>
+          <div class="gallery-card-meta">
+            <span class="gallery-card-name">${nameStr}</span>
+            <span>${dateStr}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    wrap.style.display = '';
+  } catch (err) {
+    // Silently fail — gallery is a progressive enhancement
+    console.log('Gallery load skipped:', err.message);
+  }
+}
+
+// ─────────────────────────────────────────────
 // COMMUNITY — PHOTO UPLOAD + FEEDBACK
 // ─────────────────────────────────────────────
 function initCommunity() {
+  // ── Featured gallery — load community sunrise photos ──
+  loadFeaturedGallery();
+
   // Default feedback date to today
   const fbDateInput = document.getElementById('feedbackDate');
   if (fbDateInput) fbDateInput.value = new Date().toISOString().split('T')[0];

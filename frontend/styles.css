@@ -2134,6 +2134,102 @@ body.is-premium .nav-premium-badge { display:inline-block; }
   margin-bottom: 24px;
 }
 
+/* ── Featured Gallery — Community Sunrise Photos ── */
+.featured-gallery {
+  margin-bottom: 48px;
+}
+.featured-gallery-heading {
+  font-family: var(--ff-display);
+  font-size: clamp(18px, 2vw, 22px);
+  font-weight: 400;
+  color: var(--t1);
+  margin: 0 0 6px 0;
+}
+.featured-gallery-sub {
+  font-size: 13px;
+  color: var(--t3);
+  margin: 0 0 24px 0;
+  line-height: 1.7;
+}
+.gallery-track {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding-bottom: 8px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.gallery-track::-webkit-scrollbar { display: none; }
+
+.gallery-card {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--glass-fill);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  box-shadow:
+    0 0 0 0.5px rgba(255,255,255,0.10),
+    inset 0 0.5px 0 rgba(255,255,255,0.14);
+  transition: transform 0.35s var(--ease-spring), box-shadow 0.35s;
+  position: relative;
+}
+.gallery-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(155deg, rgba(255,255,255,0.10) 0%, var(--prism-warm) 15%, transparent 30%, var(--prism-blue) 50%, transparent 65%, var(--prism-violet) 80%, transparent 95%);
+  opacity: 0.30;
+  border-radius: 20px;
+  z-index: 1;
+}
+.gallery-card:hover {
+  transform: translateY(-4px) scale(1.008);
+}
+.gallery-card-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+.gallery-card-body {
+  padding: 16px 18px 18px;
+  position: relative;
+  z-index: 2;
+}
+.gallery-card-beach {
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--t1);
+  margin: 0 0 6px 0;
+}
+.gallery-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--t3);
+  line-height: 1.5;
+}
+.gallery-card-name {
+  color: var(--t2);
+  font-weight: 400;
+}
+.gallery-empty {
+  display: none;
+}
+
+/* Gallery responsive */
+@media (max-width: 600px) {
+  .gallery-card { flex: 0 0 240px; }
+  .gallery-card-img { height: 160px; }
+}
+
 /* Photo upload area */
 .photo-upload-area {
   display: flex;
