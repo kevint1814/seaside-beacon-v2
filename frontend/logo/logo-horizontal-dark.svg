@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="200" viewBox="0 0 1000 200">
+  <defs>
+    <filter id="glow2">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="ringGrad2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(196,115,58,0.7)"/>
+      <stop offset="50%" stop-color="rgba(212,176,120,0.4)"/>
+      <stop offset="100%" stop-color="rgba(196,115,58,0.7)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="200" fill="#0F0F0F" rx="16"/>
+
+  <!-- Sun icon ring -->
+  <circle cx="100" cy="100" r="42" fill="none" stroke="url(#ringGrad2)" stroke-width="2.5" opacity="0.8"/>
+  <circle cx="100" cy="100" r="40" fill="#0e0d0b"/>
+
+  <!-- Sun icon -->
+  <g transform="translate(100,100)" stroke="#C4733A" stroke-width="2" fill="none" filter="url(#glow2)">
+    <circle r="10"/>
+    <line x1="0" y1="-16" x2="0" y2="-22"/>
+    <line x1="0" y1="16" x2="0" y2="22"/>
+    <line x1="-16" y1="0" x2="-22" y2="0"/>
+    <line x1="16" y1="0" x2="22" y2="0"/>
+    <line x1="-11.3" y1="-11.3" x2="-15.6" y2="-15.6"/>
+    <line x1="11.3" y1="11.3" x2="15.6" y2="15.6"/>
+    <line x1="-11.3" y1="11.3" x2="-15.6" y2="15.6"/>
+    <line x1="11.3" y1="-11.3" x2="15.6" y2="-15.6"/>
+  </g>
+
+  <!-- Text: SEASIDE BEACON -->
+  <text x="190" y="108"
+        font-family="'Cormorant Garamond', 'Georgia', serif"
+        font-size="42" font-weight="500"
+        fill="#b8ae9e"
+        letter-spacing="8"
+        dominant-baseline="middle">SEASIDE BEACON</text>
+
+  <!-- Tagline -->
+  <text x="192" y="142"
+        font-family="'Instrument Sans', 'Helvetica Neue', sans-serif"
+        font-size="13" font-weight="400"
+        fill="#7a7060"
+        letter-spacing="3">SUNRISE QUALITY FORECAST</text>
+</svg>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <filter id="glow4">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="ringGrad4" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C4733A"/>
+      <stop offset="50%" stop-color="#d4b078"/>
+      <stop offset="100%" stop-color="#C4733A"/>
+    </linearGradient>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#161412"/>
+      <stop offset="100%" stop-color="#0F0F0F"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bgGrad)" rx="80"/>
+
+  <!-- Outer ring -->
+  <circle cx="256" cy="220" r="108" fill="none" stroke="url(#ringGrad4)" stroke-width="3" opacity="0.6"/>
+  <circle cx="256" cy="220" r="105" fill="#0e0d0b"/>
+
+  <!-- Sun icon -->
+  <g transform="translate(256,220)" stroke="#C4733A" stroke-width="4" fill="none" filter="url(#glow4)">
+    <circle r="28"/>
+    <line x1="0" y1="-44" x2="0" y2="-60"/>
+    <line x1="0" y1="44" x2="0" y2="60"/>
+    <line x1="-44" y1="0" x2="-60" y2="0"/>
+    <line x1="44" y1="0" x2="60" y2="0"/>
+    <line x1="-31" y1="-31" x2="-42.4" y2="-42.4"/>
+    <line x1="31" y1="31" x2="42.4" y2="42.4"/>
+    <line x1="-31" y1="31" x2="-42.4" y2="42.4"/>
+    <line x1="31" y1="-31" x2="42.4" y2="-42.4"/>
+  </g>
+
+  <!-- Text below icon -->
+  <text x="256" y="390"
+        font-family="'Cormorant Garamond', 'Georgia', serif"
+        font-size="36" font-weight="500"
+        fill="#b8ae9e"
+        letter-spacing="6"
+        text-anchor="middle">SEASIDE</text>
+  <text x="256" y="432"
+        font-family="'Cormorant Garamond', 'Georgia', serif"
+        font-size="36" font-weight="500"
+        fill="#b8ae9e"
+        letter-spacing="6"
+        text-anchor="middle">BEACON</text>
+</svg>

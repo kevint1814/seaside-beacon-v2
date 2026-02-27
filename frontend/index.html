@@ -295,7 +295,7 @@
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   <link rel="preconnect" href="https://api.seasidebeacon.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=7.3.4">
+  <link rel="stylesheet" href="styles.css?v=7.3.5">
 </head>
 <body>
 
@@ -332,7 +332,7 @@
     </button>
     <p class="modal-eyebrow">Daily Briefing</p>
     <h2 class="modal-title">Wake up knowing<br>what the sky holds.</h2>
-    <p class="modal-sub">Your beach. Tomorrow's conditions — an early preview at 8:30 PM to plan your morning, and the definitive forecast at 4 AM before you decide whether to set the alarm.</p>
+    <p class="modal-sub">Your beach. Tomorrow's sunrise score, conditions, and a Go or Skip verdict delivered to your inbox at 4 AM, before you decide whether to set the alarm.</p>
     <form id="subscriptionForm" autocomplete="off">
       <div class="form-row">
         <label class="form-label">Email</label>
@@ -871,6 +871,11 @@
           <span class="hst-key">Morning delivery</span>
         </div>
       </div>
+
+      <p class="hero-cinema-hint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="vertical-align:-2px;opacity:0.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+        Try the <strong>Cinema</strong> toggle, then scroll. We built background animations tuned to every section.
+      </p>
     </div>
 
     <!-- Seaside Beacon badge (right side) -->
@@ -1245,6 +1250,12 @@
       <p class="section-note">All photos clicked at Chennai beaches. Tap a card to see the full frame.</p>
 
       <div class="cases-carousel">
+        <button type="button" class="cases-arrow cases-arrow-left" id="casesArrowLeft" aria-label="Scroll left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" class="cases-arrow cases-arrow-right" id="casesArrowRight" aria-label="Scroll right">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
         <div class="cases-track">
 
           <!-- Card 1: Covelong GO 87 -->
@@ -1809,6 +1820,6 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="script.js?v=7.3.4" defer></script>
+<script src="script.js?v=7.3.5" defer></script>
 </body>
 </html>

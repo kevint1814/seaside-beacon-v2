@@ -2388,6 +2388,21 @@ function initScrollReveal() {
   document.querySelectorAll('.case-card').forEach((el,i)=>{
     el.classList.add('reveal',`reveal-delay-${i%3+1}`);
   });
+  // Cases carousel arrows
+  const casesTrack = document.querySelector('.cases-track');
+  const arrowL = document.getElementById('casesArrowLeft');
+  const arrowR = document.getElementById('casesArrowRight');
+  if (casesTrack && arrowL && arrowR) {
+    const scrollAmt = 340;
+    arrowL.addEventListener('click', () => casesTrack.scrollBy({ left: -scrollAmt, behavior: 'smooth' }));
+    arrowR.addEventListener('click', () => casesTrack.scrollBy({ left: scrollAmt, behavior: 'smooth' }));
+    const updateArrows = () => {
+      arrowL.disabled = casesTrack.scrollLeft <= 10;
+      arrowR.disabled = casesTrack.scrollLeft + casesTrack.clientWidth >= casesTrack.scrollWidth - 10;
+    };
+    casesTrack.addEventListener('scroll', updateArrows, { passive: true });
+    updateArrows();
+  }
   // Subscribe section
   document.querySelectorAll('.sub-heading, .sub-body, .sub-form-card').forEach((el,i) => {
     el.classList.add('reveal', `reveal-delay-${i%3+1}`);
