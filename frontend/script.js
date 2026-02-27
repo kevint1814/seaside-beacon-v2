@@ -2327,7 +2327,7 @@ async function submitSub(email,beach,msgId,btnId) {
     const d=await res.json();
     if(d.success){
       localStorage.setItem('sb_subscribed', '1');
-      showMsg(msgId,d.message||'✓ Subscribed — preview at 8:30 PM, final forecast at 4 AM.',true);
+      showMsg(msgId,d.message||'✓ Subscribed — forecast at 4 AM every morning.',true);
       // GPay-style card flip success
       const card = document.getElementById(btnId)?.closest('.sub-form-card');
       if (card) {
@@ -2366,7 +2366,7 @@ async function submitSub(email,beach,msgId,btnId) {
 
         const sub = document.createElement('p');
         sub.className = 'success-subtitle';
-        sub.textContent = 'Evening preview tonight at 8:30 PM.\nFinal forecast tomorrow at 4:00 AM IST.';
+        sub.textContent = 'Final forecast every morning at 4:00 AM IST.\nSleep well — we\'ll handle the alarm call.';
         face.appendChild(sub);
 
         card.appendChild(face);
