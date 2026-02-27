@@ -291,8 +291,58 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 /* Inactive row */
 .row-inactive td{opacity:0.45}
 
+/* ── Tab Navigation ── */
+.nav-tabs{display:flex;gap:2px;padding:4px;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:0;z-index:50}
+.tab-btn{padding:8px 16px;border:none;border-radius:6px;background:transparent;color:var(--t3);font-size:11px;font-weight:500;font-family:var(--sans);cursor:pointer;white-space:nowrap;transition:all .2s;letter-spacing:.02em}
+.tab-btn:hover{color:var(--t1);background:var(--surface2)}
+.tab-btn.active{color:var(--accent);background:rgba(196,115,58,0.1);font-weight:600}
+.tab-btn .tab-count{font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;margin-left:4px;background:var(--surface2);color:var(--t4)}
+.tab-btn.active .tab-count{background:rgba(196,115,58,0.15);color:var(--accent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── Photo Gallery ── */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.photo-card{background:var(--surface2);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);transition:border-color .2s}
+.photo-card:hover{border-color:var(--border-light)}
+.photo-card img{width:100%;height:160px;object-fit:cover;cursor:pointer;display:block}
+.photo-card-info{padding:10px}
+.photo-card-beach{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3)}
+.photo-card-meta{font-size:10px;color:var(--t4);margin-top:2px}
+.photo-card-actions{display:flex;gap:4px;margin-top:8px}
+.mini-btn{padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:transparent;font-size:9px;font-family:var(--sans);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.3px}
+.mini-btn:hover{border-color:var(--border-light);background:var(--surface3)}
+.mini-btn.feat-on{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.mini-btn.spot-on{border-color:var(--violet);color:var(--violet);background:var(--violet-bg)}
+.mini-btn.del{color:var(--red)}.mini-btn.del:hover{border-color:var(--red);background:var(--red-bg)}
+
+/* ── Ticket detail ── */
+.ticket-detail{padding:16px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border);margin-top:8px}
+.ticket-detail-label{font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.ticket-detail-body{font-size:12px;color:var(--t2);line-height:1.6;white-space:pre-wrap}
+
+/* ── Environment / System ── */
+.env-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:11px}
+.env-row:last-child{border-bottom:none}
+.env-key{color:var(--t2);font-family:var(--mono);font-weight:500}
+.env-val{color:var(--t3);font-family:var(--mono);max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.env-masked{color:var(--t4)}
+
+/* ── Export / Job buttons ── */
+.export-btn{padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--t2);font-size:11px;font-weight:500;font-family:var(--sans);cursor:pointer;transition:all .2s}
+.export-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(196,115,58,0.05)}
+.job-btn{padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--t2);font-size:11px;font-weight:500;font-family:var(--sans);cursor:pointer;transition:all .2s}
+.job-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.job-btn.running{opacity:.5;cursor:wait}
+.job-result{font-size:10px;color:var(--t3);margin-top:4px;font-family:var(--mono)}
+
+/* ── DB Browser ── */
+.doc-json{font-family:var(--mono);font-size:10px;color:var(--t2);background:var(--bg);padding:8px;border-radius:4px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;border:1px solid var(--border)}
+
 /* ── Mobile responsive ── */
 @media(max-width:768px){
+  .nav-tabs{gap:1px;padding:3px}
+  .tab-btn{padding:6px 10px;font-size:10px}
   .header{flex-direction:column;gap:12px;align-items:flex-start}
   .header-right{flex-wrap:wrap;gap:8px}
   .stat-val{font-size:24px}
@@ -380,6 +430,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
       <button class="sign-out" id="logoutBtn">Sign Out</button>
     </div>
   </div>
+
+  <!-- Tab Navigation -->
+  <div class="nav-tabs" id="navTabs">
+    <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+    <button class="tab-btn" data-tab="photos" onclick="switchTab('photos')">Photos <span class="tab-count" id="tcPhotos">—</span></button>
+    <button class="tab-btn" data-tab="support" onclick="switchTab('support')">Support <span class="tab-count" id="tcSupport">—</span></button>
+    <button class="tab-btn" data-tab="community" onclick="switchTab('community')">Community</button>
+    <button class="tab-btn" data-tab="database" onclick="switchTab('database')">Database</button>
+    <button class="tab-btn" data-tab="revenue" onclick="switchTab('revenue')">Revenue</button>
+    <button class="tab-btn" data-tab="system" onclick="switchTab('system')">System</button>
+  </div>
+
+  <!-- ═══ TAB: Overview ═══ -->
+  <div class="tab-panel active" id="tab-overview">
 
   <!-- ROW 1: Headline numbers (LIFETIME) -->
   <div class="row cols-4">
@@ -665,6 +729,181 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
     <div class="card">
       <div class="card-title">Error Log <span class="badge" style="background:var(--red-bg);color:var(--red)" id="errBadge">0</span></div>
       <div class="scroll-y" id="errLog"><div class="empty-state">No errors this session</div></div>
+    </div>
+  </div>
+
+  </div><!-- /tab-overview -->
+
+  <!-- ═══ TAB: Photos ═══ -->
+  <div class="tab-panel" id="tab-photos">
+    <div class="row" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+      <div class="card stat-card blue"><div class="card-title">Total Photos</div><div class="stat-val" id="photoTotal">—</div></div>
+      <div class="card stat-card green"><div class="card-title">Featured</div><div class="stat-val" id="photoFeatured">—</div></div>
+      <div class="card stat-card violet"><div class="card-title">Spotlighted</div><div class="stat-val" id="photoSpotlighted">—</div></div>
+      <div class="card stat-card copper"><div class="card-title">By Beach</div><div class="stat-val" style="font-size:16px" id="photoByBeach">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sunrise Gallery <span class="badge" style="background:var(--surface2);color:var(--t2)" id="photoPageInfo">—</span></div>
+      <div class="mgmt-bar">
+        <input type="text" class="mgmt-search" id="photoSearch" placeholder="Search by name or email...">
+        <select class="mgmt-filter" id="photoBeachFilter">
+          <option value="">All beaches</option>
+          <option value="marina">Marina</option>
+          <option value="elliot">Elliot's</option>
+          <option value="covelong">Covelong</option>
+          <option value="thiruvanmiyur">Thiruvanmiyur</option>
+        </select>
+        <select class="mgmt-filter" id="photoFeatFilter">
+          <option value="">All</option>
+          <option value="true">Featured only</option>
+          <option value="false">Not featured</option>
+        </select>
+      </div>
+      <div class="photo-grid" id="photoGrid"><div class="empty-state">Loading photos...</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: Support ═══ -->
+  <div class="tab-panel" id="tab-support">
+    <div class="row" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+      <div class="card stat-card copper"><div class="card-title">Open</div><div class="stat-val" id="tkOpen">—</div></div>
+      <div class="card stat-card blue"><div class="card-title">In Progress</div><div class="stat-val" id="tkInProgress">—</div></div>
+      <div class="card stat-card green"><div class="card-title">Resolved</div><div class="stat-val" id="tkResolved">—</div></div>
+      <div class="card stat-card violet"><div class="card-title">Total</div><div class="stat-val" id="tkTotal">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Support Tickets</div>
+      <div class="mgmt-bar">
+        <input type="text" class="mgmt-search" id="ticketSearch" placeholder="Search tickets...">
+        <select class="mgmt-filter" id="ticketStatusFilter">
+          <option value="">All statuses</option>
+          <option value="open">Open</option>
+          <option value="in-progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Ticket</th><th>Category</th><th>Subject</th><th>User</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+          <tbody id="ticketBody"><tr><td colspan="7" class="empty-state">Loading tickets...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: Community ═══ -->
+  <div class="tab-panel" id="tab-community">
+    <div class="row cols-2" style="margin-bottom:14px">
+      <!-- Feedback Section -->
+      <div class="card">
+        <div class="card-title">Feedback <span class="badge" style="background:var(--surface2);color:var(--t2)" id="cmFeedbackCount">—</span></div>
+        <div class="scroll-y" style="max-height:500px" id="cmFeedbackList"><div class="empty-state">Loading feedback...</div></div>
+      </div>
+      <!-- Telegram + FCM -->
+      <div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">Telegram Linked Users <span class="badge" style="background:rgba(6,182,212,0.1);color:var(--cyan)" id="cmTelegramCount">—</span></div>
+          <div class="scroll-y" style="max-height:240px">
+            <table class="tbl">
+              <thead><tr><th>Email</th><th>Beach</th><th>Chat ID</th><th>Linked</th></tr></thead>
+              <tbody id="cmTelegramBody"><tr><td colspan="4" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">FCM Devices <span class="badge" style="background:var(--surface2);color:var(--t2)" id="cmDeviceCount">—</span></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
+            <div><div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Android</div><div class="stat-val" style="font-size:22px" id="cmAndroid">—</div></div>
+            <div><div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">iOS</div><div class="stat-val" style="font-size:22px" id="cmIos">—</div></div>
+            <div><div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Active (7d)</div><div class="stat-val" style="font-size:22px" id="cmActiveDevices">—</div></div>
+          </div>
+          <div class="scroll-y" style="max-height:200px">
+            <table class="tbl">
+              <thead><tr><th>Platform</th><th>Beach</th><th>Muted</th><th>Last Active</th></tr></thead>
+              <tbody id="cmDeviceBody"><tr><td colspan="4" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: Database ═══ -->
+  <div class="tab-panel" id="tab-database">
+    <div class="row cols-2" style="margin-bottom:14px">
+      <div class="card">
+        <div class="card-title">Collections <span class="badge" style="background:var(--surface2);color:var(--t2)" id="dbCollCount">—</span></div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Collection</th><th>Documents</th><th>Action</th></tr></thead>
+            <tbody id="dbCollBody"><tr><td colspan="3" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Manual Job Triggers</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <button class="job-btn" onclick="triggerJob('dailyEmail')">Daily Email (4 AM)</button>
+          <button class="job-btn" onclick="triggerJob('eveningPreview')">Evening Preview</button>
+          <button class="job-btn" onclick="triggerJob('morningPush')">Morning Push</button>
+          <button class="job-btn" onclick="triggerJob('eveningPush')">Evening Push</button>
+          <button class="job-btn" onclick="triggerJob('specialAlert')">Special Alert (70+)</button>
+        </div>
+        <div id="jobResult" class="job-result" style="display:none"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Document Browser <span class="badge" style="background:var(--surface2);color:var(--t2)" id="dbBrowseInfo">Select a collection above</span></div>
+      <div id="dbBrowseContent"><div class="empty-state">Click "Browse" on a collection to view its documents</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: Revenue ═══ -->
+  <div class="tab-panel" id="tab-revenue">
+    <div class="row" style="grid-template-columns:repeat(5,1fr);margin-bottom:14px">
+      <div class="card stat-card copper"><div class="card-title">MRR</div><div class="stat-val" id="revMRR">—</div></div>
+      <div class="card stat-card green"><div class="card-title">ARR</div><div class="stat-val" id="revARR">—</div></div>
+      <div class="card stat-card blue"><div class="card-title">Monthly Plans</div><div class="stat-val" id="revMonthly">—</div></div>
+      <div class="card stat-card violet"><div class="card-title">Annual Plans</div><div class="stat-val" id="revAnnual">—</div></div>
+      <div class="card stat-card copper"><div class="card-title">Cancellations</div><div class="stat-val" id="revCancelled">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Premium User Timeline</div>
+      <div class="scroll-y" style="max-height:500px">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>Subscribed</th><th>Period End</th><th>Tenure</th></tr></thead>
+            <tbody id="revBody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: System ═══ -->
+  <div class="tab-panel" id="tab-system">
+    <div class="row cols-2" style="margin-bottom:14px">
+      <div class="card">
+        <div class="card-title">Environment Variables <span class="badge" style="background:var(--surface2);color:var(--t2)" id="envCount">—</span></div>
+        <div class="scroll-y" style="max-height:500px" id="envList"><div class="empty-state">Loading...</div></div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">Data Exports</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button class="export-btn" onclick="exportCSV('subscribers')">Export Subscribers</button>
+            <button class="export-btn" onclick="exportCSV('premium')">Export Premium Users</button>
+            <button class="export-btn" onclick="exportCSV('forecasts')">Export Forecasts</button>
+            <button class="export-btn" onclick="exportCSV('feedback')">Export Feedback</button>
+            <button class="export-btn" onclick="exportCSV('traffic')">Export Traffic</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Service Health</div>
+          <div id="sysHealth"><div class="empty-state">Loading...</div></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1383,6 +1622,429 @@ async function openPremiumHistory(email){
   }
 }
 
+// ══════════════════════════════════════════════
+// Tab Navigation + Lazy Loading
+// ══════════════════════════════════════════════
+let _activeTab = 'overview';
+const _tabLoaded = { overview: true };
+
+function switchTab(name) {
+  _activeTab = name;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('tab-' + name);
+  if (panel) panel.classList.add('active');
+  // Highlight active tab button
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.dataset.tab === name) b.classList.add('active');
+  });
+  // Lazy load data
+  if (!_tabLoaded[name]) {
+    _tabLoaded[name] = true;
+    switch (name) {
+      case 'photos': loadPhotos(); break;
+      case 'support': loadTickets(); break;
+      case 'community': loadCommunity(); break;
+      case 'database': loadDbStats(); break;
+      case 'revenue': loadRevenue(); break; // uses cached _premiumData from overview poll
+      case 'system': loadSystemEnv(); loadSystemHealth(); break;
+    }
+  }
+}
+
+// ═══ Photos Tab ═══
+let _photoData = [];
+async function loadPhotos() {
+  try {
+    const beach = document.getElementById('photoBeachFilter')?.value || '';
+    const featured = document.getElementById('photoFeatFilter')?.value || '';
+    let url = API + '/api/admin/photos?limit=100';
+    if (beach) url += '&beach=' + beach;
+    if (featured) url += '&featured=' + featured;
+    const res = await fetch(url, { headers: { 'X-Admin-Token': token } });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    _photoData = d.photos || [];
+    const s = d.stats || {};
+    $('photoTotal', s.total || 0);
+    $('photoFeatured', s.featured || 0);
+    $('photoSpotlighted', s.spotlighted || 0);
+    $('tcPhotos', s.total || 0);
+    const byBeach = s.byBeach || {};
+    $('photoByBeach', Object.entries(byBeach).map(([k, v]) => cap(k) + ':' + v).join(' '));
+    $('photoPageInfo', d.photos.length + ' of ' + d.total);
+    renderPhotoGrid();
+  } catch (e) {
+    document.getElementById('photoGrid').innerHTML = '<div class="empty-state" style="color:var(--red)">Error: ' + esc(e.message) + '</div>';
+  }
+}
+
+function renderPhotoGrid() {
+  const grid = document.getElementById('photoGrid');
+  const search = (document.getElementById('photoSearch')?.value || '').toLowerCase();
+  const beaches = { marina: 'Marina', elliot: "Elliot's", covelong: 'Covelong', thiruvanmiyur: 'Thiruvanmiyur' };
+  let photos = _photoData;
+  if (search) photos = photos.filter(p => (p.name || '').toLowerCase().includes(search) || (p.email || '').toLowerCase().includes(search));
+  if (!photos.length) { grid.innerHTML = '<div class="empty-state">No photos found</div>'; return; }
+  grid.innerHTML = photos.map(p => {
+    const date = new Date(p.date || p.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' });
+    const featCls = p.featured ? ' feat-on' : '';
+    const spotCls = p.spotlighted ? ' spot-on' : '';
+    const pid = escAttr(p._id);
+    return '<div class="photo-card">' +
+      '<img src="' + esc(p.cloudinaryUrl) + '" alt="Sunrise" loading="lazy" onclick="window.open(\'' + escAttr(p.cloudinaryUrl) + '\',\'_blank\')">' +
+      '<div class="photo-card-info">' +
+        '<div class="photo-card-beach">' + (beaches[p.beach] || p.beach) + '</div>' +
+        '<div class="photo-card-meta">' + esc(p.name || 'Anonymous') + ' · ' + date + '</div>' +
+        '<div class="photo-card-actions">' +
+          '<button class="mini-btn' + featCls + '" onclick="togglePhotoFeature(\'' + pid + '\',' + (!p.featured) + ')">' + (p.featured ? '★ Featured' : '☆ Feature') + '</button>' +
+          '<button class="mini-btn' + spotCls + '" onclick="togglePhotoSpotlight(\'' + pid + '\',' + (!p.spotlighted) + ')">' + (p.spotlighted ? '◆ Spotlit' : '◇ Spotlight') + '</button>' +
+          '<button class="mini-btn del" onclick="confirmDeletePhoto(\'' + pid + '\')">Delete</button>' +
+        '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+async function togglePhotoFeature(id, val) {
+  try {
+    await fetch(API + '/api/admin/photos/' + id, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+      body: JSON.stringify({ featured: val })
+    });
+    _tabLoaded.photos = false; loadPhotos();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function togglePhotoSpotlight(id, val) {
+  try {
+    await fetch(API + '/api/admin/photos/' + id, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+      body: JSON.stringify({ spotlighted: val })
+    });
+    _tabLoaded.photos = false; loadPhotos();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+function confirmDeletePhoto(id) {
+  openModal(
+    '<div class="modal-title">Delete Photo</div>' +
+    '<div class="modal-sub">This will remove the photo from MongoDB and Cloudinary. This cannot be undone.</div>' +
+    '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Cancel</button><button class="modal-btn modal-btn-danger" onclick="doDeletePhoto(\'' + id + '\')">Delete</button></div>'
+  );
+}
+
+async function doDeletePhoto(id) {
+  try {
+    const res = await fetch(API + '/api/admin/photos/' + id, { method: 'DELETE', headers: { 'X-Admin-Token': token } });
+    const d = await res.json();
+    if (d.success) { closeModal(); _tabLoaded.photos = false; loadPhotos(); }
+    else alert(d.error || 'Delete failed');
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+// ═══ Support Tab ═══
+let _ticketData = [];
+async function loadTickets() {
+  try {
+    const status = document.getElementById('ticketStatusFilter')?.value || '';
+    let url = API + '/api/admin/tickets';
+    if (status) url += '?status=' + status;
+    const res = await fetch(url, { headers: { 'X-Admin-Token': token } });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    _ticketData = d.tickets || [];
+    const s = d.stats || {};
+    $('tkOpen', s.open || 0);
+    $('tkInProgress', s.inProgress || 0);
+    $('tkResolved', s.resolved || 0);
+    $('tkTotal', s.total || 0);
+    $('tcSupport', (s.open || 0) + (s.inProgress || 0));
+    renderTicketTable();
+  } catch (e) {
+    document.getElementById('ticketBody').innerHTML = '<tr><td colspan="7" class="empty-state" style="color:var(--red)">Error: ' + esc(e.message) + '</td></tr>';
+  }
+}
+
+function renderTicketTable() {
+  const body = document.getElementById('ticketBody');
+  const search = (document.getElementById('ticketSearch')?.value || '').toLowerCase();
+  let tickets = _ticketData;
+  if (search) tickets = tickets.filter(t =>
+    (t.ticketId || '').toLowerCase().includes(search) ||
+    (t.subject || '').toLowerCase().includes(search) ||
+    (t.userEmail || '').toLowerCase().includes(search)
+  );
+  if (!tickets.length) { body.innerHTML = '<tr><td colspan="7" class="empty-state">No tickets found</td></tr>'; return; }
+
+  const statusClass = { 'open': 'status-cancelled', 'in-progress': 'status-pending', 'resolved': 'status-active', 'closed': 'status-expired' };
+  body.innerHTML = tickets.map(t => {
+    const created = new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' });
+    const sClass = statusClass[t.status] || 'status-pending';
+    return '<tr>' +
+      '<td class="mono" style="color:var(--accent)">' + esc(t.ticketId) + '</td>' +
+      '<td><span class="sb" style="background:var(--surface3);color:var(--t2)">' + esc(t.category || 'general') + '</span></td>' +
+      '<td style="color:var(--t1);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(t.subject) + '</td>' +
+      '<td class="mono" style="font-size:11px;color:var(--t3)">' + esc(t.userEmail || t.userName || '—') + '</td>' +
+      '<td><span class="status-badge ' + sClass + '">' + esc(t.status) + '</span></td>' +
+      '<td style="color:var(--t4)">' + created + '</td>' +
+      '<td><div class="act-group">' +
+        '<button class="act-btn act-edit" onclick="openTicketDetail(\'' + escAttr(t.ticketId) + '\')">View</button>' +
+        (t.status !== 'resolved' && t.status !== 'closed' ? '<button class="act-btn act-extend" onclick="resolveTicket(\'' + escAttr(t.ticketId) + '\')">Resolve</button>' : '') +
+      '</div></td></tr>';
+  }).join('');
+}
+
+function openTicketDetail(ticketId) {
+  const t = _ticketData.find(tk => tk.ticketId === ticketId);
+  if (!t) return;
+  const created = new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const resolved = t.resolvedAt ? new Date(t.resolvedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+  const statuses = ['open', 'in-progress', 'resolved', 'closed'];
+  const statusOpts = statuses.map(s => '<option value="' + s + '"' + (t.status === s ? ' selected' : '') + '>' + cap(s) + '</option>').join('');
+
+  openModal(
+    '<div class="modal-title">' + esc(t.ticketId) + ': ' + esc(t.subject) + '</div>' +
+    '<div class="modal-sub">' + esc(t.category || 'general') + ' · ' + esc(t.userEmail || 'Unknown') + ' · ' + created + '</div>' +
+    '<div class="ticket-detail"><div class="ticket-detail-label">Description</div><div class="ticket-detail-body">' + esc(t.description || '—') + '</div></div>' +
+    '<div class="modal-field" style="margin-top:14px"><label class="modal-label">Status</label><select class="modal-select" id="tkEditStatus">' + statusOpts + '</select></div>' +
+    '<div class="modal-field"><label class="modal-label">Admin Notes</label><textarea class="modal-input" id="tkEditNotes" rows="3" style="resize:vertical">' + esc(t.adminNotes || '') + '</textarea></div>' +
+    (t.resolvedAt ? '<div style="font-size:10px;color:var(--t4);margin-bottom:8px">Resolved: ' + resolved + '</div>' : '') +
+    '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Close</button><button class="modal-btn modal-btn-primary" onclick="saveTicket(\'' + escAttr(t.ticketId) + '\')">Save</button></div>'
+  );
+}
+
+async function saveTicket(ticketId) {
+  const status = document.getElementById('tkEditStatus').value;
+  const adminNotes = document.getElementById('tkEditNotes').value;
+  try {
+    const res = await fetch(API + '/api/admin/tickets/' + encodeURIComponent(ticketId), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+      body: JSON.stringify({ status, adminNotes })
+    });
+    const d = await res.json();
+    if (d.success) { closeModal(); _tabLoaded.support = false; loadTickets(); }
+    else alert(d.error || 'Update failed');
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function resolveTicket(ticketId) {
+  if (!confirm('Resolve ticket ' + ticketId + '?')) return;
+  try {
+    const res = await fetch(API + '/api/admin/tickets/' + encodeURIComponent(ticketId) + '/resolve', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+      body: JSON.stringify({})
+    });
+    const d = await res.json();
+    if (d.success) { _tabLoaded.support = false; loadTickets(); }
+    else alert(d.error || 'Resolve failed');
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+// ═══ Community Tab ═══
+async function loadCommunity() {
+  // Feedback with delete
+  try {
+    const mRes = await fetch(API + '/api/admin/metrics', { headers: { 'X-Admin-Token': token } });
+    const mData = await mRes.json();
+    const fb = mData.feedback || [];
+    const beaches = { marina: 'Marina', elliot: "Elliot's", covelong: 'Covelong', thiruvanmiyur: 'Thiruvanmiyur' };
+    const ratingColors = { 'spot-on': 'background:var(--green-bg);color:var(--green)', 'close': 'background:var(--amber-bg);color:var(--amber)', 'missed': 'background:var(--red-bg);color:var(--red)' };
+    $('cmFeedbackCount', fb.length);
+    const el = document.getElementById('cmFeedbackList');
+    if (!fb.length) { el.innerHTML = '<div class="empty-state">No feedback yet</div>'; }
+    else {
+      el.innerHTML = fb.map(f => {
+        const date = new Date(f.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' });
+        const beach = beaches[f.beach] || f.beach;
+        return '<div class="feedback-item"><div class="feedback-content"><div class="feedback-user">' + esc(f.userName || 'Anonymous') + '</div><div class="feedback-meta"><span class="feedback-beach">' + beach + '</span> · ' + date + '</div><div class="feedback-comment">' + esc(f.comment || '') + '</div></div><div style="display:flex;align-items:center;gap:6px"><span class="feedback-rating" style="' + (ratingColors[f.rating] || '') + '">' + esc(f.rating || '—') + '</span><button class="mini-btn del" onclick="deleteFeedback(\'' + escAttr(f._id) + '\')">✕</button></div></div>';
+      }).join('');
+    }
+
+    // Telegram linked users
+    const premUsers = mData.premium?.list || [];
+    const telegramUsers = premUsers.filter(u => u.telegramChatId);
+    $('cmTelegramCount', telegramUsers.length);
+    const tBody = document.getElementById('cmTelegramBody');
+    if (!telegramUsers.length) { tBody.innerHTML = '<tr><td colspan="4" class="empty-state">No Telegram users</td></tr>'; }
+    else {
+      tBody.innerHTML = telegramUsers.map(u => {
+        return '<tr><td class="mono" style="font-size:11px">' + esc(u.email) + '</td><td style="color:var(--t3)">' + (beaches[u.preferredBeach] || u.preferredBeach) + '</td><td class="mono" style="font-size:10px;color:var(--t4)">' + esc(u.telegramChatId) + '</td><td style="color:var(--t4)">' + (u.lastLogin ? timeAgo(new Date(u.lastLogin)) : '—') + '</td></tr>';
+      }).join('');
+    }
+  } catch (e) { console.error('Community load error:', e); }
+
+  // FCM Devices
+  try {
+    const dRes = await fetch(API + '/api/admin/devices', { headers: { 'X-Admin-Token': token } });
+    const dData = await dRes.json();
+    if (dData.success) {
+      const s = dData.stats || {};
+      $('cmDeviceCount', s.total || 0);
+      $('cmAndroid', s.android || 0);
+      $('cmIos', s.ios || 0);
+      $('cmActiveDevices', s.activeLastWeek || 0);
+      const dBody = document.getElementById('cmDeviceBody');
+      const devices = (dData.devices || []).slice(0, 50);
+      if (!devices.length) { dBody.innerHTML = '<tr><td colspan="4" class="empty-state">No devices</td></tr>'; }
+      else {
+        dBody.innerHTML = devices.map(d => {
+          const muted = d.settings?.muteAll ? 'All' : [d.settings?.muteMorning && 'AM', d.settings?.muteEvening && 'PM'].filter(Boolean).join('+') || '—';
+          return '<tr><td><span class="sb" style="background:' + (d.platform === 'android' ? 'var(--green-bg);color:var(--green)' : 'var(--blue-bg);color:var(--blue)') + '">' + (d.platform || '?') + '</span></td><td style="color:var(--t3)">' + cap(d.defaultBeach || 'marina') + '</td><td style="color:var(--t4)">' + muted + '</td><td style="color:var(--t4)">' + (d.lastActive ? timeAgo(new Date(d.lastActive)) : '—') + '</td></tr>';
+        }).join('');
+      }
+    }
+  } catch (e) { console.error('Devices load error:', e); }
+}
+
+async function deleteFeedback(id) {
+  if (!confirm('Delete this feedback?')) return;
+  try {
+    const res = await fetch(API + '/api/admin/feedback/' + id, { method: 'DELETE', headers: { 'X-Admin-Token': token } });
+    const d = await res.json();
+    if (d.success) { _tabLoaded.community = false; loadCommunity(); }
+    else alert(d.error || 'Delete failed');
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+// ═══ Database Tab ═══
+async function loadDbStats() {
+  try {
+    const res = await fetch(API + '/api/admin/db/stats', { headers: { 'X-Admin-Token': token } });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    $('dbCollCount', d.total + ' collections');
+    const body = document.getElementById('dbCollBody');
+    body.innerHTML = (d.collections || []).map(c => {
+      return '<tr><td class="mono" style="color:var(--t1)">' + esc(c.name) + '</td><td class="mono">' + fmt(c.count) + '</td><td><button class="act-btn act-edit" onclick="browseCollection(\'' + escAttr(c.name) + '\')">Browse</button></td></tr>';
+    }).join('');
+  } catch (e) {
+    document.getElementById('dbCollBody').innerHTML = '<tr><td colspan="3" class="empty-state" style="color:var(--red)">Error: ' + esc(e.message) + '</td></tr>';
+  }
+}
+
+async function browseCollection(name) {
+  const el = document.getElementById('dbBrowseContent');
+  $('dbBrowseInfo', name + ' — loading...');
+  el.innerHTML = '<div class="empty-state">Loading documents...</div>';
+  try {
+    const res = await fetch(API + '/api/admin/db/collection/' + encodeURIComponent(name) + '?limit=20', { headers: { 'X-Admin-Token': token } });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    $('dbBrowseInfo', name + ' — ' + d.docs.length + ' of ' + d.total);
+    if (!d.docs.length) { el.innerHTML = '<div class="empty-state">Collection is empty</div>'; return; }
+    el.innerHTML = d.docs.map((doc, i) => {
+      return '<div style="margin-bottom:8px"><div style="font-size:10px;color:var(--t4);margin-bottom:2px">#' + (i + 1) + ' · ' + (doc._id || '—') + '</div><div class="doc-json">' + esc(JSON.stringify(doc, null, 2)) + '</div></div>';
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state" style="color:var(--red)">Error: ' + esc(e.message) + '</div>';
+  }
+}
+
+async function triggerJob(jobName) {
+  const resultEl = document.getElementById('jobResult');
+  resultEl.style.display = 'block';
+  resultEl.textContent = 'Running ' + jobName + '...';
+  resultEl.style.color = 'var(--t3)';
+  try {
+    const res = await fetch(API + '/api/admin/jobs/trigger', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+      body: JSON.stringify({ job: jobName })
+    });
+    const d = await res.json();
+    if (d.success) {
+      resultEl.style.color = 'var(--green)';
+      resultEl.textContent = '✓ ' + jobName + ' completed in ' + d.duration + 'ms' + (d.result && typeof d.result === 'object' ? ' — ' + JSON.stringify(d.result) : '');
+    } else {
+      resultEl.style.color = 'var(--red)';
+      resultEl.textContent = '✗ ' + (d.error || 'Failed');
+    }
+  } catch (e) {
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = '✗ Network error: ' + e.message;
+  }
+}
+
+// ═══ Revenue Tab ═══
+async function loadRevenue() {
+  // Revenue uses already-fetched premium data from metrics, or fetches if empty
+  let p = _premiumData;
+  if (!p || !p.list) {
+    try {
+      const res = await fetch(API + '/api/admin/metrics', { headers: { 'X-Admin-Token': token } });
+      const d = await res.json();
+      p = d.premium || {};
+      if (!p.list) { document.getElementById('revBody').innerHTML = '<tr><td colspan="6" class="empty-state">No premium data available</td></tr>'; return; }
+    } catch (e) { document.getElementById('revBody').innerHTML = '<tr><td colspan="6" class="empty-state" style="color:var(--red)">Error loading data</td></tr>'; return; }
+  }
+  const now = new Date();
+  const activePremium = (p.list || []).filter(u => u.status === 'active' || (u.cancelledWithGrace && u.currentPeriodEnd && new Date(u.currentPeriodEnd) > now));
+  const monthlyCount = activePremium.filter(u => u.plan === 'monthly').length;
+  const annualCount = activePremium.filter(u => u.plan === 'annual').length;
+  const mrr = monthlyCount * 49 + Math.round(annualCount * 399 / 12);
+  const arr = mrr * 12;
+  const cancelled = (p.list || []).filter(u => u.status === 'cancelled').length;
+
+  $('revMRR', 'INR ' + fmt(mrr));
+  $('revARR', 'INR ' + fmt(arr));
+  $('revMonthly', monthlyCount);
+  $('revAnnual', annualCount);
+  $('revCancelled', cancelled);
+
+  const body = document.getElementById('revBody');
+  const sorted = [...(p.list || [])].sort((a, b) => new Date(b.subscribedAt || b.createdAt) - new Date(a.subscribedAt || a.createdAt));
+  if (!sorted.length) { body.innerHTML = '<tr><td colspan="6" class="empty-state">No premium users</td></tr>'; return; }
+
+  const statusClass = { active: 'status-active', cancelled: 'status-cancelled', expired: 'status-expired', pending: 'status-pending' };
+  body.innerHTML = sorted.map(u => {
+    const subDate = u.subscribedAt ? new Date(u.subscribedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : '—';
+    const endDate = u.currentPeriodEnd ? new Date(u.currentPeriodEnd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : '—';
+    const isGrace = u.cancelledWithGrace && u.currentPeriodEnd && new Date(u.currentPeriodEnd) > now;
+    const sClass = isGrace ? 'status-grace' : (statusClass[u.status] || 'status-pending');
+    const sLabel = isGrace ? 'Grace' : (u.status || '—');
+    const tenure = u.subscribedAt ? Math.floor((Date.now() - new Date(u.subscribedAt).getTime()) / (1000 * 60 * 60 * 24)) + 'd' : '—';
+    return '<tr><td class="mono" style="font-size:11px;color:var(--t1)">' + esc(u.email) + '</td><td><span class="sb" style="background:var(--amber-bg);color:var(--amber)">' + esc(u.plan || '—') + '</span></td><td><span class="status-badge ' + sClass + '">' + esc(sLabel) + '</span></td><td style="color:var(--t3)">' + subDate + '</td><td style="color:var(--t3)">' + endDate + '</td><td class="mono" style="color:var(--t4)">' + tenure + '</td></tr>';
+  }).join('');
+}
+
+// ═══ System Tab ═══
+async function loadSystemEnv() {
+  try {
+    const res = await fetch(API + '/api/admin/system/env', { headers: { 'X-Admin-Token': token } });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    $('envCount', d.count + ' variables');
+    const el = document.getElementById('envList');
+    const entries = Object.entries(d.env || {}).sort((a, b) => a[0].localeCompare(b[0]));
+    el.innerHTML = entries.map(([k, v]) => {
+      const isMasked = v.includes('••••');
+      return '<div class="env-row"><span class="env-key">' + esc(k) + '</span><span class="env-val' + (isMasked ? ' env-masked' : '') + '">' + esc(v) + '</span></div>';
+    }).join('');
+  } catch (e) {
+    document.getElementById('envList').innerHTML = '<div class="empty-state" style="color:var(--red)">Error: ' + esc(e.message) + '</div>';
+  }
+}
+
+async function loadSystemHealth() {
+  try {
+    const res = await fetch(API + '/api/admin/metrics', { headers: { 'X-Admin-Token': token } });
+    const d = await res.json();
+    const se = d.session || {};
+    const db = d.database || {};
+    const el = document.getElementById('sysHealth');
+    el.innerHTML =
+      '<div class="svc"><span class="svc-name"><span class="dot dot-' + (db.connected ? 'green' : 'red') + '"></span>MongoDB</span><span class="svc-val">' + (db.connected ? 'Connected' : 'Down') + '</span></div>' +
+      '<div class="svc"><span class="svc-name"><span class="dot dot-green"></span>Server</span><span class="svc-val">' + (se.server?.uptimeFormatted || '—') + '</span></div>' +
+      '<div class="svc"><span class="svc-name"><span class="dot dot-green"></span>Memory RSS</span><span class="svc-val">' + (se.server?.memory?.rss || '—') + ' MB</span></div>' +
+      '<div class="svc"><span class="svc-name"><span class="dot dot-green"></span>Heap</span><span class="svc-val">' + (se.server?.memory?.heapUsed || '—') + ' MB</span></div>';
+  } catch (e) {
+    document.getElementById('sysHealth').innerHTML = '<div class="empty-state" style="color:var(--red)">Error: ' + esc(e.message) + '</div>';
+  }
+}
+
+function exportCSV(type) {
+  window.open(API + '/api/admin/export/' + type + '?token=' + token, '_blank');
+}
+
 // ── Bind ──
 document.getElementById('loginBtn').addEventListener('click', login);
 document.getElementById('logoutBtn').addEventListener('click', logout);
@@ -1398,6 +2060,13 @@ document.getElementById('subSearch').addEventListener('input', renderSubTable);
 document.getElementById('subBeachFilter').addEventListener('change', renderSubTable);
 document.getElementById('premiumSearch').addEventListener('input', renderPremiumTable);
 document.getElementById('premiumStatusFilter').addEventListener('change', renderPremiumTable);
+// Photo tab filters
+document.getElementById('photoSearch').addEventListener('input', renderPhotoGrid);
+document.getElementById('photoBeachFilter').addEventListener('change', function(){ _tabLoaded.photos=false; loadPhotos(); });
+document.getElementById('photoFeatFilter').addEventListener('change', function(){ _tabLoaded.photos=false; loadPhotos(); });
+// Ticket tab filters
+document.getElementById('ticketSearch').addEventListener('input', renderTicketTable);
+document.getElementById('ticketStatusFilter').addEventListener('change', function(){ _tabLoaded.support=false; loadTickets(); });
 initDropZone();
 
 // ── Live Predictions ──

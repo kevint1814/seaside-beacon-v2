@@ -18,6 +18,10 @@ const DailyVisit = require('../models/DailyVisit');
 const SiteStats = require('../models/SiteStats');
 const PremiumUser = require('../models/PremiumUser');
 const Feedback = require('../models/Feedback');
+const SunriseSubmission = require('../models/SunriseSubmission');
+const SupportTicket = require('../models/SupportTicket');
+const DeviceToken = require('../models/DeviceToken');
+const SampleForecast = require('../models/SampleForecast');
 const mongoose = require('mongoose');
 
 // ── Auth config ──────────────────────────────
@@ -708,6 +712,440 @@ router.get('/admin/premium/:email/history', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin premium history error:', error.message);
     res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
+// ══════════════════════════════════════════════
+// Photos Management (Cloudinary / SunriseSubmission)
+// ══════════════════════════════════════════════
+
+// List all sunrise submissions (paginated, filterable)
+router.get('/admin/photos', requireAuth, async (req, res) => {
+  try {
+    const { beach, featured } = req.query;
+    const filter = {};
+    if (beach && ['marina', 'elliot', 'covelong', 'thiruvanmiyur'].includes(beach)) filter.beach = beach;
+    if (featured === 'true') filter.featured = true;
+    if (featured === 'false') filter.featured = false;
+
+    const pg = Math.max(parseInt(req.query.page) || 1, 1);
+    const lim = Math.max(1, Math.min(parseInt(req.query.limit) || 50, 100));
+    const skip = (pg - 1) * lim;
+    const total = await SunriseSubmission.countDocuments(filter);
+    const photos = await SunriseSubmission.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(lim)
+      .lean();
+
+    const stats = {
+      total: await SunriseSubmission.countDocuments({}),
+      featured: await SunriseSubmission.countDocuments({ featured: true }),
+      spotlighted: await SunriseSubmission.countDocuments({ spotlighted: true }),
+      byBeach: {}
+    };
+    for (const b of ['marina', 'elliot', 'covelong', 'thiruvanmiyur']) {
+      stats.byBeach[b] = await SunriseSubmission.countDocuments({ beach: b });
+    }
+
+    res.json({ success: true, photos, total, page: pg, stats });
+  } catch (error) {
+    console.error('Admin photos list error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch photos' });
+  }
+});
+
+// Toggle featured/spotlighted flags on a photo
+router.patch('/admin/photos/:id', requireAuth, async (req, res) => {
+  try {
+    const { featured, spotlighted } = req.body;
+    const update = {};
+    if (typeof featured === 'boolean') update.featured = featured;
+    if (typeof spotlighted === 'boolean') update.spotlighted = spotlighted;
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const photo = await SunriseSubmission.findByIdAndUpdate(
+      req.params.id,
+      { $set: update },
+      { new: true }
+    );
+    if (!photo) return res.status(404).json({ error: 'Photo not found' });
+
+    console.log(`📸 Admin: Updated photo ${req.params.id} →`, update);
+    res.json({ success: true, photo });
+  } catch (error) {
+    console.error('Admin photo update error:', error.message);
+    res.status(500).json({ error: 'Failed to update photo' });
+  }
+});
+
+// Delete photo from MongoDB + Cloudinary
+router.delete('/admin/photos/:id', requireAuth, async (req, res) => {
+  try {
+    const photo = await SunriseSubmission.findById(req.params.id);
+    if (!photo) return res.status(404).json({ error: 'Photo not found' });
+
+    // Try to delete from Cloudinary if we have the public ID
+    if (photo.cloudinaryPublicId) {
+      try {
+        const cloudinary = require('cloudinary').v2;
+        await cloudinary.uploader.destroy(photo.cloudinaryPublicId);
+        console.log(`☁️  Cloudinary: Deleted ${photo.cloudinaryPublicId}`);
+      } catch (cloudErr) {
+        console.warn(`☁️  Cloudinary delete failed (continuing): ${cloudErr.message}`);
+      }
+    }
+
+    await SunriseSubmission.findByIdAndDelete(req.params.id);
+    console.log(`🗑️  Admin: Deleted photo ${req.params.id}`);
+    res.json({ success: true, deleted: req.params.id });
+  } catch (error) {
+    console.error('Admin photo delete error:', error.message);
+    res.status(500).json({ error: 'Failed to delete photo' });
+  }
+});
+
+// ══════════════════════════════════════════════
+// Support Tickets
+// ══════════════════════════════════════════════
+
+// List all support tickets (filterable by status)
+router.get('/admin/tickets', requireAuth, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const filter = {};
+    if (status && ['open', 'in-progress', 'resolved', 'closed'].includes(status)) {
+      filter.status = status;
+    }
+
+    const tickets = await SupportTicket.find(filter)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const stats = {
+      open: await SupportTicket.countDocuments({ status: 'open' }),
+      inProgress: await SupportTicket.countDocuments({ status: 'in-progress' }),
+      resolved: await SupportTicket.countDocuments({ status: 'resolved' }),
+      closed: await SupportTicket.countDocuments({ status: 'closed' }),
+      total: await SupportTicket.countDocuments({})
+    };
+
+    res.json({ success: true, tickets, stats });
+  } catch (error) {
+    console.error('Admin tickets list error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch tickets' });
+  }
+});
+
+// Update ticket status + admin notes
+router.patch('/admin/tickets/:ticketId', requireAuth, async (req, res) => {
+  try {
+    const { status, adminNotes } = req.body;
+    const update = {};
+    if (status && ['open', 'in-progress', 'resolved', 'closed'].includes(status)) {
+      update.status = status;
+      if (status === 'resolved') update.resolvedAt = new Date();
+    }
+    if (typeof adminNotes === 'string') update.adminNotes = adminNotes;
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const ticket = await SupportTicket.findOneAndUpdate(
+      { ticketId: req.params.ticketId },
+      { $set: update },
+      { new: true }
+    );
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    console.log(`🎫 Admin: Updated ticket ${req.params.ticketId} →`, update);
+    res.json({ success: true, ticket });
+  } catch (error) {
+    console.error('Admin ticket update error:', error.message);
+    res.status(500).json({ error: 'Failed to update ticket' });
+  }
+});
+
+// Resolve a ticket (shortcut)
+router.post('/admin/tickets/:ticketId/resolve', requireAuth, async (req, res) => {
+  try {
+    const { adminNotes } = req.body;
+    const update = { status: 'resolved', resolvedAt: new Date() };
+    if (adminNotes) update.adminNotes = adminNotes;
+
+    const ticket = await SupportTicket.findOneAndUpdate(
+      { ticketId: req.params.ticketId },
+      { $set: update },
+      { new: true }
+    );
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    console.log(`✅ Admin: Resolved ticket ${req.params.ticketId}`);
+    res.json({ success: true, ticket });
+  } catch (error) {
+    console.error('Admin ticket resolve error:', error.message);
+    res.status(500).json({ error: 'Failed to resolve ticket' });
+  }
+});
+
+// ══════════════════════════════════════════════
+// Feedback Management
+// ══════════════════════════════════════════════
+
+// Delete feedback entry
+router.delete('/admin/feedback/:id', requireAuth, async (req, res) => {
+  try {
+    const result = await Feedback.findByIdAndDelete(req.params.id);
+    if (!result) return res.status(404).json({ error: 'Feedback not found' });
+
+    console.log(`🗑️  Admin: Deleted feedback ${req.params.id}`);
+    res.json({ success: true, deleted: req.params.id });
+  } catch (error) {
+    console.error('Admin feedback delete error:', error.message);
+    res.status(500).json({ error: 'Failed to delete feedback' });
+  }
+});
+
+// ══════════════════════════════════════════════
+// Database Browser
+// ══════════════════════════════════════════════
+
+// Get all collection stats
+router.get('/admin/db/stats', requireAuth, async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    if (!db) return res.status(503).json({ error: 'Database connection unavailable' });
+    const collections = await db.listCollections().toArray();
+    const stats = [];
+
+    for (const col of collections) {
+      const count = await db.collection(col.name).countDocuments();
+      stats.push({ name: col.name, count });
+    }
+
+    stats.sort((a, b) => b.count - a.count);
+    res.json({ success: true, collections: stats, total: stats.length });
+  } catch (error) {
+    console.error('Admin db stats error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch database stats' });
+  }
+});
+
+// Browse documents from any collection (read-only)
+router.get('/admin/db/collection/:name', requireAuth, async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    if (!db) return res.status(503).json({ error: 'Database connection unavailable' });
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
+    const skip = parseInt(req.query.skip) || 0;
+
+    // Verify collection exists
+    const collections = await db.listCollections({ name: req.params.name }).toArray();
+    if (collections.length === 0) {
+      return res.status(404).json({ error: 'Collection not found' });
+    }
+
+    const docs = await db.collection(req.params.name)
+      .find({})
+      .sort({ _id: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    const total = await db.collection(req.params.name).countDocuments();
+
+    res.json({ success: true, collection: req.params.name, docs, total, limit, skip });
+  } catch (error) {
+    console.error('Admin db browse error:', error.message);
+    res.status(500).json({ error: 'Failed to browse collection' });
+  }
+});
+
+// ══════════════════════════════════════════════
+// Manual Job Triggers
+// ══════════════════════════════════════════════
+
+router.post('/admin/jobs/trigger', requireAuth, async (req, res) => {
+  try {
+    const { job } = req.body;
+    const allowed = ['dailyEmail', 'eveningPreview', 'morningPush', 'eveningPush', 'specialAlert'];
+    if (!job || !allowed.includes(job)) {
+      return res.status(400).json({ error: `Invalid job. Allowed: ${allowed.join(', ')}` });
+    }
+
+    let result;
+    const startTime = Date.now();
+
+    switch (job) {
+      case 'dailyEmail': {
+        const { sendDailyPredictions } = require('../jobs/dailyEmail');
+        result = await sendDailyPredictions();
+        break;
+      }
+      case 'eveningPreview': {
+        const { sendEveningPreviews } = require('../jobs/dailyEmail');
+        result = await sendEveningPreviews();
+        break;
+      }
+      case 'morningPush': {
+        const { sendMorningPush } = require('../jobs/pushNotifications');
+        result = await sendMorningPush();
+        break;
+      }
+      case 'eveningPush': {
+        const { sendEveningPush } = require('../jobs/pushNotifications');
+        result = await sendEveningPush();
+        break;
+      }
+      case 'specialAlert': {
+        const { sendSpecialAlert } = require('../jobs/dailyEmail');
+        result = await sendSpecialAlert();
+        break;
+      }
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(`⚡ Admin: Triggered job "${job}" (${duration}ms)`);
+    res.json({ success: true, job, duration, result: result || 'completed' });
+  } catch (error) {
+    console.error(`Admin job trigger error (${req.body.job}):`, error.message);
+    res.status(500).json({ error: `Job failed: ${error.message}` });
+  }
+});
+
+// ══════════════════════════════════════════════
+// FCM Devices
+// ══════════════════════════════════════════════
+
+router.get('/admin/devices', requireAuth, async (req, res) => {
+  try {
+    const devices = await DeviceToken.find({})
+      .sort({ lastActive: -1 })
+      .lean();
+
+    const stats = {
+      total: devices.length,
+      android: devices.filter(d => d.platform === 'android').length,
+      ios: devices.filter(d => d.platform === 'ios').length,
+      muteAll: devices.filter(d => d.settings?.muteAll).length,
+      activeLastWeek: devices.filter(d => d.lastActive && (Date.now() - new Date(d.lastActive).getTime()) < 7 * 24 * 60 * 60 * 1000).length
+    };
+
+    res.json({ success: true, devices, stats });
+  } catch (error) {
+    console.error('Admin devices error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch devices' });
+  }
+});
+
+// ══════════════════════════════════════════════
+// System — Environment & Exports
+// ══════════════════════════════════════════════
+
+// Sanitized environment variables
+router.get('/admin/system/env', requireAuth, async (req, res) => {
+  try {
+    const sensitiveKeys = [
+      'ADMIN_PASS', 'BREVO_API_KEY', 'SENDGRID_API_KEY', 'RAZORPAY_KEY_SECRET',
+      'RAZORPAY_KEY_ID', 'MONGODB_URI', 'GOOGLE_CLIENT_SECRET', 'TELEGRAM_BOT_TOKEN',
+      'CLOUDINARY_API_SECRET', 'CLOUDINARY_API_KEY', 'FIREBASE_PRIVATE_KEY',
+      'JWT_SECRET', 'SESSION_SECRET', 'GROQ_API_KEY', 'GEMINI_API_KEY'
+    ];
+
+    const envVars = {};
+    const relevantPrefixes = [
+      'ADMIN_', 'BREVO_', 'SENDGRID_', 'RAZORPAY_', 'MONGODB_', 'GOOGLE_',
+      'TELEGRAM_', 'CLOUDINARY_', 'FIREBASE_', 'API_', 'FRONTEND_', 'NODE_ENV',
+      'PORT', 'JWT_', 'SESSION_', 'GROQ_', 'GEMINI_', 'EMAIL_', 'RENDER'
+    ];
+
+    for (const [key, value] of Object.entries(process.env)) {
+      if (!relevantPrefixes.some(p => key.startsWith(p))) continue;
+      const isSensitive = sensitiveKeys.includes(key);
+      if (isSensitive) {
+        // Always fully mask sensitive values — never leak partial keys
+        envVars[key] = '••••••••';
+      } else {
+        envVars[key] = value;
+      }
+    }
+
+    res.json({ success: true, env: envVars, count: Object.keys(envVars).length });
+  } catch (error) {
+    console.error('Admin env error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch environment' });
+  }
+});
+
+// CSV exports
+router.get('/admin/export/:type', requireAuth, async (req, res) => {
+  try {
+    const { type } = req.params;
+    let csv = '';
+    let filename = '';
+
+    switch (type) {
+      case 'subscribers': {
+        const subs = await Subscriber.find({}).sort({ subscribedAt: -1 }).lean();
+        csv = 'Email,Beach,Active,Subscribed At,Last Email\n';
+        for (const s of subs) {
+          csv += `"${s.email}","${s.preferredBeach}",${s.isActive},"${s.subscribedAt || ''}","${s.lastEmailSent || ''}"\n`;
+        }
+        filename = `subscribers-${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+      }
+      case 'premium': {
+        const users = await PremiumUser.find({}).sort({ subscribedAt: -1 }).lean();
+        csv = 'Email,Plan,Status,Beach,Subscribed At,Period End,Telegram,Last Login\n';
+        for (const u of users) {
+          csv += `"${u.email}","${u.plan || ''}","${u.status}","${u.preferredBeach}","${u.subscribedAt || ''}","${u.currentPeriodEnd || ''}","${u.telegramChatId || ''}","${u.lastLogin || ''}"\n`;
+        }
+        filename = `premium-users-${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+      }
+      case 'forecasts': {
+        const scores = await DailyScore.find({}).sort({ date: -1 }).limit(365).lean();
+        csv = 'Date,Average Score,Best Beach,Marina,Elliot,Covelong,Thiruvanmiyur\n';
+        for (const s of scores) {
+          const beachScores = {};
+          (s.beaches || []).forEach(b => { beachScores[b.beachKey] = b.score; });
+          csv += `"${s.date}",${s.averageScore || ''},"${s.bestBeach || ''}",${beachScores.marina || ''},${beachScores.elliot || ''},${beachScores.covelong || ''},${beachScores.thiruvanmiyur || ''}\n`;
+        }
+        filename = `forecasts-${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+      }
+      case 'feedback': {
+        const fb = await Feedback.find({}).sort({ createdAt: -1 }).lean();
+        csv = 'Rating,Comment,User,Email,Beach,Date\n';
+        for (const f of fb) {
+          csv += `${f.rating || ''},"${(f.comment || '').replace(/"/g, '""')}","${f.userName || ''}","${f.email || ''}","${f.beach || ''}","${f.createdAt || ''}"\n`;
+        }
+        filename = `feedback-${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+      }
+      case 'traffic': {
+        const visits = await DailyVisit.find({}).sort({ date: -1 }).lean();
+        csv = 'Date,Visits,Unique Visitors,Predictions,New Subs,Unsubs\n';
+        for (const v of visits) {
+          csv += `"${v.date}",${v.visits || 0},${v.uniqueVisits || 0},${v.predictions || 0},${v.newSubs || 0},${v.unsubs || 0}\n`;
+        }
+        filename = `traffic-${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+      }
+      default:
+        return res.status(400).json({ error: 'Invalid export type. Allowed: subscribers, premium, forecasts, feedback, traffic' });
+    }
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (error) {
+    console.error('Admin export error:', error.message);
+    res.status(500).json({ error: 'Failed to export data' });
   }
 });
 
