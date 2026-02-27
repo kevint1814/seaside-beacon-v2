@@ -204,10 +204,12 @@ router.get('/predict/:beach', async (req, res) => {
     metrics.trackResponseTime(Date.now() - _startTime);
     console.log(`💾 Cached prediction for ${beach} (TTL: ${PREDICTION_CACHE_TTL / 60000}min)`);
 
-    // Strip premium data if not premium user
+    // Strip premium data if not premium user — deep clone first to preserve cache
     if (!isPremiumUser && response.data?.photography) {
-      delete response.data.photography.dslr;
-      delete response.data.photography.mobile;
+      const stripped = JSON.parse(JSON.stringify(response));
+      delete stripped.data.photography.dslr;
+      delete stripped.data.photography.mobile;
+      return res.json(stripped);
     }
 
     res.json(response);
