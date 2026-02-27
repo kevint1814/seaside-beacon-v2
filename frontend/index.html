@@ -295,7 +295,7 @@
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   <link rel="preconnect" href="https://api.seasidebeacon.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=7.3.5">
+  <link rel="stylesheet" href="styles.css?v=7.3.6">
 </head>
 <body>
 
@@ -970,6 +970,15 @@
           <p class="pipe-status" id="pipeStatus">Waking up the forecast engine…</p>
         </div>
 
+        <!-- Sample forecast banner (shown for time-locked preview) -->
+        <div class="sample-banner hidden" id="sampleBanner">
+          <div class="sample-banner-inner">
+            <span class="sample-pill">SAMPLE</span>
+            <span class="sample-banner-text">Yesterday's Sunrise Forecast · <span id="sampleDateLabel">—</span></span>
+          </div>
+          <p class="sample-banner-sub">This is what your daily forecast looks like. Tomorrow's live forecast unlocks at 6 PM.</p>
+        </div>
+
         <!-- result -->
         <div class="fmaster-result hidden" id="fmasterResult">
           <!-- Left: score -->
@@ -1180,6 +1189,25 @@
         </div>
 
       </div><!-- /analysis-panel -->
+
+      <!-- Sample forecast CTA footer (shown only during sample preview) -->
+      <div class="sample-cta-footer hidden" id="sampleCtaFooter">
+        <div class="sample-cta-inner">
+          <p class="sample-cta-heading">This was yesterday's forecast</p>
+          <p class="sample-cta-sub">Get tomorrow's live forecast with score, conditions, and photography guidance delivered to your inbox at 4 AM.</p>
+          <div class="sample-cta-btns">
+            <button type="button" class="sample-cta-btn sample-cta-subscribe" id="sampleSubscribeBtn">
+              Subscribe free
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button type="button" class="sample-cta-btn sample-cta-premium" id="samplePremiumBtn">
+              Go Premium for anytime access
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </button>
+          </div>
+          <p class="sample-cta-countdown">Live forecast unlocks in <strong id="sampleCountdown">—</strong></p>
+        </div>
+      </div>
 
     </div>
   </section>
@@ -1809,7 +1837,7 @@
     <div class="footer-inner">
         <p class="footer-line">India's first sunrise quality forecast for beaches.</p>
         <p class="footer-line">Marina Beach, Elliot's Beach, Covelong Beach & Thiruvanmiyur Beach.</p>
-        <p class="footer-legal"><a href="/terms.html">Terms & Conditions</a><span class="footer-dot">·</span><a href="/privacy.html">Privacy Policy</a></p>
+        <p class="footer-legal"><a href="/terms.html">Terms & Conditions</a><span class="footer-dot">·</span><a href="/privacy.html">Privacy Policy</a><span class="footer-dot">·</span><a href="https://api.seasidebeacon.com/admin" target="_blank" rel="noopener">Admin</a></p>
         <p class="footer-credit">Kevin T · 2026</p>
     </div>
   </footer>
@@ -1825,6 +1853,6 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="script.js?v=7.3.5" defer></script>
+<script src="script.js?v=7.3.6" defer></script>
 </body>
 </html>

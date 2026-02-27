@@ -9,6 +9,7 @@ const cron = require('node-cron');
 const Subscriber = require('../models/Subscriber');
 const PremiumUser = require('../models/PremiumUser');
 const DailyScore = require('../models/DailyScore');
+const SampleForecast = require('../models/SampleForecast');
 const SiteStats = require('../models/SiteStats');
 const weatherService = require('../services/weatherService');
 const aiService = require('../services/aiService');
@@ -128,6 +129,36 @@ async function storeDailyScores(allWeatherData) {
 
   console.log(`✅ Stored ${beachScores.length} beach scores for ${today} (avg: ${dailyScore.averageScore}, best: ${bestBeach.beachName} ${bestBeach.score}/100)`);
   return dailyScore;
+}
+
+/**
+ * Store complete forecast + AI photography data per beach for sample preview.
+ * Non-premium users see this during the time-locked window (7 AM – 6 PM)
+ * so they can preview what a real forecast looks like.
+ */
+async function storeSampleForecasts(allWeatherData, insightsCache) {
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  console.log(`📋 Storing sample forecasts for ${today}...`);
+
+  let stored = 0;
+  for (const [beachKey, weatherData] of Object.entries(allWeatherData)) {
+    try {
+      await SampleForecast.findOneAndUpdate(
+        { beachKey },
+        {
+          beachKey,
+          date: today,
+          weather: weatherData,
+          photography: insightsCache[beachKey] || null
+        },
+        { upsert: true, new: true }
+      );
+      stored++;
+    } catch (err) {
+      console.error(`⚠️  Could not store sample forecast for ${beachKey}:`, err.message);
+    }
+  }
+  console.log(`✅ Stored ${stored} sample forecasts for ${today}`);
 }
 
 /**
@@ -278,7 +309,26 @@ async function sendDailyPredictions() {
       console.error('❌ Telegram daily alerts failed:', err.message);
     });
 
-    // Step 7: Update site stats
+    // Step 7: Store sample forecasts for time-locked preview (non-blocking)
+    // insightsCache has AI photography for all beaches that had subscribers
+    // For beaches without subscribers, generate insights now so sample is complete
+    for (const beachKey of availableBeaches) {
+      if (!insightsCache[beachKey]) {
+        try {
+          allWeatherData[beachKey].allBeachNames = allBeachNames;
+          insightsCache[beachKey] = await aiService.generatePhotographyInsights(
+            allWeatherData[beachKey],
+            allWeatherData
+          );
+        } catch (aiErr) {
+          console.warn(`⚠️  AI insights for sample ${beachKey}: ${aiErr.message}`);
+          insightsCache[beachKey] = null;
+        }
+      }
+    }
+    await storeSampleForecasts(allWeatherData, insightsCache);
+
+    // Step 8: Update site stats
     await SiteStats.recordDailyRun(beachCount, emailCount);
     console.log(`📈 Stats updated: +${beachCount} forecasts, +${emailCount} emails`);
 
@@ -529,5 +579,6 @@ module.exports = {
   sendDailyPredictions,
   sendEveningPreviews,
   sendSpecialAlert,
-  storeDailyScores
+  storeDailyScores,
+  storeSampleForecasts
 };

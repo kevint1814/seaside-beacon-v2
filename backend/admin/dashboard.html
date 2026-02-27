@@ -244,6 +244,53 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .feedback-comment{font-size:11px;color:var(--t2);margin-top:4px;line-height:1.5}
 .feedback-rating{font-size:10px;font-weight:600;text-transform:uppercase;margin-left:8px}
 
+/* ── Admin Management ── */
+.mgmt-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.mgmt-search{flex:1;min-width:160px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:11px;font-family:var(--sans);outline:none;transition:border-color .2s}
+.mgmt-search:focus{border-color:var(--accent)}
+.mgmt-search::placeholder{color:var(--t4)}
+.mgmt-filter{padding:5px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--t2);font-size:10px;font-family:var(--sans);cursor:pointer;outline:none}
+.mgmt-filter:focus{border-color:var(--accent)}
+
+/* Action buttons */
+.act-btn{padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:transparent;font-size:10px;font-family:var(--sans);cursor:pointer;transition:all .15s;letter-spacing:.01em;white-space:nowrap}
+.act-btn:hover{border-color:var(--border-light);background:var(--surface2)}
+.act-edit{color:var(--blue)}.act-edit:hover{border-color:var(--blue);background:var(--blue-bg)}
+.act-toggle{color:var(--amber)}.act-toggle:hover{border-color:var(--amber);background:var(--amber-bg)}
+.act-delete{color:var(--red)}.act-delete:hover{border-color:var(--red);background:var(--red-bg)}
+.act-extend{color:var(--green)}.act-extend:hover{border-color:var(--green);background:var(--green-bg)}
+.act-cancel{color:var(--red)}.act-cancel:hover{border-color:var(--red);background:var(--red-bg)}
+.act-history{color:var(--violet)}.act-history:hover{border-color:var(--violet);background:var(--violet-bg)}
+.act-group{display:flex;gap:4px;flex-wrap:nowrap}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 0 1px var(--border);border-radius:var(--radius-lg);padding:28px 28px 24px;width:420px;max-width:92vw;max-height:85vh;overflow-y:auto;animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+.modal-title{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:4px}
+.modal-sub{font-size:11px;color:var(--t3);margin-bottom:20px}
+.modal-field{margin-bottom:14px}
+.modal-label{display:block;font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.modal-input{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:var(--sans);outline:none;box-sizing:border-box}
+.modal-input:focus{border-color:var(--accent)}
+.modal-select{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--t1);font-size:12px;font-family:var(--mono);outline:none;cursor:pointer;-webkit-appearance:none}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.modal-btn{padding:8px 18px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .2s}
+.modal-btn-primary{background:var(--accent);color:#fff}.modal-btn-primary:hover{background:var(--accent-light)}
+.modal-btn-danger{background:var(--red);color:#fff}.modal-btn-danger:hover{opacity:0.85}
+.modal-btn-ghost{background:transparent;border:1px solid var(--border);color:var(--t3)}.modal-btn-ghost:hover{color:var(--t2);border-color:var(--border-light)}
+
+/* Timeline */
+.timeline-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px}
+.timeline-item:last-child{border-bottom:none}
+.timeline-date{color:var(--t4);font-family:var(--mono);white-space:nowrap;min-width:90px}
+.timeline-event{color:var(--t1);font-weight:500}
+.timeline-detail{color:var(--t3);margin-left:auto}
+
+/* Inactive row */
+.row-inactive td{opacity:0.45}
+
 /* ── Mobile responsive ── */
 @media(max-width:768px){
   .header{flex-direction:column;gap:12px;align-items:flex-start}
@@ -423,21 +470,46 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
           </div>
         </div>
       </div>
-      <div class="scroll-y">
+      <div class="mgmt-bar">
+        <input type="text" class="mgmt-search" id="premiumSearch" placeholder="Search premium users...">
+        <select class="mgmt-filter" id="premiumStatusFilter">
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="grace">Grace period</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="expired">Expired</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
+      <div class="scroll-y" style="max-height:340px">
+        <div class="tbl-wrap">
         <table class="tbl" id="premiumTable">
-          <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>Beach</th><th>Alert Time</th><th>Evening Time</th><th>Cancel Window</th><th>Telegram</th><th>Last Login</th></tr></thead>
+          <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>Beach</th><th>Alert</th><th>Evening</th><th>Telegram</th><th>Last Login</th><th>Actions</th></tr></thead>
           <tbody id="premiumBody"></tbody>
         </table>
+        </div>
       </div>
     </div>
     <div class="card">
       <div class="card-title">Subscribers <span class="badge" style="background:var(--surface2);color:var(--t2)" id="subCountBadge">—</span></div>
       <div style="margin-bottom:12px" id="beachPills"></div>
-      <div class="scroll-y">
+      <div class="mgmt-bar">
+        <input type="text" class="mgmt-search" id="subSearch" placeholder="Search subscribers...">
+        <select class="mgmt-filter" id="subBeachFilter">
+          <option value="">All beaches</option>
+          <option value="marina">Marina</option>
+          <option value="elliot">Elliot's</option>
+          <option value="covelong">Covelong</option>
+          <option value="thiruvanmiyur">Thiruvanmiyur</option>
+        </select>
+      </div>
+      <div class="scroll-y" style="max-height:340px">
+        <div class="tbl-wrap">
         <table class="tbl" id="subTable">
-          <thead><tr><th>#</th><th>Email</th><th>Beach</th><th>Joined</th><th>Last Email</th></tr></thead>
+          <thead><tr><th>#</th><th>Email</th><th>Beach</th><th>Status</th><th>Joined</th><th>Last Email</th><th>Actions</th></tr></thead>
           <tbody id="subBody"></tbody>
         </table>
+        </div>
       </div>
     </div>
   </div>
@@ -574,6 +646,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
     </div>
   </div>
 
+  <!-- Modals -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
   <!-- ROW 5: Scores + Errors -->
   <div class="row cols-7-5">
     <div class="card">
@@ -615,7 +692,9 @@ function logout(){token=null;localStorage.removeItem('sb_token');clearInterval(i
 function show(){document.getElementById('loginScreen').style.display='none';document.getElementById('dashboard').style.display='block';poll();interval=setInterval(poll,6000);startPredAutoRefresh();}
 
 // ── Poll ──
+let _modalOpen = false;
 function poll(){
+  if(_modalOpen) return; // skip poll while editing in modal
   const bar=document.getElementById('refreshBar');bar.style.opacity='1';bar.style.width='50%';
   fetch(API+'/api/admin/metrics',{headers:{'X-Admin-Token':token}})
     .then(r=>{if(r.status===401){logout();throw'auth';}return r.json();})
@@ -784,28 +863,45 @@ function chart(days){
   }
 }
 
+// ── Premium & Subscriber data stores (for filtering) ──
+let _premiumData = {};
+let _subscriberData = {};
+
 function premiumTable(p){
+  _premiumData = p;
+  renderPremiumTable();
+}
+
+function renderPremiumTable(){
+  const p = _premiumData;
   const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
   const body=document.getElementById('premiumBody');
   if(!p.list||!p.list.length){body.innerHTML='<tr><td colspan="9" class="empty-state">No premium users</td></tr>';return;}
   const now=new Date();
-  body.innerHTML=p.list.map((user,i)=>{
-    const joined=new Date(user.subscribedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
+  const search=(document.getElementById('premiumSearch')?.value||'').toLowerCase();
+  const statusFilter=document.getElementById('premiumStatusFilter')?.value||'';
+
+  const filtered=p.list.filter(user=>{
+    if(search && !user.email.toLowerCase().includes(search)) return false;
+    const isGrace=user.cancelledWithGrace && user.currentPeriodEnd && new Date(user.currentPeriodEnd) > now;
+    if(statusFilter==='grace') return isGrace;
+    if(statusFilter==='active') return user.status==='active' && !isGrace;
+    if(statusFilter && user.status!==statusFilter) return false;
+    return true;
+  });
+
+  if(!filtered.length){body.innerHTML='<tr><td colspan="9" class="empty-state">No matching users</td></tr>';return;}
+
+  body.innerHTML=filtered.map((user,i)=>{
     const lastLogin=user.lastLogin?timeAgo(new Date(user.lastLogin)):'Never';
     const bName=beaches[user.preferredBeach]||user.preferredBeach;
     const telegram=user.telegramChatId?'<span style="color:var(--green)">Linked</span>':'<span style="color:var(--t4)">—</span>';
-
-    // Alert Time
     const alertTime=user.alertTime||'—';
-
-    // Evening Time
     const eveningTime=user.eveningPreviewTime||'—';
 
-    // Grace period detection
     const isGrace=user.cancelledWithGrace && user.currentPeriodEnd && new Date(user.currentPeriodEnd) > now;
     const graceDaysLeft=isGrace ? Math.ceil((new Date(user.currentPeriodEnd) - now) / (1000*60*60*24)) : 0;
 
-    // Status badge — show grace period distinctly
     let statusHTML;
     if(isGrace){
       statusHTML='<span class="status-badge status-grace">Grace · '+graceDaysLeft+'d</span>';
@@ -814,34 +910,65 @@ function premiumTable(p){
       statusHTML='<span class="status-badge '+statusClass+'">'+esc(user.status||'—')+'</span>';
     }
 
-    // Cancel Window calculation
-    const subDate = user.subscribedAt || user.createdAt;
-    const daysSince = subDate ? Math.floor((Date.now() - new Date(subDate).getTime()) / (1000*60*60*24)) : 999;
-    const daysLeft = Math.max(0, Math.ceil(7 - daysSince));
-    const cancelStatus = user.status==='active' ? (daysLeft > 0 ? daysLeft + 'd left' : 'Expired') : '—';
+    const isActive = user.status==='active' || isGrace;
+    const eml=escAttr(user.email);
+    const actionsHTML='<div class="act-group">'+
+      '<button class="act-btn act-edit" onclick="openPremiumEdit(\''+eml+'\')">Edit</button>'+
+      (isActive?'<button class="act-btn act-extend" onclick="openPremiumExtend(\''+eml+'\')">Extend</button>':'')+
+      (isActive?'<button class="act-btn act-cancel" onclick="confirmPremiumCancel(\''+eml+'\')">Cancel</button>':'')+
+      '<button class="act-btn act-history" onclick="openPremiumHistory(\''+eml+'\')">History</button>'+
+    '</div>';
 
-    return '<tr><td class="mono" style="color:var(--t1);font-size:11px">'+esc(user.email)+'</td><td><span class="sb" style="background:var(--amber-bg);color:var(--amber)">'+esc(user.plan||'—')+'</span></td><td>'+statusHTML+'</td><td style="color:var(--t3)">'+bName+'</td><td style="color:var(--t3);font-size:11px">'+alertTime+'</td><td style="color:var(--t3);font-size:11px">'+eveningTime+'</td><td style="color:var(--t3);font-size:11px">'+cancelStatus+'</td><td>'+telegram+'</td><td style="color:var(--t4);font-size:11px">'+lastLogin+'</td></tr>';
+    return '<tr><td class="mono" style="color:var(--t1);font-size:11px">'+esc(user.email)+'</td><td><span class="sb" style="background:var(--amber-bg);color:var(--amber)">'+esc(user.plan||'—')+'</span></td><td>'+statusHTML+'</td><td style="color:var(--t3)">'+bName+'</td><td style="color:var(--t3);font-size:11px">'+alertTime+'</td><td style="color:var(--t3);font-size:11px">'+eveningTime+'</td><td>'+telegram+'</td><td style="color:var(--t4);font-size:11px">'+lastLogin+'</td><td>'+actionsHTML+'</td></tr>';
   }).join('');
 }
 
 function subTable(s){
+  _subscriberData = s;
   const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
   const colors={marina:'var(--blue)',elliot:'var(--violet)',covelong:'var(--green)',thiruvanmiyur:'var(--amber)'};
   // Pills
   document.getElementById('beachPills').innerHTML=Object.entries(beaches).map(([k,v])=>{
     return '<span class="beach-pill"><span style="width:6px;height:6px;border-radius:2px;background:'+colors[k]+';display:inline-block"></span>'+v+' <span class="ct">'+(s.byBeach[k]||0)+'</span></span>';
   }).join('');
-  $('subCountBadge', s.total+' total');
+  const inactiveCount = (s.list||[]).filter(sub => sub.isActive === false).length;
+  $('subCountBadge', s.total + ' active' + (inactiveCount ? ' · ' + inactiveCount + ' inactive' : ''));
+  renderSubTable();
+}
 
-  // Table
+function renderSubTable(){
+  const s = _subscriberData;
+  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const colors={marina:'var(--blue)',elliot:'var(--violet)',covelong:'var(--green)',thiruvanmiyur:'var(--amber)'};
   const body=document.getElementById('subBody');
-  if(!s.list||!s.list.length){body.innerHTML='<tr><td colspan="5" class="empty-state">No subscribers</td></tr>';return;}
-  body.innerHTML=s.list.map((sub,i)=>{
+  if(!s.list||!s.list.length){body.innerHTML='<tr><td colspan="7" class="empty-state">No subscribers</td></tr>';return;}
+
+  const search=(document.getElementById('subSearch')?.value||'').toLowerCase();
+  const beachFilter=document.getElementById('subBeachFilter')?.value||'';
+
+  const filtered=s.list.filter(sub=>{
+    if(search && !sub.email.toLowerCase().includes(search)) return false;
+    if(beachFilter && sub.preferredBeach!==beachFilter) return false;
+    return true;
+  });
+
+  if(!filtered.length){body.innerHTML='<tr><td colspan="7" class="empty-state">No matching subscribers</td></tr>';return;}
+
+  body.innerHTML=filtered.map((sub,i)=>{
     const joined=new Date(sub.subscribedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
     const lastMail=sub.lastEmailSent?timeAgo(new Date(sub.lastEmailSent)):'Never';
     const bName=beaches[sub.preferredBeach]||sub.preferredBeach;
     const bColor=colors[sub.preferredBeach]||'var(--t3)';
-    return '<tr><td class="mono" style="color:var(--t4)">'+(i+1)+'</td><td class="mono" style="color:var(--t1);font-size:11px">'+esc(sub.email)+'</td><td><span style="color:'+bColor+'">'+bName+'</span></td><td style="color:var(--t3)">'+joined+'</td><td style="color:var(--t3)">'+lastMail+'</td></tr>';
+    const isActive=sub.isActive!==false;
+    const statusHTML=isActive?'<span class="status-badge status-active">Active</span>':'<span class="status-badge status-cancelled">Inactive</span>';
+    const toggleLabel=isActive?'Deactivate':'Activate';
+    const eml=escAttr(sub.email);
+    const actionsHTML='<div class="act-group">'+
+      '<button class="act-btn act-edit" onclick="openSubEdit(\''+eml+'\')">Edit</button>'+
+      '<button class="act-btn act-toggle" onclick="toggleSub(\''+eml+'\','+(!isActive)+')">'+toggleLabel+'</button>'+
+      '<button class="act-btn act-delete" onclick="confirmSubDelete(\''+eml+'\')">Delete</button>'+
+    '</div>';
+    return '<tr'+(isActive?'':' class="row-inactive"')+'><td class="mono" style="color:var(--t4)">'+(i+1)+'</td><td class="mono" style="color:var(--t1);font-size:11px">'+esc(sub.email)+'</td><td><span style="color:'+bColor+'">'+bName+'</span></td><td>'+statusHTML+'</td><td style="color:var(--t3)">'+joined+'</td><td style="color:var(--t3)">'+lastMail+'</td><td>'+actionsHTML+'</td></tr>';
   }).join('');
 }
 
@@ -895,6 +1022,7 @@ function $(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function dot(id,c){const e=document.getElementById(id);if(e)e.className='dot dot-'+c;}
 function fmt(n){return Number(n).toLocaleString();}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function escAttr(s){return esc(s).replace(/'/g,'&#39;')}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function timeAgo(d){const s=Math.floor((Date.now()-d)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 
@@ -1066,6 +1194,195 @@ async function sendBroadcast() {
   }
 }
 
+// ── Modal helpers ──
+function openModal(html){
+  _modalOpen=true;
+  document.getElementById('modalContent').innerHTML=html;
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function closeModal(){
+  _modalOpen=false;
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+document.getElementById('modalOverlay').addEventListener('click',function(e){
+  if(e.target===this)closeModal();
+});
+
+// ── Subscriber Management ──
+function openSubEdit(email){
+  const sub=(_subscriberData.list||[]).find(s=>s.email===email);
+  if(!sub)return;
+  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const beachOpts=Object.entries(beaches).map(([k,v])=>'<option value="'+k+'"'+(sub.preferredBeach===k?' selected':'')+'>'+v+'</option>').join('');
+  openModal(
+    '<div class="modal-title">Edit Subscriber</div>'+
+    '<div class="modal-sub">'+esc(email)+'</div>'+
+    '<div class="modal-field"><label class="modal-label">Preferred Beach</label><select class="modal-select" id="editSubBeach">'+beachOpts+'</select></div>'+
+    '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Cancel</button><button class="modal-btn modal-btn-primary" onclick="saveSubEdit(\''+esc(email)+'\')">Save</button></div>'
+  );
+}
+
+async function saveSubEdit(email){
+  const beach=document.getElementById('editSubBeach').value;
+  try{
+    const res=await fetch(API+'/api/admin/subscriber/'+encodeURIComponent(email),{
+      method:'PATCH',headers:{'Content-Type':'application/json','X-Admin-Token':token},
+      body:JSON.stringify({preferredBeach:beach})
+    });
+    const d=await res.json();
+    if(d.success){closeModal();poll();}
+    else alert(d.error||'Update failed');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+async function toggleSub(email, newActive){
+  try{
+    const res=await fetch(API+'/api/admin/subscriber/'+encodeURIComponent(email),{
+      method:'PATCH',headers:{'Content-Type':'application/json','X-Admin-Token':token},
+      body:JSON.stringify({isActive:newActive})
+    });
+    const d=await res.json();
+    if(d.success)poll();
+    else alert(d.error||'Toggle failed');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+function confirmSubDelete(email){
+  openModal(
+    '<div class="modal-title">Delete Subscriber</div>'+
+    '<div class="modal-sub">Are you sure you want to remove <strong>'+esc(email)+'</strong> from the subscriber list? This action cannot be undone.</div>'+
+    '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Cancel</button><button class="modal-btn modal-btn-danger" onclick="doSubDelete(\''+esc(email)+'\')">Delete</button></div>'
+  );
+}
+
+async function doSubDelete(email){
+  try{
+    const res=await fetch(API+'/api/admin/subscriber/'+encodeURIComponent(email),{
+      method:'DELETE',headers:{'X-Admin-Token':token}
+    });
+    const d=await res.json();
+    if(d.success){closeModal();poll();}
+    else alert(d.error||'Delete failed');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ── Premium User Management ──
+function openPremiumEdit(email){
+  const user=(_premiumData.list||[]).find(u=>u.email===email);
+  if(!user)return;
+  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const beachOpts=Object.entries(beaches).map(([k,v])=>'<option value="'+k+'"'+(user.preferredBeach===k?' selected':'')+'>'+v+'</option>').join('');
+  const statuses=['active','cancelled','expired','pending'];
+  const statusOpts=statuses.map(s=>'<option value="'+s+'"'+(user.status===s?' selected':'')+'>'+cap(s)+'</option>').join('');
+  openModal(
+    '<div class="modal-title">Edit Premium User</div>'+
+    '<div class="modal-sub">'+esc(email)+'</div>'+
+    '<div class="modal-field"><label class="modal-label">Preferred Beach</label><select class="modal-select" id="editPremBeach">'+beachOpts+'</select></div>'+
+    '<div class="modal-field"><label class="modal-label">Status</label><select class="modal-select" id="editPremStatus">'+statusOpts+'</select></div>'+
+    '<div class="modal-field"><label class="modal-label">Alert Time (HH:MM)</label><input class="modal-input" id="editPremAlert" type="text" value="'+(user.alertTime||'04:00')+'" placeholder="04:00"></div>'+
+    '<div class="modal-field"><label class="modal-label">Evening Preview Time (HH:MM)</label><input class="modal-input" id="editPremEvening" type="text" value="'+(user.eveningPreviewTime||'20:30')+'" placeholder="20:30"></div>'+
+    '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Cancel</button><button class="modal-btn modal-btn-primary" onclick="savePremiumEdit(\''+esc(email)+'\')">Save</button></div>'
+  );
+}
+
+async function savePremiumEdit(email){
+  const body={
+    preferredBeach:document.getElementById('editPremBeach').value,
+    status:document.getElementById('editPremStatus').value,
+    alertTime:document.getElementById('editPremAlert').value.trim(),
+    eveningPreviewTime:document.getElementById('editPremEvening').value.trim()
+  };
+  try{
+    const res=await fetch(API+'/api/admin/premium/'+encodeURIComponent(email),{
+      method:'PATCH',headers:{'Content-Type':'application/json','X-Admin-Token':token},
+      body:JSON.stringify(body)
+    });
+    const d=await res.json();
+    if(d.success){closeModal();poll();}
+    else alert(d.error||'Update failed');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+function openPremiumExtend(email){
+  openModal(
+    '<div class="modal-title">Extend Subscription</div>'+
+    '<div class="modal-sub">Extend premium access for <strong>'+esc(email)+'</strong></div>'+
+    '<div class="modal-field"><label class="modal-label">Days to Add</label><input class="modal-input" id="extendDays" type="number" value="30" min="1" max="365" placeholder="30"></div>'+
+    '<div style="font-size:11px;color:var(--t3);margin-top:-8px">Extends from current period end or from today if expired.</div>'+
+    '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Cancel</button><button class="modal-btn modal-btn-primary" onclick="doPremiumExtend(\''+esc(email)+'\')">Extend</button></div>'
+  );
+}
+
+async function doPremiumExtend(email){
+  const days=parseInt(document.getElementById('extendDays').value);
+  if(!days||days<1||days>365){alert('Enter 1-365 days');return;}
+  try{
+    const res=await fetch(API+'/api/admin/premium/'+encodeURIComponent(email)+'/extend',{
+      method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':token},
+      body:JSON.stringify({days})
+    });
+    const d=await res.json();
+    if(d.success){closeModal();poll();}
+    else alert(d.error||'Extend failed');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+function confirmPremiumCancel(email){
+  openModal(
+    '<div class="modal-title">Cancel Premium</div>'+
+    '<div class="modal-sub">Cancel subscription for <strong>'+esc(email)+'</strong></div>'+
+    '<div class="modal-field" style="margin-bottom:16px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--t2)"><input type="checkbox" id="cancelImmediate" style="accent-color:var(--red)"> Cancel immediately (no grace period)</label></div>'+
+    '<div style="font-size:11px;color:var(--t3)">Without immediate: user keeps access until current period ends.</div>'+
+    '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Back</button><button class="modal-btn modal-btn-danger" onclick="doPremiumCancel(\''+esc(email)+'\')">Cancel Subscription</button></div>'
+  );
+}
+
+async function doPremiumCancel(email){
+  const immediate=document.getElementById('cancelImmediate').checked;
+  try{
+    const res=await fetch(API+'/api/admin/premium/'+encodeURIComponent(email)+'/cancel',{
+      method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':token},
+      body:JSON.stringify({immediate})
+    });
+    const d=await res.json();
+    if(d.success){closeModal();poll();}
+    else alert(d.error||'Cancel failed');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+async function openPremiumHistory(email){
+  openModal('<div class="modal-title">Subscription History</div><div class="modal-sub">'+esc(email)+'</div><div class="empty-state">Loading...</div>');
+  try{
+    const res=await fetch(API+'/api/admin/premium/'+encodeURIComponent(email)+'/history',{headers:{'X-Admin-Token':token}});
+    const d=await res.json();
+    if(!d.success){openModal('<div class="modal-title">Error</div><div class="modal-sub">'+esc(d.error||'Failed to load')+'</div><div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Close</button></div>');return;}
+
+    const infoHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:11px">'+
+      '<div><span style="color:var(--t4)">Plan:</span> <span style="color:var(--t1);font-weight:500">'+esc(d.plan||'—')+'</span></div>'+
+      '<div><span style="color:var(--t4)">Status:</span> <span style="color:var(--t1);font-weight:500">'+esc(d.status||'—')+'</span></div>'+
+      '<div><span style="color:var(--t4)">Period End:</span> <span style="color:var(--t1);font-weight:500">'+(d.currentPeriodEnd?new Date(d.currentPeriodEnd).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—')+'</span></div>'+
+      '<div><span style="color:var(--t4)">Razorpay Sub:</span> <span class="mono" style="color:var(--t2);font-size:10px">'+esc(d.razorpaySubscriptionId||'—')+'</span></div>'+
+    '</div>';
+
+    const timelineHTML=d.timeline.length?d.timeline.map(t=>{
+      const date=new Date(t.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});
+      const time=new Date(t.date).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false});
+      return '<div class="timeline-item"><span class="timeline-date">'+date+' '+time+'</span><span class="timeline-event">'+esc(t.event)+'</span><span class="timeline-detail">'+esc(t.detail)+'</span></div>';
+    }).join(''):'<div class="empty-state">No history available</div>';
+
+    openModal(
+      '<div class="modal-title">Subscription History</div>'+
+      '<div class="modal-sub">'+esc(email)+'</div>'+
+      infoHTML+
+      '<div style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">Timeline</div>'+
+      timelineHTML+
+      '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Close</button></div>'
+    );
+  }catch(e){
+    openModal('<div class="modal-title">Error</div><div class="modal-sub">'+esc(e.message)+'</div><div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Close</button></div>');
+  }
+}
+
 // ── Bind ──
 document.getElementById('loginBtn').addEventListener('click', login);
 document.getElementById('logoutBtn').addEventListener('click', logout);
@@ -1076,6 +1393,11 @@ document.getElementById('selCustom').addEventListener('click', ()=>{setEmailMode
 document.getElementById('selNone').addEventListener('click', ()=>{selectedEmails.clear();buildRecipientList();updateRecipientCount();});
 document.getElementById('recipientSearch').addEventListener('input', e=>buildRecipientList(e.target.value));
 document.getElementById('emailSendBtn').addEventListener('click', sendBroadcast);
+// Search & filter for management tables
+document.getElementById('subSearch').addEventListener('input', renderSubTable);
+document.getElementById('subBeachFilter').addEventListener('change', renderSubTable);
+document.getElementById('premiumSearch').addEventListener('input', renderPremiumTable);
+document.getElementById('premiumStatusFilter').addEventListener('change', renderPremiumTable);
 initDropZone();
 
 // ── Live Predictions ──

@@ -1171,6 +1171,123 @@ body.is-premium .hero-badge-m-logo::before { opacity:1; }
 .uf-text { flex:1; }
 
 /* ═══════════════════════════════════════════════════════
+   SAMPLE FORECAST BANNER + CTA FOOTER
+═══════════════════════════════════════════════════════ */
+.sample-banner {
+  border-radius:var(--r-xl);
+  background:var(--glass-fill);
+  backdrop-filter:var(--blur-md);
+  -webkit-backdrop-filter:var(--blur-md);
+  border:1px dashed rgba(196,115,58,0.35);
+  padding:18px 24px 14px;
+  margin-bottom:12px;
+  position:relative; overflow:hidden;
+}
+.sample-banner-inner {
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.sample-pill {
+  display:inline-block;
+  font-size:9px; font-weight:600;
+  letter-spacing:3px; text-transform:uppercase;
+  color:var(--dawn-copper,#c4733a);
+  background:rgba(196,115,58,0.1);
+  border:1px solid rgba(196,115,58,0.25);
+  border-radius:20px;
+  padding:4px 14px;
+  line-height:1;
+}
+.sample-banner-text {
+  font-size:13px; color:var(--t2); font-weight:300;
+}
+.sample-banner-sub {
+  font-size:12px; color:var(--t3); margin-top:8px;
+  font-weight:300; line-height:1.6;
+}
+
+/* Premium tab label — shown on photographers, DSLR, mobile tabs during sample */
+.premium-tab-label {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:10px; font-weight:500;
+  letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--dawn-copper,#c4733a);
+  background:rgba(196,115,58,0.08);
+  border:1px solid rgba(196,115,58,0.2);
+  border-radius:16px;
+  padding:6px 16px;
+  margin-bottom:16px;
+}
+.premium-tab-label svg {
+  width:12px; height:12px;
+  stroke:var(--dawn-copper,#c4733a);
+  fill:none; stroke-width:1.5;
+}
+
+/* Sample CTA footer */
+.sample-cta-footer {
+  margin-top:16px;
+  border-radius:var(--r-xl);
+  background:var(--glass-fill);
+  backdrop-filter:var(--blur-md);
+  -webkit-backdrop-filter:var(--blur-md);
+  border:1px dashed rgba(196,115,58,0.35);
+  padding:32px 28px;
+  text-align:center;
+  position:relative; overflow:hidden;
+}
+.sample-cta-inner {
+  position:relative; z-index:1;
+}
+.sample-cta-heading {
+  font-family:var(--ff-display);
+  font-size:18px; font-weight:600; color:var(--t1);
+  letter-spacing:-0.01em; margin-bottom:8px;
+}
+.sample-cta-sub {
+  font-size:13px; color:var(--t2); line-height:1.7;
+  font-weight:300; max-width:480px; margin:0 auto 20px;
+}
+.sample-cta-btns {
+  display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+}
+.sample-cta-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:500;
+  padding:10px 22px;
+  border-radius:24px; border:none;
+  cursor:pointer; transition:all 0.25s;
+  font-family:inherit;
+}
+.sample-cta-subscribe {
+  background:rgba(196,115,58,0.12);
+  color:var(--dawn-copper,#c4733a);
+  border:1px solid rgba(196,115,58,0.3);
+}
+.sample-cta-subscribe:hover {
+  background:rgba(196,115,58,0.2);
+  border-color:rgba(196,115,58,0.5);
+}
+.sample-cta-premium {
+  background:linear-gradient(135deg, rgba(196,115,58,0.15), rgba(212,146,74,0.15));
+  color:var(--dawn-amber,#d4924a);
+  border:1px solid rgba(196,115,58,0.3);
+}
+.sample-cta-premium:hover {
+  background:linear-gradient(135deg, rgba(196,115,58,0.25), rgba(212,146,74,0.25));
+  border-color:rgba(196,115,58,0.5);
+}
+.sample-cta-premium svg {
+  stroke:var(--dawn-copper,#c4733a);
+}
+.sample-cta-countdown {
+  font-size:12px; color:var(--t3); margin-top:16px;
+  font-weight:300;
+}
+.sample-cta-countdown strong {
+  color:var(--dawn-copper,#c4733a); font-weight:500;
+}
+
+/* ═══════════════════════════════════════════════════════
    SUNRISE EXPERIENCE PANEL — general audience
 ═══════════════════════════════════════════════════════ */
 .experience-panel {
@@ -1534,6 +1651,10 @@ body.is-premium .nav-premium-badge { display:inline-block; }
 
 .premium-modal-panel {
   max-width:400px; padding:32px 28px;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .pm-state { animation:fadeUp 0.3s ease; }
 .pm-state.hidden { display:none; }

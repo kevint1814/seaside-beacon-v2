@@ -1270,6 +1270,14 @@ function initBeachSelector() {
 function resetForecast() {
   state.weather = null; state.photography = null;
   show('fmasterIdle'); hide('fmasterLoading'); hide('fmasterResult'); hide('experiencePanel'); hide('deepPanel'); hide('shareBar');
+  // Clean up sample mode artifacts
+  hide('sampleBanner'); hide('sampleCtaFooter');
+  if (state._isSampleMode) {
+    state._isSampleMode = false;
+    document.querySelectorAll('.premium-tab-label').forEach(el => el.remove());
+    document.querySelectorAll('.tab-lock').forEach(el => el.style.display = '');
+  }
+  if (state._sampleInterval) { clearInterval(state._sampleInterval); state._sampleInterval = null; }
   const master = document.getElementById('forecastMaster');
   master.classList.remove('loaded','tone-great','tone-good','tone-meh','tone-poor');
 }
@@ -1304,7 +1312,11 @@ function initForecast() {
 async function handlePredict() {
   if (state.loading) return;
   // Premium users bypass the 6 PM time lock
-  if (!isAvailable() && !document.body.classList.contains('is-premium')) { showUnavailable(); return; }
+  if (!isAvailable() && !document.body.classList.contains('is-premium')) {
+    // Fetch sample forecast in background, then show unavail + sample
+    fetchAndShowSample();
+    return;
+  }
   state.loading = true;
   setLoadingState(true);
 
@@ -1494,18 +1506,20 @@ function renderForecast() {
   // Render sunrise experience panel (general audience)
   renderExperiencePanel(pred.score, p, w.beach);
 
-  // Show share bar
-  show('shareBar');
-  updateShareLinks(w.beach, pred.score, pred.verdict);
+  // Show share bar (hide in sample mode — it's yesterday's data)
+  if (!state._isSampleMode) {
+    show('shareBar');
+    updateShareLinks(w.beach, pred.score, pred.verdict);
+  }
 
   renderAnalysisPanel(f, pred, p, w.beach);
   setTimeout(()=>document.getElementById('forecastMaster').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
 
-  // Auto-prompt subscribe modal after forecast loads
-  maybePromptSubscribe();
+  // Auto-prompt subscribe modal after forecast loads (skip in sample mode — CTA footer handles it)
+  if (!state._isSampleMode) maybePromptSubscribe();
 
-  // Load 7-day calendar for premium users (use beachKey, not display name)
-  fetch7DayForecast(w.beachKey || state.beach);
+  // Load 7-day calendar for premium users (skip in sample mode — no 7-day for sample)
+  if (!state._isSampleMode) fetch7DayForecast(w.beachKey || state.beach);
 }
 
 /**
@@ -1632,8 +1646,8 @@ function renderAnalysisPanel(f,pred,p,beachName) {
   document.getElementById('deepSubtitle').textContent = `For ${beachName} · ${morningLabel}`;
   show('deepPanel');
   renderConditionsTab(f,pred,p);
-  // Only render premium photography tabs if user is premium - otherwise show locked placeholder
-  if (document.body.classList.contains('is-premium')) {
+  // Render premium photography tabs if user is premium OR in sample preview mode
+  if (document.body.classList.contains('is-premium') || state._isSampleMode) {
     renderPhotographersTab(p, pred);
     renderDSLRTab(p);
     renderMobileTab(p);
@@ -1947,8 +1961,8 @@ function initTabs() {
     tab.addEventListener('click', ()=>{
       const tabId = tab.dataset.tab;
 
-      // Gate premium tabs for non-premium users
-      if (PREMIUM_TABS.includes(tabId) && !document.body.classList.contains('is-premium')) {
+      // Gate premium tabs for non-premium users (but allow in sample mode)
+      if (PREMIUM_TABS.includes(tabId) && !document.body.classList.contains('is-premium') && !state._isSampleMode) {
         showPhotographyPaywall(tabId);
         return;
       }
@@ -2043,11 +2057,181 @@ function showUnavailable(td) {
   }
 }
 
+// ─────────────────────────────────────────────
+// SAMPLE FORECAST (previous day's preview for time-locked users)
+// ─────────────────────────────────────────────
+state._isSampleMode = false;
+
+async function fetchAndShowSample() {
+  // Show loading state while fetching sample
+  state.loading = true;
+  setLoadingState(true);
+  advancePipeline(0, 'Loading sample forecast…');
+
+  state._pipeTimeouts = [
+    setTimeout(() => advancePipeline(1, 'Fetching yesterday\'s data…'), 600),
+  ];
+
+  let sampleData = null;
+  try {
+    const resp = await fetchTimeout(`${CONFIG.API_URL}/predict/sample/${state.beach}`, 15000);
+    if (resp.success && resp.data && resp.data.weather) {
+      sampleData = resp;
+    }
+  } catch (e) {
+    console.warn('Sample forecast unavailable:', e.message);
+  }
+
+  // Clear pipeline
+  state._pipeTimeouts.forEach(t => clearTimeout(t));
+  state._pipeTimeouts = [];
+  state.loading = false;
+  setLoadingState(false);
+
+  if (!sampleData) {
+    // No sample data — fall back to regular unavailable card
+    showUnavailable();
+    return;
+  }
+
+  // Enter sample mode: render full forecast with sample data
+  enterSampleMode(sampleData);
+}
+
+function enterSampleMode(sampleResp) {
+  state._isSampleMode = true;
+  const w = sampleResp.data.weather;
+  const p = sampleResp.data.photography;
+
+  // Store in state so renderForecast can use them
+  state.weather = w;
+  state.photography = p;
+
+  // Format sample date for banner
+  const sampleDate = sampleResp.sampleDate;
+  let dateLabel = sampleDate;
+  try {
+    const d = new Date(sampleDate + 'T00:00:00+05:30');
+    dateLabel = d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric', timeZone:'Asia/Kolkata' });
+  } catch(e) { /* use raw date */ }
+
+  // Show sample banner
+  document.getElementById('sampleDateLabel').textContent = dateLabel;
+  show('sampleBanner');
+
+  // Hide the unavail card if it was showing
+  hide('unavailCard');
+
+  // Render the full forecast (reuses existing renderForecast)
+  renderForecast();
+
+  // After rendering, show premium labels on photography tabs
+  addSamplePremiumLabels();
+
+  // Show sample CTA footer
+  show('sampleCtaFooter');
+  updateSampleCountdown();
+  startSampleCountdownInterval();
+
+  // Override time-aware labels to say "yesterday" instead of "tomorrow"
+  overrideSampleLabels(w.beach, dateLabel);
+
+  // Wire up CTA buttons (only once — check flag to prevent listener accumulation)
+  const subBtn = document.getElementById('sampleSubscribeBtn');
+  const premBtn = document.getElementById('samplePremiumBtn');
+  if (subBtn && !subBtn._sampleBound) {
+    subBtn.addEventListener('click', openModal);
+    subBtn._sampleBound = true;
+  }
+  if (premBtn && !premBtn._sampleBound) {
+    premBtn.addEventListener('click', () => {
+      openModal();
+      setTimeout(() => document.getElementById('modalPremiumUpsell')?.scrollIntoView({behavior:'smooth',block:'start'}), 200);
+    });
+    premBtn._sampleBound = true;
+  }
+}
+
+function addSamplePremiumLabels() {
+  // Add "Included with Seaside Beacon Premium" label to photography tabs
+  const premiumPanes = ['tab-photographers', 'tab-dslr', 'tab-mobile'];
+  const labelHTML = `<div class="premium-tab-label">
+    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Included with Seaside Beacon Premium
+  </div>`;
+
+  premiumPanes.forEach(paneId => {
+    const pane = document.getElementById(paneId);
+    if (pane && !pane.querySelector('.premium-tab-label')) {
+      pane.insertAdjacentHTML('afterbegin', labelHTML);
+    }
+  });
+
+  // Hide lock icons on tabs during sample mode
+  document.querySelectorAll('.tab-lock').forEach(el => el.style.display = 'none');
+}
+
+function overrideSampleLabels(beachName, dateLabel) {
+  // Experience panel title
+  const expTitle = document.getElementById('expTitle');
+  if (expTitle) expTitle.textContent = `What the sunrise looked like at ${beachName}`;
+
+  // Analysis panel subtitle
+  const deepSub = document.getElementById('deepSubtitle');
+  if (deepSub) deepSub.textContent = `For ${beachName} · ${dateLabel} (sample)`;
+}
+
+function updateSampleCountdown() {
+  const el = document.getElementById('sampleCountdown');
+  if (!el) return;
+  const cd = countdownTo6PM();
+  el.textContent = cd || 'Ready';
+}
+
+function startSampleCountdownInterval() {
+  // Reuse the unavail interval mechanism
+  if (state._sampleInterval) clearInterval(state._sampleInterval);
+  state._sampleInterval = setInterval(() => {
+    if (isAvailable()) {
+      clearInterval(state._sampleInterval);
+      state._sampleInterval = null;
+      const el = document.getElementById('sampleCountdown');
+      if (el) el.textContent = 'Ready';
+      // Exit sample mode — user can now get live forecast
+      exitSampleMode();
+      return;
+    }
+    updateSampleCountdown();
+  }, 60000);
+}
+
+function exitSampleMode() {
+  state._isSampleMode = false;
+  hide('sampleBanner');
+  hide('sampleCtaFooter');
+  // Remove premium labels and restore lock icons
+  document.querySelectorAll('.premium-tab-label').forEach(el => el.remove());
+  document.querySelectorAll('.tab-lock').forEach(el => el.style.display = '');
+  // Reset _sampleBound flags so listeners can re-attach if sample mode re-enters
+  const subBtn = document.querySelector('.sample-cta-subscribe');
+  const premBtn = document.querySelector('.sample-cta-premium');
+  if (subBtn) subBtn._sampleBound = false;
+  if (premBtn) premBtn._sampleBound = false;
+  // Reset forecast display
+  resetForecast();
+  // Show a toast inviting them to get the live forecast
+  showToast('Live forecast is now available! Tap Predict to get today\'s sunrise score.');
+}
+
 // Clean up intervals on page unload to prevent leaks
 window.addEventListener('beforeunload', () => {
   if (state._unavailInterval) {
     clearInterval(state._unavailInterval);
     state._unavailInterval = null;
+  }
+  if (state._sampleInterval) {
+    clearInterval(state._sampleInterval);
+    state._sampleInterval = null;
   }
 });
 
@@ -3371,7 +3555,7 @@ function initPremium() {
 
   // Account actions
   document.getElementById('pmLogout')?.addEventListener('click', () => { closePremiumModal(); logoutPremium(); });
-  document.getElementById('pmCancelSub')?.addEventListener('click', () => { closePremiumModal(); cancelPremium(); });
+  // pmCancelBtn already has onclick="cancelSubscription()" in HTML — no duplicate listener needed
   document.getElementById('pmManageTelegram')?.addEventListener('click', () => {
     closePremiumModal();
     openTelegramModal();

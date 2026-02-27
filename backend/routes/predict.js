@@ -237,4 +237,69 @@ router.get('/forecast/7day/:beach', requirePremium, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/predict/sample/:beach
+ * Public — returns yesterday's full forecast (weather + AI + photography)
+ * for non-premium users to preview during the time-locked window.
+ * Includes sample: true flag and sampleDate so frontend can label it clearly.
+ */
+
+// Sample forecast cache — one entry per beach, refreshed when date changes
+const _sampleCache = {};
+
+router.get('/predict/sample/:beach', async (req, res) => {
+  try {
+    const { beach } = req.params;
+    const validBeaches = weatherService.getBeaches().map(b => b.key);
+    if (!validBeaches.includes(beach)) {
+      return res.status(400).json({ success: false, message: 'Invalid beach. Valid options: ' + validBeaches.join(', ') });
+    }
+
+    // Check in-memory cache first (date-keyed so it auto-expires daily)
+    const todayIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const todayStr = todayIST.toLocaleDateString('en-CA');
+    const cacheKey = `${beach}_${todayStr}`;
+
+    if (_sampleCache[cacheKey]) {
+      return res.json(_sampleCache[cacheKey]);
+    }
+
+    const SampleForecast = require('../models/SampleForecast');
+    const sample = await SampleForecast.findOne({ beachKey: beach });
+
+    if (!sample) {
+      return res.json({
+        success: true,
+        sample: true,
+        sampleDate: null,
+        data: null,
+        message: 'No sample forecast available yet'
+      });
+    }
+
+    const response = {
+      success: true,
+      sample: true,
+      sampleDate: sample.date,
+      data: {
+        weather: sample.weather,
+        photography: sample.photography
+      }
+    };
+
+    // Cache until date rolls over
+    _sampleCache[cacheKey] = response;
+
+    // Clean old cache entries
+    for (const key in _sampleCache) {
+      if (!key.endsWith(`_${todayStr}`)) delete _sampleCache[key];
+    }
+
+    res.json(response);
+  } catch (error) {
+    console.error('Sample forecast error:', error.message);
+    res.status(500).json({ success: false, message: error.message || 'Sample forecast failed' });
+  }
+});
+
 module.exports = router;

@@ -91,14 +91,15 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
     const snapshot = getMetricsSnapshot();
     const visitStats = await getStats();
 
-    // ── Subscribers: full list with emails ──
-    const allSubscribers = await Subscriber.find({ isActive: true })
+    // ── Subscribers: full list with emails (include inactive for admin management) ──
+    const allSubscribers = await Subscriber.find({})
       .sort({ subscribedAt: -1 })
-      .select('email preferredBeach subscribedAt lastEmailSent')
+      .select('email preferredBeach isActive subscribedAt lastEmailSent')
       .lean();
+    const activeSubscribers = allSubscribers.filter(s => s.isActive);
 
     const subsByBeach = {};
-    allSubscribers.forEach(s => {
+    activeSubscribers.forEach(s => {
       subsByBeach[s.preferredBeach] = (subsByBeach[s.preferredBeach] || 0) + 1;
     });
 
@@ -190,7 +191,7 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
 
     // Premium-only users (not in Subscriber) who logged in within 48h = likely received emails
     // Since premium-only users don't have lastEmailSent in Subscriber, use lastLogin as proxy
-    const subscriberEmailSet = new Set(allSubscribers.map(s => s.email));
+    const subscriberEmailSet = new Set(activeSubscribers.map(s => s.email));
     const premiumOnlyActive = activePremium.filter(u => !subscriberEmailSet.has(u.email));
     const premiumOnlyEmailed = premiumOnlyActive.filter(u => u.lastLogin && new Date(u.lastLogin) >= twentyFourHoursAgo).length;
 
@@ -206,7 +207,7 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
     }).select('email preferredBeach lastEmailSent subscribedAt').lean();
 
     // Total email recipients = active subscribers + premium-only users
-    const totalEmailRecipients = allSubscribers.length + premiumOnlyActive.length;
+    const totalEmailRecipients = activeSubscribers.length + premiumOnlyActive.length;
 
     const emailHealth = {
       activeSubscribers: totalEmailRecipients,
@@ -246,7 +247,8 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
         totalDays: allTraffic.length
       },
       subscribers: {
-        total: allSubscribers.length,
+        total: activeSubscribers.length,
+        totalAll: allSubscribers.length,
         list: allSubscribers,
         byBeach: subsByBeach,
         limit: 300
@@ -478,6 +480,234 @@ router.post('/admin/send-email', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin send-email error:', error.message);
     res.status(500).json({ error: 'Failed to send emails' });
+  }
+});
+
+// ── Subscriber Management ────────────────────
+
+// Edit subscriber (beach preference, toggle active)
+router.patch('/admin/subscriber/:email', requireAuth, async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase().trim();
+    const { preferredBeach, isActive } = req.body;
+
+    const update = {};
+    if (preferredBeach && ['marina', 'elliot', 'covelong', 'thiruvanmiyur'].includes(preferredBeach)) {
+      update.preferredBeach = preferredBeach;
+    }
+    if (typeof isActive === 'boolean') {
+      update.isActive = isActive;
+    }
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const subscriber = await Subscriber.findOneAndUpdate(
+      { email },
+      { $set: update },
+      { new: true }
+    );
+
+    if (!subscriber) {
+      return res.status(404).json({ error: 'Subscriber not found' });
+    }
+
+    console.log(`🔧 Admin: Updated subscriber ${email} →`, update);
+    res.json({ success: true, subscriber });
+  } catch (error) {
+    console.error('Admin subscriber update error:', error.message);
+    res.status(500).json({ error: 'Failed to update subscriber' });
+  }
+});
+
+// Delete subscriber
+router.delete('/admin/subscriber/:email', requireAuth, async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase().trim();
+    const result = await Subscriber.findOneAndDelete({ email });
+
+    if (!result) {
+      return res.status(404).json({ error: 'Subscriber not found' });
+    }
+
+    console.log(`🗑️  Admin: Deleted subscriber ${email}`);
+    res.json({ success: true, deleted: email });
+  } catch (error) {
+    console.error('Admin subscriber delete error:', error.message);
+    res.status(500).json({ error: 'Failed to delete subscriber' });
+  }
+});
+
+// ── Premium User Management ─────────────────
+
+// Edit premium user (beach, alert time, evening time, status)
+router.patch('/admin/premium/:email', requireAuth, async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase().trim();
+    const { preferredBeach, alertTime, eveningPreviewTime, status } = req.body;
+
+    const update = {};
+    if (preferredBeach && ['marina', 'elliot', 'covelong', 'thiruvanmiyur'].includes(preferredBeach)) {
+      update.preferredBeach = preferredBeach;
+    }
+    if (alertTime && /^\d{2}:\d{2}$/.test(alertTime)) {
+      update.alertTime = alertTime;
+    }
+    if (eveningPreviewTime && /^\d{2}:\d{2}$/.test(eveningPreviewTime)) {
+      update.eveningPreviewTime = eveningPreviewTime;
+    }
+    if (status && ['active', 'cancelled', 'expired', 'pending'].includes(status)) {
+      update.status = status;
+      if (status === 'cancelled') {
+        update.cancelledAt = new Date();
+      }
+      if (status === 'active') {
+        update.cancelledAt = null;
+        update.cancelledWithGrace = false;
+      }
+    }
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const user = await PremiumUser.findOneAndUpdate(
+      { email },
+      { $set: update },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: 'Premium user not found' });
+    }
+
+    console.log(`🔧 Admin: Updated premium user ${email} →`, update);
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error('Admin premium update error:', error.message);
+    res.status(500).json({ error: 'Failed to update premium user' });
+  }
+});
+
+// Extend premium subscription
+router.post('/admin/premium/:email/extend', requireAuth, async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase().trim();
+    const { days } = req.body;
+
+    if (!days || days < 1 || days > 365) {
+      return res.status(400).json({ error: 'Days must be between 1 and 365' });
+    }
+
+    const user = await PremiumUser.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'Premium user not found' });
+    }
+
+    // Extend from current period end or from now
+    const baseDate = (user.currentPeriodEnd && new Date(user.currentPeriodEnd) > new Date())
+      ? new Date(user.currentPeriodEnd)
+      : new Date();
+
+    const newEnd = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000);
+
+    user.currentPeriodEnd = newEnd;
+    if (user.status !== 'active') {
+      user.status = 'active';
+      user.cancelledAt = null;
+      user.cancelledWithGrace = false;
+    }
+    await user.save();
+
+    console.log(`📅 Admin: Extended premium for ${email} by ${days} days → ${newEnd.toISOString()}`);
+    res.json({ success: true, newPeriodEnd: newEnd, user });
+  } catch (error) {
+    console.error('Admin premium extend error:', error.message);
+    res.status(500).json({ error: 'Failed to extend subscription' });
+  }
+});
+
+// Cancel premium subscription (admin override)
+router.post('/admin/premium/:email/cancel', requireAuth, async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase().trim();
+    const { immediate } = req.body; // if true, cancel immediately; else grace period
+
+    const user = await PremiumUser.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'Premium user not found' });
+    }
+
+    if (immediate) {
+      user.status = 'cancelled';
+      user.cancelledAt = new Date();
+      user.cancelledWithGrace = false;
+    } else {
+      // Cancel with grace — keep access until currentPeriodEnd
+      user.status = 'cancelled';
+      user.cancelledAt = new Date();
+      user.cancelledWithGrace = true;
+    }
+    await user.save();
+
+    console.log(`❌ Admin: Cancelled premium for ${email} (immediate: ${!!immediate})`);
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error('Admin premium cancel error:', error.message);
+    res.status(500).json({ error: 'Failed to cancel subscription' });
+  }
+});
+
+// Get premium user payment/subscription history
+router.get('/admin/premium/:email/history', requireAuth, async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase().trim();
+    const user = await PremiumUser.findOne({ email }).lean();
+
+    if (!user) {
+      return res.status(404).json({ error: 'Premium user not found' });
+    }
+
+    // Build a timeline from available data
+    const timeline = [];
+
+    if (user.createdAt) {
+      timeline.push({ date: user.createdAt, event: 'Account created', detail: '' });
+    }
+    if (user.subscribedAt) {
+      timeline.push({ date: user.subscribedAt, event: 'Subscribed', detail: user.plan || 'unknown plan' });
+    }
+    if (user.telegramLinkedAt) {
+      timeline.push({ date: user.telegramLinkedAt, event: 'Telegram linked', detail: 'Chat ID: ' + (user.telegramChatId || '—') });
+    }
+    if (user.cancelledAt) {
+      timeline.push({ date: user.cancelledAt, event: 'Cancelled', detail: user.cancelledWithGrace ? 'Grace period until ' + (user.currentPeriodEnd ? new Date(user.currentPeriodEnd).toLocaleDateString('en-IN') : '—') : 'Immediate' });
+    }
+    if (user.lastPaymentFailed) {
+      timeline.push({ date: user.lastPaymentFailed, event: 'Payment failed', detail: '' });
+    }
+    if (user.lastLogin) {
+      timeline.push({ date: user.lastLogin, event: 'Last login', detail: '' });
+    }
+
+    // Sort by date descending
+    timeline.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.json({
+      success: true,
+      email: user.email,
+      plan: user.plan,
+      status: user.status,
+      razorpaySubscriptionId: user.razorpaySubscriptionId || null,
+      razorpayCustomerId: user.razorpayCustomerId || null,
+      currentPeriodEnd: user.currentPeriodEnd,
+      cancelledWithGrace: user.cancelledWithGrace,
+      timeline
+    });
+  } catch (error) {
+    console.error('Admin premium history error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch history' });
   }
 });
 
