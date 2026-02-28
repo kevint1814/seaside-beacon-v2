@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sample CTA Footer Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dawn-copper: #c4733a;
+    --dawn-amber: #d4924a;
+    --accent: #c4733a;
+    --glass-fill: rgba(20,16,10,0.05);
+    --glass-border: rgba(255,255,255,0.08);
+    --blur-md: blur(3px) saturate(1.25) brightness(1.22) contrast(1.08);
+    --t1: rgba(240,238,250,0.95);
+    --t2: rgba(210,205,235,0.62);
+    --t3: rgba(190,185,220,0.38);
+    --r-xl: 30px;
+    --ff-display: 'Cormorant Garamond', Georgia, serif;
+    --ff-body: 'Instrument Sans', system-ui, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0F0F0F;
+    font-family: var(--ff-body);
+    color: var(--t1);
+    display:flex;
+    justify-content:center;
+    padding: 40px 20px;
+    min-height:100vh;
+  }
+  .wrapper { max-width:700px; width:100%; }
+
+  .sample-cta-footer {
+    margin-top:16px;
+    border-radius:var(--r-xl);
+    background:var(--glass-fill);
+    backdrop-filter:var(--blur-md);
+    -webkit-backdrop-filter:var(--blur-md);
+    border:none;
+    box-shadow:0 0 0 0.5px rgba(255,255,255,0.10), inset 0 0.5px 0 rgba(255,255,255,0.14);
+    padding:32px 28px;
+    text-align:center;
+    position:relative; overflow:hidden;
+  }
+  .sample-cta-inner { position:relative; z-index:1; }
+  .sample-cta-heading {
+    font-family:var(--ff-display);
+    font-size:18px; font-weight:600; color:var(--t1);
+    letter-spacing:-0.01em; margin-bottom:8px;
+  }
+  .sample-cta-sub {
+    font-size:13px; color:var(--t2); line-height:1.7;
+    font-weight:300; max-width:480px; margin:0 auto 20px;
+  }
+  .sample-cta-btns {
+    display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+  }
+  .sample-cta-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:500;
+    padding:9px 18px; border-radius:8px;
+    cursor:pointer; transition:all 0.2s;
+    font-family:inherit; border:none;
+  }
+  .sample-cta-subscribe {
+    background:rgba(196,115,58,0.12);
+    color:var(--dawn-copper);
+    border:1px solid rgba(196,115,58,0.3);
+  }
+  .sample-cta-subscribe:hover {
+    background:rgba(196,115,58,0.2);
+    border-color:rgba(196,115,58,0.5);
+  }
+  .sample-cta-premium {
+    background:linear-gradient(135deg, rgba(196,115,58,0.15), rgba(212,146,74,0.15));
+    color:var(--dawn-amber);
+    border:1px solid rgba(196,115,58,0.3);
+  }
+  .sample-cta-premium:hover {
+    background:linear-gradient(135deg, rgba(196,115,58,0.25), rgba(212,146,74,0.25));
+    border-color:rgba(196,115,58,0.5);
+  }
+  .sample-cta-premium svg { stroke:var(--dawn-copper); }
+  .sample-cta-countdown {
+    font-size:12px; color:var(--t3); margin-top:16px;
+    font-weight:300;
+  }
+  .sample-cta-countdown strong {
+    color:var(--dawn-copper); font-weight:500;
+  }
+
+  /* Why the wait */
+  .sample-cta-why {
+    margin-top:24px;
+    padding-top:22px;
+    border-top:1px solid var(--glass-border);
+    text-align:left;
+    max-width:560px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .sample-cta-why-title {
+    font-family:var(--ff-display);
+    font-size:14px;
+    font-weight:500;
+    color:var(--t2);
+    margin:0 0 10px 0;
+    letter-spacing:-0.01em;
+  }
+  .sample-cta-why-desc {
+    font-size:12.5px;
+    color:var(--t3);
+    line-height:1.82;
+    font-weight:300;
+    margin:0 0 16px 0;
+  }
+  .sample-cta-why-factors {
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+  }
+  .sample-cta-why-factor {
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    font-size:12px;
+    color:var(--t3);
+    line-height:1.6;
+  }
+  .scw-icon {
+    color:var(--accent);
+    font-size:10px;
+    flex-shrink:0;
+    margin-top:3px;
+    opacity:0.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="sample-cta-footer">
+    <div class="sample-cta-inner">
+      <p class="sample-cta-heading">This was yesterday's forecast</p>
+      <p class="sample-cta-sub">Get tomorrow's live forecast with score, conditions, and photography guidance delivered to your inbox at 4 AM.</p>
+      <div class="sample-cta-btns">
+        <button type="button" class="sample-cta-btn sample-cta-subscribe">
+          Subscribe free
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <button type="button" class="sample-cta-btn sample-cta-premium">
+          Go Premium for anytime access
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </button>
+      </div>
+      <p class="sample-cta-countdown">Live forecast unlocks in <strong>3h 42m</strong></p>
+
+      <div class="sample-cta-why">
+        <h4 class="sample-cta-why-title">Why the evening window?</h4>
+        <p class="sample-cta-why-desc">Dawn conditions are shaped by atmospheric systems that take 10–14 hours to establish. Cloud formations, moisture gradients, and pressure cells that determine whether the horizon ignites in deep copper or stays flat and grey — all of it settles after sunset. Reading the sky at noon gives you 18 hours of uncertainty. Reading it at 6 PM gives you 12 — the minimum window where models converge to honest accuracy.</p>
+        <div class="sample-cta-why-factors">
+          <div class="sample-cta-why-factor"><span class="scw-icon">◎</span><span>Cloud formations need 8–10 hours to stabilise into forecastable patterns</span></div>
+          <div class="sample-cta-why-factor"><span class="scw-icon">◎</span><span>Bay of Bengal moisture moves overnight — evening readings capture it accurately</span></div>
+          <div class="sample-cta-why-factor"><span class="scw-icon">◎</span><span>Wind direction at dawn is set by pressure gradients that form after sunset</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

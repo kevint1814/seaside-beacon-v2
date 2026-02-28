@@ -1291,9 +1291,15 @@ function isAvailable() {
 }
 function countdownTo6PM() {
   const ist = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=ist.getHours(), m=ist.getMinutes();
-  if (h<18) { const hrs=17-h, mins=60-m; return mins===60?`${hrs}h`:`${hrs}h ${mins}m`; }
-  return null;
+  const h=ist.getHours(), m=ist.getMinutes(), s=ist.getSeconds();
+  if (h>=18) return null;
+  const totalSecs = (17-h)*3600 + (59-m)*60 + (60-s);
+  const hrs = Math.floor(totalSecs/3600);
+  const mins = Math.floor((totalSecs%3600)/60);
+  const secs = totalSecs%60;
+  if (hrs>0) return `${hrs}h ${mins}m ${secs}s`;
+  if (mins>0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
 }
 
 // ─────────────────────────────────────────────
@@ -2037,12 +2043,12 @@ function showUnavailable(td) {
   show('unavailCard');
 
   function updateCountdown() {
-    const t = td ? `${td.hours}h ${td.minutes}m` : (countdownTo6PM() || '—');
+    const t = countdownTo6PM() || '—';
     document.getElementById('unavailCountdown').textContent = t;
   }
 
   updateCountdown();
-  // Tick every 60s so the countdown stays live without a refresh
+  // Tick every second for live countdown
   if (!state._unavailInterval) {
     state._unavailInterval = setInterval(() => {
       // If we've passed 6 PM, stop ticking
@@ -2053,7 +2059,7 @@ function showUnavailable(td) {
         return;
       }
       updateCountdown();
-    }, 60000);
+    }, 1000);
   }
 }
 
@@ -2202,7 +2208,7 @@ function startSampleCountdownInterval() {
       return;
     }
     updateSampleCountdown();
-  }, 60000);
+  }, 1000);
 }
 
 function exitSampleMode() {
