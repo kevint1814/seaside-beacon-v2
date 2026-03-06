@@ -2840,7 +2840,6 @@ async function generateShareCard() {
 
 async function renderShareCardCanvas(w, p) {
   const canvas = document.getElementById('scCanvas');
-  const ctx = canvas.getContext('2d');
   const W = 1080, H = 1920;
   canvas.width = W; canvas.height = H;
 
@@ -2850,351 +2849,239 @@ async function renderShareCardCanvas(w, p) {
   const isPremium = document.body.classList.contains('is-premium');
   const score = pred.score || 0;
 
-  // ── Sky gradient background ──
-  const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
-  skyGrad.addColorStop(0, '#04050f');
-  skyGrad.addColorStop(0.15, '#0a0d1f');
-  skyGrad.addColorStop(0.35, '#12112a');
-  skyGrad.addColorStop(0.55, '#1a1228');
-  skyGrad.addColorStop(0.68, '#1e1428');
-  skyGrad.addColorStop(0.80, '#2a1a2e');
-  skyGrad.addColorStop(0.92, '#3d2232');
-  skyGrad.addColorStop(1, '#7a4a30');
-  ctx.fillStyle = skyGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // ── Stars ──
-  const stars = [
-    {x:130,y:115,s:4,o:0.3},{x:378,y:77,s:6,o:0.6},{x:626,y:173,s:4,o:0.45},
-    {x:842,y:58,s:4,o:0.25},{x:238,y:269,s:5,o:0.5},{x:950,y:211,s:6,o:0.6},
-    {x:486,y:346,s:4,o:0.25},{x:994,y:135,s:4,o:0.4},{x:756,y:423,s:4,o:0.2},
-    {x:86,y:307,s:5,o:0.4},{x:562,y:481,s:6,o:0.5},{x:324,y:384,s:4,o:0.25},
-    {x:918,y:538,s:4,o:0.3},{x:162,y:614,s:4,o:0.2},{x:670,y:576,s:5,o:0.35},
-    {x:432,y:672,s:4,o:0.15}
-  ];
-  stars.forEach(s => {
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.s, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(240,238,250,${s.o})`;
-    ctx.fill();
-  });
-
-  // ── Helper: draw text with word wrap and justify ──
-  function drawWrappedText(text, x, y, maxW, lineH, opts = {}) {
-    const { font = '39px "Instrument Sans", sans-serif', color = 'rgba(210,205,235,0.62)', justify = true } = opts;
-    ctx.font = font;
-    ctx.fillStyle = color;
-    const words = text.split(' ');
-    let line = '', lines = [];
-    for (const word of words) {
-      const test = line ? line + ' ' + word : word;
-      if (ctx.measureText(test).width > maxW && line) {
-        lines.push(line);
-        line = word;
-      } else {
-        line = test;
-      }
-    }
-    if (line) lines.push(line);
-
-    lines.forEach((ln, i) => {
-      const isLast = i === lines.length - 1;
-      if (justify && !isLast && lines.length > 1) {
-        // Justify: distribute space between words
-        const lnWords = ln.split(' ');
-        if (lnWords.length > 1) {
-          const totalTextW = lnWords.reduce((a, w) => a + ctx.measureText(w).width, 0);
-          const spaceW = (maxW - totalTextW) / (lnWords.length - 1);
-          let cx = x;
-          lnWords.forEach((w, wi) => {
-            ctx.fillText(w, cx, y + i * lineH);
-            cx += ctx.measureText(w).width + spaceW;
-          });
-          return;
-        }
-      }
-      ctx.fillText(ln, x, y + i * lineH);
-    });
-    return y + lines.length * lineH;
-  }
-
-  // ── Brand row ──
-  const brandY = 80;
-  // Sun icon
-  const sunGrad = ctx.createRadialGradient(78, brandY + 6, 0, 78, brandY + 6, 24);
-  sunGrad.addColorStop(0, 'rgba(255,248,225,0.95)');
-  sunGrad.addColorStop(0.6, 'rgba(220,160,60,0.7)');
-  sunGrad.addColorStop(1, 'rgba(196,115,58,0)');
-  ctx.beginPath();
-  ctx.arc(78, brandY + 6, 24, 0, Math.PI * 2);
-  ctx.fillStyle = sunGrad;
-  ctx.fill();
-
-  ctx.font = '500 33px "Instrument Sans", sans-serif';
-  ctx.fillStyle = 'rgba(210,205,235,0.62)';
-  ctx.letterSpacing = '9px';
-  ctx.fillText('SEASIDE BEACON', 115, brandY + 16);
-  ctx.letterSpacing = '0px';
-
-  if (isPremium) {
-    const premX = 115 + ctx.measureText('SEASIDE BEACON').width + 24;
-    ctx.font = '700 21px "Instrument Sans", sans-serif';
-    ctx.strokeStyle = 'rgba(196,115,58,0.4)';
-    ctx.lineWidth = 2;
-    const pw = ctx.measureText('PREMIUM').width + 18;
-    ctx.strokeRect(premX, brandY - 6, pw, 28);
-    ctx.fillStyle = '#c4733a';
-    ctx.fillText('PREMIUM', premX + 9, brandY + 14);
-  }
-
-  // ── Score ring ──
-  const ringCx = 78 + 130/2, ringCy = brandY + 120 + 130/2;
-  const ringR = 100;
-  // Background ring
-  ctx.beginPath();
-  ctx.arc(ringCx, ringCy, ringR, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-  ctx.lineWidth = 14;
-  ctx.stroke();
-  // Score arc
-  const scoreAngle = (score / 100) * Math.PI * 2;
-  ctx.beginPath();
-  ctx.arc(ringCx, ringCy, ringR, -Math.PI / 2, -Math.PI / 2 + scoreAngle);
-  ctx.strokeStyle = '#c4733a';
-  ctx.lineWidth = 14;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-  ctx.lineCap = 'butt';
-  // Score number
-  ctx.font = '500 96px "Cormorant Garamond", Georgia, serif';
-  ctx.fillStyle = 'rgba(240,238,250,0.95)';
-  ctx.textAlign = 'center';
-  ctx.fillText(score, ringCx, ringCy + 20);
-  ctx.font = '400 33px "Instrument Sans", sans-serif';
-  ctx.fillStyle = 'rgba(190,185,220,0.38)';
-  ctx.fillText('/100', ringCx, ringCy + 56);
-  ctx.textAlign = 'left';
-
-  // ── Beach name + badge + date ──
-  const metaX = ringCx + ringR + 66;
-  const metaY = ringCy - 55;
-  ctx.font = '500 60px "Cormorant Garamond", Georgia, serif';
-  ctx.fillStyle = 'rgba(240,238,250,0.95)';
-  ctx.fillText(w.beach, metaX, metaY);
-
-  // Badge
-  let badgeText = '~ Soft colors possible';
-  if (score >= 70) badgeText = '✓ Worth the early alarm';
-  else if (score >= 55) badgeText = '~ Could surprise you';
-  else if (score >= 40) badgeText = '~ Soft colors possible';
-  else if (score >= 25) badgeText = '✗ Muted sunrise likely';
-  else badgeText = 'Sunrise likely not visible';
-
-  ctx.font = '500 30px "Instrument Sans", sans-serif';
-  const badgeW = ctx.measureText(badgeText).width + 36;
-  const badgeY = metaY + 18;
-  ctx.fillStyle = 'rgba(196,115,58,0.08)';
-  ctx.beginPath();
-  ctx.roundRect(metaX, badgeY, badgeW, 42, 21);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(196,115,58,0.18)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.fillStyle = '#d4924a';
-  ctx.fillText(badgeText, metaX + 18, badgeY + 30);
-
-  // Date
+  // ── Build data ──
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const dateStr = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
-  ctx.font = '400 33px "Instrument Sans", sans-serif';
-  ctx.fillStyle = 'rgba(190,185,220,0.38)';
-  ctx.fillText(dateStr, metaX, badgeY + 72);
+  const sunriseTime = w.sunrise || gh.peak || '';
+  const dateStr = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}${sunriseTime ? ' &middot; Sunrise ' + _esc(sunriseTime) : ''}`;
 
-  // ── Divider ──
-  const divY = ringCy + ringR + 50;
-  const divGrad = ctx.createLinearGradient(78, divY, W - 78, divY);
-  divGrad.addColorStop(0, 'transparent');
-  divGrad.addColorStop(0.5, 'rgba(255,255,255,0.16)');
-  divGrad.addColorStop(1, 'transparent');
-  ctx.fillStyle = divGrad;
-  ctx.fillRect(78, divY, W - 156, 2);
+  const ghStart = gh.start || '';
+  const ghEnd = gh.end || '';
+  const ghPeak = gh.peak || ghStart;
 
-  // ── Golden window bar ──
-  let curY = divY + 44;
-  ctx.fillStyle = 'rgba(20,16,10,0.45)';
-  ctx.beginPath();
-  ctx.roundRect(78, curY, W - 156, 130, 48);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Golden icon
-  ctx.font = '60px sans-serif';
-  ctx.fillStyle = '#c9a055';
-  ctx.fillText('◐', 110, curY + 82);
-
-  ctx.font = '500 48px "Cormorant Garamond", Georgia, serif';
-  ctx.fillStyle = '#d4924a';
-  const ghStart = gh.start || '--';
-  const ghEnd = gh.end || '--';
-  ctx.fillText(`${ghStart} to ${ghEnd}`, 195, curY + 60);
-  ctx.font = '400 30px "Instrument Sans", sans-serif';
-  ctx.fillStyle = 'rgba(190,185,220,0.38)';
-  ctx.fillText(`Peak color at ${gh.peak || ghStart}`, 195, curY + 100);
-
-  curY += 165;
-
-  // ── Explanation sections ──
-  const secX = 78, secW = W - 156;
-  const labelFont = '600 27px "Instrument Sans", sans-serif';
-  const textFont = '39px "Instrument Sans", sans-serif';
-  const labelColor = '#c4733a';
-  const textColor = 'rgba(210,205,235,0.62)';
-  const lineH = 56;
-
-  function drawSection(label, text) {
-    ctx.font = labelFont;
-    ctx.fillStyle = labelColor;
-    ctx.letterSpacing = '6px';
-    ctx.fillText(label.toUpperCase(), secX, curY);
-    ctx.letterSpacing = '0px';
-    curY += 38;
-    curY = drawWrappedText(text, secX, curY, secW, lineH, { font: textFont, color: textColor, justify: true });
-    curY += 24;
-  }
-
-  if (exp.whatYoullSee) drawSection('What You\'ll See', exp.whatYoullSee);
-
-  if (!isPremium) {
-    // Free: show all three sections
-    if (exp.beachVibes) drawSection('Beach Vibes', exp.beachVibes);
-    if (exp.worthWakingUp) drawSection('Worth the Early Alarm?', exp.worthWakingUp);
-  } else {
-    // Premium: condensed explanation + photography tips
-    if (exp.worthWakingUp) drawSection('Worth the Early Alarm?', exp.worthWakingUp);
-
-    // Photography tips section
-    const pb = p?.photographyBrief || {};
-    const photoTip = pb.bestShots || pb.lightQuality || '';
-    if (photoTip) {
-      // Glass card background
-      const photoCardY = curY - 8;
-      const photoCardH = 200; // estimate, will overflow-clip anyway
-      ctx.fillStyle = 'rgba(20,16,10,0.45)';
-      ctx.beginPath();
-      ctx.roundRect(secX, photoCardY, secW, photoCardH, 42);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      curY += 14;
-      ctx.font = labelFont;
-      ctx.fillStyle = labelColor;
-      ctx.letterSpacing = '6px';
-      ctx.fillText('PHOTOGRAPHY TIPS', secX + 48, curY);
-      ctx.letterSpacing = '0px';
-      curY += 34;
-      curY = drawWrappedText(photoTip, secX + 48, curY, secW - 96, 52, { font: '36px "Instrument Sans", sans-serif', color: textColor, justify: true });
-      curY += 24;
-    }
-  }
-
-  // ── Footer fade ──
-  const fadeH = 80;
-  const fadeY = H - 160;
-  const fadeGrad = ctx.createLinearGradient(0, fadeY, 0, fadeY + fadeH);
-  fadeGrad.addColorStop(0, 'rgba(4,5,15,0)');
-  fadeGrad.addColorStop(1, 'rgba(4,5,15,0.35)');
-  ctx.fillStyle = fadeGrad;
-  ctx.fillRect(0, fadeY, W, fadeH);
-
-  // Footer separator
-  const sepY = H - 130;
-  const sepGrad = ctx.createLinearGradient(78, sepY, W - 78, sepY);
-  sepGrad.addColorStop(0, 'transparent');
-  sepGrad.addColorStop(0.5, 'rgba(255,255,255,0.06)');
-  sepGrad.addColorStop(1, 'transparent');
-  ctx.fillStyle = sepGrad;
-  ctx.fillRect(78, sepY, W - 156, 1);
-
-  // URL
-  ctx.font = '400 30px "Instrument Sans", sans-serif';
-  ctx.fillStyle = 'rgba(150,145,185,0.22)';
-  ctx.fillText('www.seasidebeacon.com', 78, H - 60);
-
-  // ── QR Code ──
+  const verdictText = pred.verdict || 'Soft colors possible';
+  const expectText = [p?.greeting, p?.insight].filter(Boolean).join(' ');
   const beachKey = w.beachKey || state.beach || 'marina';
   const qrUrl = `https://www.seasidebeacon.com/?beach=${beachKey}`;
-  drawQRCode(ctx, qrUrl, W - 78 - 102, H - 136, 102);
-}
 
-// Minimal QR Code generator (alphanumeric, level L)
-// Renders a simple QR-like grid that encodes the URL
-function drawQRCode(ctx, url, x, y, size) {
-  // Use a deterministic pattern based on URL hash for a QR-like appearance
-  // This creates a visually recognizable QR pattern
-  const modules = 25;
-  const cellSize = size / modules;
-
-  // Simple hash for deterministic pattern
-  let hash = 0;
-  for (let i = 0; i < url.length; i++) {
-    hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0;
-  }
-
-  // Background
-  ctx.fillStyle = 'rgba(240,238,250,0.9)';
-  ctx.beginPath();
-  ctx.roundRect(x - 6, y - 6, size + 12, size + 12, 8);
-  ctx.fill();
-
-  ctx.fillStyle = '#0a0d1f';
-
-  // Finder patterns (3 corners)
-  function drawFinder(fx, fy) {
-    // Outer
-    ctx.fillRect(fx, fy, 7 * cellSize, cellSize);
-    ctx.fillRect(fx, fy + 6 * cellSize, 7 * cellSize, cellSize);
-    ctx.fillRect(fx, fy, cellSize, 7 * cellSize);
-    ctx.fillRect(fx + 6 * cellSize, fy, cellSize, 7 * cellSize);
-    // Inner
-    ctx.fillRect(fx + 2 * cellSize, fy + 2 * cellSize, 3 * cellSize, 3 * cellSize);
-  }
-  drawFinder(x, y);
-  drawFinder(x + (modules - 7) * cellSize, y);
-  drawFinder(x, y + (modules - 7) * cellSize);
-
-  // Timing patterns
-  for (let i = 8; i < modules - 8; i++) {
-    if (i % 2 === 0) {
-      ctx.fillRect(x + i * cellSize, y + 6 * cellSize, cellSize, cellSize);
-      ctx.fillRect(x + 6 * cellSize, y + i * cellSize, cellSize, cellSize);
-    }
-  }
-
-  // Data area — fill with deterministic pseudo-random based on URL
-  const rng = (function(seed) {
-    return function() {
-      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-      return seed / 0x7fffffff;
-    };
-  })(Math.abs(hash));
-
-  for (let row = 0; row < modules; row++) {
-    for (let col = 0; col < modules; col++) {
-      // Skip finder pattern areas
-      if ((row < 8 && col < 8) || (row < 8 && col >= modules - 8) || (row >= modules - 8 && col < 8)) continue;
-      // Skip timing
-      if (row === 6 || col === 6) continue;
-      if (rng() > 0.55) {
-        ctx.fillRect(x + col * cellSize, y + row * cellSize, cellSize, cellSize);
+  // Generate real QR code as canvas → data URL (html2canvas can't render SVGs reliably)
+  let qrImgHtml = '';
+  try {
+    const qr = qrcode(0, 'L');
+    qr.addData(qrUrl);
+    qr.make();
+    const count = qr.getModuleCount();
+    const qrPx = 80;
+    const cellSize = qrPx / count;
+    const qrCanvas = document.createElement('canvas');
+    qrCanvas.width = qrPx; qrCanvas.height = qrPx;
+    const qctx = qrCanvas.getContext('2d');
+    // White background
+    qctx.fillStyle = '#ffffff';
+    qctx.fillRect(0, 0, qrPx, qrPx);
+    // Dark modules
+    qctx.fillStyle = '#0a0a0e';
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (qr.isDark(r, c)) {
+          qctx.fillRect(c * cellSize, r * cellSize, cellSize + 0.5, cellSize + 0.5);
+        }
       }
     }
+    const qrDataUrl = qrCanvas.toDataURL('image/png');
+    qrImgHtml = `<img src="${qrDataUrl}" width="80" height="80" style="display:block;border-radius:5px;" />`;
+  } catch(e) {
+    console.warn('QR generation failed:', e);
+    qrImgHtml = '<div style="width:80px;height:80px;border-radius:5px;background:rgba(255,255,255,0.04);border:2.5px solid rgba(255,255,255,0.03);"></div>';
   }
+
+  // Pre-render score ring as canvas → data URL (html2canvas can't do SVG stroke-dasharray)
+  const ringSize = 225;
+  const ringR = 100;
+  const ringCanvas = document.createElement('canvas');
+  ringCanvas.width = ringSize; ringCanvas.height = ringSize;
+  const rctx = ringCanvas.getContext('2d');
+  const rCx = ringSize / 2, rCy = ringSize / 2;
+  // Background ring
+  rctx.beginPath();
+  rctx.arc(rCx, rCy, ringR, 0, Math.PI * 2);
+  rctx.strokeStyle = 'rgba(255,255,255,0.035)';
+  rctx.lineWidth = 3;
+  rctx.stroke();
+  // Score arc
+  if (score > 0) {
+    const scoreAngle = (score / 100) * Math.PI * 2;
+    rctx.beginPath();
+    rctx.arc(rCx, rCy, ringR, -Math.PI / 2, -Math.PI / 2 + scoreAngle);
+    rctx.strokeStyle = 'rgba(196,115,58,0.5)';
+    rctx.lineWidth = 3;
+    rctx.lineCap = 'round';
+    rctx.stroke();
+  }
+  const ringDataUrl = ringCanvas.toDataURL('image/png');
+
+  // Photography
+  const pb = p?.photographyBrief || {};
+  const photoTip = pb.bestShots || pb.lightQuality || '';
+
+  // ── Premium-specific spacing ──
+  const premClass = isPremium ? ' sc2-premium' : '';
+
+  // ── Sections HTML ──
+  let sectionsHtml = '';
+  if (expectText) sectionsHtml += `<div class="sc2-sec"><div class="sc2-sec-label">What to Expect</div><div class="sc2-sec-text">${_esc(expectText)}</div></div>`;
+  if (exp.whatYoullSee) sectionsHtml += `<div class="sc2-sec"><div class="sc2-sec-label">What You'll See</div><div class="sc2-sec-text">${_esc(exp.whatYoullSee)}</div></div>`;
+  if (exp.worthWakingUp) sectionsHtml += `<div class="sc2-sec"><div class="sc2-sec-label">Worth the Early Alarm?</div><div class="sc2-sec-text">${_esc(exp.worthWakingUp)}</div></div>`;
+  if (isPremium && photoTip) sectionsHtml += `<div class="sc2-sec sc2-photo-card"><div class="sc2-sec-label">Photography</div><div class="sc2-sec-text">${_esc(photoTip)}</div></div>`;
+
+  // ── Golden window HTML ──
+  const gwHtml = (ghStart && ghEnd) ? `
+    <div class="sc2-gw">
+      <div class="sc2-gw-dot"></div>
+      <span class="sc2-gw-time"><strong>${_esc(ghStart)}</strong> to <strong>${_esc(ghEnd)}</strong> &middot; Peak <strong>${_esc(ghPeak)}</strong></span>
+    </div>` : '';
+
+  // ── Build full card HTML at 1080×1920 ──
+  const container = document.getElementById('scHtmlCard');
+  container.innerHTML = `
+    <style>
+      .sc2-card, .sc2-card * { margin:0; padding:0; box-sizing:border-box; }
+      .sc2-card {
+        width:1080px; height:1920px;
+        position:relative;
+        background:#0a0a0e;
+        font-family:'Instrument Sans', system-ui, sans-serif;
+        overflow:hidden;
+      }
+      .sc2-glow {
+        position:absolute;
+        bottom:0; left:0; right:0;
+        height:20%;
+        background: radial-gradient(ellipse 140% 100% at 50% 100%, rgba(196,115,58,0.025) 0%, transparent 70%);
+        z-index:1;
+        pointer-events:none;
+      }
+      .sc2-inner {
+        position:relative; z-index:2;
+        width:100%; height:100%;
+        display:flex; flex-direction:column; align-items:center; text-align:center;
+        padding:80px 80px 60px;
+      }
+
+      /* Brand */
+      .sc2-brand { display:flex; align-items:center; gap:15px; justify-content:center; margin-bottom:80px; }
+      .sc2-brand-dot { width:12.5px; height:12.5px; border-radius:50%; background:rgba(196,115,58,0.5); flex-shrink:0; }
+      .sc2-brand-name { font-size:21px; font-weight:500; letter-spacing:8.75px; text-transform:uppercase; color:rgba(255,255,255,0.22); }
+      .sc2-prem-tag { margin-left:12px; font-size:17.5px; font-weight:600; letter-spacing:4.5px; text-transform:uppercase; color:rgba(196,115,58,0.38); border:2.5px solid rgba(196,115,58,0.14); padding:5px 17.5px; border-radius:5px; }
+
+      /* Hero */
+      .sc2-hero { display:flex; flex-direction:column; align-items:center; margin-bottom:60px; }
+      .sc2-ring-wrap { position:relative; width:225px; height:225px; margin-bottom:40px; }
+      .sc2-ring-img { width:225px; height:225px; display:block; }
+      .sc2-ring-inner { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+      .sc2-ring-score { font-family:'Cormorant Garamond', serif; font-size:80px; font-weight:300; color:rgba(255,255,255,0.88); line-height:1; letter-spacing:-2.5px; }
+      .sc2-ring-of { font-size:18.75px; color:rgba(255,255,255,0.14); letter-spacing:2.5px; margin-top:10px; }
+
+      .sc2-beach { font-family:'Cormorant Garamond', serif; font-size:65px; font-weight:400; color:rgba(255,255,255,0.88); letter-spacing:0.75px; margin-bottom:12.5px; }
+      .sc2-verdict { font-size:22.5px; font-weight:500; letter-spacing:4.5px; text-transform:uppercase; color:rgba(196,115,58,0.5); margin-bottom:10px; }
+      .sc2-date { font-size:22.5px; color:rgba(255,255,255,0.16); letter-spacing:0.75px; margin-bottom:15px; }
+
+      /* Golden window */
+      .sc2-gw { display:flex; align-items:center; justify-content:center; gap:12.5px; }
+      .sc2-gw-dot { width:15px; height:15px; border-radius:50%; background:#0a0a0e; border:2.5px solid rgba(196,115,58,0.5); flex-shrink:0; }
+      .sc2-gw-time { font-size:21.25px; color:rgba(255,255,255,0.22); letter-spacing:0.5px; }
+      .sc2-gw-time strong { color:rgba(255,255,255,0.38); font-weight:500; }
+
+      /* Separator */
+      .sc2-sep { width:70px; height:2.5px; background:rgba(255,255,255,0.06); flex-shrink:0; margin-bottom:60px; }
+
+      /* Sections */
+      .sc2-sections { display:flex; flex-direction:column; gap:35px; width:100%; text-align:left; flex:1; min-height:0; }
+      .sc2-sec { display:flex; flex-direction:column; gap:7.5px; }
+      .sc2-sec-label { font-size:17.5px; font-weight:600; letter-spacing:5px; text-transform:uppercase; color:rgba(196,115,58,0.4); }
+      .sc2-sec-text { font-size:26.25px; line-height:1.65; color:rgba(255,255,255,0.3); }
+
+      /* Photography glass card */
+      .sc2-photo-card { background:rgba(255,255,255,0.018); border:2.5px solid rgba(255,255,255,0.035); border-radius:12.5px; padding:25px 30px; }
+      .sc2-photo-card .sc2-sec-label { color:rgba(196,115,58,0.3); }
+      .sc2-photo-card .sc2-sec-text { font-size:23.75px; line-height:1.5; color:rgba(255,255,255,0.22); }
+
+      /* Footer */
+      .sc2-foot { display:flex; align-items:flex-end; justify-content:space-between; width:100%; flex-shrink:0; margin-top:auto; padding-top:50px; }
+      .sc2-foot-left { display:flex; flex-direction:column; gap:7.5px; }
+      .sc2-foot-cta { font-size:22.5px; font-style:italic; color:rgba(196,115,58,0.3); font-family:'Cormorant Garamond', serif; letter-spacing:0.5px; }
+      .sc2-foot-url { font-size:20px; color:rgba(255,255,255,0.14); letter-spacing:1px; }
+      .sc2-foot-right { display:flex; flex-direction:column; align-items:center; gap:7.5px; }
+      .sc2-foot-scan { font-size:16.25px; font-weight:500; letter-spacing:3.75px; text-transform:uppercase; color:rgba(255,255,255,0.1); }
+      /* ── Premium overrides ── */
+      .sc2-premium .sc2-brand { margin-bottom:60px; }
+      .sc2-premium .sc2-hero { margin-bottom:45px; }
+      .sc2-premium .sc2-sep { margin-bottom:45px; }
+      .sc2-premium .sc2-sections { gap:25px; }
+      .sc2-premium .sc2-sec-text { font-size:25px; line-height:1.55; }
+      .sc2-premium .sc2-foot { padding-top:35px; }
+    </style>
+    <div class="sc2-card${premClass}">
+      <div class="sc2-glow"></div>
+      <div class="sc2-inner">
+        <div class="sc2-brand">
+          <div class="sc2-brand-dot"></div>
+          <span class="sc2-brand-name">Seaside Beacon</span>
+          ${isPremium ? '<span class="sc2-prem-tag">Premium</span>' : ''}
+        </div>
+
+        <div class="sc2-hero">
+          <div class="sc2-ring-wrap">
+            <img src="${ringDataUrl}" class="sc2-ring-img" width="225" height="225" />
+            <div class="sc2-ring-inner">
+              <span class="sc2-ring-score">${score}</span>
+              <span class="sc2-ring-of">/100</span>
+            </div>
+          </div>
+          <div class="sc2-beach">${_esc(w.beach)}</div>
+          <div class="sc2-verdict">${_esc(verdictText)}</div>
+          <div class="sc2-date">${dateStr}</div>
+          ${gwHtml}
+        </div>
+
+        <div class="sc2-sep"></div>
+
+        <div class="sc2-sections">
+          ${sectionsHtml}
+        </div>
+
+        <div class="sc2-foot">
+          <div class="sc2-foot-left">
+            <span class="sc2-foot-cta">Tomorrow&rsquo;s sunrise, predicted tonight</span>
+            <span class="sc2-foot-url">visit: www.seasidebeacon.com</span>
+          </div>
+          <div class="sc2-foot-right">
+            <span class="sc2-foot-scan">scan</span>
+            ${qrImgHtml}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // ── Capture with html2canvas ──
+  const cardEl = container.querySelector('.sc2-card');
+  const captured = await html2canvas(cardEl, {
+    width: W,
+    height: H,
+    scale: 1,
+    backgroundColor: '#0a0a0e',
+    useCORS: true,
+    logging: false
+  });
+
+  // Draw onto scCanvas
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(captured, 0, 0, W, H);
+
+  // Clean up
+  container.innerHTML = '';
 }
 
 function downloadShareCard() {

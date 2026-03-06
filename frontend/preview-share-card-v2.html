@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share Card V2 — 9:16 Option B</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#111;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:40px 20px 80px;
+    gap:48px;
+    font-family:'Instrument Sans', system-ui, sans-serif;
+  }
+  .label {
+    text-align:center;
+    color:rgba(255,255,255,0.35);
+    font-size:10px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    margin-bottom:16px;
+  }
+
+  /* ═══ CARD — 9:16 (1080×1920 at 40% = 432×768) ═══ */
+  .card {
+    width:432px;
+    height:768px;
+    border-radius:4px;
+    overflow:hidden;
+    position:relative;
+    background:#0a0a0e;
+  }
+
+  .card::after {
+    content:'';
+    position:absolute;
+    bottom:0; left:0; right:0;
+    height:20%;
+    background: radial-gradient(ellipse 140% 100% at 50% 100%, rgba(196,115,58,0.025) 0%, transparent 70%);
+    z-index:1;
+    pointer-events:none;
+  }
+
+  .inner {
+    position:relative;
+    z-index:2;
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding:32px 32px 24px;
+  }
+
+  /* ── Brand ── */
+  .brand {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    justify-content:center;
+    margin-bottom:32px;
+  }
+  .brand-dot {
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:rgba(196,115,58,0.5);
+  }
+  .brand-name {
+    font-size:8.5px;
+    font-weight:500;
+    letter-spacing:3.5px;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.22);
+  }
+  .prem-tag {
+    margin-left:5px;
+    font-size:7px;
+    font-weight:600;
+    letter-spacing:1.8px;
+    text-transform:uppercase;
+    color:rgba(196,115,58,0.38);
+    border:1px solid rgba(196,115,58,0.14);
+    padding:2px 7px;
+    border-radius:2px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-bottom:24px;
+  }
+
+  .ring-wrap {
+    position:relative;
+    width:90px;
+    height:90px;
+    margin-bottom:16px;
+  }
+  .ring-svg { width:90px; height:90px; }
+  .ring-bg { fill:none; stroke:rgba(255,255,255,0.035); stroke-width:1.2; }
+  .ring-val {
+    fill:none;
+    stroke:rgba(196,115,58,0.5);
+    stroke-width:1.2;
+    stroke-linecap:round;
+    stroke-dasharray:251.327;
+    stroke-dashoffset:125.664;
+    transform:rotate(-90deg);
+    transform-origin:center;
+  }
+  .ring-inner {
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .ring-score {
+    font-family:'Cormorant Garamond', serif;
+    font-size:32px;
+    font-weight:300;
+    color:rgba(255,255,255,0.88);
+    line-height:1;
+    letter-spacing:-1px;
+  }
+  .ring-of {
+    font-size:7.5px;
+    color:rgba(255,255,255,0.14);
+    letter-spacing:1px;
+    margin-top:4px;
+  }
+
+  .beach {
+    font-family:'Cormorant Garamond', serif;
+    font-size:26px;
+    font-weight:400;
+    color:rgba(255,255,255,0.88);
+    letter-spacing:0.3px;
+    margin-bottom:5px;
+  }
+  .verdict {
+    font-size:9px;
+    font-weight:500;
+    letter-spacing:1.8px;
+    text-transform:uppercase;
+    color:rgba(196,115,58,0.5);
+    margin-bottom:4px;
+  }
+  .date {
+    font-size:9px;
+    color:rgba(255,255,255,0.16);
+    letter-spacing:0.3px;
+    margin-bottom:6px;
+  }
+
+  /* Golden window inline */
+  .gw {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+  }
+  .gw-dot {
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background: conic-gradient(from 180deg, rgba(196,115,58,0.5) 0%, rgba(212,146,74,0.5) 50%, rgba(196,115,58,0.5) 100%);
+    position:relative;
+  }
+  .gw-dot::after {
+    content:'';
+    position:absolute;
+    inset:1.5px;
+    border-radius:50%;
+    background:#0a0a0e;
+  }
+  .gw-time {
+    font-size:8.5px;
+    color:rgba(255,255,255,0.22);
+    letter-spacing:0.2px;
+  }
+  .gw-time strong {
+    color:rgba(255,255,255,0.38);
+    font-weight:500;
+  }
+
+  /* ── Separator ── */
+  .sep {
+    width:28px;
+    height:1px;
+    background:rgba(255,255,255,0.06);
+    flex-shrink:0;
+    margin-bottom:24px;
+  }
+
+  /* ── Sections ── */
+  .sections {
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    width:100%;
+    text-align:left;
+    flex:1;
+    min-height:0;
+  }
+
+  .sec {
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .sec-label {
+    font-size:7px;
+    font-weight:600;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:rgba(196,115,58,0.4);
+  }
+  .sec-text {
+    font-size:10.5px;
+    line-height:1.65;
+    color:rgba(255,255,255,0.3);
+  }
+
+  /* Premium card — tighter spacing to fit photography */
+  .card.premium .sections { gap:10px; }
+  .card.premium .sec-text {
+    font-size:10px;
+    line-height:1.55;
+  }
+  .card.premium .hero { margin-bottom:18px; }
+  .card.premium .sep { margin-bottom:18px; }
+  .card.premium .brand { margin-bottom:24px; }
+
+  /* Photography glass card */
+  .photo-card {
+    background:rgba(255,255,255,0.018);
+    border:1px solid rgba(255,255,255,0.035);
+    border-radius:5px;
+    padding:10px 12px;
+  }
+  .photo-card .sec-label {
+    color:rgba(196,115,58,0.3);
+  }
+  .photo-card .sec-text {
+    font-size:9.5px;
+    line-height:1.5;
+    color:rgba(255,255,255,0.22);
+  }
+
+  /* ── Footer ── */
+  .foot {
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    width:100%;
+    flex-shrink:0;
+    margin-top:auto;
+    padding-top:20px;
+  }
+  .foot-left {
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .foot-cta {
+    font-size:9px;
+    font-style:italic;
+    color:rgba(196,115,58,0.3);
+    font-family:'Cormorant Garamond', serif;
+    letter-spacing:0.2px;
+  }
+  .foot-url {
+    font-size:8px;
+    color:rgba(255,255,255,0.14);
+    letter-spacing:0.4px;
+  }
+  .foot-right {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+  }
+  .foot-scan {
+    font-size:6.5px;
+    font-weight:500;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.1);
+  }
+  .foot-qr {
+    width:32px;
+    height:32px;
+    border-radius:2px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.03);
+  }
+
+  /* Premium footer tighter */
+  .card.premium .foot { padding-top:14px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ FREE VERSION ═══ -->
+<div>
+  <div class="label">Free — 9:16 (1080×1920)</div>
+  <div class="card">
+    <div class="inner">
+      <div class="brand">
+        <div class="brand-dot"></div>
+        <span class="brand-name">Seaside Beacon</span>
+      </div>
+
+      <div class="hero">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 90 90">
+            <circle class="ring-bg" cx="45" cy="45" r="40"/>
+            <circle class="ring-val" cx="45" cy="45" r="40"/>
+          </svg>
+          <div class="ring-inner">
+            <span class="ring-score">50</span>
+            <span class="ring-of">/100</span>
+          </div>
+        </div>
+        <div class="beach">Covelong Beach</div>
+        <div class="verdict">Soft colors possible</div>
+        <div class="date">Friday, March 6, 2026 · Sunrise 6:23 AM</div>
+        <div class="gw">
+          <div class="gw-dot"></div>
+          <span class="gw-time"><strong>6:03</strong> to <strong>6:53 AM</strong> · Peak 6:13</span>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="sections">
+        <div class="sec">
+          <div class="sec-label">What to Expect</div>
+          <div class="sec-text">Good morning! This morning is looking pretty fair, with a decent sunrise waiting for you at Covelong Beach! The sky will have a warm, pale blue tone with hints of peach, but the colors will be a bit muted due to the high humidity. As the sun rises, you might catch glimpses of it punching through the cloud gaps, creating a soft, warm glow on the water.</div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">What You'll See</div>
+          <div class="sec-text">A soft, pale blue gently spreading across the sky with hints of muted peach emerging above the low cloud band. Around 6:23 AM, the sun will likely peek through a gap in the clouds as a soft, warm disc, casting a subtle glow on the rolling waves. Don't expect super bright colors, but a very gentle, understated beauty.</div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Worth the Early Alarm?</div>
+          <div class="sec-text">Absolutely! While the sky won't be putting on a dramatic color show, the serene atmosphere and the feeling of being in such a pristine, natural setting are worth every minute. It's about the peaceful start, not just the colors today!</div>
+        </div>
+      </div>
+
+      <div class="foot">
+        <div class="foot-left">
+          <span class="foot-cta">Tomorrow's sunrise, predicted tonight</span>
+          <span class="foot-url">visit: www.seasidebeacon.com</span>
+        </div>
+        <div class="foot-right">
+          <span class="foot-scan">scan</span>
+          <div class="foot-qr"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ PREMIUM VERSION ═══ -->
+<div>
+  <div class="label">Premium — 9:16 (1080×1920)</div>
+  <div class="card premium">
+    <div class="inner">
+      <div class="brand">
+        <div class="brand-dot"></div>
+        <span class="brand-name">Seaside Beacon</span>
+        <span class="prem-tag">Premium</span>
+      </div>
+
+      <div class="hero">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 90 90">
+            <circle class="ring-bg" cx="45" cy="45" r="40"/>
+            <circle class="ring-val" cx="45" cy="45" r="40"/>
+          </svg>
+          <div class="ring-inner">
+            <span class="ring-score">50</span>
+            <span class="ring-of">/100</span>
+          </div>
+        </div>
+        <div class="beach">Covelong Beach</div>
+        <div class="verdict">Soft colors possible</div>
+        <div class="date">Friday, March 6, 2026 · Sunrise 6:23 AM</div>
+        <div class="gw">
+          <div class="gw-dot"></div>
+          <span class="gw-time"><strong>6:03</strong> to <strong>6:53 AM</strong> · Peak 6:13</span>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="sections">
+        <div class="sec">
+          <div class="sec-label">What to Expect</div>
+          <div class="sec-text">Good morning! This morning is looking pretty fair, with a decent sunrise waiting for you at Covelong Beach! The sky will have a warm, pale blue tone with hints of peach, but the colors will be a bit muted due to the high humidity. As the sun rises, you might catch glimpses of it punching through the cloud gaps, creating a soft, warm glow on the water.</div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">What You'll See</div>
+          <div class="sec-text">A soft, pale blue gently spreading across the sky with hints of muted peach emerging above the low cloud band. Around 6:23 AM, the sun will likely peek through a gap in the clouds as a soft, warm disc, casting a subtle glow on the rolling waves. Don't expect super bright colors, but a very gentle, understated beauty.</div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Worth the Early Alarm?</div>
+          <div class="sec-text">Absolutely! While the sky won't be putting on a dramatic color show, the serene atmosphere and the feeling of being in such a pristine, natural setting are worth every minute. It's about the peaceful start, not just the colors today!</div>
+        </div>
+        <div class="sec photo-card">
+          <div class="sec-label">Photography</div>
+          <div class="sec-text">Arrive by 5:50 AM. Shoot at f/8, ISO 200. The soft light is perfect for silhouettes against Covelong's rock formations. Use the leading lines of the shoreline to draw the eye toward the horizon. Consider a warm white balance to enhance the peach tones.</div>
+        </div>
+      </div>
+
+      <div class="foot">
+        <div class="foot-left">
+          <span class="foot-cta">Tomorrow's sunrise, predicted tonight</span>
+          <span class="foot-url">visit: www.seasidebeacon.com</span>
+        </div>
+        <div class="foot-right">
+          <span class="foot-scan">scan</span>
+          <div class="foot-qr"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
