@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shareable Forecast Card Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --sky-zenith:    #04050f;
+    --sky-mid:       #0a0d1f;
+    --sky-violet:    #12112a;
+    --sky-horizon:   #1a1228;
+    --dawn-copper:   #c4733a;
+    --dawn-rose:     #8a3d5a;
+    --dawn-amber:    #d4924a;
+    --dawn-gold:     #c9a055;
+
+    --accent:        #c4733a;
+    --accent-bright: #d4924a;
+    --accent-glow:   rgba(196,115,58,0.22);
+    --accent-border: rgba(196,115,58,0.32);
+    --accent-subtle: rgba(196,115,58,0.08);
+
+    --glass-fill:      rgba(20,16,10,0.45);
+    --glass-border:    rgba(255,255,255,0.08);
+    --glass-border-hi: rgba(255,255,255,0.16);
+
+    --t1: rgba(240,238,250,0.95);
+    --t2: rgba(210,205,235,0.62);
+    --t3: rgba(190,185,220,0.38);
+    --t-footer: rgba(150,145,185,0.22);
+
+    --ff-display: 'Cormorant Garamond', Georgia, serif;
+    --ff-body:    'Instrument Sans', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--sky-zenith);
+    display: flex;
+    gap: 48px;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 48px 20px;
+    font-family: var(--ff-body);
+    flex-wrap: wrap;
+  }
+
+  .label {
+    color: var(--t3);
+    text-align: center;
+    font-size: 11px;
+    margin-bottom: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: var(--ff-body);
+  }
+
+  /* Card Container (9:16) */
+  .card {
+    width: 360px;
+    height: 640px;
+    border-radius: 30px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(
+      180deg,
+      var(--sky-zenith)   0%,
+      var(--sky-mid)      15%,
+      var(--sky-violet)   35%,
+      var(--sky-horizon)  55%,
+      #1e1428            68%,
+      #2a1a2e            80%,
+      #3d2232            92%,
+      #7a4a30            100%
+    );
+    border: 1px solid var(--glass-border);
+  }
+
+  /* Stars layer */
+  .stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: rgba(240,238,250,0.5);
+    box-shadow: 0 0 3px rgba(240,238,250,0.2);
+  }
+  .star.dim { opacity: 0.3; width: 1.5px; height: 1.5px; }
+  .star.bright { opacity: 0.7; width: 2.5px; height: 2.5px; box-shadow: 0 0 5px rgba(240,238,250,0.3); }
+  .star.twinkle { animation: twinkle 3s ease-in-out infinite alternate; }
+  @keyframes twinkle {
+    0% { opacity: 0.25; }
+    100% { opacity: 0.7; }
+  }
+
+  /* Top section */
+  .card-header {
+    position: relative;
+    padding: 24px 26px 18px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+
+  /* Brand */
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 22px;
+  }
+  .brand-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,248,225,0.95), rgba(220,160,60,0.7) 60%, rgba(196,115,58,0) 100%);
+    box-shadow: 0 0 12px rgba(255,200,100,0.3);
+  }
+  .brand-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--t2);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: var(--ff-body);
+  }
+  .premium-tag {
+    font-size: 7px;
+    font-weight: 700;
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 1.2px;
+    margin-left: 4px;
+  }
+
+  /* Score cluster */
+  .score-area {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+  .score-ring {
+    width: 82px;
+    height: 82px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .score-ring svg {
+    width: 82px;
+    height: 82px;
+    transform: rotate(-90deg);
+  }
+  .score-ring .bg-circle {
+    fill: none;
+    stroke: rgba(255,255,255,0.06);
+    stroke-width: 4.5;
+  }
+  .score-ring .fg-circle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4.5;
+    stroke-linecap: round;
+    stroke-dasharray: 207;
+    stroke-dashoffset: 102;
+    filter: drop-shadow(0 0 6px rgba(196,115,58,0.4));
+  }
+  .score-number {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--ff-display);
+    color: var(--t1);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .score-number small {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--t3);
+    margin-top: 2px;
+    font-family: var(--ff-body);
+  }
+  .score-meta { flex: 1; }
+  .score-beach {
+    font-family: var(--ff-display);
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--t1);
+    margin-bottom: 6px;
+    line-height: 1.15;
+  }
+  .score-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--accent-bright);
+    background: var(--accent-subtle);
+    border: 1px solid rgba(196,115,58,0.18);
+    border-radius: 20px;
+    padding: 4px 12px;
+    letter-spacing: 0.3px;
+    font-family: var(--ff-body);
+  }
+  .score-date {
+    font-size: 11px;
+    color: var(--t3);
+    margin-top: 8px;
+    font-family: var(--ff-body);
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    margin: 0 26px;
+    background: linear-gradient(90deg, transparent, var(--glass-border-hi), transparent);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Content body */
+  .card-body {
+    flex: 1;
+    padding: 16px 26px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Golden window bar */
+  .golden-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 10px 16px;
+  }
+  .golden-icon {
+    font-size: 20px;
+    color: var(--dawn-gold);
+    filter: drop-shadow(0 0 4px rgba(201,160,85,0.3));
+  }
+  .golden-info { flex: 1; }
+  .golden-time {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--accent-bright);
+    font-family: var(--ff-display);
+    letter-spacing: 0.5px;
+  }
+  .golden-peak {
+    font-size: 10px;
+    color: var(--t3);
+    margin-top: 2px;
+    font-family: var(--ff-body);
+  }
+
+  /* Text sections */
+  .section {
+    text-align: justify;
+  }
+  .section-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+    font-family: var(--ff-body);
+    text-align: left;
+  }
+  .section-text {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--t2);
+    font-family: var(--ff-body);
+    text-align: justify;
+  }
+
+  /* Photography section (premium) */
+  .photo-section {
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    text-align: justify;
+  }
+  .photo-section .section-label {
+    margin-bottom: 4px;
+  }
+  .photo-tip {
+    font-size: 12px;
+    color: var(--t2);
+    line-height: 1.5;
+    font-family: var(--ff-body);
+    text-align: justify;
+  }
+
+  /* Footer fade-in */
+  .card-footer-wrap {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+  }
+  .card-footer-fade {
+    height: 28px;
+    background: linear-gradient(180deg, transparent, rgba(4,5,15,0.35));
+    pointer-events: none;
+  }
+  .card-footer {
+    padding: 0 26px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-url {
+    font-size: 10px;
+    color: var(--t-footer);
+    letter-spacing: 1px;
+    font-family: var(--ff-body);
+  }
+  .footer-qr {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: rgba(20,16,10,0.25);
+    border: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    color: var(--t-footer);
+    font-family: var(--ff-body);
+  }
+</style>
+</head>
+<body>
+
+<!-- FREE USER VERSION -->
+<div>
+  <div class="label">Free User</div>
+  <div class="card">
+    <!-- Stars -->
+    <div class="stars">
+      <div class="star dim" style="top:6%;left:12%"></div>
+      <div class="star bright twinkle" style="top:4%;left:35%"></div>
+      <div class="star" style="top:9%;left:58%"></div>
+      <div class="star dim" style="top:3%;left:78%"></div>
+      <div class="star twinkle" style="top:14%;left:22%"></div>
+      <div class="star bright" style="top:11%;left:88%"></div>
+      <div class="star dim" style="top:18%;left:45%"></div>
+      <div class="star" style="top:7%;left:92%"></div>
+      <div class="star dim twinkle" style="top:22%;left:70%"></div>
+      <div class="star" style="top:16%;left:8%"></div>
+      <div class="star bright twinkle" style="top:25%;left:52%"></div>
+      <div class="star dim" style="top:20%;left:30%"></div>
+      <div class="star" style="top:28%;left:85%"></div>
+      <div class="star dim" style="top:32%;left:15%"></div>
+      <div class="star twinkle" style="top:30%;left:62%"></div>
+      <div class="star dim" style="top:35%;left:40%"></div>
+    </div>
+
+    <div class="card-header">
+      <div class="brand-row">
+        <div class="brand-icon"></div>
+        <span class="brand-name">Seaside Beacon</span>
+      </div>
+      <div class="score-area">
+        <div class="score-ring">
+          <svg viewBox="0 0 72 72">
+            <circle class="bg-circle" cx="36" cy="36" r="33"/>
+            <circle class="fg-circle" cx="36" cy="36" r="33"/>
+          </svg>
+          <div class="score-number">51<small>/100</small></div>
+        </div>
+        <div class="score-meta">
+          <div class="score-beach">Covelong Beach</div>
+          <div class="score-badge">~ Soft colors possible</div>
+          <div class="score-date">Friday, March 6, 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="card-body">
+      <div class="golden-bar">
+        <span class="golden-icon">◐</span>
+        <div class="golden-info">
+          <div class="golden-time">6:03 AM to 6:53 AM</div>
+          <div class="golden-peak">Peak color at 6:13 AM</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">What You'll See</div>
+        <div class="section-text">The eastern sky will start with a muted glow, then around 6:13 AM, you'll likely see a soft, warm light trying to break through the low cloud layer. A diffused, gentle disc casting subtle warmth over the water.</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Beach Vibes</div>
+        <div class="section-text">Cool, damp sand underfoot with the steady sound of rolling waves. This secluded spot with dramatic cliffs and tidal pools offers a peaceful escape.</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Worth the Early Alarm?</div>
+        <div class="section-text">Not the most vibrant color show, but the quiet solitude and fresh air at Covelong are absolutely worth experiencing.</div>
+      </div>
+    </div>
+
+    <div class="card-footer-wrap">
+      <div class="card-footer-fade"></div>
+      <div class="card-footer">
+        <span class="footer-url">www.seasidebeacon.com</span>
+        <div class="footer-qr">QR</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PREMIUM USER VERSION -->
+<div>
+  <div class="label">Premium User</div>
+  <div class="card">
+    <!-- Stars -->
+    <div class="stars">
+      <div class="star dim" style="top:6%;left:12%"></div>
+      <div class="star bright twinkle" style="top:4%;left:35%"></div>
+      <div class="star" style="top:9%;left:58%"></div>
+      <div class="star dim" style="top:3%;left:78%"></div>
+      <div class="star twinkle" style="top:14%;left:22%"></div>
+      <div class="star bright" style="top:11%;left:88%"></div>
+      <div class="star dim" style="top:18%;left:45%"></div>
+      <div class="star" style="top:7%;left:92%"></div>
+      <div class="star dim twinkle" style="top:22%;left:70%"></div>
+      <div class="star" style="top:16%;left:8%"></div>
+      <div class="star bright twinkle" style="top:25%;left:52%"></div>
+      <div class="star dim" style="top:20%;left:30%"></div>
+      <div class="star" style="top:28%;left:85%"></div>
+      <div class="star dim" style="top:32%;left:15%"></div>
+      <div class="star twinkle" style="top:30%;left:62%"></div>
+      <div class="star dim" style="top:35%;left:40%"></div>
+    </div>
+
+    <div class="card-header">
+      <div class="brand-row">
+        <div class="brand-icon"></div>
+        <span class="brand-name">Seaside Beacon</span>
+        <span class="premium-tag">PREMIUM</span>
+      </div>
+      <div class="score-area">
+        <div class="score-ring">
+          <svg viewBox="0 0 72 72">
+            <circle class="bg-circle" cx="36" cy="36" r="33"/>
+            <circle class="fg-circle" cx="36" cy="36" r="33"/>
+          </svg>
+          <div class="score-number">51<small>/100</small></div>
+        </div>
+        <div class="score-meta">
+          <div class="score-beach">Covelong Beach</div>
+          <div class="score-badge">~ Soft colors possible</div>
+          <div class="score-date">Friday, March 6, 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="card-body">
+      <div class="golden-bar">
+        <span class="golden-icon">◐</span>
+        <div class="golden-info">
+          <div class="golden-time">6:03 AM to 6:53 AM</div>
+          <div class="golden-peak">Peak color at 6:13 AM</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">What You'll See</div>
+        <div class="section-text">Soft, warm light breaking through the low cloud layer. A diffused, gentle disc casting subtle warmth over the water near the rock formations.</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Worth the Early Alarm?</div>
+        <div class="section-text">Quiet solitude and fresh air at Covelong are absolutely worth experiencing. A gentle morning to recharge.</div>
+      </div>
+
+      <div class="photo-section">
+        <div class="section-label">Photography Tips</div>
+        <div class="photo-tip">Use the rocks as foreground anchors. Shoot at f/8, ISO 200. The diffused light is perfect for long exposures, try 1/15s to capture wave motion around the boulders.</div>
+      </div>
+    </div>
+
+    <div class="card-footer-wrap">
+      <div class="card-footer-fade"></div>
+      <div class="card-footer">
+        <span class="footer-url">www.seasidebeacon.com</span>
+        <div class="footer-qr">QR</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

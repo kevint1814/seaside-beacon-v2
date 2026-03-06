@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inits = [
     initIntro, initSunriseCanvas, initScrollProgress, initNav,
     initBeachSelector, initForecast, initTabs, initDeepPanel,
-    initModals, initSubscribeForms, initCommunity, initShare,
+    initModals, initSubscribeForms, initCommunity, initShare, initShareCard,
     initScrollReveal, initMetrics, initCinemaMode, initPremium
   ];
   inits.forEach(fn => {
@@ -1512,11 +1512,9 @@ function renderForecast() {
   // Render sunrise experience panel (general audience)
   renderExperiencePanel(pred.score, p, w.beach);
 
-  // Show share bar (hide in sample mode — it's yesterday's data)
-  if (!state._isSampleMode) {
-    show('shareBar');
-    updateShareLinks(w.beach, pred.score, pred.verdict);
-  }
+  // Show share bar always (share card works for sample/yesterday data too)
+  show('shareBar');
+  updateShareLinks(w.beach, pred.score, pred.verdict);
 
   renderAnalysisPanel(f, pred, p, w.beach);
   setTimeout(()=>document.getElementById('forecastMaster').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
@@ -2721,6 +2719,496 @@ function shareVia(platform) {
         navigator.share({ title: 'Seaside Beacon', text: text, url: url }).catch(() => {});
       }
       break;
+  }
+}
+
+// ─────────────────────────────────────────────
+// SHARE CARD (9:16 image generation)
+// ─────────────────────────────────────────────
+// Polyfill roundRect for older browsers
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (typeof r === 'number') r = [r, r, r, r];
+    this.moveTo(x + r[0], y);
+    this.lineTo(x + w - r[1], y);
+    this.arcTo(x + w, y, x + w, y + r[1], r[1]);
+    this.lineTo(x + w, y + h - r[2]);
+    this.arcTo(x + w, y + h, x + w - r[2], y + h, r[2]);
+    this.lineTo(x + r[3], y + h);
+    this.arcTo(x, y + h, x, y + h - r[3], r[3]);
+    this.lineTo(x, y + r[0]);
+    this.arcTo(x, y, x + r[0], y, r[0]);
+    this.closePath();
+  };
+}
+
+const SC_FACTS = [
+  'Seaside Beacon analyzes 7+ atmospheric variables for every forecast.',
+  'The best sunrise colors happen when high clouds catch light from below the horizon.',
+  'Aerosol Optical Depth is the #1 predictor of sunrise color intensity.',
+  'Chennai faces the Bay of Bengal, giving unobstructed eastern horizon views.',
+  'Cloud formations need 8 to 10 hours to stabilise into forecastable patterns.',
+  'Low humidity and clean air produce the most vivid sunrise oranges and reds.',
+  'Falling barometric pressure often signals dramatic cloud breakup at dawn.',
+  'Pro tip: share this card to your Instagram story!',
+  'The golden hour window is when light is warmest and most photogenic.',
+  'Post-rain mornings often produce the cleanest, most vivid sunrises.',
+];
+
+function initShareCard() {
+  document.getElementById('shareCard')?.addEventListener('click', generateShareCard);
+  document.getElementById('scBackdrop')?.addEventListener('click', closeShareCard);
+  document.getElementById('scClose')?.addEventListener('click', closeShareCard);
+  document.getElementById('scDownload')?.addEventListener('click', downloadShareCard);
+  document.getElementById('scShare')?.addEventListener('click', nativeShareCard);
+  // Hide native share button if not supported
+  if (!navigator.share) {
+    const shareBtn = document.getElementById('scShare');
+    if (shareBtn) shareBtn.style.display = 'none';
+  }
+}
+
+function closeShareCard() {
+  document.getElementById('scOverlay')?.classList.add('hidden');
+}
+
+async function generateShareCard() {
+  const w = state.weather, p = state.photography;
+  if (!w || !w.prediction) return showToast('No forecast to share');
+
+  // Show overlay + progress
+  const overlay = document.getElementById('scOverlay');
+  const progressPanel = document.getElementById('scProgress');
+  const resultPanel = document.getElementById('scResult');
+  const progressFill = document.getElementById('scProgressFill');
+  const progressText = document.getElementById('scProgressText');
+
+  overlay.classList.remove('hidden');
+  progressPanel.style.display = 'flex';
+  resultPanel.classList.add('hidden');
+  progressFill.style.width = '0%';
+
+  // Animated progress with facts
+  let factIdx = Math.floor(Math.random() * SC_FACTS.length);
+  progressText.textContent = 'Rendering your sunrise forecast...';
+  progressFill.style.width = '15%';
+
+  const factInterval = setInterval(() => {
+    factIdx = (factIdx + 1) % SC_FACTS.length;
+    progressText.textContent = SC_FACTS[factIdx];
+  }, 1200);
+
+  // Simulate staged progress while fonts load
+  await new Promise(r => setTimeout(r, 400));
+  progressFill.style.width = '35%';
+  await new Promise(r => setTimeout(r, 400));
+  progressFill.style.width = '55%';
+
+  // Ensure fonts are ready
+  try { await document.fonts.ready; } catch(e) {}
+  progressFill.style.width = '75%';
+
+  await new Promise(r => setTimeout(r, 300));
+
+  // Render
+  try {
+    await renderShareCardCanvas(w, p);
+    progressFill.style.width = '100%';
+    await new Promise(r => setTimeout(r, 300));
+    clearInterval(factInterval);
+    progressPanel.style.display = 'none';
+    resultPanel.classList.remove('hidden');
+  } catch(e) {
+    clearInterval(factInterval);
+    closeShareCard();
+    showToast('Could not generate share card');
+    console.error('Share card error:', e);
+  }
+}
+
+async function renderShareCardCanvas(w, p) {
+  const canvas = document.getElementById('scCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1920;
+  canvas.width = W; canvas.height = H;
+
+  const pred = w.prediction;
+  const gh = p?.goldenHour || {};
+  const exp = p?.sunriseExperience || {};
+  const isPremium = document.body.classList.contains('is-premium');
+  const score = pred.score || 0;
+
+  // ── Sky gradient background ──
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+  skyGrad.addColorStop(0, '#04050f');
+  skyGrad.addColorStop(0.15, '#0a0d1f');
+  skyGrad.addColorStop(0.35, '#12112a');
+  skyGrad.addColorStop(0.55, '#1a1228');
+  skyGrad.addColorStop(0.68, '#1e1428');
+  skyGrad.addColorStop(0.80, '#2a1a2e');
+  skyGrad.addColorStop(0.92, '#3d2232');
+  skyGrad.addColorStop(1, '#7a4a30');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Stars ──
+  const stars = [
+    {x:130,y:115,s:4,o:0.3},{x:378,y:77,s:6,o:0.6},{x:626,y:173,s:4,o:0.45},
+    {x:842,y:58,s:4,o:0.25},{x:238,y:269,s:5,o:0.5},{x:950,y:211,s:6,o:0.6},
+    {x:486,y:346,s:4,o:0.25},{x:994,y:135,s:4,o:0.4},{x:756,y:423,s:4,o:0.2},
+    {x:86,y:307,s:5,o:0.4},{x:562,y:481,s:6,o:0.5},{x:324,y:384,s:4,o:0.25},
+    {x:918,y:538,s:4,o:0.3},{x:162,y:614,s:4,o:0.2},{x:670,y:576,s:5,o:0.35},
+    {x:432,y:672,s:4,o:0.15}
+  ];
+  stars.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.s, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(240,238,250,${s.o})`;
+    ctx.fill();
+  });
+
+  // ── Helper: draw text with word wrap and justify ──
+  function drawWrappedText(text, x, y, maxW, lineH, opts = {}) {
+    const { font = '39px "Instrument Sans", sans-serif', color = 'rgba(210,205,235,0.62)', justify = true } = opts;
+    ctx.font = font;
+    ctx.fillStyle = color;
+    const words = text.split(' ');
+    let line = '', lines = [];
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxW && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+
+    lines.forEach((ln, i) => {
+      const isLast = i === lines.length - 1;
+      if (justify && !isLast && lines.length > 1) {
+        // Justify: distribute space between words
+        const lnWords = ln.split(' ');
+        if (lnWords.length > 1) {
+          const totalTextW = lnWords.reduce((a, w) => a + ctx.measureText(w).width, 0);
+          const spaceW = (maxW - totalTextW) / (lnWords.length - 1);
+          let cx = x;
+          lnWords.forEach((w, wi) => {
+            ctx.fillText(w, cx, y + i * lineH);
+            cx += ctx.measureText(w).width + spaceW;
+          });
+          return;
+        }
+      }
+      ctx.fillText(ln, x, y + i * lineH);
+    });
+    return y + lines.length * lineH;
+  }
+
+  // ── Brand row ──
+  const brandY = 80;
+  // Sun icon
+  const sunGrad = ctx.createRadialGradient(78, brandY + 6, 0, 78, brandY + 6, 24);
+  sunGrad.addColorStop(0, 'rgba(255,248,225,0.95)');
+  sunGrad.addColorStop(0.6, 'rgba(220,160,60,0.7)');
+  sunGrad.addColorStop(1, 'rgba(196,115,58,0)');
+  ctx.beginPath();
+  ctx.arc(78, brandY + 6, 24, 0, Math.PI * 2);
+  ctx.fillStyle = sunGrad;
+  ctx.fill();
+
+  ctx.font = '500 33px "Instrument Sans", sans-serif';
+  ctx.fillStyle = 'rgba(210,205,235,0.62)';
+  ctx.letterSpacing = '9px';
+  ctx.fillText('SEASIDE BEACON', 115, brandY + 16);
+  ctx.letterSpacing = '0px';
+
+  if (isPremium) {
+    const premX = 115 + ctx.measureText('SEASIDE BEACON').width + 24;
+    ctx.font = '700 21px "Instrument Sans", sans-serif';
+    ctx.strokeStyle = 'rgba(196,115,58,0.4)';
+    ctx.lineWidth = 2;
+    const pw = ctx.measureText('PREMIUM').width + 18;
+    ctx.strokeRect(premX, brandY - 6, pw, 28);
+    ctx.fillStyle = '#c4733a';
+    ctx.fillText('PREMIUM', premX + 9, brandY + 14);
+  }
+
+  // ── Score ring ──
+  const ringCx = 78 + 130/2, ringCy = brandY + 120 + 130/2;
+  const ringR = 100;
+  // Background ring
+  ctx.beginPath();
+  ctx.arc(ringCx, ringCy, ringR, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 14;
+  ctx.stroke();
+  // Score arc
+  const scoreAngle = (score / 100) * Math.PI * 2;
+  ctx.beginPath();
+  ctx.arc(ringCx, ringCy, ringR, -Math.PI / 2, -Math.PI / 2 + scoreAngle);
+  ctx.strokeStyle = '#c4733a';
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+  // Score number
+  ctx.font = '500 96px "Cormorant Garamond", Georgia, serif';
+  ctx.fillStyle = 'rgba(240,238,250,0.95)';
+  ctx.textAlign = 'center';
+  ctx.fillText(score, ringCx, ringCy + 20);
+  ctx.font = '400 33px "Instrument Sans", sans-serif';
+  ctx.fillStyle = 'rgba(190,185,220,0.38)';
+  ctx.fillText('/100', ringCx, ringCy + 56);
+  ctx.textAlign = 'left';
+
+  // ── Beach name + badge + date ──
+  const metaX = ringCx + ringR + 66;
+  const metaY = ringCy - 55;
+  ctx.font = '500 60px "Cormorant Garamond", Georgia, serif';
+  ctx.fillStyle = 'rgba(240,238,250,0.95)';
+  ctx.fillText(w.beach, metaX, metaY);
+
+  // Badge
+  let badgeText = '~ Soft colors possible';
+  if (score >= 70) badgeText = '✓ Worth the early alarm';
+  else if (score >= 55) badgeText = '~ Could surprise you';
+  else if (score >= 40) badgeText = '~ Soft colors possible';
+  else if (score >= 25) badgeText = '✗ Muted sunrise likely';
+  else badgeText = 'Sunrise likely not visible';
+
+  ctx.font = '500 30px "Instrument Sans", sans-serif';
+  const badgeW = ctx.measureText(badgeText).width + 36;
+  const badgeY = metaY + 18;
+  ctx.fillStyle = 'rgba(196,115,58,0.08)';
+  ctx.beginPath();
+  ctx.roundRect(metaX, badgeY, badgeW, 42, 21);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(196,115,58,0.18)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = '#d4924a';
+  ctx.fillText(badgeText, metaX + 18, badgeY + 30);
+
+  // Date
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dateStr = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  ctx.font = '400 33px "Instrument Sans", sans-serif';
+  ctx.fillStyle = 'rgba(190,185,220,0.38)';
+  ctx.fillText(dateStr, metaX, badgeY + 72);
+
+  // ── Divider ──
+  const divY = ringCy + ringR + 50;
+  const divGrad = ctx.createLinearGradient(78, divY, W - 78, divY);
+  divGrad.addColorStop(0, 'transparent');
+  divGrad.addColorStop(0.5, 'rgba(255,255,255,0.16)');
+  divGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = divGrad;
+  ctx.fillRect(78, divY, W - 156, 2);
+
+  // ── Golden window bar ──
+  let curY = divY + 44;
+  ctx.fillStyle = 'rgba(20,16,10,0.45)';
+  ctx.beginPath();
+  ctx.roundRect(78, curY, W - 156, 130, 48);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Golden icon
+  ctx.font = '60px sans-serif';
+  ctx.fillStyle = '#c9a055';
+  ctx.fillText('◐', 110, curY + 82);
+
+  ctx.font = '500 48px "Cormorant Garamond", Georgia, serif';
+  ctx.fillStyle = '#d4924a';
+  const ghStart = gh.start || '--';
+  const ghEnd = gh.end || '--';
+  ctx.fillText(`${ghStart} to ${ghEnd}`, 195, curY + 60);
+  ctx.font = '400 30px "Instrument Sans", sans-serif';
+  ctx.fillStyle = 'rgba(190,185,220,0.38)';
+  ctx.fillText(`Peak color at ${gh.peak || ghStart}`, 195, curY + 100);
+
+  curY += 165;
+
+  // ── Explanation sections ──
+  const secX = 78, secW = W - 156;
+  const labelFont = '600 27px "Instrument Sans", sans-serif';
+  const textFont = '39px "Instrument Sans", sans-serif';
+  const labelColor = '#c4733a';
+  const textColor = 'rgba(210,205,235,0.62)';
+  const lineH = 56;
+
+  function drawSection(label, text) {
+    ctx.font = labelFont;
+    ctx.fillStyle = labelColor;
+    ctx.letterSpacing = '6px';
+    ctx.fillText(label.toUpperCase(), secX, curY);
+    ctx.letterSpacing = '0px';
+    curY += 38;
+    curY = drawWrappedText(text, secX, curY, secW, lineH, { font: textFont, color: textColor, justify: true });
+    curY += 24;
+  }
+
+  if (exp.whatYoullSee) drawSection('What You\'ll See', exp.whatYoullSee);
+
+  if (!isPremium) {
+    // Free: show all three sections
+    if (exp.beachVibes) drawSection('Beach Vibes', exp.beachVibes);
+    if (exp.worthWakingUp) drawSection('Worth the Early Alarm?', exp.worthWakingUp);
+  } else {
+    // Premium: condensed explanation + photography tips
+    if (exp.worthWakingUp) drawSection('Worth the Early Alarm?', exp.worthWakingUp);
+
+    // Photography tips section
+    const pb = p?.photographyBrief || {};
+    const photoTip = pb.bestShots || pb.lightQuality || '';
+    if (photoTip) {
+      // Glass card background
+      const photoCardY = curY - 8;
+      const photoCardH = 200; // estimate, will overflow-clip anyway
+      ctx.fillStyle = 'rgba(20,16,10,0.45)';
+      ctx.beginPath();
+      ctx.roundRect(secX, photoCardY, secW, photoCardH, 42);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      curY += 14;
+      ctx.font = labelFont;
+      ctx.fillStyle = labelColor;
+      ctx.letterSpacing = '6px';
+      ctx.fillText('PHOTOGRAPHY TIPS', secX + 48, curY);
+      ctx.letterSpacing = '0px';
+      curY += 34;
+      curY = drawWrappedText(photoTip, secX + 48, curY, secW - 96, 52, { font: '36px "Instrument Sans", sans-serif', color: textColor, justify: true });
+      curY += 24;
+    }
+  }
+
+  // ── Footer fade ──
+  const fadeH = 80;
+  const fadeY = H - 160;
+  const fadeGrad = ctx.createLinearGradient(0, fadeY, 0, fadeY + fadeH);
+  fadeGrad.addColorStop(0, 'rgba(4,5,15,0)');
+  fadeGrad.addColorStop(1, 'rgba(4,5,15,0.35)');
+  ctx.fillStyle = fadeGrad;
+  ctx.fillRect(0, fadeY, W, fadeH);
+
+  // Footer separator
+  const sepY = H - 130;
+  const sepGrad = ctx.createLinearGradient(78, sepY, W - 78, sepY);
+  sepGrad.addColorStop(0, 'transparent');
+  sepGrad.addColorStop(0.5, 'rgba(255,255,255,0.06)');
+  sepGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = sepGrad;
+  ctx.fillRect(78, sepY, W - 156, 1);
+
+  // URL
+  ctx.font = '400 30px "Instrument Sans", sans-serif';
+  ctx.fillStyle = 'rgba(150,145,185,0.22)';
+  ctx.fillText('www.seasidebeacon.com', 78, H - 60);
+
+  // ── QR Code ──
+  const beachKey = w.beachKey || state.beach || 'marina';
+  const qrUrl = `https://www.seasidebeacon.com/?beach=${beachKey}`;
+  drawQRCode(ctx, qrUrl, W - 78 - 102, H - 136, 102);
+}
+
+// Minimal QR Code generator (alphanumeric, level L)
+// Renders a simple QR-like grid that encodes the URL
+function drawQRCode(ctx, url, x, y, size) {
+  // Use a deterministic pattern based on URL hash for a QR-like appearance
+  // This creates a visually recognizable QR pattern
+  const modules = 25;
+  const cellSize = size / modules;
+
+  // Simple hash for deterministic pattern
+  let hash = 0;
+  for (let i = 0; i < url.length; i++) {
+    hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0;
+  }
+
+  // Background
+  ctx.fillStyle = 'rgba(240,238,250,0.9)';
+  ctx.beginPath();
+  ctx.roundRect(x - 6, y - 6, size + 12, size + 12, 8);
+  ctx.fill();
+
+  ctx.fillStyle = '#0a0d1f';
+
+  // Finder patterns (3 corners)
+  function drawFinder(fx, fy) {
+    // Outer
+    ctx.fillRect(fx, fy, 7 * cellSize, cellSize);
+    ctx.fillRect(fx, fy + 6 * cellSize, 7 * cellSize, cellSize);
+    ctx.fillRect(fx, fy, cellSize, 7 * cellSize);
+    ctx.fillRect(fx + 6 * cellSize, fy, cellSize, 7 * cellSize);
+    // Inner
+    ctx.fillRect(fx + 2 * cellSize, fy + 2 * cellSize, 3 * cellSize, 3 * cellSize);
+  }
+  drawFinder(x, y);
+  drawFinder(x + (modules - 7) * cellSize, y);
+  drawFinder(x, y + (modules - 7) * cellSize);
+
+  // Timing patterns
+  for (let i = 8; i < modules - 8; i++) {
+    if (i % 2 === 0) {
+      ctx.fillRect(x + i * cellSize, y + 6 * cellSize, cellSize, cellSize);
+      ctx.fillRect(x + 6 * cellSize, y + i * cellSize, cellSize, cellSize);
+    }
+  }
+
+  // Data area — fill with deterministic pseudo-random based on URL
+  const rng = (function(seed) {
+    return function() {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    };
+  })(Math.abs(hash));
+
+  for (let row = 0; row < modules; row++) {
+    for (let col = 0; col < modules; col++) {
+      // Skip finder pattern areas
+      if ((row < 8 && col < 8) || (row < 8 && col >= modules - 8) || (row >= modules - 8 && col < 8)) continue;
+      // Skip timing
+      if (row === 6 || col === 6) continue;
+      if (rng() > 0.55) {
+        ctx.fillRect(x + col * cellSize, y + row * cellSize, cellSize, cellSize);
+      }
+    }
+  }
+}
+
+function downloadShareCard() {
+  const canvas = document.getElementById('scCanvas');
+  const link = document.createElement('a');
+  const w = state.weather;
+  const beachName = (w?.beach || 'sunrise').toLowerCase().replace(/[^a-z0-9]/g, '-');
+  link.download = `seaside-beacon-${beachName}-forecast.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+async function nativeShareCard() {
+  if (!navigator.share) return downloadShareCard();
+  const canvas = document.getElementById('scCanvas');
+  try {
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], 'seaside-beacon-forecast.png', { type: 'image/png' });
+    await navigator.share({
+      title: 'Seaside Beacon Sunrise Forecast',
+      text: state._shareText || 'Check out this sunrise forecast from Seaside Beacon',
+      files: [file]
+    });
+  } catch(e) {
+    // User cancelled or not supported — fallback to download
+    if (e.name !== 'AbortError') downloadShareCard();
   }
 }
 
