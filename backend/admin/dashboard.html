@@ -507,7 +507,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
   <!-- ROW 3: Premium Users + Subscribers -->
   <div class="row cols-6-6">
     <div class="card">
-      <div class="card-title">Premium Users <span class="badge" style="background:rgba(196,115,58,0.15);color:var(--accent)" id="premiumCountBadge">—</span></div>
+      <div class="card-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Premium Users <span class="badge" style="background:rgba(196,115,58,0.15);color:var(--accent)" id="premiumCountBadge">—</span><button class="act-btn" style="background:rgba(196,115,58,0.12);color:var(--accent);font-size:10px;padding:4px 10px;border:1px solid rgba(196,115,58,0.25);margin-left:auto;cursor:pointer" onclick="openGiftPremium()">🎁 Gift Premium</button><button class="act-btn" style="background:rgba(255,170,0,0.1);color:var(--amber);font-size:10px;padding:4px 10px;border:1px solid rgba(255,170,0,0.2);cursor:pointer" onclick="triggerCleanup()">🧹 Cleanup</button></div>
       <div style="margin-bottom:12px">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
           <div>
@@ -1165,7 +1165,8 @@ function renderPremiumTable(){
       '<button class="act-btn act-history" onclick="openPremiumHistory(\''+eml+'\')">History</button>'+
     '</div>';
 
-    return '<tr><td class="mono" style="color:var(--t1);font-size:11px">'+esc(user.email)+'</td><td><span class="sb" style="background:var(--amber-bg);color:var(--amber)">'+esc(user.plan||'—')+'</span></td><td>'+statusHTML+'</td><td style="color:var(--t3)">'+bName+'</td><td style="color:var(--t3);font-size:11px">'+alertTime+'</td><td style="color:var(--t3);font-size:11px">'+eveningTime+'</td><td>'+telegram+'</td><td style="color:var(--t4);font-size:11px">'+lastLogin+'</td><td>'+actionsHTML+'</td></tr>';
+    const planLabel=esc(user.plan||'—')+(user.source==='gift'?' 🎁':'');
+    return '<tr><td class="mono" style="color:var(--t1);font-size:11px">'+esc(user.email)+'</td><td><span class="sb" style="background:var(--amber-bg);color:var(--amber)">'+planLabel+'</span></td><td>'+statusHTML+'</td><td style="color:var(--t3)">'+bName+'</td><td style="color:var(--t3);font-size:11px">'+alertTime+'</td><td style="color:var(--t3);font-size:11px">'+eveningTime+'</td><td>'+telegram+'</td><td style="color:var(--t4);font-size:11px">'+lastLogin+'</td><td>'+actionsHTML+'</td></tr>';
   }).join('');
 }
 
@@ -2234,6 +2235,62 @@ function startPredAutoRefresh(){
   if(predInterval)clearInterval(predInterval);
   fetchPredictions();
   predInterval=setInterval(fetchPredictions,5*60*1000);
+}
+
+// ── Gift Premium ──
+function openGiftPremium(){
+  openModal(
+    '<div class="modal-title">🎁 Gift Premium</div>'+
+    '<div class="modal-sub">Gift a free premium subscription to any email address</div>'+
+    '<div class="modal-field"><label class="modal-label">Email Address</label><input class="modal-input" id="giftEmail" type="email" placeholder="user@example.com"></div>'+
+    '<div class="modal-field"><label class="modal-label">Plan</label><select class="modal-input" id="giftPlan"><option value="monthly">Monthly (1 month)</option><option value="annual">Annual (1 year)</option></select></div>'+
+    '<div class="modal-field"><label class="modal-label">Preferred Beach</label><select class="modal-input" id="giftBeach"><option value="marina">Marina</option><option value="elliot">Elliot\'s</option><option value="covelong">Covelong</option><option value="thiruvanmiyur">Thiruvanmiyur</option></select></div>'+
+    '<div style="font-size:11px;color:var(--t3);margin-top:-4px">User will be added to Subscribers + Premium Users and receive a congratulations email.</div>'+
+    '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Cancel</button><button class="modal-btn modal-btn-primary" onclick="doGiftPremium()">🎁 Gift Premium</button></div>'
+  );
+}
+
+async function doGiftPremium(){
+  const email=(document.getElementById('giftEmail').value||'').trim();
+  const plan=document.getElementById('giftPlan').value;
+  const beach=document.getElementById('giftBeach').value;
+  if(!email){alert('Enter an email address');return;}
+  if(!email.match(/^\S+@\S+\.\S+$/)){alert('Enter a valid email');return;}
+  try{
+    const res=await fetch(API+'/api/admin/premium/gift',{
+      method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':token},
+      body:JSON.stringify({email,plan,beach})
+    });
+    const d=await res.json();
+    if(d.success){
+      closeModal();
+      openModal(
+        '<div class="modal-title" style="color:var(--green)">✅ Premium Gifted!</div>'+
+        '<div class="modal-sub">'+esc(d.email)+' now has <strong>'+esc(d.plan)+'</strong> premium until '+new Date(d.periodEnd).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+'</div>'+
+        '<div style="font-size:11px;color:var(--t3);margin-top:8px">A congratulations email has been sent.</div>'+
+        '<div class="modal-actions"><button class="modal-btn modal-btn-primary" onclick="closeModal()">Done</button></div>'
+      );
+      poll();
+    } else {
+      alert(d.error||'Gift failed');
+    }
+  }catch(e){alert('Error: '+e.message);}
+}
+
+async function triggerCleanup(){
+  if(!confirm('Run premium cleanup now? This will expire stale cancelled/expired/pending records older than 5 days.')) return;
+  try{
+    const res=await fetch(API+'/api/admin/premium/cleanup',{
+      method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':token}
+    });
+    const d=await res.json();
+    if(d.success){
+      alert('Cleanup complete: '+d.cleaned+' record(s) expired');
+      poll();
+    } else {
+      alert(d.error||'Cleanup failed');
+    }
+  }catch(e){alert('Error: '+e.message);}
 }
 
 // ── Auto-login ──

@@ -1461,6 +1461,18 @@ function renderForecast() {
   applyScoreTone(pred.score);
 
   document.getElementById('fmrBeachName').textContent = w.beach;
+
+  // Date display
+  const _fmrNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const _fmrH = _fmrNow.getHours();
+  // Before 6 PM = "this morning's" date (today), after 6 PM = "tomorrow's" date
+  const _forecastDate = new Date(_fmrNow);
+  if (_fmrH >= 18) _forecastDate.setDate(_forecastDate.getDate() + 1);
+  const _days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const _months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const _dateEl = document.getElementById('fmrDate');
+  if (_dateEl) _dateEl.textContent = `${_days[_forecastDate.getDay()]}, ${_months[_forecastDate.getMonth()]} ${_forecastDate.getDate()}`;
+
   animateRing(pred.score);
   countUp('ringScore', 0, pred.score, 1100);
 

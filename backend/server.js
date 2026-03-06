@@ -207,6 +207,10 @@ async function startServer() {
     const { initializePushJobs } = require('./jobs/pushNotifications');
     initializePushJobs();
 
+    // Daily cleanup of stale cancelled/expired/pending premium users (2:00 AM IST)
+    const { initializeCleanupJob } = require('./jobs/premiumCleanup');
+    initializeCleanupJob();
+
     // Set Telegram webhook automatically on startup
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.API_URL) {
       const telegramService = require('./services/telegramService');

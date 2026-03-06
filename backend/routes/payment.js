@@ -233,6 +233,11 @@ router.post('/payment/cancel', requirePremium, async (req, res) => {
   try {
     const user = req.premiumUser;
 
+    // Gifted users don't have Razorpay subscriptions — can't cancel via payment flow
+    if (user.source === 'gift') {
+      return res.status(400).json({ success: false, message: 'Gifted subscriptions are managed by the admin. Contact support to make changes.' });
+    }
+
     if (user.status !== 'active' || !user.razorpaySubscriptionId) {
       return res.status(400).json({ success: false, message: 'No active subscription to cancel.' });
     }
@@ -277,6 +282,11 @@ router.post('/payment/switch-plan', requirePremium, async (req, res) => {
       return res.status(400).json({ success: false, message: 'No active subscription' });
     }
 
+    // Gifted users can't switch plans via Razorpay
+    if (user.source === 'gift') {
+      return res.status(400).json({ success: false, message: 'Gifted subscriptions are managed by the admin. Contact support to change plans.' });
+    }
+
     // Use Razorpay subscription update API
     // annual→monthly: change at cycle end. monthly→annual: change now
     try {
@@ -319,6 +329,11 @@ router.post('/payment/switch-plan', requirePremium, async (req, res) => {
 router.post('/payment/cancel-with-refund', requirePremium, async (req, res) => {
   try {
     const user = req.premiumUser;
+
+    // Gifted users don't have Razorpay subscriptions — no refund flow
+    if (user.source === 'gift') {
+      return res.status(400).json({ success: false, message: 'Gifted subscriptions are managed by the admin. Contact support to make changes.' });
+    }
 
     if (user.status !== 'active' || !user.razorpaySubscriptionId) {
       return res.status(400).json({ success: false, message: 'No active subscription' });
@@ -393,10 +408,11 @@ router.post('/payment/cancel-with-refund', requirePremium, async (req, res) => {
 // ═══════════════════════════════════════
 router.get('/payment/subscription-info', requirePremium, async (req, res) => {
   const user = req.premiumUser;
+  const isGift = user.source === 'gift';
   const subStart = user.subscribedAt || user.createdAt;
   const daysSince = (Date.now() - new Date(subStart).getTime()) / (1000 * 60 * 60 * 24);
-  const daysLeft = Math.max(0, Math.ceil(7 - daysSince));
-  const canCancel = daysSince <= 7;
+  const daysLeft = isGift ? 0 : Math.max(0, Math.ceil(7 - daysSince));
+  const canCancel = isGift ? false : daysSince <= 7;
 
   res.json({
     success: true,
@@ -404,11 +420,12 @@ router.get('/payment/subscription-info', requirePremium, async (req, res) => {
       plan: user.plan,
       planDisplay: PLANS[user.plan]?.display || user.plan,
       status: user.status,
+      source: user.source || 'razorpay',
       subscribedAt: subStart,
       currentPeriodEnd: user.currentPeriodEnd,
       canCancel,
       daysLeftForCancellation: daysLeft,
-      canSwitchPlan: user.status === 'active'
+      canSwitchPlan: isGift ? false : user.status === 'active'
     }
   });
 });

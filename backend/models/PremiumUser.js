@@ -122,6 +122,13 @@ const premiumUserSchema = new mongoose.Schema({
   cancelledWithGrace: {
     type: Boolean,
     default: false   // true when 7-day refund cancel grants access until period end
+  },
+
+  // ─── Source Tracking ───
+  source: {
+    type: String,
+    enum: ['razorpay', 'gift'],
+    default: 'razorpay'
   }
 }, {
   timestamps: true  // createdAt, updatedAt

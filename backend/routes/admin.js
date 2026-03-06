@@ -12,6 +12,8 @@ const router = express.Router();
 
 const { getMetricsSnapshot } = require('../services/metricsCollector');
 const { getStats } = require('../services/visitTracker');
+const { sendGiftPremiumEmail } = require('../services/emailService');
+const { runPremiumCleanup } = require('../jobs/premiumCleanup');
 const Subscriber = require('../models/Subscriber');
 const DailyScore = require('../models/DailyScore');
 const DailyVisit = require('../models/DailyVisit');
@@ -138,7 +140,7 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
 
     // ── Premium Users ──
     const premiumUsers = await PremiumUser.find({})
-      .select('email plan status currentPeriodEnd preferredBeach telegramChatId lastLogin subscribedAt alertTime eveningPreviewTime cancelledAt lastPaymentFailed cancelledWithGrace createdAt')
+      .select('email plan status currentPeriodEnd preferredBeach telegramChatId lastLogin subscribedAt alertTime eveningPreviewTime cancelledAt lastPaymentFailed cancelledWithGrace createdAt source')
       .lean();
 
     // Sort: active first, then grace period, then pending, then cancelled/expired
@@ -660,6 +662,110 @@ router.post('/admin/premium/:email/cancel', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin premium cancel error:', error.message);
     res.status(500).json({ error: 'Failed to cancel subscription' });
+  }
+});
+
+// Gift premium subscription to any email
+router.post('/admin/premium/gift', requireAuth, async (req, res) => {
+  try {
+    const { email, plan, beach } = req.body;
+
+    if (!email || !plan) {
+      return res.status(400).json({ error: 'Email and plan are required' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    if (!['monthly', 'annual'].includes(plan)) {
+      return res.status(400).json({ error: 'Plan must be monthly or annual' });
+    }
+
+    const preferredBeach = beach || 'marina';
+    if (!['marina', 'elliot', 'covelong', 'thiruvanmiyur'].includes(preferredBeach)) {
+      return res.status(400).json({ error: 'Invalid beach' });
+    }
+
+    // Check if already an active premium user
+    const existing = await PremiumUser.findOne({ email: cleanEmail });
+    if (existing && (existing.status === 'active')) {
+      return res.status(409).json({ error: 'User already has active premium' });
+    }
+
+    // Calculate period end based on plan
+    const now = new Date();
+    const periodEnd = new Date(now);
+    if (plan === 'annual') {
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+    } else {
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+    }
+
+    // Create or update PremiumUser record
+    if (existing) {
+      // Reactivate existing record
+      existing.plan = plan;
+      existing.status = 'active';
+      existing.source = 'gift';
+      existing.subscribedAt = now;
+      existing.currentPeriodEnd = periodEnd;
+      existing.cancelledAt = null;
+      existing.cancelledWithGrace = false;
+      existing.lastPaymentFailed = null;
+      existing.preferredBeach = preferredBeach;
+      await existing.save();
+      console.log(`🎁 Admin: Gifted premium (${plan}) to existing user ${cleanEmail}`);
+    } else {
+      // Create new premium user
+      await PremiumUser.create({
+        email: cleanEmail,
+        plan,
+        status: 'active',
+        source: 'gift',
+        subscribedAt: now,
+        currentPeriodEnd: periodEnd,
+        preferredBeach
+      });
+      console.log(`🎁 Admin: Gifted premium (${plan}) to new user ${cleanEmail}`);
+    }
+
+    // Ensure they're also in the Subscribers list (for daily 4 AM emails)
+    const existingSub = await Subscriber.findOne({ email: cleanEmail });
+    if (!existingSub) {
+      await Subscriber.create({
+        email: cleanEmail,
+        preferredBeach,
+        isActive: true
+      });
+      console.log(`📬 Auto-subscribed ${cleanEmail} to daily emails`);
+    } else if (!existingSub.isActive) {
+      existingSub.isActive = true;
+      existingSub.preferredBeach = preferredBeach;
+      await existingSub.save();
+      console.log(`📬 Re-activated subscriber ${cleanEmail}`);
+    }
+
+    // Send gift premium welcome email
+    try {
+      await sendGiftPremiumEmail(cleanEmail, plan);
+    } catch (emailErr) {
+      console.error('⚠️  Gift email failed (premium still active):', emailErr.message);
+    }
+
+    res.json({ success: true, email: cleanEmail, plan, periodEnd });
+  } catch (error) {
+    console.error('Admin gift premium error:', error.message);
+    res.status(500).json({ error: 'Failed to gift premium' });
+  }
+});
+
+// Manually trigger premium cleanup
+router.post('/admin/premium/cleanup', requireAuth, async (req, res) => {
+  try {
+    const result = await runPremiumCleanup();
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Admin cleanup trigger error:', error.message);
+    res.status(500).json({ error: 'Cleanup failed' });
   }
 });
 
