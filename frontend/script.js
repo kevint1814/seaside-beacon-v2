@@ -2824,6 +2824,9 @@ async function generateShareCard() {
 
   // Render
   try {
+    if (typeof html2canvas === 'undefined') throw new Error('html2canvas library not loaded');
+    if (typeof qrcode === 'undefined') console.warn('QR library not loaded, will skip QR');
+    if (!document.getElementById('scHtmlCard')) throw new Error('scHtmlCard container missing');
     await renderShareCardCanvas(w, p);
     progressFill.style.width = '100%';
     await new Promise(r => setTimeout(r, 300));
@@ -2834,7 +2837,7 @@ async function generateShareCard() {
     clearInterval(factInterval);
     closeShareCard();
     showToast('Could not generate share card');
-    console.error('Share card error:', e);
+    console.error('Share card error:', e, e.stack);
   }
 }
 
@@ -3066,7 +3069,14 @@ async function renderShareCardCanvas(w, p) {
   `;
 
   // ── Capture with html2canvas ──
+  // Temporarily move container on-screen for html2canvas to render correctly
   const cardEl = container.querySelector('.sc2-card');
+  const origStyle = container.getAttribute('style');
+  container.setAttribute('style', 'position:fixed;top:0;left:0;pointer-events:none;z-index:-1;');
+
+  // Allow layout to settle
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
   const captured = await html2canvas(cardEl, {
     width: W,
     height: H,
@@ -3075,6 +3085,9 @@ async function renderShareCardCanvas(w, p) {
     useCORS: true,
     logging: false
   });
+
+  // Restore off-screen position
+  container.setAttribute('style', origStyle || '');
 
   // Draw onto scCanvas
   const ctx = canvas.getContext('2d');
