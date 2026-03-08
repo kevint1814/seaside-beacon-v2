@@ -126,7 +126,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
         'List-Unsubscribe': `<${unsubscribeUrl}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
       },
-      text: `Welcome to Seaside Beacon!\n\nYou're subscribed to daily sunrise forecasts for ${beachDisplay}.\n\nEvery morning at 4:00 AM IST, you'll get the definitive sunrise forecast — score, verdict, and what the sky will actually look like. Built from overnight model updates, right before sunrise.\n\nYour first email arrives tomorrow at 4:00 AM IST.\n\nWant evening previews and photography settings? Upgrade to Premium at ${APP_URL}/pricing\n\nUnsubscribe: ${unsubscribeUrl}\n\nSeaside Beacon — Made in Chennai`,
+      text: `Welcome to Seaside Beacon!\n\nYou're subscribed to daily sunrise forecasts for ${beachDisplay}.\n\nEvery morning at 4:00 AM IST, you'll get the definitive sunrise forecast — score, verdict, and what the sky will actually look like. Built from overnight model updates, right before sunrise.\n\nYour first email arrives tomorrow at 4:00 AM IST.\n\nWant evening previews and photography settings? Upgrade to Premium at ${APP_URL}/pricing\n\nUnsubscribe: ${unsubscribeUrl}\n\nSeaside Beacon · Kevin T`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -225,18 +225,6 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
                 </tr>
               </table>
 
-              <!-- Feature 4 -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px;">
-                <tr>
-                  <td style="width:36px;vertical-align:top;padding-top:2px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#FDF5EE" style="width:32px;height:32px;border:1px solid #E8D5C0;text-align:center;line-height:32px;font-size:15px;">📸</td></tr></table>
-                  </td>
-                  <td style="padding-left:14px;vertical-align:top;">
-                    <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:#2a2420;">Photography Tips</p>
-                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">Camera settings and composition tips — with explanations of why each setting works for the day's conditions.</p>
-                  </td>
-                </tr>
-              </table>
 
             </td></tr>
           </table>
@@ -265,7 +253,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
         <!-- ═══ FOOTER ═══ -->
         <tr><td bgcolor="#F0E8DE" style="padding:28px 40px;text-align:center;border-top:1px solid #E0D5C8;">
 
-          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Made with ☀️ in Chennai</p>
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Kevin T</p>
           <p style="margin:0 0 10px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#a09888;">You're subscribed to daily sunrise forecasts for ${beachDisplay}.</p>
           <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
             <a href="${unsubscribeUrl}" style="color:#C4733A;text-decoration:none;">Unsubscribe</a>
@@ -926,7 +914,7 @@ async function sendEveningPreviewEmail(subscriberEmail, weatherData, photography
 
         <!-- ═══ FOOTER ═══ -->
         <tr><td bgcolor="#e8e0f0" style="padding:28px 40px;text-align:center;border-top:1px solid #d4c5e8;">
-          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#6b6058;">Seaside Beacon · Made with ☀️ in Chennai</p>
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#6b6058;">Seaside Beacon · Kevin T</p>
           <p style="margin:0 0 10px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#8a7e72;">Evening previews at 8:30 PM · Final forecasts at 4:00 AM IST</p>
           <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
             <a href="${unsubscribeUrl}" style="color:#6d28d9;text-decoration:none;">Unsubscribe</a>
@@ -1061,7 +1049,7 @@ async function sendPremiumWelcomeEmail(userEmail, plan) {
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
       },
       text: `Welcome to Seaside Beacon Premium!\n\nYou're now on the ${planDisplay} plan. Here's what you've unlocked:\n\n• 7 days of forecasts in advance — plan your week, not just tomorrow\n• DSLR camera settings — ISO, aperture, shutter speed tuned to the day's light\n• Mobile photography tips — get stunning shots with just your phone\n• AI Sunrise Assistant on Telegram — ask about conditions, get photography advice, compare days
-• Priority alerts — 70+ score mornings delivered before anyone else\n\nThank you for supporting India's first native sunrise quality forecaster. Starting with Chennai's beaches, expanding to coastlines across India. Your support helps us get there.\n\nSeaside Beacon — Made in Chennai\n${APP_URL}`,
+• Priority alerts — 70+ score mornings delivered before anyone else\n\nThank you for supporting India's first native sunrise quality forecaster. Starting with Chennai's beaches, expanding to coastlines across India. Your support helps us get there.\n\nSeaside Beacon · Kevin T\n${APP_URL}`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -1219,7 +1207,7 @@ async function sendPremiumWelcomeEmail(userEmail, plan) {
         <!-- ═══ FOOTER ═══ -->
         <tr><td bgcolor="#F0E8DE" style="padding:28px 40px;text-align:center;border-top:1px solid #E0D5C8;">
 
-          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Made with ☀️ in Chennai</p>
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Kevin T</p>
           <p style="margin:0 0 10px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#a09888;">You're on the Premium ${planDisplay} plan.</p>
           <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
             <a href="${APP_URL}" style="color:#C4733A;text-decoration:none;">Visit Website</a>
@@ -1514,7 +1502,7 @@ async function sendGiftPremiumEmail(userEmail, plan) {
         'List-Unsubscribe': `<${getUnsubscribeUrl(userEmail)}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
       },
-      text: `Congratulations! You've been gifted Seaside Beacon Premium!\n\nSomeone at Seaside Beacon thinks you deserve the full sunrise experience. You now have ${duration} of Premium access — completely free.\n\nHere's what you've unlocked:\n\n• 7 days of forecasts in advance — plan your week, not just tomorrow\n• DSLR camera settings — ISO, aperture, shutter speed tuned to the day's light\n• Mobile photography tips — get stunning shots with just your phone\n• AI Sunrise Assistant on Telegram — ask about conditions, get photography advice, compare days\n• Priority alerts — 70+ score mornings delivered before anyone else\n\nEnjoy your sunrises!\n\nSeaside Beacon — Made in Chennai\n${APP_URL}`,
+      text: `Congratulations! You've been gifted Seaside Beacon Premium!\n\nSomeone at Seaside Beacon thinks you deserve the full sunrise experience. You now have ${duration} of Premium access — completely free.\n\nHere's what you've unlocked:\n\n• 7 days of forecasts in advance — plan your week, not just tomorrow\n• DSLR camera settings — ISO, aperture, shutter speed tuned to the day's light\n• Mobile photography tips — get stunning shots with just your phone\n• AI Sunrise Assistant on Telegram — ask about conditions, get photography advice, compare days\n• Priority alerts — 70+ score mornings delivered before anyone else\n\nEnjoy your sunrises!\n\nSeaside Beacon · Kevin T\n${APP_URL}`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -1673,7 +1661,7 @@ async function sendGiftPremiumEmail(userEmail, plan) {
         <!-- FOOTER -->
         <tr><td bgcolor="#F0E8DE" style="padding:28px 40px;text-align:center;border-top:1px solid #E0D5C8;">
 
-          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Made with ☀️ in Chennai</p>
+          <p style="margin:0 0 6px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:500;color:#8a7e72;">Seaside Beacon · Kevin T</p>
           <p style="margin:0 0 10px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:#a09888;">You've been gifted the Premium ${planDisplay} plan for ${duration}.</p>
           <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;">
             <a href="${APP_URL}" style="color:#C4733A;text-decoration:none;">Visit Website</a>
