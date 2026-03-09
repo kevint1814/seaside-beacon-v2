@@ -2856,7 +2856,7 @@ async function renderShareCardCanvas(w, p) {
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const sunriseTime = w.sunrise || gh.peak || '';
+  const sunriseTime = w.goldenHour?.sunriseExact || gh.peak || '';
   const dateStr = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}${sunriseTime ? ' &middot; Sunrise ' + _esc(sunriseTime) : ''}`;
 
   const ghStart = gh.start || '';
