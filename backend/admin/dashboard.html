@@ -1754,20 +1754,25 @@ async function togglePhotoSpotlight(id, val) {
 }
 
 function confirmDeletePhoto(id) {
-  openModal(
-    '<div class="modal-title">Delete Photo</div>' +
-    '<div class="modal-sub">This will remove the photo from MongoDB and Cloudinary. This cannot be undone.</div>' +
-    '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Cancel</button><button class="modal-btn modal-btn-danger" onclick="doDeletePhoto(\'' + id + '\')">Delete</button></div>'
-  );
+  console.log('confirmDeletePhoto called with:', id);
+  try {
+    openModal(
+      '<div class="modal-title">Delete Photo</div>' +
+      '<div class="modal-sub">This will remove the photo from MongoDB and Cloudinary. This cannot be undone.</div>' +
+      '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Cancel</button><button class="modal-btn modal-btn-danger" onclick="doDeletePhoto(\'' + id + '\')">Delete</button></div>'
+    );
+  } catch (e) { console.error('confirmDeletePhoto error:', e); alert('Modal error: ' + e.message); }
 }
 
 async function doDeletePhoto(id) {
   try {
+    console.log('Deleting photo:', id, 'Token:', token ? token.substring(0, 8) + '...' : 'NONE');
     const res = await authFetch(API + '/api/admin/photos/' + id, { method: 'DELETE' });
+    console.log('Delete response:', res.status);
     const d = await res.json();
     if (d.success) { closeModal(); _tabLoaded.photos = false; loadPhotos(); }
     else alert(d.error || 'Delete failed: ' + res.status);
-  } catch (e) { alert('Error: ' + e.message); }
+  } catch (e) { console.error('Delete error:', e); alert('Error: ' + e.message); }
 }
 
 // ═══ Support Tab ═══

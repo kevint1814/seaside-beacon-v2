@@ -71,8 +71,8 @@ const limiter = rateLimit({
   max: 100,
   message: 'Too many requests, please try again later',
   skip: (req) => {
-    // Exempt server-to-server webhooks from rate limiting
-    return req.path === '/api/payment/webhook' || req.path === '/api/telegram/webhook';
+    // Exempt server-to-server webhooks and admin dashboard from rate limiting
+    return req.path === '/api/payment/webhook' || req.path === '/api/telegram/webhook' || req.path.startsWith('/api/admin');
   }
 });
 app.use('/api/', limiter);
