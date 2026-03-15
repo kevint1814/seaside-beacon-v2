@@ -921,6 +921,14 @@ const API = window.location.origin;
 let token = localStorage.getItem('sb_token');
 let interval;
 
+// Authenticated fetch — auto-logout on 401
+async function authFetch(url, opts = {}) {
+  opts.headers = Object.assign({ 'X-Admin-Token': token }, opts.headers || {});
+  const res = await fetch(url, opts);
+  if (res.status === 401) { logout(); throw new Error('Session expired — please log in again'); }
+  return res;
+}
+
 // ── Auth ──
 function login() {
   const u = document.getElementById('loginUser').value;
@@ -1677,7 +1685,7 @@ async function loadPhotos() {
     let url = API + '/api/admin/photos?limit=100';
     if (beach) url += '&beach=' + beach;
     if (featured) url += '&featured=' + featured;
-    const res = await fetch(url, { headers: { 'X-Admin-Token': token } });
+    const res = await authFetch(url);
     const d = await res.json();
     if (!d.success) throw new Error(d.error);
     _photoData = d.photos || [];
@@ -1723,8 +1731,8 @@ function renderPhotoGrid() {
 
 async function togglePhotoFeature(id, val) {
   try {
-    const res = await fetch(API + '/api/admin/photos/' + id, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+    const res = await authFetch(API + '/api/admin/photos/' + id, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ featured: val })
     });
     const d = await res.json();
@@ -1735,8 +1743,8 @@ async function togglePhotoFeature(id, val) {
 
 async function togglePhotoSpotlight(id, val) {
   try {
-    const res = await fetch(API + '/api/admin/photos/' + id, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+    const res = await authFetch(API + '/api/admin/photos/' + id, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ spotlighted: val })
     });
     const d = await res.json();
@@ -1755,10 +1763,10 @@ function confirmDeletePhoto(id) {
 
 async function doDeletePhoto(id) {
   try {
-    const res = await fetch(API + '/api/admin/photos/' + id, { method: 'DELETE', headers: { 'X-Admin-Token': token } });
+    const res = await authFetch(API + '/api/admin/photos/' + id, { method: 'DELETE' });
     const d = await res.json();
     if (d.success) { closeModal(); _tabLoaded.photos = false; loadPhotos(); }
-    else alert(d.error || 'Delete failed');
+    else alert(d.error || 'Delete failed: ' + res.status);
   } catch (e) { alert('Error: ' + e.message); }
 }
 

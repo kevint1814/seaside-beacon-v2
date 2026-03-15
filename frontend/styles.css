@@ -2398,6 +2398,13 @@ body.is-premium .nav-premium-badge { display:inline-block; }
   font-weight: 400;
 }
 
+/* Gallery carousel wrapper — arrow navigation for desktop */
+.gallery-carousel {
+  position: relative;
+  margin: 0 calc(-1 * clamp(20px,4vw,56px));
+  padding: 0 clamp(20px,4vw,56px);
+}
+
 /* Gallery responsive */
 @media (max-width: 600px) {
   .gallery-card { flex: 0 0 240px; height: 280px; }

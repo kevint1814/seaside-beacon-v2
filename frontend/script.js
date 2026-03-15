@@ -2461,6 +2461,22 @@ async function loadFeaturedGallery() {
     }).join('');
 
     wrap.style.display = '';
+
+    // Wire up gallery arrow navigation (desktop)
+    const galTrack = document.getElementById('galleryTrack');
+    const galL = document.getElementById('galleryArrowLeft');
+    const galR = document.getElementById('galleryArrowRight');
+    if (galTrack && galL && galR) {
+      const scrollAmt = 310;
+      galL.addEventListener('click', () => galTrack.scrollBy({ left: -scrollAmt, behavior: 'smooth' }));
+      galR.addEventListener('click', () => galTrack.scrollBy({ left: scrollAmt, behavior: 'smooth' }));
+      const updateGalArrows = () => {
+        galL.disabled = galTrack.scrollLeft <= 10;
+        galR.disabled = galTrack.scrollLeft + galTrack.clientWidth >= galTrack.scrollWidth - 10;
+      };
+      galTrack.addEventListener('scroll', updateGalArrows, { passive: true });
+      updateGalArrows();
+    }
   } catch (err) {
     // Silently fail — gallery is a progressive enhancement
     console.log('Gallery load skipped:', err.message);
