@@ -2975,7 +2975,7 @@ async function renderShareCardCanvas(w, p) {
       /* Brand */
       .sc2-brand { display:flex; align-items:center; gap:15px; justify-content:center; margin-bottom:80px; }
       .sc2-brand-dot { width:12.5px; height:12.5px; border-radius:50%; background:rgba(196,115,58,0.5); flex-shrink:0; }
-      .sc2-brand-name { font-size:21px; font-weight:500; letter-spacing:8.75px; text-transform:uppercase; color:rgba(255,255,255,0.22); }
+      .sc2-brand-name { font-size:21px; font-weight:500; letter-spacing:8.75px; text-transform:uppercase; color:rgba(255,255,255,0.30); }
       .sc2-prem-tag { margin-left:12px; font-size:17.5px; font-weight:600; letter-spacing:4.5px; text-transform:uppercase; color:rgba(196,115,58,0.38); border:2.5px solid rgba(196,115,58,0.14); padding:5px 17.5px; border-radius:5px; }
 
       /* Hero */
@@ -2984,39 +2984,39 @@ async function renderShareCardCanvas(w, p) {
       .sc2-ring-img { width:225px; height:225px; display:block; }
       .sc2-ring-inner { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
       .sc2-ring-score { font-family:'Cormorant Garamond', serif; font-size:80px; font-weight:300; color:rgba(255,255,255,0.88); line-height:1; letter-spacing:-2.5px; }
-      .sc2-ring-of { font-size:18.75px; color:rgba(255,255,255,0.14); letter-spacing:2.5px; margin-top:10px; }
+      .sc2-ring-of { font-size:18.75px; color:rgba(255,255,255,0.22); letter-spacing:2.5px; margin-top:10px; }
 
       .sc2-beach { font-family:'Cormorant Garamond', serif; font-size:65px; font-weight:400; color:rgba(255,255,255,0.88); letter-spacing:0.75px; margin-bottom:12.5px; }
       .sc2-verdict { font-size:22.5px; font-weight:500; letter-spacing:4.5px; text-transform:uppercase; color:rgba(196,115,58,0.5); margin-bottom:10px; }
-      .sc2-date { font-size:22.5px; color:rgba(255,255,255,0.16); letter-spacing:0.75px; margin-bottom:15px; }
+      .sc2-date { font-size:22.5px; color:rgba(255,255,255,0.32); letter-spacing:0.75px; margin-bottom:15px; }
 
       /* Golden window */
       .sc2-gw { display:flex; align-items:center; justify-content:center; gap:12.5px; }
       .sc2-gw-dot { width:15px; height:15px; border-radius:50%; background:#0a0a0e; border:2.5px solid rgba(196,115,58,0.5); flex-shrink:0; }
-      .sc2-gw-time { font-size:21.25px; color:rgba(255,255,255,0.22); letter-spacing:0.5px; }
-      .sc2-gw-time strong { color:rgba(255,255,255,0.38); font-weight:500; }
+      .sc2-gw-time { font-size:21.25px; color:rgba(255,255,255,0.35); letter-spacing:0.5px; }
+      .sc2-gw-time strong { color:rgba(255,255,255,0.50); font-weight:500; }
 
       /* Separator */
-      .sc2-sep { width:70px; height:2.5px; background:rgba(255,255,255,0.06); flex-shrink:0; margin-bottom:60px; }
+      .sc2-sep { width:70px; height:2.5px; background:rgba(255,255,255,0.08); flex-shrink:0; margin-bottom:60px; }
 
       /* Sections */
       .sc2-sections { display:flex; flex-direction:column; gap:35px; width:100%; text-align:left; flex:1; min-height:0; }
       .sc2-sec { display:flex; flex-direction:column; gap:7.5px; }
-      .sc2-sec-label { font-size:17.5px; font-weight:600; letter-spacing:5px; text-transform:uppercase; color:rgba(196,115,58,0.4); }
-      .sc2-sec-text { font-size:26.25px; line-height:1.65; color:rgba(255,255,255,0.3); }
+      .sc2-sec-label { font-size:17.5px; font-weight:600; letter-spacing:5px; text-transform:uppercase; color:rgba(196,115,58,0.6); }
+      .sc2-sec-text { font-size:26.25px; line-height:1.65; color:rgba(255,255,255,0.48); }
 
       /* Photography glass card */
       .sc2-photo-card { background:rgba(255,255,255,0.018); border:2.5px solid rgba(255,255,255,0.035); border-radius:12.5px; padding:25px 30px; }
-      .sc2-photo-card .sc2-sec-label { color:rgba(196,115,58,0.3); }
-      .sc2-photo-card .sc2-sec-text { font-size:23.75px; line-height:1.5; color:rgba(255,255,255,0.22); }
+      .sc2-photo-card .sc2-sec-label { color:rgba(196,115,58,0.5); }
+      .sc2-photo-card .sc2-sec-text { font-size:23.75px; line-height:1.5; color:rgba(255,255,255,0.35); }
 
       /* Footer */
       .sc2-foot { display:flex; align-items:flex-end; justify-content:space-between; width:100%; flex-shrink:0; margin-top:auto; padding-top:50px; }
       .sc2-foot-left { display:flex; flex-direction:column; gap:7.5px; }
-      .sc2-foot-cta { font-size:22.5px; font-style:italic; color:rgba(196,115,58,0.3); font-family:'Cormorant Garamond', serif; letter-spacing:0.5px; }
-      .sc2-foot-url { font-size:20px; color:rgba(255,255,255,0.14); letter-spacing:1px; }
+      .sc2-foot-cta { font-size:22.5px; font-style:italic; color:rgba(196,115,58,0.42); font-family:'Cormorant Garamond', serif; letter-spacing:0.5px; }
+      .sc2-foot-url { font-size:20px; color:rgba(255,255,255,0.25); letter-spacing:1px; }
       .sc2-foot-right { display:flex; flex-direction:column; align-items:center; gap:7.5px; }
-      .sc2-foot-scan { font-size:16.25px; font-weight:500; letter-spacing:3.75px; text-transform:uppercase; color:rgba(255,255,255,0.1); }
+      .sc2-foot-scan { font-size:16.25px; font-weight:500; letter-spacing:3.75px; text-transform:uppercase; color:rgba(255,255,255,0.18); }
       /* ── Premium overrides ── */
       .sc2-premium .sc2-brand { margin-bottom:60px; }
       .sc2-premium .sc2-hero { margin-bottom:45px; }
