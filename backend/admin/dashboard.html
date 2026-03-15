@@ -1723,20 +1723,24 @@ function renderPhotoGrid() {
 
 async function togglePhotoFeature(id, val) {
   try {
-    await fetch(API + '/api/admin/photos/' + id, {
+    const res = await fetch(API + '/api/admin/photos/' + id, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
       body: JSON.stringify({ featured: val })
     });
+    const d = await res.json();
+    if (!res.ok || !d.success) { alert(d.error || 'Feature toggle failed: ' + res.status); return; }
     _tabLoaded.photos = false; loadPhotos();
   } catch (e) { alert('Error: ' + e.message); }
 }
 
 async function togglePhotoSpotlight(id, val) {
   try {
-    await fetch(API + '/api/admin/photos/' + id, {
+    const res = await fetch(API + '/api/admin/photos/' + id, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
       body: JSON.stringify({ spotlighted: val })
     });
+    const d = await res.json();
+    if (!res.ok || !d.success) { alert(d.error || 'Spotlight toggle failed: ' + res.status); return; }
     _tabLoaded.photos = false; loadPhotos();
   } catch (e) { alert('Error: ' + e.message); }
 }

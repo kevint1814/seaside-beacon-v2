@@ -173,9 +173,17 @@ router.get('/admin/metrics', requireAuth, async (req, res) => {
       avgTenure = Math.round(tenures.reduce((a, b) => a + b, 0) / tenures.length);
     }
 
+    // Filter out fully expired users (cancelled/expired past grace period)
+    const visibleUsers = premiumUsers.filter(u =>
+      u.status === 'active' ||
+      u.status === 'pending' ||
+      (u.cancelledWithGrace && u.currentPeriodEnd && new Date(u.currentPeriodEnd) > now) ||
+      (u.status === 'cancelled' && u.cancelledAt && new Date(u.cancelledAt) > new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000))
+    );
+
     const premiumStats = {
       total: activePremium.length,
-      list: premiumUsers,
+      list: visibleUsers,
       revenue: {
         monthly: activePremium.filter(u => u.plan === 'monthly').length * 49,
         annual: activePremium.filter(u => u.plan === 'annual').length * 399

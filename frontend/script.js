@@ -1595,9 +1595,9 @@ function renderExperiencePanel(score, p, beachName) {
 
   show('experiencePanel');
 
-  // Time-aware: "this morning" before 10 AM IST, "tomorrow" after 6 PM, neutral midday
+  // Time-aware: "this morning" before 10 AM IST, "tomorrow" after 6 PM, "today's" midday
   const istHour = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })).getHours();
-  const timeLabel = istHour < 10 ? "this morning's" : istHour >= 18 ? "tomorrow's" : "the next";
+  const timeLabel = istHour < 10 ? "this morning's" : istHour >= 18 ? "tomorrow's" : "today's";
   document.getElementById('expTitle').textContent = `What ${timeLabel} sunrise will look like at ${beachName}`;
 
   // Recommendation badge
@@ -2085,7 +2085,7 @@ async function fetchAndShowSample() {
   advancePipeline(0, 'Loading sample forecast…');
 
   state._pipeTimeouts = [
-    setTimeout(() => advancePipeline(1, 'Fetching yesterday\'s data…'), 600),
+    setTimeout(() => advancePipeline(1, 'Fetching past forecast data…'), 600),
   ];
 
   let sampleData = null;
@@ -2144,12 +2144,25 @@ function enterSampleMode(sampleResp) {
   // After rendering, show premium labels on photography tabs
   addSamplePremiumLabels();
 
-  // Show sample CTA footer
+  // Show sample CTA footer with time-aware labels
+  // Compare sampleDate to today — if same day, it's "this morning's" forecast, otherwise "yesterday's"
+  const _todayIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const _todayStr = `${_todayIST.getFullYear()}-${String(_todayIST.getMonth()+1).padStart(2,'0')}-${String(_todayIST.getDate()).padStart(2,'0')}`;
+  const isToday = sampleDate === _todayStr;
+  const sampleTimeWord = isToday ? "this morning's" : "yesterday's";
+
+  const ctaHeading = document.getElementById('sampleCtaHeading');
+  if (ctaHeading) ctaHeading.textContent = `This was ${sampleTimeWord} forecast`;
+  const ctaSub = document.getElementById('sampleCtaSub');
+  if (ctaSub) ctaSub.textContent = isToday
+    ? 'Get the live forecast delivered to your inbox every morning at 4 AM — never miss a great sunrise.'
+    : "Get tomorrow's live forecast with score, conditions, and photography guidance delivered to your inbox at 4 AM.";
+
   show('sampleCtaFooter');
   updateSampleCountdown();
   startSampleCountdownInterval();
 
-  // Override time-aware labels to say "yesterday" instead of "tomorrow"
+  // Override time-aware labels for sample mode
   overrideSampleLabels(w.beach, dateLabel);
 
   // Wire up CTA buttons (only once — check flag to prevent listener accumulation)
@@ -2854,10 +2867,13 @@ async function renderShareCardCanvas(w, p) {
 
   // ── Build data ──
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  // After 6 PM IST, the forecast is for tomorrow's sunrise
+  const forecastDate = new Date(now);
+  if (now.getHours() >= 18) forecastDate.setDate(forecastDate.getDate() + 1);
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const sunriseTime = w.goldenHour?.sunriseExact || gh.peak || '';
-  const dateStr = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}${sunriseTime ? ' &middot; Sunrise ' + _esc(sunriseTime) : ''}`;
+  const dateStr = `${days[forecastDate.getDay()]}, ${months[forecastDate.getMonth()]} ${forecastDate.getDate()}, ${forecastDate.getFullYear()}${sunriseTime ? ' &middot; Sunrise ' + _esc(sunriseTime) : ''}`;
 
   const ghStart = gh.start || '';
   const ghEnd = gh.end || '';

@@ -308,9 +308,10 @@ router.post('/payment/switch-plan', requirePremium, async (req, res) => {
       throw rzpErr;  // re-throw non-UPI errors
     }
 
-    const changeAt = user.plan === 'annual' ? 'end of current annual period' : 'next billing cycle';
+    const oldPlan = user.plan;
+    const changeAt = oldPlan === 'annual' ? 'end of current annual period' : 'next billing cycle';
     user.plan = newPlan;
-    user.pendingPlanChange = user.plan === 'annual' ? newPlan : null;
+    user.pendingPlanChange = oldPlan === 'annual' ? newPlan : null;
     await user.save();
 
     res.json({ success: true, message: `Plan will switch to ${PLANS[newPlan].display} at ${changeAt}.` });
