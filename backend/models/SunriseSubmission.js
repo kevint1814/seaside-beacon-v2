@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { getBeachKeys, getBeachNames } = require('../services/weatherService');
 
 const sunriseSubmissionSchema = new mongoose.Schema({
   cloudinaryUrl: { type: String, required: true },
@@ -6,7 +7,10 @@ const sunriseSubmissionSchema = new mongoose.Schema({
   beach: {
     type: String,
     required: true,
-    enum: ['marina', 'elliot', 'covelong', 'thiruvanmiyur']
+    validate: {
+      validator: v => getBeachKeys().includes(v),
+      message: props => `${props.value} is not a valid beach`
+    }
   },
   beachName: { type: String },
   date: { type: Date, required: true },
@@ -17,15 +21,11 @@ const sunriseSubmissionSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-const BEACH_NAMES = {
-  marina: 'Marina Beach',
-  elliot: "Elliot's Beach",
-  covelong: 'Covelong Beach',
-  thiruvanmiyur: 'Thiruvanmiyur Beach'
-};
-
 sunriseSubmissionSchema.pre('save', function(next) {
-  if (!this.beachName) this.beachName = BEACH_NAMES[this.beach] || this.beach;
+  if (!this.beachName) {
+    const names = getBeachNames();
+    this.beachName = names[this.beach] || this.beach;
+  }
   next();
 });
 

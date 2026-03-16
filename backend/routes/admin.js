@@ -14,6 +14,7 @@ const { getMetricsSnapshot } = require('../services/metricsCollector');
 const { getStats } = require('../services/visitTracker');
 const { sendGiftPremiumEmail } = require('../services/emailService');
 const { runPremiumCleanup } = require('../jobs/premiumCleanup');
+const { getBeachKeys, getBeachNames, isValidBeach } = require('../services/weatherService');
 const Subscriber = require('../models/Subscriber');
 const DailyScore = require('../models/DailyScore');
 const DailyVisit = require('../models/DailyVisit');
@@ -506,7 +507,7 @@ router.patch('/admin/subscriber/:email', requireAuth, async (req, res) => {
     const { preferredBeach, isActive } = req.body;
 
     const update = {};
-    if (preferredBeach && ['marina', 'elliot', 'covelong', 'thiruvanmiyur'].includes(preferredBeach)) {
+    if (preferredBeach && isValidBeach(preferredBeach)) {
       update.preferredBeach = preferredBeach;
     }
     if (typeof isActive === 'boolean') {
@@ -562,7 +563,7 @@ router.patch('/admin/premium/:email', requireAuth, async (req, res) => {
     const { preferredBeach, alertTime, eveningPreviewTime, status } = req.body;
 
     const update = {};
-    if (preferredBeach && ['marina', 'elliot', 'covelong', 'thiruvanmiyur'].includes(preferredBeach)) {
+    if (preferredBeach && isValidBeach(preferredBeach)) {
       update.preferredBeach = preferredBeach;
     }
     if (alertTime && /^\d{2}:\d{2}$/.test(alertTime)) {
@@ -689,7 +690,7 @@ router.post('/admin/premium/gift', requireAuth, async (req, res) => {
     }
 
     const preferredBeach = beach || 'marina';
-    if (!['marina', 'elliot', 'covelong', 'thiruvanmiyur'].includes(preferredBeach)) {
+    if (!isValidBeach(preferredBeach)) {
       return res.status(400).json({ error: 'Invalid beach' });
     }
 
@@ -838,7 +839,7 @@ router.get('/admin/photos', requireAuth, async (req, res) => {
   try {
     const { beach, featured } = req.query;
     const filter = {};
-    if (beach && ['marina', 'elliot', 'covelong', 'thiruvanmiyur'].includes(beach)) filter.beach = beach;
+    if (beach && isValidBeach(beach)) filter.beach = beach;
     if (featured === 'true') filter.featured = true;
     if (featured === 'false') filter.featured = false;
 
@@ -858,7 +859,7 @@ router.get('/admin/photos', requireAuth, async (req, res) => {
       spotlighted: await SunriseSubmission.countDocuments({ spotlighted: true }),
       byBeach: {}
     };
-    for (const b of ['marina', 'elliot', 'covelong', 'thiruvanmiyur']) {
+    for (const b of getBeachKeys()) {
       stats.byBeach[b] = await SunriseSubmission.countDocuments({ beach: b });
     }
 
@@ -1223,11 +1224,13 @@ router.get('/admin/export/:type', requireAuth, async (req, res) => {
       }
       case 'forecasts': {
         const scores = await DailyScore.find({}).sort({ date: -1 }).limit(365).lean();
-        csv = 'Date,Average Score,Best Beach,Marina,Elliot,Covelong,Thiruvanmiyur\n';
+        const bKeys = getBeachKeys();
+        const bNames = getBeachNames();
+        csv = `Date,Average Score,Best Beach,${bKeys.map(k => bNames[k]).join(',')}\n`;
         for (const s of scores) {
           const beachScores = {};
           (s.beaches || []).forEach(b => { beachScores[b.beachKey] = b.score; });
-          csv += `"${s.date}",${s.averageScore || ''},"${s.bestBeach || ''}",${beachScores.marina || ''},${beachScores.elliot || ''},${beachScores.covelong || ''},${beachScores.thiruvanmiyur || ''}\n`;
+          csv += `"${s.date}",${s.averageScore || ''},"${s.bestBeach || ''}",${bKeys.map(k => beachScores[k] || '').join(',')}\n`;
         }
         filename = `forecasts-${new Date().toISOString().split('T')[0]}.csv`;
         break;

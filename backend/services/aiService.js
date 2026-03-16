@@ -556,6 +556,15 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
 // ==========================================
 
 function generatePhotographyBrief(score, cloudCover, humidity, visibility, windSpeed, beach, breakdown) {
+  // Beach-specific features for photography tips (from BEACHES config context)
+  const BEACH_PHOTO_FEATURES = {
+    marina: { silhouette: 'the lighthouse and fishing boats', foreground: 'The lighthouse makes a strong anchor for rule-of-thirds compositions. Fishing nets and boats add human interest.', hazySubject: 'Fishing boat silhouettes against the soft amber horizon.', bwSubject: 'the lighthouse silhouette' },
+    covelong: { silhouette: 'rock formations against the golden sky', foreground: 'Rock formations and tidal pools are your foreground — use the moderate sky color as background.', hazySubject: 'The rock formations will look incredible as dark shapes in the warm haze.', bwSubject: 'the rock formations' },
+    thiruvanmiyur: { silhouette: 'the breakwater with golden water trails', foreground: 'Tidal pools reflecting whatever color is available. Breakwater lines create leading lines.', hazySubject: 'Simple foreground subjects against the layered atmosphere.', bwSubject: 'dark sand and structures' },
+    mahabalipuram: { silhouette: 'the Shore Temple and fishing boats against ancient granite', foreground: 'The Shore Temple is an extraordinary foreground — 7th-century carved granite lit by sunrise. Fishing boats and boulder formations add layers.', hazySubject: 'The Shore Temple becomes a moody silhouette in the warm haze — telephoto compression against the amber disc is stunning.', bwSubject: 'the Shore Temple and scattered boulders' }
+  };
+  const feat = BEACH_PHOTO_FEATURES[beach] || { silhouette: 'walkers and landmarks', foreground: 'Find strong foreground elements to anchor your compositions.', hazySubject: 'Simple foreground subjects against the layered atmosphere.', bwSubject: 'dark sand and structures' };
+
   const highCloud = breakdown?.multiLevelCloud?.high ?? breakdown?.highCloud ?? null;
   const lowCloud = breakdown?.multiLevelCloud?.low ?? breakdown?.lowCloud ?? null;
   const aodValue = breakdown?.aod?.value ?? null;
@@ -583,15 +592,15 @@ function generatePhotographyBrief(score, cloudCover, humidity, visibility, windS
   // Best shots recommendation
   let bestShots;
   if (score >= 70) {
-    bestShots = `Wide golden landscapes with the full color show, sun-star effects as the disc peeks over the horizon, silhouettes of ${beach === 'marina' ? 'the lighthouse and fishing boats' : beach === 'covelong' ? 'rock formations against the golden sky' : beach === 'thiruvanmiyur' ? 'the breakwater with golden water trails' : 'walkers and landmarks'} against the warm glow. Wet sand reflections will mirror the sky — get low for maximum impact. Golden water trail shots from a slightly elevated position.`;
+    bestShots = `Wide golden landscapes with the full color show, sun-star effects as the disc peeks over the horizon, silhouettes of ${feat.silhouette} against the warm glow. Wet sand reflections will mirror the sky — get low for maximum impact. Golden water trail shots from a slightly elevated position.`;
   } else if (score >= 55) {
     if (isHazy) {
-      bestShots = `The hazy light is perfect for minimalist compositions — isolated subjects against soft gradients. Telephoto compression shots of the muted sun disc work beautifully. ${beach === 'covelong' ? 'The rock formations will look incredible as dark shapes in the warm haze.' : beach === 'marina' ? 'Fishing boat silhouettes against the soft amber horizon.' : 'Simple foreground subjects against the layered atmosphere.'} Also great for abstract water texture close-ups.`;
+      bestShots = `The hazy light is perfect for minimalist compositions — isolated subjects against soft gradients. Telephoto compression shots of the muted sun disc work beautifully. ${feat.hazySubject} Also great for abstract water texture close-ups.`;
     } else {
-      bestShots = `Focus on compositional photography rather than sky-dominant shots. ${beach === 'marina' ? 'The lighthouse makes a strong anchor for rule-of-thirds compositions. Fishing nets and boats add human interest.' : beach === 'covelong' ? 'Rock formations and tidal pools are your foreground — use the moderate sky color as background.' : beach === 'thiruvanmiyur' ? 'Tidal pools reflecting whatever color is available. Breakwater lines create leading lines.' : 'Find strong foreground elements to anchor your compositions.'} Mid-range focal lengths (35-70mm) will serve you best.`;
+      bestShots = `Focus on compositional photography rather than sky-dominant shots. ${feat.foreground} Mid-range focal lengths (35-70mm) will serve you best.`;
     }
   } else {
-    bestShots = `Moody black and white is your friend this morning. The muted tones and atmospheric depth convert beautifully. Long exposure waves (10-30 seconds with ND filter) create ethereal water against ${beach === 'covelong' ? 'the rock formations' : beach === 'marina' ? 'the lighthouse silhouette' : 'dark sand and structures'}. Close-up textures like wet sand patterns, shells, and seaweed benefit from the even light. High contrast B&W processing will make these pop.`;
+    bestShots = `Moody black and white is your friend this morning. The muted tones and atmospheric depth convert beautifully. Long exposure waves (10-30 seconds with ND filter) create ethereal water against ${feat.bwSubject}. Close-up textures like wet sand patterns, shells, and seaweed benefit from the even light. High contrast B&W processing will make these pop.`;
   }
 
   // Color palette

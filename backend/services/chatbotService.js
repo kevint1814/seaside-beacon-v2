@@ -155,7 +155,7 @@ Your honesty is your superpower. People trust you BECAUSE you don't sugarcoat:
 
 // ─── Fetch live context for AI responses ───
 async function getLiveWeatherContext() {
-  const beaches = ['marina', 'elliot', 'covelong', 'thiruvanmiyur'];
+  const beaches = weatherService.getBeachKeys();
   const context = {};
 
   for (const beach of beaches) {
@@ -282,7 +282,8 @@ async function chat(chatId, userMessage, userName) {
 
     // Fetch live weather for context (cached internally by weatherService)
     let weatherContext = '';
-    const needsWeather = /\b(today|tomorrow|tmrw|tmr|2moro|2mrw|forecast|score|beach|sunrise|sunset|weather|morning|golden.?hour|cloud|humidity|wind|predict|how.{0,10}look|week|7.?day|next.?few|which day|best day|this week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|marina|elliot|covelong|thiruvanmiyur|besant|ecr|photo|shoot|camera|dslr|sky|haze|fog|rain|clear)\b/i.test(userMessage);
+    const beachKeywords = weatherService.getBeachKeys().join('|');
+    const needsWeather = new RegExp(`\\b(today|tomorrow|tmrw|tmr|2moro|2mrw|forecast|score|beach|sunrise|sunset|weather|morning|golden.?hour|cloud|humidity|wind|predict|how.{0,10}look|week|7.?day|next.?few|which day|best day|this week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|${beachKeywords}|besant|ecr|photo|shoot|camera|dslr|sky|haze|fog|rain|clear)\\b`, 'i').test(userMessage);
     if (needsWeather) {
       try {
         const [liveData, sevenDayData] = await Promise.all([

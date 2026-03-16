@@ -559,12 +559,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
       <div style="margin-bottom:12px" id="beachPills"></div>
       <div class="mgmt-bar">
         <input type="text" class="mgmt-search" id="subSearch" placeholder="Search subscribers...">
-        <select class="mgmt-filter" id="subBeachFilter">
+        <select class="mgmt-filter admin-beach-select" id="subBeachFilter">
           <option value="">All beaches</option>
           <option value="marina">Marina</option>
           <option value="elliot">Elliot's</option>
           <option value="covelong">Covelong</option>
           <option value="thiruvanmiyur">Thiruvanmiyur</option>
+          <option value="mahabalipuram">Mahabalipuram</option>
         </select>
       </div>
       <div class="scroll-y" style="max-height:340px">
@@ -723,7 +724,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
       <div class="card-title">Forecast History</div>
       <div class="scroll-y">
         <table class="tbl">
-          <thead><tr><th>Date</th><th>Marina</th><th>Elliot's</th><th>Covelong</th><th>Thiruvanmiyur</th><th>Avg</th><th>Best</th></tr></thead>
+          <thead id="scoreHead"><tr><th>Date</th><th>Avg</th><th>Best</th></tr></thead>
           <tbody id="scoreBody"></tbody>
         </table>
       </div>
@@ -748,12 +749,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
       <div class="card-title">Sunrise Gallery <span class="badge" style="background:var(--surface2);color:var(--t2)" id="photoPageInfo">—</span></div>
       <div class="mgmt-bar">
         <input type="text" class="mgmt-search" id="photoSearch" placeholder="Search by name or email...">
-        <select class="mgmt-filter" id="photoBeachFilter">
+        <select class="mgmt-filter admin-beach-select" id="photoBeachFilter">
           <option value="">All beaches</option>
           <option value="marina">Marina</option>
           <option value="elliot">Elliot's</option>
           <option value="covelong">Covelong</option>
           <option value="thiruvanmiyur">Thiruvanmiyur</option>
+          <option value="mahabalipuram">Mahabalipuram</option>
         </select>
         <select class="mgmt-filter" id="photoFeatFilter">
           <option value="">All</option>
@@ -920,6 +922,41 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 const API = window.location.origin;
 let token = localStorage.getItem('sb_token');
 let interval;
+
+// ── Dynamic beach data (populated from API, fallback hardcoded) ──
+let ADMIN_BEACHES = { marina:'Marina', elliot:"Elliot's", covelong:'Covelong', thiruvanmiyur:'Thiruvanmiyur', mahabalipuram:'Mahabalipuram' };
+let ADMIN_BEACH_KEYS = Object.keys(ADMIN_BEACHES);
+const ADMIN_BEACH_COLORS = { marina:'var(--blue)', elliot:'var(--violet)', covelong:'var(--green)', thiruvanmiyur:'var(--amber)', mahabalipuram:'var(--orange)' };
+const CHART_COLOR_PALETTE = ['var(--blue)','var(--violet)','var(--green)','var(--amber)','var(--orange)','var(--pink)','var(--teal)','var(--red)'];
+(async function loadAdminBeaches() {
+  try {
+    const r = await fetch(API + '/api/beaches');
+    const j = await r.json();
+    if (j.success && j.data) {
+      const map = {};
+      j.data.forEach(b => { map[b.key] = b.name.replace(/ Beach$/, ''); });
+      ADMIN_BEACHES = map;
+      ADMIN_BEACH_KEYS = Object.keys(map);
+      // Assign colors for new beaches
+      let ci = Object.keys(ADMIN_BEACH_COLORS).length;
+      j.data.forEach(b => {
+        if (!ADMIN_BEACH_COLORS[b.key]) {
+          ADMIN_BEACH_COLORS[b.key] = CHART_COLOR_PALETTE[ci % CHART_COLOR_PALETTE.length];
+          ci++;
+        }
+      });
+      // Populate beach filter selects
+      document.querySelectorAll('.admin-beach-select').forEach(sel => {
+        const cur = sel.value;
+        const allOpt = sel.querySelector('option[value=""]');
+        sel.innerHTML = (allOpt ? allOpt.outerHTML : '') + j.data.map(b =>
+          `<option value="${b.key}">${map[b.key]}</option>`
+        ).join('');
+        if (cur) sel.value = cur;
+      });
+    }
+  } catch(e) { /* fallback to hardcoded */ }
+})();
 
 // Authenticated fetch — auto-logout on 401
 async function authFetch(url, opts = {}) {
@@ -1128,7 +1165,7 @@ function premiumTable(p){
 
 function renderPremiumTable(){
   const p = _premiumData;
-  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const beaches=ADMIN_BEACHES;
   const body=document.getElementById('premiumBody');
   if(!p.list||!p.list.length){body.innerHTML='<tr><td colspan="9" class="empty-state">No premium users</td></tr>';return;}
   const now=new Date();
@@ -1180,8 +1217,8 @@ function renderPremiumTable(){
 
 function subTable(s){
   _subscriberData = s;
-  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
-  const colors={marina:'var(--blue)',elliot:'var(--violet)',covelong:'var(--green)',thiruvanmiyur:'var(--amber)'};
+  const beaches=ADMIN_BEACHES;
+  const colors=ADMIN_BEACH_COLORS;
   // Pills
   document.getElementById('beachPills').innerHTML=Object.entries(beaches).map(([k,v])=>{
     return '<span class="beach-pill"><span style="width:6px;height:6px;border-radius:2px;background:'+colors[k]+';display:inline-block"></span>'+v+' <span class="ct">'+(s.byBeach[k]||0)+'</span></span>';
@@ -1193,8 +1230,8 @@ function subTable(s){
 
 function renderSubTable(){
   const s = _subscriberData;
-  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
-  const colors={marina:'var(--blue)',elliot:'var(--violet)',covelong:'var(--green)',thiruvanmiyur:'var(--amber)'};
+  const beaches=ADMIN_BEACHES;
+  const colors=ADMIN_BEACH_COLORS;
   const body=document.getElementById('subBody');
   if(!s.list||!s.list.length){body.innerHTML='<tr><td colspan="7" class="empty-state">No subscribers</td></tr>';return;}
 
@@ -1229,7 +1266,7 @@ function renderSubTable(){
 
 function feedbackList(feedbacks){
   const el=document.getElementById('feedbackList');
-  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const beaches=ADMIN_BEACHES;
   const ratingColors={
     'spot-on':'background:var(--green-bg);color:var(--green)',
     'close':'background:var(--amber-bg);color:var(--amber)',
@@ -1246,13 +1283,15 @@ function feedbackList(feedbacks){
 }
 
 function scoreTable(scores){
+  const colCount=ADMIN_BEACH_KEYS.length+3;
+  document.getElementById('scoreHead').innerHTML='<tr><th>Date</th>'+ADMIN_BEACH_KEYS.map(function(k){return '<th>'+ADMIN_BEACHES[k]+'</th>'}).join('')+'<th>Avg</th><th>Best</th></tr>';
   const body=document.getElementById('scoreBody');
-  if(!scores.length){body.innerHTML='<tr><td colspan="7" class="empty-state">No scores yet</td></tr>';return;}
+  if(!scores.length){body.innerHTML='<tr><td colspan="'+colCount+'" class="empty-state">No scores yet</td></tr>';return;}
   body.innerHTML=scores.map(s=>{
     const bs={};(s.beaches||[]).forEach(b=>{bs[b.beachKey]=b;});
     const best=s.bestBeach?.beachKey||'';
     return '<tr><td class="mono">'+s.date+'</td>'+
-      ['marina','elliot','covelong','thiruvanmiyur'].map(k=>{
+      ADMIN_BEACH_KEYS.map(k=>{
         const b=bs[k];if(!b)return'<td>—</td>';
         const cls=b.recommendation==='GO'?'sb-go':b.recommendation==='MAYBE'?'sb-maybe':b.recommendation==='SKIP'?'sb-skip':'sb-no';
         return '<td><span class="sb '+cls+'">'+b.score+'</span></td>';
@@ -1298,7 +1337,7 @@ function updateRecipientCount() {
 }
 
 function buildRecipientList(filter) {
-  const beaches = {marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const beaches = ADMIN_BEACHES;
   const list = document.getElementById('recipientList');
   const filtered = filter ? allSubEmails.filter(s => s.email.toLowerCase().includes(filter.toLowerCase())) : allSubEmails;
   list.innerHTML = filtered.map(s => {
@@ -1475,7 +1514,7 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){
 function openSubEdit(email){
   const sub=(_subscriberData.list||[]).find(s=>s.email===email);
   if(!sub)return;
-  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const beaches=ADMIN_BEACHES;
   const beachOpts=Object.entries(beaches).map(([k,v])=>'<option value="'+k+'"'+(sub.preferredBeach===k?' selected':'')+'>'+v+'</option>').join('');
   openModal(
     '<div class="modal-title">Edit Subscriber</div>'+
@@ -1533,7 +1572,7 @@ async function doSubDelete(email){
 function openPremiumEdit(email){
   const user=(_premiumData.list||[]).find(u=>u.email===email);
   if(!user)return;
-  const beaches={marina:'Marina',elliot:"Elliot's",covelong:'Covelong',thiruvanmiyur:'Thiruvanmiyur'};
+  const beaches=ADMIN_BEACHES;
   const beachOpts=Object.entries(beaches).map(([k,v])=>'<option value="'+k+'"'+(user.preferredBeach===k?' selected':'')+'>'+v+'</option>').join('');
   const statuses=['active','cancelled','expired','pending'];
   const statusOpts=statuses.map(s=>'<option value="'+s+'"'+(user.status===s?' selected':'')+'>'+cap(s)+'</option>').join('');
@@ -1706,7 +1745,7 @@ async function loadPhotos() {
 function renderPhotoGrid() {
   const grid = document.getElementById('photoGrid');
   const search = (document.getElementById('photoSearch')?.value || '').toLowerCase();
-  const beaches = { marina: 'Marina', elliot: "Elliot's", covelong: 'Covelong', thiruvanmiyur: 'Thiruvanmiyur' };
+  const beaches = ADMIN_BEACHES;
   let photos = _photoData;
   if (search) photos = photos.filter(p => (p.name || '').toLowerCase().includes(search) || (p.email || '').toLowerCase().includes(search));
   if (!photos.length) { grid.innerHTML = '<div class="empty-state">No photos found</div>'; return; }
@@ -1880,7 +1919,7 @@ async function loadCommunity() {
     const mRes = await fetch(API + '/api/admin/metrics', { headers: { 'X-Admin-Token': token } });
     const mData = await mRes.json();
     const fb = mData.feedback || [];
-    const beaches = { marina: 'Marina', elliot: "Elliot's", covelong: 'Covelong', thiruvanmiyur: 'Thiruvanmiyur' };
+    const beaches = ADMIN_BEACHES;
     const ratingColors = { 'spot-on': 'background:var(--green-bg);color:var(--green)', 'close': 'background:var(--amber-bg);color:var(--amber)', 'missed': 'background:var(--red-bg);color:var(--red)' };
     $('cmFeedbackCount', fb.length);
     const el = document.getElementById('cmFeedbackList');
@@ -2261,7 +2300,7 @@ function openGiftPremium(){
     '<div class="modal-sub">Gift a free premium subscription to any email address</div>'+
     '<div class="modal-field"><label class="modal-label">Email Address</label><input class="modal-input" id="giftEmail" type="email" placeholder="user@example.com"></div>'+
     '<div class="modal-field"><label class="modal-label">Plan</label><select class="modal-input" id="giftPlan"><option value="monthly">Monthly (1 month)</option><option value="annual">Annual (1 year)</option></select></div>'+
-    '<div class="modal-field"><label class="modal-label">Preferred Beach</label><select class="modal-input" id="giftBeach"><option value="marina">Marina</option><option value="elliot">Elliot\'s</option><option value="covelong">Covelong</option><option value="thiruvanmiyur">Thiruvanmiyur</option></select></div>'+
+    '<div class="modal-field"><label class="modal-label">Preferred Beach</label><select class="modal-input admin-beach-select" id="giftBeach">' + ADMIN_BEACH_KEYS.map(k => '<option value="' + k + '">' + ADMIN_BEACHES[k] + '</option>').join('') + '</select></div>'+
     '<div style="font-size:11px;color:var(--t3);margin-top:-4px">User will be added to Subscribers + Premium Users and receive a congratulations email.</div>'+
     '<div class="modal-actions"><button class="modal-btn modal-btn-ghost" onclick="closeModal()">Cancel</button><button class="modal-btn modal-btn-primary" onclick="doGiftPremium()">🎁 Gift Premium</button></div>'
   );

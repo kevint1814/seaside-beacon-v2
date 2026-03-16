@@ -3,6 +3,7 @@
 // ==========================================
 
 const mongoose = require('mongoose');
+const { getBeachKeys } = require('../services/weatherService');
 
 const subscriberSchema = new mongoose.Schema({
   email: {
@@ -16,7 +17,10 @@ const subscriberSchema = new mongoose.Schema({
   preferredBeach: {
     type: String,
     required: true,
-    enum: ['marina', 'elliot', 'covelong', 'thiruvanmiyur'],
+    validate: {
+      validator: v => getBeachKeys().includes(v),
+      message: props => `${props.value} is not a valid beach`
+    },
     default: 'marina'
   },
   isActive: {

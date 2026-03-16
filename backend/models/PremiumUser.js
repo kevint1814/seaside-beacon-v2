@@ -5,6 +5,7 @@
 // ==========================================
 
 const mongoose = require('mongoose');
+const { getBeachKeys } = require('../services/weatherService');
 
 const premiumUserSchema = new mongoose.Schema({
   email: {
@@ -77,7 +78,10 @@ const premiumUserSchema = new mongoose.Schema({
   // ─── Preferences ───
   preferredBeach: {
     type: String,
-    enum: ['marina', 'elliot', 'covelong', 'thiruvanmiyur'],
+    validate: {
+      validator: v => getBeachKeys().includes(v),
+      message: props => `${props.value} is not a valid beach`
+    },
     default: 'marina'
   },
   alertTime: {

@@ -22,6 +22,49 @@ const state = {
   _loadInterval:null, _pipeTimeouts:[]
 };
 
+// ── Dynamic beach data (fetched from API, fallback hardcoded) ──
+let BEACH_NAME_MAP = {
+  marina: 'Marina Beach', elliot: "Elliot's Beach",
+  covelong: 'Covelong Beach', thiruvanmiyur: 'Thiruvanmiyur Beach',
+  mahabalipuram: 'Mahabalipuram Beach'
+};
+let BEACH_META = {
+  marina:        { name: 'Marina Beach',        sub: 'Lighthouse · Fishing boats' },
+  elliot:        { name: "Elliot's Beach",      sub: 'Karl Schmidt Memorial' },
+  covelong:      { name: 'Covelong Beach',      sub: 'Rock formations · Tidal pools' },
+  thiruvanmiyur: { name: 'Thiruvanmiyur',       sub: 'Breakwater · Reflections' },
+  mahabalipuram: { name: 'Mahabalipuram Beach', sub: 'Shore Temple · UNESCO Heritage' }
+};
+// Populate from API on boot (non-blocking)
+(async function loadBeachData() {
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/beaches`);
+    const json = await res.json();
+    if (json.success && json.data) {
+      const map = {};
+      json.data.forEach(b => { map[b.key] = b.name; });
+      BEACH_NAME_MAP = map;
+      // Update meta for any new beaches (keep existing sub text for known beaches)
+      json.data.forEach(b => {
+        if (!BEACH_META[b.key]) {
+          BEACH_META[b.key] = { name: b.name, sub: '' };
+        }
+      });
+      // Populate all beach <select> dropdowns dynamically
+      const beachSelects = ['beachSelect', 'photoBeach', 'feedbackBeach', 'stripBeach', 'prefBeach'];
+      beachSelects.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const currentVal = sel.value;
+        sel.innerHTML = json.data.map(b =>
+          `<option value="${b.key}">${_esc(b.name)}</option>`
+        ).join('');
+        if (currentVal && map[currentVal]) sel.value = currentVal;
+      });
+    }
+  } catch (e) { /* fallback to hardcoded defaults in HTML */ }
+})();
+
 // ─────────────────────────────────────────────
 // BOOT
 // ─────────────────────────────────────────────
@@ -1937,12 +1980,7 @@ function renderTips(id, tips, heading) {
 
 function renderCompositionTab(p) {
   const comp=p?.beachComparison||{}, beaches=comp.beaches||{};
-  const meta={
-    marina:        {name:'Marina Beach',    sub:'Lighthouse · Fishing boats'},
-    elliot:        {name:"Elliot's Beach",  sub:'Karl Schmidt Memorial'},
-    covelong:      {name:'Covelong Beach',  sub:'Rock formations · Tidal pools'},
-    thiruvanmiyur: {name:'Thiruvanmiyur',   sub:'Breakwater · Reflections'}
-  };
+  const meta = BEACH_META;
   const suitCls={Best:'cs-best',Good:'cs-good',Fair:'cs-fair',Poor:'cs-poor'};
   const hasData = Object.keys(beaches).length > 0;
 
@@ -2429,15 +2467,8 @@ async function loadFeaturedGallery() {
     const wrap = document.getElementById('featuredGallery');
     if (!track || !wrap) return;
 
-    const BEACH_NAMES = {
-      marina: 'Marina Beach',
-      elliot: "Elliot's Beach",
-      covelong: 'Covelong Beach',
-      thiruvanmiyur: 'Thiruvanmiyur Beach'
-    };
-
     track.innerHTML = data.photos.map(p => {
-      const beachLabel = p.beachName || BEACH_NAMES[p.beach] || p.beach;
+      const beachLabel = p.beachName || BEACH_NAME_MAP[p.beach] || p.beach;
       const dateStr = p.date ? new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
       const nameStr = p.name || 'Anonymous';
       // Cloudinary transforms — cropped thumb for front, full image for back
@@ -3616,9 +3647,8 @@ function populateAccountPanel() {
     statusEl.style.color = user.isActive ? '#22c55e' : '#ef4444';
   }
 
-  const beachNames = { marina:'Marina Beach', elliot:"Elliot's Beach", covelong:'Covelong Beach', thiruvanmiyur:'Thiruvanmiyur Beach' };
   const beachEl = document.getElementById('pmAccountBeach');
-  if (beachEl) beachEl.textContent = beachNames[user.preferredBeach] || user.preferredBeach || 'Marina Beach';
+  if (beachEl) beachEl.textContent = BEACH_NAME_MAP[user.preferredBeach] || user.preferredBeach || 'Marina Beach';
 
   const renewEl = document.getElementById('pmAccountRenews');
   if (renewEl) {

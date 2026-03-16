@@ -9,6 +9,7 @@ const router = express.Router();
 const chatbotService = require('../services/chatbotService');
 const PremiumUser = require('../models/PremiumUser');
 const SupportTicket = require('../models/SupportTicket');
+const { getBeachKeys } = require('../services/weatherService');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -310,7 +311,7 @@ async function handleCommand(chatId, text, userName) {
       await sendTypingAction(chatId);
 
       // Fetch all beaches
-      const beaches = ['marina', 'elliot', 'covelong', 'thiruvanmiyur'];
+      const beaches = getBeachKeys();
       const lines = ['🌅 <b>Tomorrow\'s Sunrise Forecast</b>\n'];
       let bestBeach = null;
       let bestScore = 0;

@@ -110,12 +110,8 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
   try {
     const unsubscribeUrl = getUnsubscribeUrl(subscriberEmail);
 
-    const beachDisplayNames = {
-      marina: 'Marina Beach',
-      elliot: "Elliot's Beach (Besant Nagar)",
-      covelong: 'Covelong Beach',
-      thiruvanmiyur: 'Thiruvanmiyur Beach'
-    };
+    const { getBeachNames } = require('./weatherService');
+    const beachDisplayNames = getBeachNames();
     const beachDisplay = beachDisplayNames[beachName] || beachName;
 
     const mailOptions = {

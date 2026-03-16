@@ -87,7 +87,8 @@ router.get('/stats', async (req, res) => {
 router.get('/beaches', async (req, res) => {
   try {
     const beaches = weatherService.getBeaches();
-    res.json({ success: true, data: beaches });
+    const regions = weatherService.getRegions();
+    res.json({ success: true, data: beaches, regions });
   } catch (error) {
     console.error('Beaches error:', error.message);
     res.status(500).json({ success: false, message: 'Failed to fetch beaches' });

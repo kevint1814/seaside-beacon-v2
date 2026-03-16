@@ -13,6 +13,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { OAuth2Client } = require('google-auth-library');
 const router = express.Router();
+const { isValidBeach } = require('../services/weatherService');
 
 const PremiumUser = require('../models/PremiumUser');
 
@@ -572,8 +573,7 @@ router.post('/auth/preferences', requirePremium, async (req, res) => {
     }
 
     if (preferredBeach) {
-      const validBeaches = ['marina', 'elliot', 'covelong', 'thiruvanmiyur'];
-      if (!validBeaches.includes(preferredBeach)) {
+      if (!isValidBeach(preferredBeach)) {
         return res.status(400).json({ success: false, message: 'Invalid beach' });
       }
       user.preferredBeach = preferredBeach;

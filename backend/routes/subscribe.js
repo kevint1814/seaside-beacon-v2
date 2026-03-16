@@ -12,6 +12,7 @@ const router = express.Router();
 const Subscriber = require('../models/Subscriber');
 const emailService = require('../services/emailService');
 const { trackNewSub, trackUnsub } = require('../services/visitTracker');
+const { getBeachKeys } = require('../services/weatherService');
 
 /**
  * POST /api/subscribe
@@ -27,8 +28,7 @@ router.post('/subscribe', async (req, res) => {
       });
     }
 
-    const validBeaches = ['marina', 'elliot', 'covelong', 'thiruvanmiyur'];
-    if (!validBeaches.includes(preferredBeach)) {
+    if (!getBeachKeys().includes(preferredBeach)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid beach selection'

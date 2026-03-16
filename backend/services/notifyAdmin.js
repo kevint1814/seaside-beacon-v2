@@ -11,17 +11,14 @@
 const cron = require('node-cron');
 const Subscriber = require('../models/Subscriber');
 const { getStats, getTodayIST } = require('./visitTracker');
+const { getBeachNames } = require('./weatherService');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'hello@seasidebeacon.com';
 const SENDER_EMAIL = process.env.SENDER_EMAIL || 'forecast@seasidebeacon.com';
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
-const BEACH_NAMES = {
-  marina: 'Marina Beach',
-  elliot: "Elliot's Beach",
-  covelong: 'Covelong Beach',
-  thiruvanmiyur: 'Thiruvanmiyur Beach'
-};
+// Dynamic — picks up any new beaches automatically
+const BEACH_NAMES = getBeachNames();
 
 // ══════════════════════════════════════════
 // Core email sender

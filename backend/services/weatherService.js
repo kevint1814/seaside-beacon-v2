@@ -40,39 +40,99 @@ const ACCUWEATHER_API_KEY = process.env.ACCUWEATHER_API_KEY;
 // Cloudflare Worker proxy URL — bypasses Render's shared-IP rate limits on Open-Meteo
 // e.g. https://openmeteo-proxy.YOUR_SUBDOMAIN.workers.dev
 const OPENMETEO_PROXY = process.env.OPENMETEO_PROXY_URL || null;
-const CHENNAI_LOCATION_KEY = '206671';
 
-// Beach configurations
+// ── AccuWeather Location Keys ──
+const LOCATION_KEYS = {
+  chennai: '206671',
+  mahabalipuram: '196140',
+  kanyakumari: '188917',
+  rameswaram: '200997'
+};
+
+// ── Region definitions ──
+const REGIONS = {
+  chennai: { name: 'Chennai', state: 'Tamil Nadu' },
+  ecr_south: { name: 'ECR South', state: 'Tamil Nadu' },
+  kanyakumari: { name: 'Kanyakumari', state: 'Tamil Nadu' },
+  rameswaram: { name: 'Rameswaram', state: 'Tamil Nadu' }
+};
+
+// ── Beach configurations ──
+// Single source of truth — every other file derives from this.
+// To add a new beach: add an entry here, everything else picks it up.
 const BEACHES = {
   marina: {
     name: 'Marina Beach',
     key: 'marina',
-    locationKey: CHENNAI_LOCATION_KEY,
+    region: 'chennai',
+    locationKey: LOCATION_KEYS.chennai,
     coordinates: { lat: 13.0499, lon: 80.2824 },
     context: 'The world\'s longest urban beach. Key elements: lighthouse (north end), fishing boats (colorful vallamkaran boats launch at dawn), the pier, long flat sand, urban Chennai skyline as backdrop, large tidal pools during low tide.'
   },
   elliot: {
     name: "Elliot's Beach",
     key: 'elliot',
-    locationKey: CHENNAI_LOCATION_KEY,
+    region: 'chennai',
+    locationKey: LOCATION_KEYS.chennai,
     coordinates: { lat: 13.0067, lon: 80.2669 },
     context: 'Quieter, upscale Besant Nagar beach. Key elements: Karl Schmidt Memorial (stone structure on beach), clean white sand, Ashtalakshmi Temple visible in background, fewer crowds, calm water.'
   },
   covelong: {
     name: 'Covelong Beach',
     key: 'covelong',
-    locationKey: CHENNAI_LOCATION_KEY,
+    region: 'chennai',
+    locationKey: LOCATION_KEYS.chennai,
     coordinates: { lat: 12.7925, lon: 80.2514 },
     context: 'Secluded surf beach 40km south. Key elements: natural rock formations and tidal pools, rolling waves, dramatic cliffs to the south, isolated and pristine, minimal urban intrusion.'
   },
   thiruvanmiyur: {
     name: 'Thiruvanmiyur Beach',
     key: 'thiruvanmiyur',
-    locationKey: CHENNAI_LOCATION_KEY,
+    region: 'chennai',
+    locationKey: LOCATION_KEYS.chennai,
     coordinates: { lat: 12.9826, lon: 80.2589 },
     context: 'Residential neighborhood beach. Key elements: tidal pools, natural breakwater rocks, calmer than Marina, accessible parking and walkways.'
+  },
+  mahabalipuram: {
+    name: 'Mahabalipuram Beach',
+    key: 'mahabalipuram',
+    region: 'ecr_south',
+    locationKey: LOCATION_KEYS.mahabalipuram,
+    coordinates: { lat: 12.6165, lon: 80.1992 },
+    context: 'UNESCO World Heritage beach town 60km south of Chennai on ECR. Key elements: Shore Temple (7th-century Pallava temple right on the shoreline), ancient rock carvings and cave sculptures, colorful fishing boats, rocky-sandy mix shoreline, dramatic boulder formations. The temple faces east — sunrise lights up the carved granite directly.'
   }
 };
+
+// ── Derived helpers (used across the entire codebase) ──
+/** All valid beach keys — ['marina', 'elliot', 'covelong', ...] */
+function getBeachKeys() {
+  return Object.keys(BEACHES);
+}
+
+/** Beach key → display name map — { marina: 'Marina Beach', ... } */
+function getBeachNames() {
+  const map = {};
+  for (const [key, b] of Object.entries(BEACHES)) map[key] = b.name;
+  return map;
+}
+
+/** Check if a beach key is valid */
+function isValidBeach(key) {
+  return key in BEACHES;
+}
+
+/** Get regions with their beaches grouped */
+function getRegions() {
+  const grouped = {};
+  for (const [key, b] of Object.entries(BEACHES)) {
+    const regionKey = b.region;
+    if (!grouped[regionKey]) {
+      grouped[regionKey] = { ...REGIONS[regionKey], key: regionKey, beaches: [] };
+    }
+    grouped[regionKey].beaches.push({ key, name: b.name, coordinates: b.coordinates });
+  }
+  return Object.values(grouped);
+}
 
 /**
  * Check if predictions are available (6 PM - 7 AM IST window for public users)
@@ -111,6 +171,8 @@ function getBeaches() {
   return Object.values(BEACHES).map(beach => ({
     key: beach.key,
     name: beach.name,
+    region: beach.region,
+    regionName: REGIONS[beach.region]?.name || beach.region,
     coordinates: beach.coordinates,
     context: beach.context || ''
   }));
@@ -1790,10 +1852,20 @@ async function getTomorrow6AMForecast(beachKey, { forceAvailable = false } = {})
 
 const cron = require('node-cron');
 
-const CACHE_WARMUP_COORDS = [
-  { label: 'Chennai center', lat: 13.0, lon: 80.3 },  // Marina/Elliot's/Thiruvanmiyur
-  { label: 'Covelong area',  lat: 12.8, lon: 80.3 }    // Covelong
-];
+// Derive unique grid cells from BEACHES coordinates (GFS 0.25° resolution ≈ 28km)
+// Round to 1 decimal place to deduplicate nearby beaches sharing the same grid cell
+const CACHE_WARMUP_COORDS = (() => {
+  const seen = new Set();
+  const coords = [];
+  for (const [key, b] of Object.entries(BEACHES)) {
+    const rounded = `${Math.round(b.coordinates.lat * 10) / 10},${Math.round(b.coordinates.lon * 10) / 10}`;
+    if (!seen.has(rounded)) {
+      seen.add(rounded);
+      coords.push({ label: b.name, lat: Math.round(b.coordinates.lat * 10) / 10, lon: Math.round(b.coordinates.lon * 10) / 10 });
+    }
+  }
+  return coords;
+})();
 
 /**
  * Warm up forecast cache (cloud layers, pressure, humidity, visibility)
@@ -2113,6 +2185,12 @@ module.exports = {
   getBeaches,
   isPredictionTimeAvailable,
   getTimeUntilAvailable,
+  // ── Dynamic beach helpers (used across the entire codebase) ──
+  getBeachKeys,
+  getBeachNames,
+  isValidBeach,
+  getRegions,
+  BEACHES,
   // Exposed for testing (v5)
   scoreCloudCover,
   scoreMultiLevelCloud,
