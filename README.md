@@ -2,7 +2,7 @@
 
 **India's first AI-powered sunrise quality forecast for Chennai beaches.**
 
-Seaside Beacon analyzes 9 atmospheric factors across 4 Chennai beaches to predict how colorful tomorrow's sunrise will be. It combines AccuWeather forecasts, Open-Meteo satellite data, and a 3-tier AI system (Gemini Flash, Groq Llama, Flash-Lite) to deliver a single 0 to 100 score with photography-specific insights, delivered to your inbox at 4 AM every morning.
+Seaside Beacon analyzes 9 atmospheric factors across 5 beaches (4 Chennai + Mahabalipuram) to predict how colorful tomorrow's sunrise will be. It combines AccuWeather forecasts, Open-Meteo satellite data, and a 3-tier AI system (Gemini Flash, Groq Llama, Flash-Lite) to deliver a single 0 to 100 score with photography-specific insights, delivered to your inbox at 4 AM every morning. New beaches auto-calibrate their forecasts using MOS (Model Output Statistics) bias correction.
 
 **Live:** [seasidebeacon.com](https://seasidebeacon.com)
 **Status:** Production v7.3 (launched February 14, 2026)
@@ -14,7 +14,7 @@ Seaside Beacon analyzes 9 atmospheric factors across 4 Chennai beaches to predic
 
 I moved to Chennai from Rajapalayam (a small town in Tamil Nadu) for my studies. Standing at Marina Beach one morning, watching a sky that went from flat grey to full copper in twenty minutes, I realized there was no way to know beforehand whether a sunrise would be worth the early alarm. Some mornings the sky ignites, some mornings it doesn't. Weather apps tell you temperature and rain probability, nobody tells you if the sunrise will be breathtaking.
 
-That question became Seaside Beacon. Over a year of research into atmospheric optics, cloud physics, and color scattering, months of frontend/backend iteration, and hundreds of mornings comparing predictions to actual sunrise photos. Today it covers 4 Chennai beaches and predicts sunrise quality using the same atmospheric factors that peer-reviewed meteorological research identifies as color determinants.
+That question became Seaside Beacon. Over a year of research into atmospheric optics, cloud physics, and color scattering, months of frontend/backend iteration, and hundreds of mornings comparing predictions to actual sunrise photos. Today it covers 5 beaches across Chennai and Mahabalipuram, predicting sunrise quality using the same atmospheric factors that peer-reviewed meteorological research identifies as color determinants.
 
 ---
 
@@ -24,15 +24,17 @@ Every evening at 6 PM IST, the forecast unlocks for tomorrow's sunrise. Every mo
 
 1. Fetches hourly weather data from **AccuWeather** (cloud cover, humidity, visibility, wind, precipitation)
 2. Fetches multi-level cloud layers, pressure trends, and aerosol data from **Open-Meteo** (GFS + Air Quality APIs)
-3. Runs a **9-factor scoring algorithm** (v5.2) that weights each atmospheric condition based on peer-reviewed sunrise color research
-4. Generates **AI-powered insights** via 3-tier failover (Gemini 2.5 Flash, Groq Llama 3.3 70B, Gemini Flash-Lite, rule-based) with natural language descriptions, DSLR settings, and mobile tips
-5. Sends personalized **email forecasts** to subscribers via Brevo (with SendGrid failover)
-6. Sends **Telegram alerts** to premium subscribers with the AI chatbot
-7. Stores scores in **MongoDB** for historical tracking and accuracy analysis
+3. Applies **MOS bias corrections** for auto-calibrating beaches (Mahabalipuram and future expansions) using rolling 30-day predicted-vs-observed deltas
+4. Runs a **9-factor scoring algorithm** (v5.6) that weights each atmospheric condition based on peer-reviewed sunrise color research
+5. Generates **AI-powered insights** via 3-tier failover (Gemini 2.5 Flash, Groq Llama 3.3 70B, Gemini Flash-Lite, rule-based) with natural language descriptions, DSLR settings, and mobile tips
+6. Sends personalized **email forecasts** to subscribers via Brevo (with SendGrid failover)
+7. Sends **Telegram alerts** to premium subscribers with the AI chatbot
+8. Stores scores in **MongoDB** for historical tracking and accuracy analysis
+9. At 7:30 AM, runs **forecast verification** — fetches ERA5 observed weather from Open-Meteo Archive API and computes prediction deltas for MOS calibration
 
 ---
 
-## The Scoring Algorithm (v5.2)
+## The Scoring Algorithm (v5.6)
 
 The scoring engine assigns up to **100 points** across 9 base factors plus synergy adjustments. The weight distribution is aligned with [SunsetWx](https://sunsetwx.com) research (Penn State meteorologists) and NOAA atmospheric optics literature.
 
@@ -72,15 +74,21 @@ The scoring engine assigns up to **100 points** across 9 base factors plus syner
 
 When Open-Meteo is unavailable, the three satellite-dependent factors default to neutral scores (Multi-Level Cloud 8/15, Pressure Trend 5/10, AOD 4/8) so predictions never break due to a single API outage.
 
+### MOS Auto-Calibration (v5.6)
+
+New beaches (Mahabalipuram and future expansions) self-calibrate using Model Output Statistics (MOS). Chennai's hand-tuned scoring is untouched. Each day at 7:30 AM IST, the system fetches ERA5 reanalysis data (what actually happened) and compares it to what was predicted. After 14+ days of data, rolling corrections are computed and applied automatically before scoring runs.
+
+7 safeguards protect correction quality: minimum data threshold (14 days), per-variable correction caps, confidence ramp-in (50% at 14 days, 75% at 21, 100% at 28), IQR-based outlier exclusion, exponential recency weighting (0.93^daysAgo decay), regime shift detection (3-day vs 14-day divergence throttles corrections to 25%), and staleness checks (corrections disabled if observed data is >3 days old).
+
 ---
 
 ## Features
 
 ### Free Tier
-- **Sunrise scoring** for all 4 beaches with sub-second API response
+- **Sunrise scoring** for all 5 beaches with sub-second API response
 - **9-factor breakdown** showing points earned per factor
 - **Atmospheric analysis** with natural language explanations for each condition
-- **Beach comparison** across all 4 beaches with suitability ratings
+- **Beach comparison** across all 5 beaches with suitability ratings
 - **Daily 4 AM email** with score, verdict, and conditions
 - **Sample forecast preview** showing yesterday's full forecast during the time-locked window (7 AM to 6 PM) so users can see what they're subscribing for
 - **Community photo gallery** with sunrise submissions from real users
@@ -129,6 +137,8 @@ When Open-Meteo is unavailable, the three satellite-dependent factors default to
 - Cache warmup schedule aligned to GFS model run availability (03:40, 03:55, 04:20, 09:30, 15:30, 21:30 IST)
 - Historical score archival in MongoDB (DailyScore collection)
 - Sample forecast storage for time-locked user previews
+- MOS forecast verification pipeline (7:30 AM primary + 8:30 AM retry)
+- 2-hour correction cache per beach (aligned with Open-Meteo forecast TTL)
 - Visit tracking middleware (non-blocking)
 - Metrics collector with live public API
 
@@ -170,9 +180,9 @@ When Open-Meteo is unavailable, the three satellite-dependent factors default to
 
 | Layer | Technology | Notes |
 |-------|-----------|-------|
-| Frontend | Vanilla JS (ES6+), HTML5, CSS3 | Vercel CDN, zero frameworks, ~10K lines |
+| Frontend | Vanilla JS (ES6+), HTML5, CSS3 | Vercel CDN, zero frameworks, ~11K lines |
 | Backend | Node.js 18+, Express 4.x | Render free plan |
-| Database | MongoDB Atlas M0 | Free tier, 512 MB, 10 collections |
+| Database | MongoDB Atlas M0 | Free tier, 512 MB, 11 collections |
 | Weather | AccuWeather + Open-Meteo | GFS cloud layers, pressure, AOD |
 | AI | Gemini 2.5 Flash, Groq Llama 3.3 70B, Gemini Flash-Lite | 3-tier failover + rule-based |
 | Email | Brevo (primary) + SendGrid (failover) | 400 emails/day combined |
@@ -187,12 +197,13 @@ When Open-Meteo is unavailable, the three satellite-dependent factors default to
 
 ## Beaches
 
-| Beach | Location | Photography Context |
-|-------|----------|-------------------|
-| Marina Beach | 13.05 N, 80.28 E | Lighthouse, fishing boats, urban skyline. World's longest urban beach |
-| Elliot's Beach | 13.01 N, 80.27 E | Karl Schmidt Memorial, Ashtalakshmi Temple, clean sand |
-| Covelong Beach | 12.79 N, 80.25 E | ECR 40km south, rock formations, tidal pools, surf beach |
-| Thiruvanmiyur Beach | 12.98 N, 80.26 E | Natural breakwater rocks, tidal pools, calm waters |
+| Beach | Location | Photography Context | Calibration |
+|-------|----------|-------------------|-------------|
+| Marina Beach | 13.05 N, 80.28 E | Lighthouse, fishing boats, urban skyline. World's longest urban beach | Hand-tuned |
+| Elliot's Beach | 13.01 N, 80.27 E | Karl Schmidt Memorial, Ashtalakshmi Temple, clean sand | Hand-tuned |
+| Covelong Beach | 12.79 N, 80.25 E | ECR 40km south, rock formations, tidal pools, surf beach | Hand-tuned |
+| Thiruvanmiyur Beach | 12.98 N, 80.26 E | Natural breakwater rocks, tidal pools, calm waters | Hand-tuned |
+| Mahabalipuram Beach | 12.62 N, 80.19 E | UNESCO Shore Temple, Five Rathas, rock-cut architecture | MOS auto-calibrated |
 
 ---
 
@@ -214,14 +225,16 @@ seaside-beacon/
 |   |   +-- device.js             # FCM device token registration
 |   |   +-- admin.js              # Admin dashboard, analytics API
 |   +-- services/
-|   |   +-- weatherService.js     # v5.2 scoring algorithm (2,131 lines)
+|   |   +-- weatherService.js     # v5.6 scoring algorithm (2,300 lines)
 |   |   +-- aiService.js          # Multi-provider AI (Gemini/Groq) + rule-based fallback
 |   |   +-- emailService.js       # Brevo + SendGrid email delivery
 |   |   +-- chatbotService.js     # Telegram AI chatbot with conversation memory
 |   |   +-- telegramService.js    # Telegram alerts and message delivery
 |   |   +-- firebaseAdmin.js      # FCM push notification service
+|   |   +-- forecastCalibration.js # MOS correction computation engine (7 safeguards)
 |   |   +-- metricsCollector.js   # Live metrics, cache hit rates, response times
 |   |   +-- notifyAdmin.js        # Admin digest email with analytics
+|   |   +-- pushNotifications.js  # Push notification orchestration
 |   |   +-- visitTracker.js       # Visit analytics middleware
 |   +-- models/
 |   |   +-- PremiumUser.js        # Premium subscriptions, auth tokens, Razorpay
@@ -234,16 +247,18 @@ seaside-beacon/
 |   |   +-- Feedback.js           # User ratings with email
 |   |   +-- SunriseSubmission.js  # Community photos with email
 |   |   +-- SupportTicket.js      # User support tickets
+|   |   +-- ForecastVerification.js # MOS predicted-vs-observed weather data
 |   +-- jobs/
 |   |   +-- dailyEmail.js         # 4 AM forecast, evening preview, 70+ alerts
+|   |   +-- forecastVerification.js # 7:30 AM MOS verification cron + 8:30 AM retry
 |   +-- admin/
 |   |   +-- dashboard.html        # Admin analytics dashboard
-|   +-- test-scoring.js           # 327 test assertions
+|   +-- test-scoring.js           # 240 test assertions
 |   +-- test-email.js             # Email delivery tests
 +-- frontend/
-|   +-- index.html                # Single-page app (1,857 lines, SEO optimized)
-|   +-- script.js                 # UI logic (4,211 lines, vanilla JS)
-|   +-- styles.css                # Styling (3,989 lines)
+|   +-- index.html                # Single-page app (1,935 lines, SEO optimized)
+|   +-- script.js                 # UI logic (4,792 lines, vanilla JS)
+|   +-- styles.css                # Styling (4,314 lines)
 |   +-- favicon.svg               # Sun icon favicon
 |   +-- og-image.jpg              # Social media preview
 |   +-- robots.txt
@@ -313,6 +328,8 @@ seaside-beacon/
 
 **Razorpay KYC for solo dev:** Required visible pricing, refund policy, contact info, and PAN verification. Built dedicated pricing, terms, and privacy pages before applying. Activation completed in 2 to 3 days.
 
+**Scaling to new beaches without manual tuning:** Chennai's scoring was hand-tuned over hundreds of mornings, but that doesn't scale. Solved with an MOS (Model Output Statistics) auto-calibration system that collects predicted-vs-observed weather deltas daily, computes rolling bias corrections, and applies them automatically after 14+ days of data. Seven safeguards (correction caps, confidence ramp-in, outlier exclusion, recency weighting, regime detection, staleness checks) prevent overcorrection during unusual weather patterns.
+
 ---
 
 ## Costs
@@ -347,7 +364,7 @@ seaside-beacon/
 | Prediction cache | 10-min TTL per beach, ~80% hit rate |
 | Cold start | 30 to 50s (mitigated by scheduled wake-ups) |
 | Email delivery | Under 5s per batch |
-| Test coverage | 327/327 assertions (100%) |
+| Test coverage | 240 assertions (100%) |
 | Uptime | 99.9% (monitored) |
 
 ---
@@ -364,7 +381,7 @@ Seaside Beacon is the only sunrise prediction platform built specifically for th
 | [ClearOutside](https://clearoutside.com) | UK | Astronomy, not sunrise | No | Basic |
 | **Seaside Beacon** | **India (Chennai)** | **9 base + synergy** | **Yes (16 pts)** | **Native** |
 
-Key differentiators: AOD as the top-weighted factor (no competitor uses satellite aerosol data), beach-specific composition tips referencing actual landmarks, AI-generated camera settings adapted to real-time conditions, and a premium tier with Telegram chatbot and 7-day calendar.
+Key differentiators: AOD as the top-weighted factor (no competitor uses satellite aerosol data), MOS auto-calibration for scaling to new beaches without manual tuning, beach-specific composition tips referencing actual landmarks, AI-generated camera settings adapted to real-time conditions, and a premium tier with Telegram chatbot and 7-day calendar.
 
 ---
 
@@ -372,9 +389,9 @@ Key differentiators: AOD as the top-weighted factor (no competitor uses satellit
 
 | Phase | Timeline | Focus |
 |-------|----------|-------|
-| Phase 0 (Current) | Now | 4 Chennai beaches, prove accuracy, build community |
+| Phase 0 (Current) | Now | 5 beaches (4 Chennai + Mahabalipuram), prove accuracy, build community, MOS auto-calibration |
 | Phase 1 | Q2 2026 | Marketing push: Instagram, Reddit, SEO, accuracy tracking |
-| Phase 2 | Q3 2026 | Expand to Pondicherry, Visakhapatnam, Puri |
+| Phase 2 | Q3 2026 | Expand to Pondicherry, Visakhapatnam, Puri (MOS auto-calibrates new beaches) |
 | Phase 3 | Q4 2026 | Multi-city frontend, React Native mobile app |
 | Phase 4 | 2027+ | All major Indian coastal cities, Southeast Asia, API licensing |
 
@@ -442,19 +459,24 @@ CLOUDINARY_CLOUD_NAME=your_name
 CLOUDINARY_API_KEY=your_key
 CLOUDINARY_API_SECRET=your_secret
 
+# Payments (webhook)
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
+
 # Server
 PORT=3000
 NODE_ENV=development
 TZ=Asia/Kolkata
 FRONTEND_URL=http://localhost:5500
 ADMIN_EMAIL=your@email.com
+ADMIN_USER=admin
+ADMIN_PASS=your_admin_password
 ```
 
 ### Running Tests
 
 ```bash
 cd backend
-node test-scoring.js   # 327 assertions, should show 327/327 passed
+node test-scoring.js   # 240 assertions, should show all passed
 ```
 
 ---

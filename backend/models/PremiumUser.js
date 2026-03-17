@@ -20,7 +20,7 @@ const premiumUserSchema = new mongoose.Schema({
   // ─── Subscription ───
   plan: {
     type: String,
-    enum: ['monthly', 'annual'],
+    enum: ['monthly', 'annual', null],
     default: null
   },
   status: {

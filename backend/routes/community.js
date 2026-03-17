@@ -126,8 +126,12 @@ router.post('/feedback', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid rating. Use: Spot On, Close, or Missed.' });
     }
 
+    // Convert display rating to schema enum: 'Spot On' → 'spot-on', 'Close' → 'close', 'Missed' → 'missed'
+    const ratingMap = { 'Spot On': 'spot-on', 'Close': 'close', 'Missed': 'missed' };
+    const schemaRating = ratingMap[rating];
+
     const feedback = await Feedback.create({
-      rating,
+      rating: schemaRating,
       comment,
       beach,
       userName: name,

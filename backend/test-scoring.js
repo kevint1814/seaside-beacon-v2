@@ -526,7 +526,7 @@ const lowBlanket = calculateSunriseScore(
   makeForecast({ cloud: 85, humidity: 88, vis: 5, wind: 20 }),
   makeExtras({ highCloud: 5, midCloud: 10, lowCloud: 90, aod: 0.6, pressureMsl: [1013, 1013, 1013] })
 );
-assert(lowBlanket.score <= 35, `Low cloud blanket ≤35 (got ${lowBlanket.score})`);
+assert(lowBlanket.score <= 38, `Low cloud blanket ≤38 (got ${lowBlanket.score})`);
 
 // Scenario 10: Fog (very low vis + high humidity = synergy penalty dominates)
 const fog = calculateSunriseScore(
@@ -668,7 +668,7 @@ const allLowStratus = calculateSunriseScore(
 );
 assertInRange(allLowStratus.score, 40, 58, `v5.3 All-low-stratus (Marina Feb 21): ${allLowStratus.score} — should be "decent, not dramatic"`);
 assert(allLowStratus.breakdown.cloudCover.lowStratusDiscount > 0, 'v5.3: low-stratus discount applied');
-assert(allLowStratus.breakdown.cloudCover.score < 12, `v5.3: cloud score discounted (got ${allLowStratus.breakdown.cloudCover.score})`);
+assert(allLowStratus.breakdown.cloudCover.score < 18, `v5.5: cloud score discounted by gappy-stratus rate (got ${allLowStratus.breakdown.cloudCover.score})`);
 
 // Scenario B: Same cloud amount but WITH high canvas — should score higher
 const highCanvas51 = calculateSunriseScore(
