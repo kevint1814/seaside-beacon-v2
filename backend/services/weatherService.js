@@ -774,9 +774,10 @@ function getImprovedPostRainBonus(forecastRaw, dailyData, openMeteoForecast) {
   // PRIMARY: Temporal signal from AccuWeather daily forecast
   if (dailyData && dailyData.nightHoursOfRain > 0 && precipProb <= 20) {
     // v5.4: Cross-validate with Open-Meteo GFS actual precipitation
+    // Research: ≥1mm needed for aerosol scavenging; <0.5mm is model noise/trace moisture
     const omPrecip = openMeteoForecast?.overnightPrecipMm;
-    if (omPrecip != null && omPrecip === 0) {
-      console.log(`⚠️ Post-rain SUPPRESSED: AccuWeather says ${dailyData.nightHoursOfRain}h rain, but GFS shows 0mm overnight precipitation — likely false positive`);
+    if (omPrecip != null && omPrecip < 0.5) {
+      console.log(`⚠️ Post-rain SUPPRESSED: AccuWeather says ${dailyData.nightHoursOfRain}h rain, but GFS shows only ${omPrecip}mm overnight (<0.5mm threshold) — likely false positive`);
       // Don't return 8 — fall through to heuristic check or return 0
     } else {
       console.log(`🌧️ Post-rain temporal signal: ${dailyData.nightHoursOfRain}h rain last night, 6AM precip ${precipProb}% | GFS confirms: ${omPrecip ?? 'N/A'}mm`);
@@ -785,9 +786,9 @@ function getImprovedPostRainBonus(forecastRaw, dailyData, openMeteoForecast) {
   }
 
   // FALLBACK: Data signature heuristic (when daily data unavailable)
-  // v5.4: Skip heuristic if GFS already confirmed 0mm overnight — no post-rain scenario possible
+  // v5.4: Skip heuristic if GFS confirmed <0.5mm overnight — no meaningful rain for aerosol scavenging
   const omPrecipFallback = openMeteoForecast?.overnightPrecipMm;
-  if (omPrecipFallback != null && omPrecipFallback === 0) {
+  if (omPrecipFallback != null && omPrecipFallback < 0.5) {
     return 0;
   }
 
