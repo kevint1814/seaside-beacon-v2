@@ -67,6 +67,7 @@ const BEACHES = {
     region: 'chennai',
     locationKey: LOCATION_KEYS.chennai,
     coordinates: { lat: 13.0499, lon: 80.2824 },
+    autoCalibrate: false,  // v5.6: Chennai beaches are hand-tuned — MOS corrections logged but never applied
     context: 'The world\'s longest urban beach. Key elements: lighthouse (north end), fishing boats (colorful vallamkaran boats launch at dawn), the pier, long flat sand, urban Chennai skyline as backdrop, large tidal pools during low tide.'
   },
   elliot: {
@@ -75,6 +76,7 @@ const BEACHES = {
     region: 'chennai',
     locationKey: LOCATION_KEYS.chennai,
     coordinates: { lat: 13.0067, lon: 80.2669 },
+    autoCalibrate: false,
     context: 'Quieter, upscale Besant Nagar beach. Key elements: Karl Schmidt Memorial (stone structure on beach), clean white sand, Ashtalakshmi Temple visible in background, fewer crowds, calm water.'
   },
   covelong: {
@@ -83,6 +85,7 @@ const BEACHES = {
     region: 'chennai',
     locationKey: LOCATION_KEYS.chennai,
     coordinates: { lat: 12.7925, lon: 80.2514 },
+    autoCalibrate: false,
     context: 'Secluded surf beach 40km south. Key elements: natural rock formations and tidal pools, rolling waves, dramatic cliffs to the south, isolated and pristine, minimal urban intrusion.'
   },
   thiruvanmiyur: {
@@ -91,6 +94,7 @@ const BEACHES = {
     region: 'chennai',
     locationKey: LOCATION_KEYS.chennai,
     coordinates: { lat: 12.9826, lon: 80.2589 },
+    autoCalibrate: false,
     context: 'Residential neighborhood beach. Key elements: tidal pools, natural breakwater rocks, calmer than Marina, accessible parking and walkways.'
   },
   mahabalipuram: {
@@ -99,6 +103,7 @@ const BEACHES = {
     region: 'ecr_south',
     locationKey: LOCATION_KEYS.mahabalipuram,
     coordinates: { lat: 12.6165, lon: 80.1992 },
+    autoCalibrate: true,   // v5.6: MOS auto-calibration — corrections applied after 14+ days of data
     context: 'UNESCO World Heritage beach town 60km south of Chennai on ECR. Key elements: Shore Temple (7th-century Pallava temple right on the shoreline), ancient rock carvings and cave sculptures, colorful fishing boats, rocky-sandy mix shoreline, dramatic boulder formations. The temple faces east — sunrise lights up the carved granite directly.'
   }
 };
@@ -1363,7 +1368,7 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   const awHumidity = forecastRaw.RelativeHumidity || 50;
   const precipProb = forecastRaw.PrecipitationProbability || 0;
   const hasPrecip = forecastRaw.HasPrecipitation || false;
-  const windSpeed = forecastRaw.Wind?.Speed?.Value || 0;
+  let windSpeed = forecastRaw.Wind?.Speed?.Value || 0;
   const weatherDesc = forecastRaw.IconPhrase || '';
 
   // AccuWeather returns visibility in miles when metric=false, km when metric=true
@@ -1371,7 +1376,7 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   const awVisUnit = forecastRaw.Visibility?.Unit || 'km';
   const awVisKm = awVisUnit === 'mi' ? awVisRaw * 1.60934 : awVisRaw;
 
-  const { dailyData, airQuality, openMeteoForecast } = extras;
+  const { dailyData, airQuality, openMeteoForecast, beachKey: extraBeachKey, corrections: mosCorrections } = extras;
 
   // ── v5.1: DATA SOURCE SELECTION (OM primary, AW fallback) ──
   // Ground-truth audit (Feb 20, 2026): AW over-reports cloud (+35%), under-reports
@@ -1383,19 +1388,33 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   const omHumidity = openMeteoForecast?.humidity;
 
   // Cloud: use OM when available (Feb 20 audit: AW 94% vs OM 60%, reality ~60%)
-  const cloudCover = omCloud != null ? omCloud : awCloudCover;
+  let cloudCover = omCloud != null ? omCloud : awCloudCover;
   const cloudSource = omCloud != null ? 'OM' : 'AW';
 
   // Humidity: use OM when available (Feb 20 audit: AW 95% vs OM 88%, reality ~88%)
-  const humidity = omHumidity != null ? omHumidity : awHumidity;
+  let humidity = omHumidity != null ? omHumidity : awHumidity;
   const humiditySource = omHumidity != null ? 'OM' : 'AW';
 
   // Visibility: use OM when available (Feb 20 audit: AW 6km vs OM 24km, effective ~15km)
-  const visibilityKm = omVisKm != null ? omVisKm : awVisKm;
+  let visibilityKm = omVisKm != null ? omVisKm : awVisKm;
   const visSource = omVisKm != null ? 'OM' : 'AW';
 
   if (omCloud != null) {
     console.log(`📡 v5.1 data sources — Cloud: ${cloudSource}(${cloudCover}%) [AW:${awCloudCover}%] | Humidity: ${humiditySource}(${humidity}%) [AW:${awHumidity}%] | Vis: ${visSource}(${visibilityKm.toFixed(1)}km) [AW:${awVisKm.toFixed(1)}km]`);
+  }
+
+  // ── v5.6: MOS AUTO-CALIBRATION (non-Chennai beaches only) ──
+  // Apply rolling bias corrections to raw weather values before scoring.
+  // Only active for beaches with autoCalibrate: true and 14+ days of data.
+  let mosApplied = false;
+  if (mosCorrections && extraBeachKey && BEACHES[extraBeachKey]?.autoCalibrate) {
+    const f = mosCorrections.factors;
+    const pre = { cloudCover, humidity, visibilityKm };
+    cloudCover = Math.max(0, Math.min(100, cloudCover + (f.cloudCover || 0)));
+    humidity = Math.max(0, Math.min(100, humidity + (f.humidity || 0)));
+    visibilityKm = Math.max(0, visibilityKm + (f.visibility || 0));
+    mosApplied = true;
+    console.log(`🔧 MOS v5.6 correction applied for ${extraBeachKey} (${mosCorrections.daysOfData}d, ${Math.round(mosCorrections.strength * 100)}% strength${mosCorrections.regimeShift ? ', REGIME SHIFT' : ''}): cloud ${pre.cloudCover}%→${cloudCover.toFixed(1)}%, humidity ${pre.humidity}%→${humidity.toFixed(1)}%, vis ${pre.visibilityKm.toFixed(1)}→${visibilityKm.toFixed(1)}km`);
   }
 
   // ── BASE FACTOR 1: Cloud Cover (max 18) ──
@@ -1409,6 +1428,14 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
     highCloud = openMeteoForecast.highCloud;
     midCloud = openMeteoForecast.midCloud;
     lowCloud = openMeteoForecast.lowCloud;
+  }
+
+  // v5.6: MOS corrections for cloud layers
+  if (mosApplied && mosCorrections?.factors) {
+    const f = mosCorrections.factors;
+    if (highCloud != null) highCloud = Math.max(0, Math.min(100, highCloud + (f.highCloud || 0)));
+    if (midCloud != null) midCloud = Math.max(0, Math.min(100, midCloud + (f.midCloud || 0)));
+    if (lowCloud != null) lowCloud = Math.max(0, Math.min(100, lowCloud + (f.lowCloud || 0)));
   }
 
   // Get ceiling for fallback scoring
@@ -1501,6 +1528,10 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   const weatherScore = scoreWeatherConditions(precipProb, hasPrecip, weatherDesc);
 
   // ── BASE FACTOR 8: Wind (max 5 — v5.2 light breeze optimal) ──
+  // v5.6: MOS wind correction
+  if (mosApplied && mosCorrections?.factors?.windSpeed) {
+    windSpeed = Math.max(0, windSpeed + mosCorrections.factors.windSpeed);
+  }
   const windScore = scoreWind(windSpeed);
 
   // ── BASE FACTOR 9: Synergy (±4) — v5.3: now cloud-layer-aware ──
@@ -1567,7 +1598,10 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
       // v5 structured fields (replaces flat v4 fields)
       highCloud,
       midCloud,
-      lowCloud
+      lowCloud,
+      // v5.6: MOS auto-calibration metadata
+      mosApplied,
+      mosCorrections: mosApplied ? { strength: mosCorrections.strength, daysOfData: mosCorrections.daysOfData } : null
     }
   };
 }
@@ -1777,7 +1811,22 @@ async function getTomorrow6AMForecast(beachKey, { forceAvailable = false } = {})
     hasPrecipitation: forecast6AM.HasPrecipitation || false
   };
 
-  const { score, breakdown } = calculateSunriseScore(forecast6AM, { dailyData, airQuality, openMeteoForecast });
+  // v5.6: Fetch MOS corrections for auto-calibrate beaches
+  let mosCorrections = null;
+  if (BEACHES[beachKey]?.autoCalibrate) {
+    try {
+      const { getBeachCorrections } = require('./forecastCalibration');
+      mosCorrections = await getBeachCorrections(beachKey);
+    } catch (e) {
+      // Calibration service not ready — proceed without corrections
+    }
+  }
+
+  const { score, breakdown } = calculateSunriseScore(forecast6AM, {
+    dailyData, airQuality, openMeteoForecast,
+    beachKey: beach.key,
+    corrections: mosCorrections
+  });
   const verdict = getVerdict(score);
   const recommendation = getRecommendation(score);
 
@@ -2013,6 +2062,17 @@ async function get7DayForecast(beachKey) {
 
   console.log(`📡 Fetching 7-day Open-Meteo data for ${beach.name}...`);
 
+  // v5.6: Pre-fetch MOS corrections once for the entire 7-day loop
+  let sevenDayMosCorrections = null;
+  if (beach.autoCalibrate) {
+    try {
+      const { getBeachCorrections } = require('./forecastCalibration');
+      sevenDayMosCorrections = await getBeachCorrections(beachKey);
+    } catch (e) {
+      // Calibration service not ready — proceed without corrections
+    }
+  }
+
   // Fetch forecast + air quality in parallel (7 days)
   const forecastUrl = OPENMETEO_PROXY
     ? `${OPENMETEO_PROXY}/forecast`
@@ -2132,7 +2192,9 @@ async function get7DayForecast(beachKey) {
     const { score, breakdown } = calculateSunriseScore(fakeAWForecast, {
       dailyData: null,
       airQuality: aod != null ? { aod } : null,
-      openMeteoForecast: omForecast
+      openMeteoForecast: omForecast,
+      beachKey,                                    // v5.6: pass beach key for MOS lookup
+      corrections: sevenDayMosCorrections          // v5.6: pre-fetched MOS corrections (null if N/A)
     });
 
     const verdict = getVerdict(score);

@@ -194,6 +194,7 @@ async function startServer() {
       console.log(`💳 Razorpay: ${process.env.RAZORPAY_KEY_ID ? 'Configured ✓' : 'Not configured'}`);
       console.log(`📱 Telegram: ${process.env.TELEGRAM_BOT_TOKEN ? 'Bot configured ✓' : 'Not configured (set TELEGRAM_BOT_TOKEN)'}`);
       console.log(`🔐 Auth: Email/Password + Google OAuth (30d session)`);
+      console.log(`🔬 MOS: Auto-calibration active (7:30 AM verification cron)`);
       console.log('═══════════════════════════════════════');
     });
 
@@ -210,6 +211,10 @@ async function startServer() {
     // Daily cleanup of stale cancelled/expired/pending premium users (2:00 AM IST)
     const { initializeCleanupJob } = require('./jobs/premiumCleanup');
     initializeCleanupJob();
+
+    // MOS forecast verification — 7:30 AM + 8:30 AM retry IST (v5.6)
+    const { initializeVerificationJob } = require('./jobs/forecastVerification');
+    initializeVerificationJob();
 
     // Set Telegram webhook automatically on startup
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.API_URL) {
