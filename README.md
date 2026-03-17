@@ -2,54 +2,144 @@
 
 **India's first AI-powered sunrise quality forecast for Chennai beaches.**
 
-Seaside Beacon analyzes 9 atmospheric factors across 5 beaches (4 Chennai + Mahabalipuram) to predict how colorful tomorrow's sunrise will be. It combines AccuWeather forecasts, Open-Meteo satellite data, and a 3-tier AI system (Gemini Flash, Groq Llama, Flash-Lite) to deliver a single 0 to 100 score with photography-specific insights, delivered to your inbox at 4 AM every morning. New beaches auto-calibrate their forecasts using MOS (Model Output Statistics) bias correction.
+Seaside Beacon analyzes 9 atmospheric factors across 5 beaches (4 Chennai + Mahabalipuram) to predict how colorful tomorrow's sunrise will be. It combines weather APIs, satellite data, and a multi-tier AI system to deliver a single 0–100 score with photography-specific insights. New beaches auto-calibrate using MOS (Model Output Statistics) bias correction.
 
 **Live:** [seasidebeacon.com](https://seasidebeacon.com)
-**Status:** Production v7.3 (launched February 14, 2026)
-**Monthly cost:** ~INR 275 (~$3.30)
+**Status:** Production v7.3 | Algorithm v5.6 | Launched February 14, 2026
 
 ---
 
-## The Story
+## Quick Start
 
-I moved to Chennai from Rajapalayam (a small town in Tamil Nadu) for my studies. Standing at Marina Beach one morning, watching a sky that went from flat grey to full copper in twenty minutes, I realized there was no way to know beforehand whether a sunrise would be worth the early alarm. Some mornings the sky ignites, some mornings it doesn't. Weather apps tell you temperature and rain probability, nobody tells you if the sunrise will be breathtaking.
+```bash
+# Backend
+cd backend
+npm install
+cp .env.example .env   # fill in API keys
+npm start              # runs on port 3000
 
-That question became Seaside Beacon. Over a year of research into atmospheric optics, cloud physics, and color scattering, months of frontend/backend iteration, and hundreds of mornings comparing predictions to actual sunrise photos. Today it covers 5 beaches across Chennai and Mahabalipuram, predicting sunrise quality using the same atmospheric factors that peer-reviewed meteorological research identifies as color determinants.
+# Frontend
+# Serve frontend/ via any static server, or deploy to Vercel
+```
+
+### Environment Variables
+
+The backend requires these env vars (see `.env.example`):
+
+| Variable | Service |
+|----------|---------|
+| `MONGODB_URI` | MongoDB Atlas connection string |
+| `ACCUWEATHER_API_KEY` | AccuWeather API |
+| `GEMINI_API_KEY` | Google Gemini AI |
+| `GROQ_API_KEY` | Groq AI |
+| `BREVO_API_KEY` | Brevo email (primary) |
+| `SENDGRID_API_KEY` | SendGrid email (failover) |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Razorpay payments |
+| `TELEGRAM_BOT_TOKEN` | Telegram bot |
+| `FIREBASE_*` | Firebase Cloud Messaging |
+| `CLOUDINARY_*` | Cloudinary image hosting |
+| `ADMIN_PASSWORD` | Admin panel access |
 
 ---
 
-## How It Works
+## Project Structure
 
-Every evening at 6 PM IST, the forecast unlocks for tomorrow's sunrise. Every morning at 4 AM IST, Seaside Beacon:
+```
+seaside-beacon/
+├── backend/
+│   ├── server.js              # Express app entry point (246 lines)
+│   ├── models/                # Mongoose schemas (11 collections)
+│   │   ├── DailyScore.js      # Stored sunrise scores per day
+│   │   ├── DailyVisit.js      # Analytics tracking
+│   │   ├── DeviceToken.js     # FCM push notification tokens
+│   │   ├── Feedback.js        # User feedback submissions
+│   │   ├── ForecastVerification.js  # MOS predicted-vs-observed deltas
+│   │   ├── PremiumUser.js     # Premium subscription records
+│   │   ├── SampleForecast.js  # Cached sample forecasts for preview
+│   │   ├── SiteStats.js       # Aggregate site statistics
+│   │   ├── Subscriber.js      # Email subscriber records
+│   │   ├── SunriseSubmission.js  # Community photo submissions
+│   │   └── SupportTicket.js   # User support tickets
+│   ├── routes/
+│   │   ├── predict.js         # Core scoring + AI insights endpoint
+│   │   ├── subscribe.js       # Email subscription management
+│   │   ├── payment.js         # Razorpay webhook + subscription handling
+│   │   ├── admin.js           # Admin panel API
+│   │   ├── auth.js            # Premium authentication
+│   │   ├── community.js       # Photo gallery endpoints
+│   │   ├── device.js          # FCM token registration
+│   │   └── telegram.js        # Telegram bot webhook
+│   ├── services/
+│   │   ├── weatherService.js  # 9-factor scoring algorithm (v5.6)
+│   │   ├── aiService.js       # 3-tier AI failover chain
+│   │   ├── chatbotService.js  # Telegram AI chatbot logic
+│   │   ├── emailService.js    # Brevo/SendGrid dual-provider
+│   │   ├── forecastCalibration.js  # MOS auto-calibration engine
+│   │   ├── firebaseAdmin.js   # FCM push notification service
+│   │   ├── metricsCollector.js  # Performance metrics
+│   │   ├── notifyAdmin.js     # Admin alert emails
+│   │   ├── telegramService.js # Telegram bot API wrapper
+│   │   ├── visitTracker.js    # Visit analytics
+│   │   └── weatherService.js  # Weather data fetching + scoring
+│   ├── jobs/
+│   │   ├── dailyEmail.js      # 4 AM email job (per-subscriber try-catch)
+│   │   ├── forecastVerification.js  # 7:30 AM ERA5 verification job
+│   │   ├── premiumCleanup.js  # Expired subscription cleanup
+│   │   └── pushNotifications.js  # FCM push job
+│   ├── test-scoring.js        # 240 test assertions for scoring functions
+│   └── test-email.js          # Email provider testing
+├── frontend/
+│   ├── index.html             # Main SPA (1,935 lines)
+│   ├── script.js              # Core application logic (4,792 lines)
+│   ├── styles.css             # Full stylesheet (4,314 lines)
+│   ├── terms.html             # Terms of service
+│   ├── privacy.html           # Privacy policy
+│   └── lib/                   # Vendor libraries (html2canvas, qrcode)
+├── cloudflare-worker/
+│   ├── worker.js              # Open-Meteo proxy with caching
+│   └── wrangler.toml          # Cloudflare Worker config
+├── docs/                      # Internal documentation
+│   ├── TASKS.md               # Task tracking
+│   ├── audits/                # Code audits
+│   ├── comparisons/           # Competitive analysis
+│   ├── deployment/            # Deployment guides
+│   ├── marketing/             # Marketing plans
+│   ├── premium/               # Premium feature specs
+│   └── reports/               # Performance reports
+├── memory/                    # Claude context memory
+│   ├── glossary.md
+│   ├── people/
+│   ├── projects/
+│   └── context/
+└── CLAUDE.md                  # Claude AI project instructions
+```
 
-1. Fetches hourly weather data from **AccuWeather** (cloud cover, humidity, visibility, wind, precipitation)
-2. Fetches multi-level cloud layers, pressure trends, and aerosol data from **Open-Meteo** (GFS + Air Quality APIs)
-3. Applies **MOS bias corrections** for auto-calibrating beaches (Mahabalipuram and future expansions) using rolling 30-day predicted-vs-observed deltas
-4. Runs a **9-factor scoring algorithm** (v5.6) that weights each atmospheric condition based on peer-reviewed sunrise color research
-5. Generates **AI-powered insights** via 3-tier failover (Gemini 2.5 Flash, Groq Llama 3.3 70B, Gemini Flash-Lite, rule-based) with natural language descriptions, DSLR settings, and mobile tips
-6. Sends personalized **email forecasts** to subscribers via Brevo (with SendGrid failover)
-7. Sends **Telegram alerts** to premium subscribers with the AI chatbot
-8. Stores scores in **MongoDB** for historical tracking and accuracy analysis
-9. At 7:30 AM, runs **forecast verification** — fetches ERA5 observed weather from Open-Meteo Archive API and computes prediction deltas for MOS calibration
+### Line Counts
+
+| Area | Lines |
+|------|-------|
+| Frontend (JS + CSS + HTML) | ~14,900 |
+| Backend (all JS, excl. node_modules) | ~13,800 |
+| **Total handwritten code** | **~28,700** |
 
 ---
 
 ## The Scoring Algorithm (v5.6)
 
-The scoring engine assigns up to **100 points** across 9 base factors plus synergy adjustments. The weight distribution is aligned with [SunsetWx](https://sunsetwx.com) research (Penn State meteorologists) and NOAA atmospheric optics literature.
+The scoring engine assigns up to **100 points** across 9 base factors plus synergy adjustments. Weights are aligned with SunsetWx research (Penn State meteorology) and NOAA atmospheric optics literature.
 
-### Base Factors (96 points)
+### Base Factors
 
-| Factor | Max | Source | Why It Matters |
-|--------|-----|--------|----------------|
-| Aerosol Optical Depth | 16 | Open-Meteo AQ | The #1 sunrise color predictor. Mie scattering proxy. Low AOD = crystal clear, high = milky haze |
-| Cloud Cover | 14 | AccuWeather | 30 to 60% is optimal. Clouds act as the color canvas |
-| Multi-Level Cloud | 14 | Open-Meteo GFS | High cirrus catches light first; low clouds block the horizon |
-| Humidity | 14 | AccuWeather | Dry air produces vivid, saturated colors |
-| Pressure Trend | 12 | Open-Meteo GFS | Falling pressure (clearing fronts) creates the most dramatic skies |
-| Visibility | 12 | AccuWeather | Ground-level atmospheric clarity confirmation |
-| Weather Conditions | 8 | AccuWeather | Rain/storm go or no-go gate |
-| Wind Speed | 6 | AccuWeather | Calm air = stable clouds, easier photography |
+| Factor | Max | Why It Matters |
+|--------|-----|----------------|
+| Aerosol Optical Depth (AOD) | 16 | #1 sunrise color predictor. Mie scattering proxy |
+| Cloud Cover | 14 | 30–60% is optimal. Clouds act as the color canvas |
+| Multi-Level Cloud Structure | 14 | High cirrus catches light first; low clouds block horizon |
+| Humidity | 14 | Dry air produces vivid, saturated colors |
+| Pressure Trend | 12 | Falling pressure (clearing fronts) = most dramatic skies |
+| Visibility | 12 | Ground-level atmospheric clarity confirmation |
+| Weather Conditions | 8 | Rain/storm go or no-go gate |
+| Wind Speed | 6 | Calm air = stable clouds, easier photography |
 
 ### Adjustments
 
@@ -63,84 +153,64 @@ The scoring engine assigns up to **100 points** across 9 base factors plus syner
 
 | Score | Verdict | Recommendation |
 |-------|---------|----------------|
-| 85 to 100 | EXCELLENT | GO. Set that alarm |
-| 70 to 84 | VERY GOOD | GO. Worth the early wake-up |
-| 55 to 69 | GOOD | MAYBE. Pleasant but not dramatic |
-| 40 to 54 | FAIR | MAYBE. Mostly flat sky |
-| 25 to 39 | POOR | SKIP. Washed out and grey |
-| 0 to 24 | UNFAVORABLE | NO. Save your sleep |
+| 85–100 | EXCELLENT | GO. Set that alarm |
+| 70–84 | VERY GOOD | GO. Worth the early wake-up |
+| 55–69 | GOOD | MAYBE. Pleasant but not dramatic |
+| 40–54 | FAIR | MAYBE. Mostly flat sky |
+| 25–39 | POOR | SKIP. Washed out and grey |
+| 0–24 | UNFAVORABLE | NO. Save your sleep |
 
 ### Graceful Degradation
 
-When Open-Meteo is unavailable, the three satellite-dependent factors default to neutral scores (Multi-Level Cloud 8/15, Pressure Trend 5/10, AOD 4/8) so predictions never break due to a single API outage.
+When any weather source is unavailable, satellite-dependent factors default to neutral scores so predictions never break due to a single API outage.
 
 ### MOS Auto-Calibration (v5.6)
 
-New beaches (Mahabalipuram and future expansions) self-calibrate using Model Output Statistics (MOS). Chennai's hand-tuned scoring is untouched. Each day at 7:30 AM IST, the system fetches ERA5 reanalysis data (what actually happened) and compares it to what was predicted. After 14+ days of data, rolling corrections are computed and applied automatically before scoring runs.
+New beaches (Mahabalipuram and future expansions) self-calibrate using Model Output Statistics. Chennai's 4 hand-tuned beaches are untouched. Each day at 7:30 AM IST, the system fetches ERA5 reanalysis data (what actually happened) and compares it to what was predicted. After 14+ days of data, rolling corrections are computed and applied automatically before scoring runs.
 
-7 safeguards protect correction quality: minimum data threshold (14 days), per-variable correction caps, confidence ramp-in (50% at 14 days, 75% at 21, 100% at 28), IQR-based outlier exclusion, exponential recency weighting (0.93^daysAgo decay), regime shift detection (3-day vs 14-day divergence throttles corrections to 25%), and staleness checks (corrections disabled if observed data is >3 days old).
+7 safeguards protect correction quality: minimum data threshold (14 days), per-variable correction caps, confidence ramp-in (50% at 14 days / 75% at 21 / 100% at 28), IQR-based outlier exclusion, exponential recency weighting (0.93^daysAgo decay), regime shift detection (3-day vs 14-day divergence throttles to 25%), and staleness checks (corrections disabled if observed data >3 days old).
 
 ---
 
-## Features
+## MongoDB Collections (11)
 
-### Free Tier
-- **Sunrise scoring** for all 5 beaches with sub-second API response
-- **9-factor breakdown** showing points earned per factor
-- **Atmospheric analysis** with natural language explanations for each condition
-- **Beach comparison** across all 5 beaches with suitability ratings
-- **Daily 4 AM email** with score, verdict, and conditions
-- **Sample forecast preview** showing yesterday's full forecast during the time-locked window (7 AM to 6 PM) so users can see what they're subscribing for
-- **Community photo gallery** with sunrise submissions from real users
+| Collection | Purpose |
+|------------|---------|
+| `dailyscores` | Stored sunrise scores per beach per day |
+| `dailyvisits` | Visit analytics and tracking |
+| `devicetokens` | Firebase Cloud Messaging tokens |
+| `feedbacks` | User feedback submissions |
+| `forecastverifications` | MOS predicted-vs-observed weather deltas |
+| `premiumusers` | Premium subscription records + Razorpay metadata |
+| `sampleforecasts` | Cached yesterday's forecast for preview display |
+| `sitestats` | Aggregate counters (visits, forecasts served) |
+| `subscribers` | Email subscriber records with preferences |
+| `sunrisesubmissions` | Community photo submissions with Cloudinary URLs |
+| `supporttickets` | User support tickets |
 
-### Premium (INR 49/mo or INR 399/yr via Razorpay)
-- **Anytime forecast access** (bypass the 6 PM time lock)
-- **7-day sunrise calendar** with scored forecasts for the week ahead
-- **AI photography insights** with detailed sunrise experience narrative
-- **DSLR camera settings** (ISO, shutter, aperture, white balance) adapted to conditions
-- **Mobile camera settings** (night mode, HDR, exposure) with composition tips
-- **Evening preview email** at customizable time (6 PM to 10 PM)
-- **Special alerts** when score hits 70+ (7 PM notification)
-- **Telegram AI chatbot** that answers sunrise and photography questions in real-time
-- **Push notifications** via Firebase Cloud Messaging
+---
 
-### Frontend
-- OLED-optimized dark theme (#0F0F0F) with bronze accents (#C4733A)
-- Procedural sunrise canvas animation (scroll-responsive, section-tuned)
-- Liquid glass design system with backdrop-filter effects
-- 5-tab atmospheric analysis (Conditions, Photographers, DSLR, Mobile, Beach Comparison)
-- Sunrise experience panel with AI-generated narrative
-- Community photo submissions via Cloudinary
-- Native share API (mobile) with clipboard fallback
-- Smart time logic: context-aware labels throughout the day
-- 95+ Lighthouse score, mobile-first responsive design, ~65 KB HTML
+## Scheduled Jobs
 
-### Email System
-- **4 AM morning forecast** for all subscribers (free and premium)
-- **Evening preview** for premium users (customizable 6 PM to 10 PM window, runs every 30 min)
-- **Special 70+ alert** at 7 PM for premium users
-- **Admin digest** at 8 AM with daily analytics
-- Brevo primary (300/day free) with SendGrid automatic failover (100/day free)
-- One-click unsubscribe (RFC 8058 / GDPR compliant)
-- HTML template with score visualization, conditions grid, camera settings
+| Job | Time (IST) | What It Does |
+|-----|-----------|--------------|
+| Daily Email | 4:00 AM | Sends personalized sunrise forecasts to all subscribers |
+| Cache Warmup | 3:40, 3:55, 4:20, 9:30, 15:30, 21:30 | Pre-fetches weather data aligned to GFS model runs |
+| Forecast Verification | 7:30 AM | Fetches ERA5 observed weather, computes MOS deltas |
+| Premium Cleanup | Daily | Removes expired subscription records |
+| Push Notifications | 4:15 AM | Sends FCM push alerts to registered devices |
 
-### Telegram Bot
-- AI-powered chatbot for premium users
-- Conversation memory with 2-hour TTL
-- Daily morning alerts with sunrise scores
-- Integrated with the same AI providers as the main platform
+---
 
-### Data Pipeline
-- Parallel weather fetching with graceful degradation for resilience
-- 2-hour in-memory caching for Open-Meteo data (aligned to GFS model runs)
-- 10-minute prediction cache per beach (eliminates duplicate API + AI calls)
-- Cache warmup schedule aligned to GFS model run availability (03:40, 03:55, 04:20, 09:30, 15:30, 21:30 IST)
-- Historical score archival in MongoDB (DailyScore collection)
-- Sample forecast storage for time-locked user previews
-- MOS forecast verification pipeline (7:30 AM primary + 8:30 AM retry)
-- 2-hour correction cache per beach (aligned with Open-Meteo forecast TTL)
-- Visit tracking middleware (non-blocking)
-- Metrics collector with live public API
+## Beaches
+
+| Beach | Key | Location | Calibration |
+|-------|-----|----------|-------------|
+| Marina | `marina` | North Chennai, lighthouse, world's longest urban beach | Hand-tuned |
+| Elliot's | `elliot` | Besant Nagar, upscale, quieter | Hand-tuned |
+| Covelong | `covelong` | ECR 40km south, surf beach, rock formations | Hand-tuned |
+| Thiruvanmiyur | `thiruvanmiyur` | South Chennai, tidal pools | Hand-tuned |
+| Mahabalipuram | `mahabalipuram` | 60km south, UNESCO Shore Temple | MOS auto-calibrated |
 
 ---
 
@@ -178,210 +248,81 @@ New beaches (Mahabalipuram and future expansions) self-calibrate using Model Out
 
 ### Tech Stack
 
-| Layer | Technology | Notes |
-|-------|-----------|-------|
-| Frontend | Vanilla JS (ES6+), HTML5, CSS3 | Vercel CDN, zero frameworks, ~11K lines |
-| Backend | Node.js 18+, Express 4.x | Render free plan |
-| Database | MongoDB Atlas M0 | Free tier, 512 MB, 11 collections |
-| Weather | AccuWeather + Open-Meteo | GFS cloud layers, pressure, AOD |
-| AI | Gemini 2.5 Flash, Groq Llama 3.3 70B, Gemini Flash-Lite | 3-tier failover + rule-based |
-| Email | Brevo (primary) + SendGrid (failover) | 400 emails/day combined |
-| Payments | Razorpay | INR 49/mo or INR 399/yr |
-| Bot | Telegram Bot API | AI chatbot for premium users |
-| Push | Firebase Cloud Messaging | Morning and special alerts |
-| Images | Cloudinary | Community photo uploads |
-| DNS/CDN | Cloudflare | seasidebeacon.com |
-| Monitoring | UptimeRobot | 5-min health checks |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Vanilla JS (ES6+), HTML5, CSS3 on Vercel CDN |
+| Backend | Node.js 18+, Express 4.x on Render (free tier) |
+| Database | MongoDB Atlas M0 (free, 512 MB) |
+| Weather | AccuWeather + Open-Meteo (GFS + Air Quality) |
+| AI | Gemini 2.5 Flash → Groq Llama 3.3 70B → Flash-Lite → rule-based (3-tier + fallback) |
+| Email | Brevo (300/day free, primary) → SendGrid (100/day free, failover) |
+| Payments | Razorpay (INR 49/mo or INR 399/yr) |
+| Bot | Telegram Bot API with AI chatbot (premium) |
+| Push | Firebase Cloud Messaging |
+| Images | Cloudinary |
+| Proxy | Cloudflare Worker (Open-Meteo caching proxy) |
+| DNS/CDN | Cloudflare |
+| Monitoring | UptimeRobot |
+
+### Monthly Cost: ~INR 275
+
+All services on free tiers: Render, Vercel, MongoDB Atlas M0, Cloudflare, Brevo, SendGrid, UptimeRobot, Firebase, Cloudinary. Only paid service is the domain.
 
 ---
 
-## Beaches
+## Testing
 
-| Beach | Location | Photography Context | Calibration |
-|-------|----------|-------------------|-------------|
-| Marina Beach | 13.05 N, 80.28 E | Lighthouse, fishing boats, urban skyline. World's longest urban beach | Hand-tuned |
-| Elliot's Beach | 13.01 N, 80.27 E | Karl Schmidt Memorial, Ashtalakshmi Temple, clean sand | Hand-tuned |
-| Covelong Beach | 12.79 N, 80.25 E | ECR 40km south, rock formations, tidal pools, surf beach | Hand-tuned |
-| Thiruvanmiyur Beach | 12.98 N, 80.26 E | Natural breakwater rocks, tidal pools, calm waters | Hand-tuned |
-| Mahabalipuram Beach | 12.62 N, 80.19 E | UNESCO Shore Temple, Five Rathas, rock-cut architecture | MOS auto-calibrated |
-
----
-
-## Project Structure
-
-```
-seaside-beacon/
-+-- backend/
-|   +-- server.js                 # Express entry point, routes, middleware, cron init
-|   +-- package.json
-|   +-- .env                      # API keys (not committed)
-|   +-- routes/
-|   |   +-- predict.js            # /api/predict/:beach, /api/predict/sample/:beach, /api/stats
-|   |   +-- subscribe.js          # /api/subscribe, /api/unsubscribe
-|   |   +-- community.js          # /api/sunrise-submission, /api/feedback
-|   |   +-- auth.js               # Premium authentication, Razorpay webhook
-|   |   +-- payment.js            # Razorpay order creation, verification
-|   |   +-- telegram.js           # Telegram bot webhook, chatbot
-|   |   +-- device.js             # FCM device token registration
-|   |   +-- admin.js              # Admin dashboard, analytics API
-|   +-- services/
-|   |   +-- weatherService.js     # v5.6 scoring algorithm (2,300 lines)
-|   |   +-- aiService.js          # Multi-provider AI (Gemini/Groq) + rule-based fallback
-|   |   +-- emailService.js       # Brevo + SendGrid email delivery
-|   |   +-- chatbotService.js     # Telegram AI chatbot with conversation memory
-|   |   +-- telegramService.js    # Telegram alerts and message delivery
-|   |   +-- firebaseAdmin.js      # FCM push notification service
-|   |   +-- forecastCalibration.js # MOS correction computation engine (7 safeguards)
-|   |   +-- metricsCollector.js   # Live metrics, cache hit rates, response times
-|   |   +-- notifyAdmin.js        # Admin digest email with analytics
-|   |   +-- pushNotifications.js  # Push notification orchestration
-|   |   +-- visitTracker.js       # Visit analytics middleware
-|   +-- models/
-|   |   +-- PremiumUser.js        # Premium subscriptions, auth tokens, Razorpay
-|   |   +-- Subscriber.js         # Free email subscriptions
-|   |   +-- DailyScore.js         # Historical forecast archive
-|   |   +-- SampleForecast.js     # Yesterday's full forecast for preview
-|   |   +-- DailyVisit.js         # Daily analytics
-|   |   +-- SiteStats.js          # Global counters (singleton)
-|   |   +-- DeviceToken.js        # FCM push notification tokens
-|   |   +-- Feedback.js           # User ratings with email
-|   |   +-- SunriseSubmission.js  # Community photos with email
-|   |   +-- SupportTicket.js      # User support tickets
-|   |   +-- ForecastVerification.js # MOS predicted-vs-observed weather data
-|   +-- jobs/
-|   |   +-- dailyEmail.js         # 4 AM forecast, evening preview, 70+ alerts
-|   |   +-- forecastVerification.js # 7:30 AM MOS verification cron + 8:30 AM retry
-|   +-- admin/
-|   |   +-- dashboard.html        # Admin analytics dashboard
-|   +-- test-scoring.js           # 240 test assertions
-|   +-- test-email.js             # Email delivery tests
-+-- frontend/
-|   +-- index.html                # Single-page app (1,935 lines, SEO optimized)
-|   +-- script.js                 # UI logic (4,792 lines, vanilla JS)
-|   +-- styles.css                # Styling (4,314 lines)
-|   +-- favicon.svg               # Sun icon favicon
-|   +-- og-image.jpg              # Social media preview
-|   +-- robots.txt
-|   +-- sitemap.xml
-|   +-- privacy.html              # Privacy policy
-|   +-- terms.html                # Terms of service
-|   +-- vercel.json               # Vercel deployment config
-|   +-- logo/                     # Brand assets (SVG + PNG)
-|   +-- screenshots/              # Marketing screenshots
-+-- cloudflare-worker/            # CF Worker for Open-Meteo proxy (rate limit bypass)
-+-- Dockerfile
-+-- README.md
+```bash
+cd backend
+node test-scoring.js
 ```
 
----
-
-## API Endpoints
-
-### Public
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/beaches` | All supported beaches with coordinates |
-| GET | `/api/predict/:beach` | Full prediction (score, breakdown, AI insights, comparison) |
-| GET | `/api/predict/sample/:beach` | Yesterday's forecast for preview during time-locked hours |
-| GET | `/api/stats` | Public site metrics |
-| POST | `/api/subscribe` | Subscribe to daily emails |
-| POST | `/api/unsubscribe` | Unsubscribe from emails |
-| GET | `/api/unsubscribe?email=...` | One-click email unsubscribe |
-| POST | `/api/sunrise-submission` | Upload community sunrise photo (multipart, 10 MB) |
-| POST | `/api/feedback` | Submit prediction accuracy feedback |
-| GET | `/health` | Health check |
-
-### Premium (requires auth token)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/forecast/7day/:beach` | 7-day scored forecast calendar |
-| POST | `/api/auth/login` | Premium user login (email + OTP) |
-| POST | `/api/payment/create-order` | Create Razorpay order |
-| POST | `/api/payment/verify` | Verify Razorpay payment |
-| POST | `/api/telegram/webhook` | Telegram bot message handler |
-| POST | `/api/device/register` | Register FCM device token |
-
-### Admin
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/admin` | Analytics dashboard |
-| GET | `/admin/api/stats` | Detailed admin metrics |
+240 test assertions covering all scoring functions, edge cases, boundary conditions, and graceful degradation scenarios. Tests import directly from `weatherService.js` — no duplicate implementations.
 
 ---
 
-## Technical Challenges Solved
+## Features
 
-**Timezone handling:** `toLocaleString()` produces corrupted dates on Render servers. Solved with manual UTC+5:30 offset calculation for all IST time logic.
+### Free Tier
+- Sunrise scoring for all 5 beaches with sub-second response
+- 9-factor breakdown showing points earned per factor
+- Atmospheric analysis with natural language explanations
+- Beach comparison with suitability ratings
+- Daily 4 AM email with score, verdict, and conditions
+- Sample forecast preview (yesterday's forecast during locked hours)
+- Community photo gallery with sunrise submissions
 
-**SMTP port blocking:** Render blocks outbound SMTP ports 25/465/587. Solved by using Brevo and SendGrid HTTP APIs instead of SMTP transport.
+### Premium (INR 49/mo or INR 399/yr)
+- Anytime forecast access (bypass the 6 PM time lock)
+- 7-day sunrise calendar with scored forecasts
+- AI photography insights with detailed narrative
+- DSLR settings (ISO, shutter, aperture, white balance) — rule-based, not AI-generated
+- Mobile camera settings with composition tips
+- Evening preview email at customizable time
+- Special alerts when score hits 70+
+- Telegram AI chatbot for sunrise and photography questions
+- Push notifications via FCM
 
-**Cold start reliability:** Render free tier sleeps after inactivity. UptimeRobot 5-minute pings + scheduled 3:30 AM wake-up ensure the server is warm before the 4 AM email job.
-
-**Multi-source weather resilience:** AccuWeather and Open-Meteo can fail independently. Graceful degradation defaults ensure scoring never breaks, even with partial data.
-
-**AI reliability:** Individual providers (Gemini, Groq) can hit rate limits or return malformed JSON. 3-tier failover chain with deterministic rule-based final fallback guarantees 100% insight availability. Combined capacity: ~1,300 calls/day vs ~288 daily demand.
-
-**Open-Meteo rate limiting:** Free API with aggressive rate limits. Solved with a Cloudflare Worker proxy that adds caching headers and retries, plus GFS model-run-aligned cache warmup schedule.
-
-**Razorpay KYC for solo dev:** Required visible pricing, refund policy, contact info, and PAN verification. Built dedicated pricing, terms, and privacy pages before applying. Activation completed in 2 to 3 days.
-
-**Scaling to new beaches without manual tuning:** Chennai's scoring was hand-tuned over hundreds of mornings, but that doesn't scale. Solved with an MOS (Model Output Statistics) auto-calibration system that collects predicted-vs-observed weather deltas daily, computes rolling bias corrections, and applies them automatically after 14+ days of data. Seven safeguards (correction caps, confidence ramp-in, outlier exclusion, recency weighting, regime detection, staleness checks) prevent overcorrection during unusual weather patterns.
-
----
-
-## Costs
-
-| Service | Tier | Monthly Cost |
-|---------|------|-------------|
-| AccuWeather API | Paid | ~INR 168 |
-| Cloudflare domain | Paid | ~INR 108 (INR 1,300/yr) |
-| Render | Free | INR 0 |
-| Vercel | Free | INR 0 |
-| MongoDB Atlas | Free (M0) | INR 0 |
-| Open-Meteo | Free | INR 0 |
-| Gemini AI | Free | INR 0 |
-| Groq AI | Free | INR 0 |
-| Brevo | Free (300/day) | INR 0 |
-| SendGrid | Free (100/day) | INR 0 |
-| Cloudinary | Free | INR 0 |
-| UptimeRobot | Free | INR 0 |
-| Razorpay | Free (per-txn fee) | INR 0 |
-| Firebase FCM | Free | INR 0 |
-| Telegram Bot API | Free | INR 0 |
-| **Total** | | **~INR 275/mo** |
-
----
-
-## Performance
-
-| Metric | Value |
-|--------|-------|
-| Lighthouse | 95+ across all categories |
-| API response | 200 to 400ms (800ms to 1.2s with AI generation) |
-| Prediction cache | 10-min TTL per beach, ~80% hit rate |
-| Cold start | 30 to 50s (mitigated by scheduled wake-ups) |
-| Email delivery | Under 5s per batch |
-| Test coverage | 240 assertions (100%) |
-| Uptime | 99.9% (monitored) |
+### Frontend Design
+- OLED-optimized dark theme (#0F0F0F) with bronze accents (#C4733A)
+- Procedural sunrise canvas animation (scroll-responsive, section-tuned)
+- Liquid glass design system with backdrop-filter effects
+- 5-tab atmospheric analysis panel
+- 95+ Lighthouse score, mobile-first responsive
+- Zero frameworks. Vanilla JS, HTML, CSS. ~11,000 lines of handwritten frontend code
 
 ---
 
 ## Competitive Landscape
 
-Seaside Beacon is the only sunrise prediction platform built specifically for the Indian market.
-
-| Platform | Based In | Scoring | AOD | India Focus |
-|----------|----------|---------|-----|-------------|
-| [SunsetWx](https://sunsetwx.com) | USA (Penn State) | ~20 factors (undisclosed) | No | GFS 13km fallback |
-| [Alpenglow](https://alpenglow.app) | USA | Uses SunsetWx data | No | No |
-| [SkyCandy](https://skycandy.app) | USA/AU/UK | 5+ factors | No | No |
-| [ClearOutside](https://clearoutside.com) | UK | Astronomy, not sunrise | No | Basic |
-| **Seaside Beacon** | **India (Chennai)** | **9 base + synergy** | **Yes (16 pts)** | **Native** |
-
-Key differentiators: AOD as the top-weighted factor (no competitor uses satellite aerosol data), MOS auto-calibration for scaling to new beaches without manual tuning, beach-specific composition tips referencing actual landmarks, AI-generated camera settings adapted to real-time conditions, and a premium tier with Telegram chatbot and 7-day calendar.
+| Platform | Based In | Own Model | AOD Scoring | MOS Calibration | India Focus |
+|----------|----------|-----------|-------------|-----------------|-------------|
+| SunsetWx | USA | Yes | No | No | Fallback only |
+| Alpenglow | USA | Yes (formerly SunsetWx) | Claims yes | No | No |
+| SkyCandy | USA/AU/UK | No (SunsetWx API) | No | No | No |
+| VIEWFINDR | Germany | Yes (DWD data) | No | No | No |
+| Sunsethue | Netherlands | Yes (ray-based) | No | No | No |
+| **Seaside Beacon** | **India** | **Yes** | **Yes (top-weighted)** | **Yes** | **Native** |
 
 ---
 
@@ -389,143 +330,20 @@ Key differentiators: AOD as the top-weighted factor (no competitor uses satellit
 
 | Phase | Timeline | Focus |
 |-------|----------|-------|
-| Phase 0 (Current) | Now | 5 beaches (4 Chennai + Mahabalipuram), prove accuracy, build community, MOS auto-calibration |
-| Phase 1 | Q2 2026 | Marketing push: Instagram, Reddit, SEO, accuracy tracking |
-| Phase 2 | Q3 2026 | Expand to Pondicherry, Visakhapatnam, Puri (MOS auto-calibrates new beaches) |
-| Phase 3 | Q4 2026 | Multi-city frontend, React Native mobile app |
-| Phase 4 | 2027+ | All major Indian coastal cities, Southeast Asia, API licensing |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- MongoDB Atlas account (free M0 cluster)
-- API keys: AccuWeather, Gemini (Google AI), Groq, Brevo, Cloudinary, Razorpay
-
-### Setup
-
-```bash
-# Clone
-git clone https://github.com/kevint1814/Seaside-Beacon.git
-cd Seaside-Beacon
-
-# Backend
-cd backend
-npm install
-cp .env.example .env   # Fill in your API keys
-npm start              # Starts on port 3000
-
-# Frontend
-cd ../frontend
-# No build step. Open index.html locally or deploy to Vercel
-```
-
-### Environment Variables
-
-Create `backend/.env` with:
-
-```env
-# Weather
-ACCUWEATHER_API_KEY=your_key
-
-# AI (3-tier failover)
-GEMINI_API_KEY=your_google_ai_key
-GROQ_API_KEY=your_groq_key
-
-# Email
-BREVO_API_KEY=your_key
-SENDGRID_API_KEY=your_key
-
-# Database
-MONGODB_URI=mongodb+srv://...
-
-# Payments
-RAZORPAY_KEY_ID=your_key
-RAZORPAY_KEY_SECRET=your_secret
-
-# Telegram
-TELEGRAM_BOT_TOKEN=your_token
-
-# Firebase
-FIREBASE_PROJECT_ID=your_project
-FIREBASE_CLIENT_EMAIL=your_email
-FIREBASE_PRIVATE_KEY=your_key
-
-# Images
-CLOUDINARY_CLOUD_NAME=your_name
-CLOUDINARY_API_KEY=your_key
-CLOUDINARY_API_SECRET=your_secret
-
-# Payments (webhook)
-RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
-
-# Server
-PORT=3000
-NODE_ENV=development
-TZ=Asia/Kolkata
-FRONTEND_URL=http://localhost:5500
-ADMIN_EMAIL=your@email.com
-ADMIN_USER=admin
-ADMIN_PASS=your_admin_password
-```
-
-### Running Tests
-
-```bash
-cd backend
-node test-scoring.js   # 240 assertions, should show all passed
-```
-
----
-
-## Deployment
-
-| Component | Platform | Trigger |
-|-----------|----------|---------|
-| Backend | Render (free plan) | Push to main branch |
-| Frontend | Vercel (free) | Push to main branch |
-| Database | MongoDB Atlas M0 | Always running |
-| CF Worker | Cloudflare Workers | Manual deploy |
-| Monitoring | UptimeRobot | 5-min health checks at /health |
+| Phase 0 (Current) | Now | 5 beaches, prove accuracy, build community, MOS auto-calibration |
+| Phase 1 | Q2 2026 | Marketing: Instagram, Reddit, SEO, accuracy tracking |
+| Phase 2 | Q3 2026 | Expand to Pondicherry, Vizag, Puri (MOS auto-calibrates new beaches) |
+| Phase 3 | Q4 2026 | Multi-city frontend, mobile app |
+| Phase 4 | 2027+ | All Indian coastal cities, Southeast Asia, API licensing |
 
 ---
 
 ## About
 
-Built by **Kevin T** from Rajapalayam, Tamil Nadu. CS undergrad, sunrise chaser, and the person who thought "what if weather data could tell you whether tomorrow's sky will be copper or grey."
+Built by **Kevin T** from Rajapalayam, Tamil Nadu.
 
 - Website: [seasidebeacon.com](https://seasidebeacon.com)
+- Email: kevin.t1302@gmail.com
 - Portfolio: [kevintportfolio.in](https://kevintportfolio.in)
 - GitHub: [github.com/kevint1814](https://github.com/kevint1814)
 - LinkedIn: [linkedin.com/in/kevint1813](https://linkedin.com/in/kevint1813)
-- Email: kevin.t1302@gmail.com
-
----
-
-## License
-
-This project is proprietary. The source code is not open source. This README is shared publicly for educational and portfolio purposes.
-
----
-
-## Acknowledgments
-
-- [AccuWeather](https://developer.accuweather.com) for hourly weather forecasts
-- [Open-Meteo](https://open-meteo.com) for GFS cloud layers, pressure, and AOD data
-- [Google Gemini](https://ai.google.dev) for Gemini 2.5 Flash and Flash-Lite inference
-- [Groq](https://groq.com) for Llama 3.3 70B inference
-- [Brevo](https://brevo.com) and [SendGrid](https://sendgrid.com) for email delivery
-- [Razorpay](https://razorpay.com) for payment processing
-- [MongoDB Atlas](https://mongodb.com/atlas) for database hosting
-- [Render](https://render.com) for backend hosting
-- [Vercel](https://vercel.com) for frontend CDN
-- [Cloudinary](https://cloudinary.com) for image hosting
-- [Cloudflare](https://cloudflare.com) for DNS and Workers
-- [UptimeRobot](https://uptimerobot.com) for uptime monitoring
-
----
-
-*Built for Chennai beach lovers who want to know if tomorrow's sunrise is worth the alarm.*
