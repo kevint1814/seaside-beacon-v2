@@ -1295,19 +1295,73 @@ function initNav() {
 }
 
 // ─────────────────────────────────────────────
-// BEACH SELECTOR
+// BEACH SELECTOR (two-tier: region → beaches)
 // ─────────────────────────────────────────────
+
+// Region config — single-beach regions fetch directly, multi-beach expand sub-row
+const REGION_CONFIG = {
+  chennai: { beaches: ['marina','elliot','covelong','thiruvanmiyur'], default: 'marina' },
+  mahabalipuram: { beaches: ['mahabalipuram'], default: 'mahabalipuram' }
+};
+
 function initBeachSelector() {
+  // ── Region pill clicks ──
+  document.querySelectorAll('.rsel').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const region = btn.dataset.region;
+      const cfg = REGION_CONFIG[region];
+      if (!cfg) return;
+
+      // Highlight this region pill
+      document.querySelectorAll('.rsel').forEach(r => r.classList.remove('active'));
+      btn.classList.add('active');
+
+      const beachRow = document.getElementById('beachRow');
+
+      if (cfg.beaches.length === 1) {
+        // Single-beach region — hide beach row, select beach directly
+        if (beachRow) beachRow.classList.remove('active');
+        const beach = cfg.default;
+        if (beach === state.beach && state.weather) return;
+        state.beach = beach;
+        // Clear any active beach pill
+        document.querySelectorAll('.bsel').forEach(b => b.classList.remove('active'));
+        if (state.weather) resetForecast();
+      } else {
+        // Multi-beach region — show beach row, auto-select default
+        if (beachRow) beachRow.classList.add('active');
+        // If we're already in this region with a loaded forecast, do nothing
+        const currentRegion = getRegionForBeach(state.beach);
+        if (currentRegion === region && state.weather) return;
+        // Select default beach for this region
+        const defaultBtn = beachRow?.querySelector(`.bsel[data-beach="${cfg.default}"]`);
+        document.querySelectorAll('.bsel').forEach(b => b.classList.remove('active'));
+        if (defaultBtn) defaultBtn.classList.add('active');
+        state.beach = cfg.default;
+        if (state.weather) resetForecast();
+      }
+    });
+  });
+
+  // ── Beach pill clicks (within expanded region) ──
   document.querySelectorAll('.bsel').forEach(btn => {
     btn.addEventListener('click', () => {
       const beach = btn.dataset.beach;
-      if (beach===state.beach && state.weather) return;
+      if (beach === state.beach && state.weather) return;
       document.querySelectorAll('.bsel').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       state.beach = beach;
       if (state.weather) resetForecast();
     });
   });
+}
+
+// Helper: find which region a beach belongs to
+function getRegionForBeach(beachKey) {
+  for (const [region, cfg] of Object.entries(REGION_CONFIG)) {
+    if (cfg.beaches.includes(beachKey)) return region;
+  }
+  return null;
 }
 
 function resetForecast() {

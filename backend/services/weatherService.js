@@ -527,7 +527,7 @@ async function fetchOpenMeteoForecast(lat, lon) {
             params: {
               latitude: roundedLat,
               longitude: roundedLon,
-              hourly: 'cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,pressure_msl,visibility,relative_humidity_2m',
+              hourly: 'cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,pressure_msl,visibility,relative_humidity_2m,precipitation',
               timezone: 'Asia/Kolkata',
               forecast_days: 2
             },
@@ -584,6 +584,17 @@ async function fetchOpenMeteoForecast(lat, lon) {
       }
     }
 
+    // v5.4: Sum overnight precipitation (midnight to 6 AM) for post-rain cross-validation
+    // null = data unavailable (don't suppress), 0 = confirmed dry (suppress false positives)
+    let overnightPrecipMm = null;
+    if (idxMidnight >= 0 && hourly.precipitation) {
+      overnightPrecipMm = 0;
+      for (let i = idxMidnight; i <= useIdx; i++) {
+        overnightPrecipMm += (hourly.precipitation[i] || 0);
+      }
+      overnightPrecipMm = Math.round(overnightPrecipMm * 100) / 100; // round to 2 decimals
+    }
+
     const result = {
       highCloud: hourly.cloud_cover_high[useIdx],
       midCloud: hourly.cloud_cover_mid[useIdx],
@@ -592,6 +603,7 @@ async function fetchOpenMeteoForecast(lat, lon) {
       visibility: hourly.visibility?.[useIdx] ?? null,           // v5.1: OM visibility (meters)
       humidity: hourly.relative_humidity_2m?.[useIdx] ?? null,   // v5.1: OM humidity %
       pressureMsl,  // array: [midnight, 1AM, 2AM, 3AM, 4AM, 5AM, 6AM]
+      overnightPrecipMm,  // v5.4: total mm of rain midnight–6AM (GFS cross-validation)
       time: hourly.time[useIdx]
     };
 
@@ -600,6 +612,9 @@ async function fetchOpenMeteoForecast(lat, lon) {
     if (pressureMsl.length >= 2) {
       const pChange = pressureMsl[pressureMsl.length - 1] - pressureMsl[0];
       console.log(`📊 Pressure: ${pressureMsl[0]?.toFixed(1)} → ${pressureMsl[pressureMsl.length - 1]?.toFixed(1)} hPa (Δ${pChange >= 0 ? '+' : ''}${pChange.toFixed(1)})`);
+    }
+    if (hourly.precipitation) {
+      console.log(`🌧️ GFS overnight precip (midnight–6AM): ${overnightPrecipMm}mm`);
     }
 
     _forecastCache[cacheKey] = { data: result, fetchedAt: Date.now() };
@@ -753,16 +768,29 @@ function getSolarAngleBonus(date) {
  * PRIMARY signal (temporal): Previous night had rain but 6 AM is dry
  * FALLBACK signal (heuristic): High visibility + moderate cloud + elevated humidity
  */
-function getImprovedPostRainBonus(forecastRaw, dailyData) {
+function getImprovedPostRainBonus(forecastRaw, dailyData, openMeteoForecast) {
   const precipProb = forecastRaw.PrecipitationProbability || 0;
 
   // PRIMARY: Temporal signal from AccuWeather daily forecast
   if (dailyData && dailyData.nightHoursOfRain > 0 && precipProb <= 20) {
-    console.log(`🌧️ Post-rain temporal signal: ${dailyData.nightHoursOfRain}h rain last night, 6AM precip ${precipProb}%`);
-    return 8;
+    // v5.4: Cross-validate with Open-Meteo GFS actual precipitation
+    const omPrecip = openMeteoForecast?.overnightPrecipMm;
+    if (omPrecip != null && omPrecip === 0) {
+      console.log(`⚠️ Post-rain SUPPRESSED: AccuWeather says ${dailyData.nightHoursOfRain}h rain, but GFS shows 0mm overnight precipitation — likely false positive`);
+      // Don't return 8 — fall through to heuristic check or return 0
+    } else {
+      console.log(`🌧️ Post-rain temporal signal: ${dailyData.nightHoursOfRain}h rain last night, 6AM precip ${precipProb}% | GFS confirms: ${omPrecip ?? 'N/A'}mm`);
+      return 8;
+    }
   }
 
   // FALLBACK: Data signature heuristic (when daily data unavailable)
+  // v5.4: Skip heuristic if GFS already confirmed 0mm overnight — no post-rain scenario possible
+  const omPrecipFallback = openMeteoForecast?.overnightPrecipMm;
+  if (omPrecipFallback != null && omPrecipFallback === 0) {
+    return 0;
+  }
+
   const humidity = forecastRaw.RelativeHumidity || 0;
   const visibilityRaw = forecastRaw.Visibility?.Value || 0;
   const visibilityUnit = forecastRaw.Visibility?.Unit || 'km';
@@ -1481,7 +1509,7 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   const baseScore = cloudScore + multiLevelScore + humidScore + pressureScore + aodScore + visScore + weatherScore + windScore + synergy;
 
   // ── MINOR ADJUSTMENTS (additive on top of base) ──
-  const postRainBonus = getImprovedPostRainBonus(forecastRaw, dailyData);
+  const postRainBonus = getImprovedPostRainBonus(forecastRaw, dailyData, openMeteoForecast);
   const forecastDate = forecastRaw.DateTime ? new Date(forecastRaw.DateTime) : new Date();
   const solarBonus = getSolarAngleBonus(forecastDate);
 

@@ -902,28 +902,38 @@
         <p class="section-note" id="forecastSectionNote">Predictions available from 6 PM IST</p>
       </header>
 
-      <!-- Beach selector -->
+      <!-- Beach selector — two-tier: region → beaches -->
       <div class="beach-selector" id="beachSelector">
-        <button type="button" class="bsel active" data-beach="marina" data-lat="13.0499" data-lon="80.2824">
-          <span class="bsel-name">Marina</span>
-          <span class="bsel-sub">North Chennai</span>
-        </button>
-        <button type="button" class="bsel" data-beach="elliot" data-lat="13.0067" data-lon="80.2669">
-          <span class="bsel-name">Elliot's</span>
-          <span class="bsel-sub">Besant Nagar</span>
-        </button>
-        <button type="button" class="bsel" data-beach="covelong" data-lat="12.7925" data-lon="80.2514">
-          <span class="bsel-name">Covelong</span>
-          <span class="bsel-sub">ECR</span>
-        </button>
-        <button type="button" class="bsel" data-beach="thiruvanmiyur" data-lat="12.9826" data-lon="80.2589">
-          <span class="bsel-name">Thiruvanmiyur</span>
-          <span class="bsel-sub">South Chennai</span>
-        </button>
-        <button type="button" class="bsel" data-beach="mahabalipuram" data-lat="12.6165" data-lon="80.1992">
-          <span class="bsel-name">Mahabalipuram</span>
-          <span class="bsel-sub">ECR South</span>
-        </button>
+        <!-- Region pills (top row) -->
+        <div class="region-row" id="regionRow">
+          <button type="button" class="rsel active" data-region="chennai">
+            <span class="rsel-name">Chennai</span>
+            <span class="rsel-sub">4 beaches</span>
+          </button>
+          <button type="button" class="rsel" data-region="mahabalipuram">
+            <span class="rsel-name">Mahabalipuram</span>
+            <span class="rsel-sub">Shore Temple</span>
+          </button>
+        </div>
+        <!-- Beach pills (sub-row, shown for multi-beach regions) -->
+        <div class="beach-row active" id="beachRow">
+          <button type="button" class="bsel active" data-beach="marina" data-lat="13.0499" data-lon="80.2824">
+            <span class="bsel-name">Marina</span>
+            <span class="bsel-sub">North Chennai</span>
+          </button>
+          <button type="button" class="bsel" data-beach="elliot" data-lat="13.0067" data-lon="80.2669">
+            <span class="bsel-name">Elliot's</span>
+            <span class="bsel-sub">Besant Nagar</span>
+          </button>
+          <button type="button" class="bsel" data-beach="covelong" data-lat="12.7925" data-lon="80.2514">
+            <span class="bsel-name">Covelong</span>
+            <span class="bsel-sub">ECR</span>
+          </button>
+          <button type="button" class="bsel" data-beach="thiruvanmiyur" data-lat="12.9826" data-lon="80.2589">
+            <span class="bsel-name">Thiruvanmiyur</span>
+            <span class="bsel-sub">South Chennai</span>
+          </button>
+        </div>
       </div>
 
       <!-- Master forecast card — idle -->
