@@ -27,7 +27,8 @@ const {
   scoreWind,
   getSynergyAdjustment,
   getSolarAngleBonus,
-  getImprovedPostRainBonus,
+  getAtmosphericClarityBonus,
+  getPostRainBonusV2,
   calculateSunriseScore,
   getVerdict,
   getRecommendation,
@@ -368,21 +369,156 @@ for (let m = 0; m < 12; m++) {
 }
 
 // ====================================
-// 11. getImprovedPostRainBonus — v5.2: +8 (was +5)
+// 11a. getAtmosphericClarityBonus — v5.7: +8
 // ====================================
-testGroup('getImprovedPostRainBonus (+8)');
+testGroup('getAtmosphericClarityBonus (+8)');
+
+// Optimal conditions → +8
+const forecastOptimal = {
+  PrecipitationProbability: 10,
+  Visibility: { Value: 18, Unit: 'km' },
+  CloudCover: 40,
+  RelativeHumidity: 70
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastOptimal),
+  8,
+  'Optimal clarity conditions → +8'
+);
+
+// Low visibility → 0
+const forecastLowVis = {
+  PrecipitationProbability: 10,
+  Visibility: { Value: 10, Unit: 'km' },
+  CloudCover: 40,
+  RelativeHumidity: 70
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastLowVis),
+  0,
+  'Low visibility (10km) → 0'
+);
+
+// Too much cloud → 0
+const forecastOvercast = {
+  PrecipitationProbability: 10,
+  Visibility: { Value: 18, Unit: 'km' },
+  CloudCover: 80,
+  RelativeHumidity: 70
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastOvercast),
+  0,
+  'Overcast (80%) → 0'
+);
+
+// Too little cloud → 0
+const forecastClear = {
+  PrecipitationProbability: 10,
+  Visibility: { Value: 18, Unit: 'km' },
+  CloudCover: 15,
+  RelativeHumidity: 70
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastClear),
+  0,
+  'Too clear (15%) → 0'
+);
+
+// Humidity too high → 0
+const forecastSoupy = {
+  PrecipitationProbability: 10,
+  Visibility: { Value: 18, Unit: 'km' },
+  CloudCover: 40,
+  RelativeHumidity: 90
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastSoupy),
+  0,
+  'Humidity too high (90%) → 0'
+);
+
+// Humidity too low → 0
+const forecastDryAir = {
+  PrecipitationProbability: 10,
+  Visibility: { Value: 18, Unit: 'km' },
+  CloudCover: 40,
+  RelativeHumidity: 45
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastDryAir),
+  0,
+  'Humidity too low (45%) → 0'
+);
+
+// Raining → 0
+const forecastRaining = {
+  PrecipitationProbability: 50,
+  Visibility: { Value: 18, Unit: 'km' },
+  CloudCover: 40,
+  RelativeHumidity: 70
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastRaining),
+  0,
+  'Active rain (50% precip) → 0'
+);
+
+// Boundary: exactly at thresholds → +8
+const forecastBoundary = {
+  PrecipitationProbability: 20,
+  Visibility: { Value: 15, Unit: 'km' },
+  CloudCover: 25,
+  RelativeHumidity: 60
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastBoundary),
+  8,
+  'Exact boundary (20%/15km/25%/60%) → +8'
+);
+
+// Upper boundary
+const forecastUpperBound = {
+  PrecipitationProbability: 20,
+  Visibility: { Value: 15, Unit: 'km' },
+  CloudCover: 65,
+  RelativeHumidity: 82
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastUpperBound),
+  8,
+  'Upper boundary (20%/15km/65%/82%) → +8'
+);
+
+// Visibility in miles → converts correctly
+const forecastMiles = {
+  PrecipitationProbability: 10,
+  Visibility: { Value: 12, Unit: 'mi' },  // 12 mi ≈ 19.3 km
+  CloudCover: 40,
+  RelativeHumidity: 70
+};
+assertEqual(
+  getAtmosphericClarityBonus(forecastMiles),
+  8,
+  'Visibility in miles (12mi → 19.3km) → +8'
+);
+
+// ====================================
+// 11b. getPostRainBonusV2 — v5.7: +5 (stackable)
+// ====================================
+testGroup('getPostRainBonusV2 (+5)');
 
 // Temporal signal: night rain + dry morning
 const forecastDry = { PrecipitationProbability: 10 };
 assertEqual(
-  getImprovedPostRainBonus(forecastDry, { nightHoursOfRain: 3 }),
-  8,
-  'Night rain + dry 6AM → +8 (v5.2)'
+  getPostRainBonusV2(forecastDry, { nightHoursOfRain: 3 }),
+  5,
+  'Night rain + dry 6AM → +5 (v5.7)'
 );
 
 // No rain at all
 assertEqual(
-  getImprovedPostRainBonus(forecastDry, { nightHoursOfRain: 0 }),
+  getPostRainBonusV2(forecastDry, { nightHoursOfRain: 0 }),
   0,
   'No night rain → 0'
 );
@@ -390,35 +526,44 @@ assertEqual(
 // Still raining
 const forecastWet = { PrecipitationProbability: 50 };
 assertEqual(
-  getImprovedPostRainBonus(forecastWet, { nightHoursOfRain: 3 }),
+  getPostRainBonusV2(forecastWet, { nightHoursOfRain: 3 }),
   0,
   'Night rain but still raining → 0'
 );
 
-// Heuristic fallback
-const forecastHeuristic = {
-  PrecipitationProbability: 10,
-  Visibility: { Value: 18, Unit: 'km' },
-  CloudCover: 40,
-  RelativeHumidity: 70
-};
+// No daily data → 0 (no heuristic fallback in V2)
 assertEqual(
-  getImprovedPostRainBonus(forecastHeuristic, null),
-  8,
-  'Post-rain heuristic signature → +8 (v5.2)'
+  getPostRainBonusV2(forecastOptimal, null),
+  0,
+  'No daily data → 0 (no heuristic in V2)'
 );
 
-// No heuristic match
-const forecastNormal = {
-  PrecipitationProbability: 10,
-  Visibility: { Value: 10, Unit: 'km' },
-  CloudCover: 40,
-  RelativeHumidity: 70
-};
+// GFS cross-validation: suppressed when <0.5mm
 assertEqual(
-  getImprovedPostRainBonus(forecastNormal, null),
+  getPostRainBonusV2(forecastDry, { nightHoursOfRain: 3 }, { overnightPrecipMm: 0.2 }),
   0,
-  'Normal conditions → 0'
+  'GFS <0.5mm suppresses rain bonus'
+);
+
+// GFS cross-validation: confirmed when ≥0.5mm
+assertEqual(
+  getPostRainBonusV2(forecastDry, { nightHoursOfRain: 3 }, { overnightPrecipMm: 2.5 }),
+  5,
+  'GFS ≥0.5mm confirms rain bonus → +5'
+);
+
+// GFS null (unavailable) → still gives bonus (temporal signal alone)
+assertEqual(
+  getPostRainBonusV2(forecastDry, { nightHoursOfRain: 3 }, { overnightPrecipMm: null }),
+  5,
+  'GFS unavailable → trust AccuWeather → +5'
+);
+
+// No Open-Meteo at all → still gives bonus
+assertEqual(
+  getPostRainBonusV2(forecastDry, { nightHoursOfRain: 3 }, null),
+  5,
+  'No Open-Meteo data → trust AccuWeather → +5'
 );
 
 // ====================================
@@ -488,14 +633,16 @@ const storm = calculateSunriseScore(
 );
 assert(storm.score < 35, `Storm score <35 (got ${storm.score})`);
 
-// Scenario 5: Post-rain magic
+// Scenario 5: Post-rain magic (v5.7: clarity +8 AND rain +5 stack)
 const postRain = calculateSunriseScore(
   makeForecast({ cloud: 40, humidity: 70, vis: 18, wind: 10, precip: 5 }),
   makeExtras({ highCloud: 45, midCloud: 20, lowCloud: 15, aod: 0.08, pressureMsl: [1014, 1013, 1012, 1010], nightRain: true })
 );
 assert(postRain.score >= 85, `Post-rain magic score ≥85 (got ${postRain.score})`);
-assertEqual(postRain.breakdown.postRainBonus, 8, 'Post-rain bonus = 8 (v5.2)');
+assertEqual(postRain.breakdown.clarityBonus, 8, 'Clarity bonus = 8 (v5.7)');
+assertEqual(postRain.breakdown.postRainBonus, 5, 'Post-rain bonus = 5 (v5.7)');
 assertEqual(postRain.breakdown.isPostRain, true, 'isPostRain flag set');
+assertEqual(postRain.breakdown.hasClarityBonus, true, 'hasClarityBonus flag set');
 
 // Scenario 6: No Open-Meteo data (graceful degradation)
 const noOpenMeteo = calculateSunriseScore(
@@ -733,9 +880,11 @@ assert(bd.visibility && bd.visibility.maxScore === 5, 'breakdown.visibility.maxS
 assert(bd.weather && bd.weather.maxScore === 5, 'breakdown.weather.maxScore = 5');
 assert(bd.wind && bd.wind.maxScore === 5, 'breakdown.wind.maxScore = 5');
 assert(typeof bd.synergy === 'number', 'breakdown.synergy is number');
+assert(typeof bd.clarityBonus === 'number', 'breakdown.clarityBonus is number');
 assert(typeof bd.postRainBonus === 'number', 'breakdown.postRainBonus is number');
 assert(typeof bd.solarBonus === 'number', 'breakdown.solarBonus is number');
 assert(typeof bd.isPostRain === 'boolean', 'breakdown.isPostRain is boolean');
+assert(typeof bd.hasClarityBonus === 'boolean', 'breakdown.hasClarityBonus is boolean');
 assert(bd.multiLevelCloud.high != null, 'breakdown.multiLevelCloud.high present');
 assert(bd.multiLevelCloud.mid != null, 'breakdown.multiLevelCloud.mid present');
 assert(bd.multiLevelCloud.low != null, 'breakdown.multiLevelCloud.low present');

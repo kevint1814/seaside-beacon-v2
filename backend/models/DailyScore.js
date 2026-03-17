@@ -31,8 +31,10 @@ const beachScoreSchema = new mongoose.Schema({
     weather:        { value: Number, score: Number, maxScore: Number },
     wind:           { value: Number, score: Number, maxScore: Number },
     synergy:         Number,   // ±4
-    postRainBonus:   Number,   // 0 or +5
+    clarityBonus:    Number,   // 0 or +8 atmospheric clarity bonus (v5.7)
+    postRainBonus:   Number,   // 0 or +5 confirmed overnight rain (v5.7)
     isPostRain:      Boolean,
+    hasClarityBonus: Boolean,  // v5.7: atmospheric clarity conditions met
     solarBonus:      Number,   // ±2 seasonal angle
     // Denormalized fields for quick queries
     highCloud:       Number,

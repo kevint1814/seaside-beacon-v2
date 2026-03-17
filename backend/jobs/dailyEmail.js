@@ -92,8 +92,10 @@ async function storeDailyScores(allWeatherData) {
           weather:        data.prediction.breakdown.weather,
           wind:           data.prediction.breakdown.wind,
           synergy:        data.prediction.breakdown.synergy || 0,
+          clarityBonus:   data.prediction.breakdown.clarityBonus || 0,
           postRainBonus:  data.prediction.breakdown.postRainBonus || 0,
           isPostRain:     data.prediction.breakdown.isPostRain || false,
+          hasClarityBonus: data.prediction.breakdown.hasClarityBonus || false,
           solarBonus:     data.prediction.breakdown.solarBonus || 0,
           // Denormalized for quick queries
           highCloud:      data.prediction.breakdown.highCloud ?? null,

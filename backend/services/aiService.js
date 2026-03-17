@@ -127,6 +127,7 @@ async function callAIProvider(provider, weatherData, allWeatherData = {}) {
     const pressureTrend = breakdown?.pressureTrend?.value ?? null;
     const pressureLabel = atmosphericLabels?.pressureTrend ?? 'N/A';
     const isPostRain = breakdown?.isPostRain ?? false;
+    const hasClarityBonus = breakdown?.hasClarityBonus ?? false;
 
     // Use context from weatherService BEACHES config (single source of truth)
     const context = beachContext || 'Beach with natural foreground elements and ocean horizon.';
@@ -231,9 +232,13 @@ Use these EXACT times in your response. Do NOT estimate or make up times.`;
       constraints.push('High cloud coverage is strong with clear horizon — this is a genuine color-canvas scenario. You CAN be enthusiastic about cloud-lit colors.');
     }
 
-    // Post-rain guardrails
-    if (isPostRain) {
-      constraints.push('Post-rain conditions confirmed. Air is exceptionally clean. You SHOULD mention the unusual clarity.');
+    // Atmospheric clarity guardrails
+    if (isPostRain && hasClarityBonus) {
+      constraints.push('Post-rain + optimal clarity conditions confirmed. Air is exceptionally clean with perfect cloud canvas. This is a unicorn scenario — you SHOULD be enthusiastic about colors and clarity.');
+    } else if (isPostRain) {
+      constraints.push('Post-rain conditions confirmed. Air is cleaner than usual from overnight rain. You SHOULD mention the improved clarity.');
+    } else if (hasClarityBonus) {
+      constraints.push('Atmospheric clarity is excellent — high visibility, moderate cloud canvas, and ideal humidity. You SHOULD mention the favorable conditions for vivid colors.');
     }
 
     const constraintsBlock = constraints.length > 0
@@ -248,7 +253,8 @@ CONDITIONS: Cloud ${cloudCover}%, Humidity ${humidity}%, Visibility ${visibility
 CLOUD LAYERS: ${highCloud != null ? `High ${highCloud}% Mid ${midCloud}% Low ${lowCloud}%` : 'N/A'}.
 AIR CLARITY (AOD): ${aodValue != null ? `${aodValue.toFixed(2)} (${aodLabel})` : 'N/A'}.
 PRESSURE TREND: ${pressureTrend != null ? `Δ${pressureTrend >= 0 ? '+' : ''}${pressureTrend}hPa (${pressureLabel})` : 'N/A'}.
-POST-RAIN: ${isPostRain ? 'Yes — recent rain washed the air clean' : 'No'}.
+ATMOSPHERIC CLARITY: ${hasClarityBonus ? 'Yes — optimal scattering conditions (high vis, moderate cloud, ideal humidity)' : 'Normal'}.
+POST-RAIN: ${isPostRain ? 'Yes — overnight rain washed aerosols clean' : 'No'}.
 ${constraintsBlock}
 ${goldenHourInstruction}
 
@@ -455,13 +461,14 @@ function generateRuleBasedInsights(weatherData, allWeatherData = {}) {
   const aodValue = breakdown?.aod?.value ?? null;
   const pressureTrend = breakdown?.pressureTrend?.value ?? null;
   const isPostRain = breakdown?.isPostRain ?? false;
+  const hasClarityBonus = breakdown?.hasClarityBonus ?? false;
 
   // ── Greeting — enthusiastic, warm, like a friend who's excited about the morning ──
   // Enhanced with v5 factor awareness
   let greeting;
   if (score >= 85) {
-    const postRainNote = isPostRain ? ' The rain cleared the air out completely — colors are going to be VIVID!' : '';
-    greeting = `Good morning! Oh this is a good one at ${beach} — the whole sky's gonna light up orange and pink! Set that alarm, you do NOT want to miss this!${postRainNote}`;
+    const bonusNote = isPostRain && hasClarityBonus ? ' The rain cleared the air AND conditions are perfect — this is the unicorn scenario!' : isPostRain ? ' The rain cleared the air out completely — colors are going to be VIVID!' : hasClarityBonus ? ' The air is crystal clear with a perfect cloud canvas — ideal for vivid colors!' : '';
+    greeting = `Good morning! Oh this is a good one at ${beach} — the whole sky's gonna light up orange and pink! Set that alarm, you do NOT want to miss this!${bonusNote}`;
   } else if (score >= 70) {
     const clearAirNote = aodValue != null && aodValue < 0.2 ? ' Plus the air is super clean today, so those colors should really pop!' : '';
     greeting = `Rise and shine! Looking like a really solid morning at ${beach} — warm colors across the sky, definitely worth the early wake-up!${clearAirNote}`;
@@ -570,12 +577,17 @@ function generatePhotographyBrief(score, cloudCover, humidity, visibility, windS
   const aodValue = breakdown?.aod?.value ?? null;
   const isHazy = aodValue != null && aodValue >= 0.4;
   const isPostRain = breakdown?.isPostRain ?? false;
+  const hasClarityBonus = breakdown?.hasClarityBonus ?? false;
 
   // Light quality assessment
   let lightQuality;
   if (score >= 85) {
-    lightQuality = isPostRain
-      ? 'Exceptional light this morning — post-rain clarity means razor-sharp golden light with intense color saturation. The light will be strongly directional from the east, creating defined shadows and vivid warm tones across everything it touches. Best natural light conditions you can ask for.'
+    lightQuality = isPostRain && hasClarityBonus
+      ? 'Exceptional light this morning — post-rain clarity with perfect atmospheric conditions means razor-sharp golden light with intense color saturation. The light will be strongly directional from the east, creating defined shadows and vivid warm tones across everything it touches. Best natural light conditions you can ask for.'
+      : isPostRain
+      ? 'Post-rain clarity means unusually sharp and vivid light. Colors will be punchy — expect strong golden directional light with excellent contrast.'
+      : hasClarityBonus
+      ? 'Excellent atmospheric clarity today — clean air with ideal cloud canvas means vivid, saturated colors. The light will be crisp and directional with good warm-to-cool tonal range.'
       : `Strong golden directional light expected. ${hasHighCanvas() ? 'High cloud cover creates a natural diffuser above while leaving the horizon clear — you get both warm direct light AND soft fill from the cloud canvas.' : 'Clear air means hard, contrasty light once the sun clears the horizon — beautiful for dramatic shadow work.'} Colors will peak in the 5 minutes bracketing sunrise.`;
   } else if (score >= 70) {
     lightQuality = `Good quality warm light with a mix of direct and diffused. ${cloudCover >= 30 && cloudCover <= 60 ? 'Partial cloud acts as a giant softbox — the light will be warm but not harsh, great for portraits and landscapes alike.' : 'The light will transition from soft amber pre-sunrise to stronger golden tones as the sun clears.'} Expect usable shooting light for 15-20 minutes around sunrise.`;
@@ -607,7 +619,9 @@ function generatePhotographyBrief(score, cloudCover, humidity, visibility, windS
   let colorPalette;
   if (score >= 85) {
     colorPalette = isPostRain
-      ? 'Expect vivid, saturated oranges, deep amber, and intense golden-yellow — the clean air means colors will be punchy and true. Set white balance to Daylight (5200-5500K) to preserve the natural warmth without over-cooking it.'
+      ? 'Expect vivid, saturated oranges, deep amber, and intense golden-yellow — the rain-washed air means colors will be punchy and true. Set white balance to Daylight (5200-5500K) to preserve the natural warmth without over-cooking it.'
+      : hasClarityBonus
+      ? 'Clean atmospheric conditions mean vivid, well-saturated warm tones — deep orange through amber with good tonal separation. Shoot in RAW. Set white balance to Daylight (5200-5500K) to preserve the natural warmth.'
       : `Rich warm tones — deep orange at the horizon fading through amber to soft pink. ${hasHighCanvas() ? 'The cloud canvas will pick up reds and violets higher up.' : 'Concentrated color band at the horizon with clean blue sky above.'} Shoot in RAW — the dynamic range of colors will reward careful processing.`;
   } else if (score >= 55) {
     colorPalette = isHazy
@@ -737,6 +751,7 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
   const aodValue = breakdown?.aod?.value ?? null;
   const pressureTrend = breakdown?.pressureTrend?.value ?? null;
   const isPostRain = breakdown?.isPostRain ?? false;
+  const hasClarityBonus = breakdown?.hasClarityBonus ?? false;
 
   const analysis = {
     cloudCover: {
@@ -827,7 +842,7 @@ function generateAtmosphericAnalysis(cloudCover, humidity, visibility, windSpeed
         ? `Light wind at ${windSpeed}km/h will gently move cloud formations. The beach will feel pleasantly breezy at dawn.`
         : `Wind at ${windSpeed}km/h will keep clouds moving and the sea choppy. You'll feel the breeze, and sand may be kicked up occasionally.`
     },
-    overallPattern: `${currentMonth} conditions: ${isPostRain ? 'Post-rain clarity is the highlight today — the air has been washed clean, creating ideal conditions for vivid colors.' : humidity <= 55 && visibility >= 10 ? 'Dry air and good visibility are working in your favor today.' : humidity > 70 ? 'Elevated humidity is limiting what could otherwise be stronger sunrise conditions.' : 'Conditions today are mixed — some factors are favorable while others will limit the sunrise quality.'}`
+    overallPattern: `${currentMonth} conditions: ${isPostRain && hasClarityBonus ? 'Post-rain clarity combined with perfect atmospheric conditions — this is the best-case scenario for vivid, saturated sunrise colors.' : isPostRain ? 'Post-rain clarity is the highlight today — the air has been washed clean, creating ideal conditions for vivid colors.' : hasClarityBonus ? 'Atmospheric clarity is excellent today — clean air, ideal cloud canvas, and the right humidity for vivid color scattering.' : humidity <= 55 && visibility >= 10 ? 'Dry air and good visibility are working in your favor today.' : humidity > 70 ? 'Elevated humidity is limiting what could otherwise be stronger sunrise conditions.' : 'Conditions today are mixed — some factors are favorable while others will limit the sunrise quality.'}`
   };
 
   return analysis;

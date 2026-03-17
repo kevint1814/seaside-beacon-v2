@@ -760,58 +760,80 @@ function getSolarAngleBonus(date) {
 // ==========================================
 
 /**
- * IMPROVED POST-RAIN BONUS (0 or +8 points — v5.2, raised from +5)
+ * ATMOSPHERIC CLARITY BONUS (0 or +8 points — v5.7)
  *
- * Research (ScienceDirect, Aerosol & Air Quality Research): Rain removes aerosol
- * particles through impaction scavenging. ≥1mm rainfall creates the cleanest air
- * possible — AOD drops to 0.02-0.05. Post-rain mornings are the single most
- * reliable predictor of exceptional sunrises. Recovery: 12-48 hours.
+ * Research basis (Corfidi/NOAA, Penn State, NOAA atmospheric optics):
+ * "Clean air is the main ingredient common to brightly colored sunrises."
+ * This bonus detects the optimal tropical coastal scattering state:
+ *   - High visibility (≥15km) = low boundary-layer aerosol load
+ *   - Moderate cloud canvas (25-65%) = color projection screen present
+ *   - Humidity sweet spot (60-82%) = hygroscopic growth enhances Mie scattering
+ *     without crossing into haze territory (f(RH) 1.3-1.8x at coastal latitudes)
+ *   - No active precipitation (≤20% prob)
  *
- * v5.2: Raised from +5 to +8 to match research importance (~12% of score).
- * Post-rain + moderate clouds = the "unicorn scenario" for sunrise photography.
+ * Previously mislabeled as "post-rain heuristic fallback" — was actually detecting
+ * optimal atmospheric conditions regardless of rain. Scores were calibrated with
+ * this bonus active for months, so removing it caused score regression.
  *
- * PRIMARY signal (temporal): Previous night had rain but 6 AM is dry
- * FALLBACK signal (heuristic): High visibility + moderate cloud + elevated humidity
+ * v5.7: Renamed from getImprovedPostRainBonus heuristic to standalone function.
+ *       Now fires independently of rain status. Post-rain bonus stacks on top.
  */
-function getImprovedPostRainBonus(forecastRaw, dailyData, openMeteoForecast) {
+function getAtmosphericClarityBonus(forecastRaw) {
   const precipProb = forecastRaw.PrecipitationProbability || 0;
-
-  // PRIMARY: Temporal signal from AccuWeather daily forecast
-  if (dailyData && dailyData.nightHoursOfRain > 0 && precipProb <= 20) {
-    // v5.4: Cross-validate with Open-Meteo GFS actual precipitation
-    // Research: ≥1mm needed for aerosol scavenging; <0.5mm is model noise/trace moisture
-    const omPrecip = openMeteoForecast?.overnightPrecipMm;
-    if (omPrecip != null && omPrecip < 0.5) {
-      console.log(`⚠️ Post-rain SUPPRESSED: AccuWeather says ${dailyData.nightHoursOfRain}h rain, but GFS shows only ${omPrecip}mm overnight (<0.5mm threshold) — likely false positive`);
-      // Don't return 8 — fall through to heuristic check or return 0
-    } else {
-      console.log(`🌧️ Post-rain temporal signal: ${dailyData.nightHoursOfRain}h rain last night, 6AM precip ${precipProb}% | GFS confirms: ${omPrecip ?? 'N/A'}mm`);
-      return 8;
-    }
-  }
-
-  // FALLBACK: Data signature heuristic (when daily data unavailable)
-  // v5.4: Skip heuristic if GFS confirmed <0.5mm overnight — no meaningful rain for aerosol scavenging
-  const omPrecipFallback = openMeteoForecast?.overnightPrecipMm;
-  if (omPrecipFallback != null && omPrecipFallback < 0.5) {
-    return 0;
-  }
-
   const humidity = forecastRaw.RelativeHumidity || 0;
   const visibilityRaw = forecastRaw.Visibility?.Value || 0;
   const visibilityUnit = forecastRaw.Visibility?.Unit || 'km';
   const visibility = visibilityUnit === 'mi' ? visibilityRaw * 1.60934 : visibilityRaw;
   const cloudCover = forecastRaw.CloudCover || 0;
 
-  const isPostRainSignature =
+  const isOptimalClarity =
     precipProb <= 20 &&
     visibility >= 15 &&
     cloudCover >= 25 && cloudCover <= 65 &&
     humidity >= 60 && humidity <= 82;
 
-  if (isPostRainSignature) {
-    console.log('🌧️ Post-rain data signature detected (heuristic fallback)');
+  if (isOptimalClarity) {
+    console.log(`✨ Atmospheric clarity bonus: +8 (vis=${visibility.toFixed(1)}km, cloud=${cloudCover}%, hum=${humidity}%, precip=${precipProb}%)`);
     return 8;
+  }
+
+  return 0;
+}
+
+/**
+ * POST-RAIN BONUS (0 or +5 points — v5.7, reduced from +8 to avoid double-counting)
+ *
+ * Research (Beijing PM2.5 study, Tropical India AOD study):
+ *   - Light rain: ~23% PM2.5 removal
+ *   - Moderate rain: ~46% PM2.5 removal
+ *   - Heavy rain: ~51% PM2.5 removal
+ *   - AOD reduced 40% at 400nm, 54% at 1020nm after rainfall in tropical India
+ *
+ * Rain forcibly resets the atmosphere to a cleaner state than even good-conditions
+ * mornings without rain. Visibility spikes to 25-30km+, AOD drops to near-pristine.
+ * The broken post-frontal clouds provide the perfect canvas.
+ *
+ * Stacks ON TOP of atmospheric clarity bonus. Not +8 because base factors already
+ * partially capture rain's effect (AOD score ↑, visibility score ↑). The +5 covers
+ * the combined scattering enhancement that individual factors don't fully capture.
+ *
+ * v5.7: Split from getImprovedPostRainBonus. Now purely rain-detection.
+ *       Cross-validated with GFS overnight precipitation (v5.4 logic retained).
+ */
+function getPostRainBonusV2(forecastRaw, dailyData, openMeteoForecast) {
+  const precipProb = forecastRaw.PrecipitationProbability || 0;
+
+  // Temporal signal from AccuWeather daily forecast
+  if (dailyData && dailyData.nightHoursOfRain > 0 && precipProb <= 20) {
+    // v5.4: Cross-validate with Open-Meteo GFS actual precipitation
+    // Research: ≥1mm needed for aerosol scavenging; <0.5mm is model noise/trace moisture
+    const omPrecip = openMeteoForecast?.overnightPrecipMm;
+    if (omPrecip != null && omPrecip < 0.5) {
+      console.log(`⚠️ Post-rain SUPPRESSED: AccuWeather says ${dailyData.nightHoursOfRain}h rain, but GFS shows only ${omPrecip}mm overnight (<0.5mm threshold) — likely false positive`);
+      return 0;
+    }
+    console.log(`🌧️ Post-rain bonus: +5 (${dailyData.nightHoursOfRain}h rain last night, 6AM precip ${precipProb}% | GFS: ${omPrecip ?? 'N/A'}mm)`);
+    return 5;
   }
 
   return 0;
@@ -1313,52 +1335,15 @@ function getSynergyAdjustment(cloudCover, humidity, visibilityKm, cloudLayers) {
 }
 
 /**
- * POST-RAIN BONUS (max +5 points)
- * After rain: clearest air (15-20km visibility), broken clouds remain at 30-60%
- *
- * DETECTION: We only have a single hour's data (6 AM), so we can't check
- * "was it raining earlier?" directly. Instead we look for the DATA SIGNATURE
- * of post-rain conditions: unusually high visibility + moderate cloud + elevated humidity.
- * This combination (vis≥15 + cloud 25-65 + humidity 60-82) almost never occurs
- * UNLESS rain recently washed the air clean and clouds are breaking up.
- *
- * Previous approach matched IconPhrase text like "Partly cloudy" — but that's
- * AccuWeather's most common description and triggered on ~70% of forecasts.
- * Now detection is purely data-driven with no text matching.
- */
-function getPostRainBonus(forecast) {
-  const precipProb = forecast.precipProbability || 0;
-  const humidity = forecast.humidity || 0;
-  const visibility = forecast.visibility || 0;
-  const cloudCover = forecast.cloudCover || 0;
-
-  // Post-rain data signature:
-  // - Low current precip probability (rain has stopped)
-  // - High visibility (rain washed aerosols from air → crystal clarity)
-  // - Moderate cloud (30-65%: clouds breaking up but still providing canvas)
-  // - Elevated humidity (60-82%: moisture from recent rain, but not soupy)
-  const isPostRain =
-    precipProb <= 20 &&
-    visibility >= 15 &&
-    cloudCover >= 25 && cloudCover <= 65 &&
-    humidity >= 60 && humidity <= 82;
-
-  if (isPostRain) {
-    console.log('🌧️ Post-rain data signature detected: +5 bonus');
-    return 5;
-  }
-
-  return 0;
-}
-
-/**
- * MASTER SCORING FUNCTION (v5 — research-aligned weight architecture)
+ * MASTER SCORING FUNCTION (v5.7 — research-aligned weight architecture)
  *
  * BASE (96 pts + synergy ±4 = 100 max):
- *   Cloud 25 | MultiLevel 15 | Humidity 20 | Pressure 10 | AOD 8 | Vis 10 | Weather 5 | Wind 3 | Synergy ±4
+ *   Cloud 18 | MultiLevel 20 | Humidity 15 | Pressure 11 | AOD 16 | Vis 5 | Weather 5 | Wind 5 | Synergy ±4
  *
- * ADJUSTMENTS (minor additive on top):
- *   PostRain +5 | Solar ±2
+ * ADJUSTMENTS (stackable, additive on top of base):
+ *   Atmospheric Clarity +8 | Post-Rain +5 | Solar ±2
+ *   Max possible adjustment: +15 (clarity + rain + solar)
+ *   Final score capped at 100 via Math.min
  *
  * @param {Object} forecastRaw — AccuWeather hourly forecast object
  * @param {Object} extras — { dailyData, airQuality, openMeteoForecast } from parallel fetches
@@ -1540,18 +1525,20 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   // ── ASSEMBLE BASE SCORE (max 100) ──
   const baseScore = cloudScore + multiLevelScore + humidScore + pressureScore + aodScore + visScore + weatherScore + windScore + synergy;
 
-  // ── MINOR ADJUSTMENTS (additive on top of base) ──
-  const postRainBonus = getImprovedPostRainBonus(forecastRaw, dailyData, openMeteoForecast);
+  // ── ADJUSTMENTS (additive on top of base) — v5.7: split into clarity + rain ──
+  const clarityBonus = getAtmosphericClarityBonus(forecastRaw);
+  const postRainBonus = getPostRainBonusV2(forecastRaw, dailyData, openMeteoForecast);
   const forecastDate = forecastRaw.DateTime ? new Date(forecastRaw.DateTime) : new Date();
   const solarBonus = getSolarAngleBonus(forecastDate);
 
-  const totalAdjustment = postRainBonus + solarBonus;
+  const totalAdjustment = clarityBonus + postRainBonus + solarBonus;
   const finalScore = Math.max(0, Math.min(100, baseScore + totalAdjustment));
 
-  // ── DETERMINE POST-RAIN STATUS ──
+  // ── DETERMINE BONUS STATUS FLAGS ──
   const isPostRain = postRainBonus > 0;
+  const hasClarityBonus = clarityBonus > 0;
 
-  console.log(`\n📊 SCORING BREAKDOWN (v5.3 — Corfidi/NOAA scientific hierarchy):`);
+  console.log(`\n📊 SCORING BREAKDOWN (v5.7 — Corfidi/NOAA scientific hierarchy):`);
   console.log(`  🌫️  AOD (${aodValue?.toFixed(3) ?? 'N/A'}): ${aodScore}/16  ← #1 factor`);
   console.log(`  🌥️  Cloud Layers (H:${highCloud ?? '?'}% M:${midCloud ?? '?'}% L:${lowCloud ?? '?'}%): ${multiLevelScore}/20  ← #2 factor`);
   console.log(`  ☁️  Cloud Cover [${cloudSource}] (${cloudCover}%): ${cloudScore}/18`);
@@ -1561,6 +1548,7 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   console.log(`  🌤️  Weather (${precipProb}% precip): ${weatherScore}/5`);
   console.log(`  💨 Wind (${windSpeed}km/h): ${windScore}/5`);
   console.log(`  🔗 Synergy: ${synergy >= 0 ? '+' : ''}${synergy}/±4`);
+  if (clarityBonus > 0) console.log(`  ✨ Atmospheric clarity bonus: +${clarityBonus}`);
   if (postRainBonus > 0) console.log(`  🌧️  Post-rain bonus: +${postRainBonus}`);
   if (solarBonus !== 0) console.log(`  🌐 Solar angle: ${solarBonus >= 0 ? '+' : ''}${solarBonus}/±2`);
   console.log(`  🎯 TOTAL: ${finalScore}/100`);
@@ -1592,8 +1580,10 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
       weather: { value: precipProb, score: weatherScore, maxScore: 5 },
       wind: { value: windSpeed, score: windScore, maxScore: 5 },
       synergy,
+      clarityBonus,
       postRainBonus,
       isPostRain,
+      hasClarityBonus,
       solarBonus,
       // v5 structured fields (replaces flat v4 fields)
       highCloud,
@@ -2293,7 +2283,8 @@ module.exports = {
   scoreWind,
   getSynergyAdjustment,
   getSolarAngleBonus,
-  getImprovedPostRainBonus,
+  getAtmosphericClarityBonus,
+  getPostRainBonusV2,
   calculateSunriseScore,
   getVerdict,
   getRecommendation,

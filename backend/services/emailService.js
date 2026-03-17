@@ -296,6 +296,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
     const aodValue = breakdown?.aod?.value ?? null;
     const pressureTrend = breakdown?.pressureTrend?.value ?? null;
     const isPostRain = breakdown?.isPostRain ?? false;
+    const hasClarityBonus = breakdown?.hasClarityBonus ?? false;
 
     // Score-dependent colors — all visible on white/light bg
     const statusColor = score >= 85 ? '#059669' : score >= 70 ? '#0284c7' : score >= 55 ? '#D97706' : score >= 40 ? '#EA580C' : '#DC2626';
@@ -515,7 +516,7 @@ async function sendDailyPredictionEmail(subscriberEmail, weatherData, photograph
                       <tr><td bgcolor="#FAF8F5" style="border:1px solid #E8E0D5;padding:14px 16px;">
                         <p style="margin:0 0 2px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#a09080;">✨ Air Clarity</p>
                         <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:#2a2420;">${aodValue.toFixed(2)}</p>
-                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${aodBadgeBg}" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:${aodBadgeColor};">${aodLabel}${isPostRain ? ' · Post-Rain' : ''}</span></td></tr></table>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${aodBadgeBg}" style="padding:2px 8px;"><span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;color:${aodBadgeColor};">${aodLabel}${isPostRain ? ' · Post-Rain' : hasClarityBonus ? ' · Clear Air' : ''}</span></td></tr></table>
                       </td></tr>
                     </table>
                   </td>` : `<td width="48%" style="padding:0 0 10px 6px;vertical-align:top;">
