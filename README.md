@@ -5,7 +5,7 @@
 Seaside Beacon analyzes 9 atmospheric factors across 5 beaches (4 Chennai + Mahabalipuram) to predict how colorful tomorrow's sunrise will be. It combines weather APIs, satellite data, and a multi-tier AI system to deliver a single 0–100 score with photography-specific insights. New beaches auto-calibrate using MOS (Model Output Statistics) bias correction.
 
 **Live:** [seasidebeacon.com](https://seasidebeacon.com)
-**Status:** Production v7.3 | Algorithm v5.6 | Launched February 14, 2026
+**Status:** Production v7.3 | Algorithm v5.7 | Launched February 14, 2026
 
 ---
 
@@ -70,7 +70,7 @@ seaside-beacon/
 │   │   ├── device.js          # FCM token registration
 │   │   └── telegram.js        # Telegram bot webhook
 │   ├── services/
-│   │   ├── weatherService.js  # 9-factor scoring algorithm (v5.6)
+│   │   ├── weatherService.js  # 9-factor scoring algorithm (v5.7)
 │   │   ├── aiService.js       # 3-tier AI failover chain
 │   │   ├── chatbotService.js  # Telegram AI chatbot logic
 │   │   ├── emailService.js    # Brevo/SendGrid dual-provider
@@ -124,29 +124,30 @@ seaside-beacon/
 
 ---
 
-## The Scoring Algorithm (v5.6)
+## The Scoring Algorithm (v5.7)
 
-The scoring engine assigns up to **100 points** across 9 base factors plus synergy adjustments. Weights are aligned with SunsetWx research (Penn State meteorology) and NOAA atmospheric optics literature.
+The scoring engine assigns up to **100 points** across 9 base factors plus adjustments. Weights are calibrated for Chennai's tropical coast, backed by Corfidi/NOAA atmospheric optics research and SunsetWx (Penn State meteorology).
 
 ### Base Factors
 
 | Factor | Max | Why It Matters |
 |--------|-----|----------------|
-| Aerosol Optical Depth (AOD) | 16 | #1 sunrise color predictor. Mie scattering proxy |
-| Cloud Cover | 14 | 30–60% is optimal. Clouds act as the color canvas |
-| Multi-Level Cloud Structure | 14 | High cirrus catches light first; low clouds block horizon |
-| Humidity | 14 | Dry air produces vivid, saturated colors |
-| Pressure Trend | 12 | Falling pressure (clearing fronts) = most dramatic skies |
-| Visibility | 12 | Ground-level atmospheric clarity confirmation |
-| Weather Conditions | 8 | Rain/storm go or no-go gate |
-| Wind Speed | 6 | Calm air = stable clouds, easier photography |
+| Multi-Level Cloud Structure | 20 | #1 for Chennai — where clouds sit matters most. High cirrus = color canvas, low stratus = blocked horizon |
+| Cloud Cover | 18 | 30–70% sweet spot. Clouds act as the color canvas |
+| Aerosol Optical Depth (AOD) | 16 | Clean air predictor. Usually decent at coast (0.14–0.30) |
+| Humidity | 15 | f(RH) curve — below 82% enhances color, above 85% causes haze |
+| Pressure Trend | 11 | Falling pressure (clearing fronts) = most dramatic skies |
+| Visibility | 5 | Ground-level atmospheric clarity confirmation |
+| Weather Conditions | 5 | Rain/storm go or no-go gate |
+| Wind Speed | 5 | Calm air = stable clouds, easier photography |
 
-### Adjustments
+### Adjustments (v5.7 — split bonus system)
 
 | Adjustment | Range | Trigger |
 |------------|-------|---------|
 | Synergy | +/- 4 pts | Bonus when humidity + cloud + visibility align; penalty when they conflict |
-| Post-Rain Bonus | +8 pts | Detected aerosol washout after overnight rain |
+| Atmospheric Clarity Bonus | +8 pts | Vis >= 15km, cloud 25-65%, humidity 60-82%, precip <= 20% — detects optimal tropical coastal scattering |
+| Post-Rain Bonus | +5 pts | AccuWeather nightHoursOfRain > 0 + GFS >= 0.5mm cross-validation — stacks with clarity bonus |
 | Solar Angle | +/- 2 pts | Seasonal Rayleigh scattering at 13 degrees N latitude |
 
 ### Verdict Scale
@@ -164,7 +165,7 @@ The scoring engine assigns up to **100 points** across 9 base factors plus syner
 
 When any weather source is unavailable, satellite-dependent factors default to neutral scores so predictions never break due to a single API outage.
 
-### MOS Auto-Calibration (v5.6)
+### MOS Auto-Calibration (v5.6+)
 
 New beaches (Mahabalipuram and future expansions) self-calibrate using Model Output Statistics. Chennai's 4 hand-tuned beaches are untouched. Each day at 7:30 AM IST, the system fetches ERA5 reanalysis data (what actually happened) and compares it to what was predicted. After 14+ days of data, rolling corrections are computed and applied automatically before scoring runs.
 

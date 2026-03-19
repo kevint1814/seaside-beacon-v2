@@ -49,8 +49,8 @@ setInterval(() => {
  * Returns live metrics for the frontend metrics strip
  *
  * Math:
- *   Forecasts generated = daysLive × 4 beaches (scored daily)
- *   Data points = daysLive × 4 beaches × 12 hourly forecasts × 11 fields per hour
+ *   Forecasts generated = daysLive × numBeaches (scored daily)
+ *   Data points = daysLive × numBeaches × 12 hourly forecasts × 11 fields per hour
  *     Fields: temperature, feelsLike, cloudCover, humidity, windSpeed,
  *             windDirection, visibility, uvIndex, precipProbability,
  *             weatherDescription, hasPrecipitation
@@ -98,7 +98,7 @@ router.get('/beaches', async (req, res) => {
 /**
  * GET /api/predict/:beach
  *
- * Fetches weather for ALL 4 beaches in parallel so the
+ * Fetches weather for ALL beaches in parallel so the
  * comparison tab reflects real conditions at every beach,
  * not just a guess derived from the selected beach's data.
  *

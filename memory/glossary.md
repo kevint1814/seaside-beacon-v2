@@ -5,7 +5,7 @@ Seaside Beacon workplace shorthand, acronyms, and internal language.
 ## Acronyms
 | Term | Meaning | Context |
 |------|---------|---------|
-| AOD | Aerosol Optical Depth | #1 sunrise color predictor, 16 pts max in scoring |
+| AOD | Aerosol Optical Depth | 16 pts max; #1 globally but for Chennai coast, cloud layers (20 pts) dominate |
 | GFS | Global Forecast System | Open-Meteo weather model, updates every 6 hrs |
 | FCM | Firebase Cloud Messaging | Push notifications to Android/iOS |
 | JWT | JSON Web Token | User auth, 30-day TTL |
@@ -13,7 +13,7 @@ Seaside Beacon workplace shorthand, acronyms, and internal language.
 | OLED | Organic LED | Display tech — site uses OLED-optimized dark theme |
 | TTL | Time To Live | Cache expiry duration |
 | IST | Indian Standard Time | UTC+5:30, all crons run on IST |
-| ECR | East Coast Road | Highway where Covelong Beach is (40km south of Chennai) |
+| ECR | East Coast Road | Highway where Covelong (40km) and Mahabalipuram (60km) are located |
 | GDPR | General Data Protection Regulation | One-click unsubscribe compliance |
 | CDN | Content Delivery Network | Vercel serves frontend via CDN |
 | CRM | Customer Relationship Management | Not used yet, potential future |
@@ -21,9 +21,10 @@ Seaside Beacon workplace shorthand, acronyms, and internal language.
 ## Internal Terms
 | Term | Meaning |
 |------|---------|
-| scoring algorithm | The v5.2 9-factor sunrise quality prediction engine in weatherService.js |
+| scoring algorithm | The v5.7 9-factor sunrise quality prediction engine in weatherService.js — split bonus system |
 | synergy adjustment | ±4 pts when humidity/cloud/visibility all align or conflict |
-| post-rain bonus | +8 pts for aerosol washout after overnight rain |
+| atmospheric clarity bonus | +8 pts when vis ≥ 15km, cloud 25-65%, humidity 60-82%, precip ≤ 20% — detects optimal tropical coastal scattering |
+| post-rain bonus | +5 pts when overnight rain confirmed (AccuWeather temporal + GFS ≥ 0.5mm cross-validation) — stacks with clarity bonus |
 | solar angle correction | ±2 pts for seasonal Rayleigh scattering at 13°N |
 | graceful degradation | When Open-Meteo is down, satellite factors default to neutral scores |
 | golden hour | Photography window: 20 min before to 30 min after sunrise |
@@ -74,7 +75,7 @@ Seaside Beacon workplace shorthand, acronyms, and internal language.
 ## Project Phases
 | Phase | Timeline | Scope |
 |-------|----------|-------|
-| Phase 0 | Feb 2026 (current) | Chennai 4 beaches, prove accuracy |
+| Phase 0 | Feb 2026 (current) | 5 Chennai-area beaches, prove accuracy |
 | Phase 1 | Q2 2026 | Marketing push |
 | Phase 2 | Q3 2026 | Expand to Pondicherry, Vizag, Puri |
 | Phase 3 | Q4 2026 | Multi-city frontend, mobile beta |

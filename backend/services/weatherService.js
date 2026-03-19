@@ -16,11 +16,11 @@
 // v5.2: Scientific predictive hierarchy rebalance (Corfidi/NOAA research).
 //     Corfidi: "Clean air is the main ingredient common to brightly colored sunrises."
 //     CHANGES:
-//     - AOD promoted to 16pts (#1 factor per science, R²≈0.65-0.70)
+//     - Cloud Layers promoted to 20pts (#1 for Chennai coast — where clouds sit matters most)
+//     - Cloud Cover at 18pts (amount is secondary to altitude)
+//     - AOD at 16pts (usually decent at coast 0.14-0.30, rarely the limiting factor)
 //       + Goldilocks curve: AOD 0.05-0.15 = peak, not <0.1 (Mie forward scattering)
-//     - Cloud Layers promoted to 20pts (#2 factor, WHERE > HOW MUCH)
-//     - Cloud Cover demoted to 18pts (amount is secondary to altitude)
-//     - Humidity reduced to 15pts (partially redundant with AOD)
+//     - Humidity reduced to 15pts (f(RH) curve — below 82% enhances, above 85% haze)
 //     - Visibility reduced to 5pts (largely redundant with AOD, coarse backup only)
 //     - Pressure raised to 11pts (clearing fronts = reliable dramatic sunrises)
 //     - Wind raised to 5pts + curve fix (8-20 km/h optimal, not ≤10)
@@ -1502,7 +1502,7 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   }
   const pressureScore = scorePressureTrend(pressureMsl);
 
-  // ── BASE FACTOR 5: Aerosol Optical Depth (max 16 — v5.2 #1 factor) ──
+  // ── BASE FACTOR 5: Aerosol Optical Depth (max 16) ──
   const aodValue = airQuality?.aod ?? null;
   const aodScore = scoreAOD(aodValue);
 
@@ -1539,8 +1539,8 @@ function calculateSunriseScore(forecastRaw, extras = {}) {
   const hasClarityBonus = clarityBonus > 0;
 
   console.log(`\n📊 SCORING BREAKDOWN (v5.7 — Corfidi/NOAA scientific hierarchy):`);
-  console.log(`  🌫️  AOD (${aodValue?.toFixed(3) ?? 'N/A'}): ${aodScore}/16  ← #1 factor`);
-  console.log(`  🌥️  Cloud Layers (H:${highCloud ?? '?'}% M:${midCloud ?? '?'}% L:${lowCloud ?? '?'}%): ${multiLevelScore}/20  ← #2 factor`);
+  console.log(`  🌫️  AOD (${aodValue?.toFixed(3) ?? 'N/A'}): ${aodScore}/16`);
+  console.log(`  🌥️  Cloud Layers (H:${highCloud ?? '?'}% M:${midCloud ?? '?'}% L:${lowCloud ?? '?'}%): ${multiLevelScore}/20  ← #1 factor`);
   console.log(`  ☁️  Cloud Cover [${cloudSource}] (${cloudCover}%): ${cloudScore}/18`);
   console.log(`  💧 Humidity [${humiditySource}] (${humidity}%): ${humidScore}/15`);
   console.log(`  📊 Pressure Trend (Δ${pressureTrend != null ? (pressureTrend >= 0 ? '+' : '') + pressureTrend : '?'}hPa): ${pressureScore}/11`);
@@ -1779,8 +1779,8 @@ async function getTomorrow6AMForecast(beachKey, { forceAvailable = false } = {})
   const forecast6AM = findNext6AM(hourlyData);
 
   const forecastTime = new Date(forecast6AM.DateTime);
-  const istTime = new Date(forecastTime.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  console.log(`✅ Forecast for ${istTime.toLocaleString('en-IN')}`);
+  // Use forecastTime directly — no double conversion (was adding +5:30 twice on UTC servers)
+  console.log(`✅ Forecast for ${forecastTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
 
   // Visibility unit handling
   const visibilityRaw = forecast6AM.Visibility?.Value || 10;
@@ -1853,7 +1853,7 @@ async function getTomorrow6AMForecast(beachKey, { forceAvailable = false } = {})
     coordinates: beach.coordinates,
     forecast: {
       ...weatherData,
-      forecastTime: istTime.toLocaleString('en-IN', {
+      forecastTime: forecastTime.toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
         dateStyle: 'full',
         timeStyle: 'short'
@@ -2008,7 +2008,7 @@ function initializeCacheWarmup() {
   cron.schedule('30 15 * * *', () => warmUpForecastCache('GFS-06Z (15:30 IST)'), TZ);
   cron.schedule('30 21 * * *', () => warmUpForecastCache('GFS-12Z (21:30 IST)'), TZ);
 
-  // ── CAMS AIR QUALITY (12-hourly model, AOD is our #1 factor) ──
+  // ── CAMS AIR QUALITY (12-hourly model, AOD is a key scoring factor) ──
   cron.schedule('0 7 * * *',  () => warmUpAQCache('CAMS-00Z (07:00 IST)'), TZ);
   cron.schedule('0 19 * * *', () => warmUpAQCache('CAMS-12Z (19:00 IST)'), TZ);
 

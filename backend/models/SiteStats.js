@@ -17,7 +17,7 @@ const siteStatsSchema = new mongoose.Schema({
     type: Number, default: 0    // total emails delivered
   },
   dataPointsProcessed: {
-    type: Number, default: 0    // 6 factors × 4 beaches per day = 24
+    type: Number, default: 0    // 6 factors × N beaches per day
   },
   daysLive: {
     type: Number, default: 0    // incremented each cron run

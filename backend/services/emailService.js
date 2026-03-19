@@ -216,7 +216,7 @@ async function sendWelcomeEmail(subscriberEmail, beachName) {
                   </td>
                   <td style="padding-left:14px;vertical-align:top;">
                     <p style="margin:0 0 3px;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;color:#2a2420;">Beach Comparison</p>
-                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">All 4 Chennai beaches rated — or honestly told "none are great today" when that's the truth.</p>
+                    <p style="margin:0;font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.6;color:#8a7e72;">All Chennai beaches rated — or honestly told "none are great today" when that's the truth.</p>
                   </td>
                 </tr>
               </table>
